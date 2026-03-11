@@ -2,7 +2,14 @@
   "name": "radix-native",
   "version": "0.0.1",
   "description": "Radix Themes API for React Native",
-  "author": "radix-native",
+  "author": "Atotaro98",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Atotaro98/radix-native"
+  },
+  "homepage": "https://github.com/Atotaro98/radix-native",
+  "keywords": ["react-native", "radix", "ui", "components", "expo", "themes"],
   "type": "module",
   "sideEffects": false,
   "source": "src/index",
@@ -27,7 +34,6 @@
     "build": "unbuild",
     "dev": "unbuild --watch",
     "generate:colors": "tsx scripts/generate-colors.ts",
-    "postinstall": "yarn generate:colors",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit"
   },
