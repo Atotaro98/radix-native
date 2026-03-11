@@ -1,0 +1,28 @@
+// WARNING: Auto-generated — do not edit manually
+// Source: @radix-ui/colors (exact hex values, unmodified)
+// To update: yarn generate:colors
+
+import type { ColorScaleWithModes } from './types'
+
+export const olive: ColorScaleWithModes = {
+  light: {
+    1: '#fcfdfc', 2: '#f8faf8', 3: '#eff1ef', 4: '#e7e9e7',
+    5: '#dfe2df', 6: '#d7dad7', 7: '#cccfcc', 8: '#b9bcb8',
+    9: '#898e87', 10: '#7f847d', 11: '#60655f', 12: '#1d211c',
+    a1: '#00550003', a2: '#00490007', a3: '#00200010', a4: '#00160018',
+    a5: '#00180020', a6: '#00140028', a7: '#000f0033', a8: '#040f0047',
+    a9: '#050f0078', a10: '#040e0082', a11: '#020a00a0', a12: '#010600e3',
+    contrast: '#ffffff', surface: '#ffffffcc',
+    indicator: '#898e87', track: '#898e87',
+  },
+  dark: {
+    1: '#111210', 2: '#181917', 3: '#212220', 4: '#282a27',
+    5: '#2f312e', 6: '#383a36', 7: '#454843', 8: '#5c625b',
+    9: '#687066', 10: '#767d74', 11: '#afb5ad', 12: '#eceeec',
+    a1: '#00000000', a2: '#f1f2f008', a3: '#f4f5f312', a4: '#f3fef21a',
+    a5: '#f2fbf122', a6: '#f4faed2c', a7: '#f2fced3b', a8: '#edfdeb57',
+    a9: '#ebfde766', a10: '#f0fdec74', a11: '#f6fef4b0', a12: '#fdfffded',
+    contrast: '#ffffff', surface: '#1f201e80',
+    indicator: '#687066', track: '#687066',
+  },
+}

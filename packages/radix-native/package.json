@@ -1,0 +1,45 @@
+{
+  "name": "radix-native",
+  "version": "0.0.1",
+  "description": "Radix Themes API for React Native",
+  "author": "radix-native",
+  "type": "module",
+  "sideEffects": false,
+  "source": "src/index",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "react-native": "./src/index.ts",
+      "import": "./dist/index.mjs",
+      "default": "./dist/index.cjs"
+    }
+  },
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "src",
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "unbuild",
+    "dev": "unbuild --watch",
+    "generate:colors": "tsx scripts/generate-colors.ts",
+    "postinstall": "yarn generate:colors",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-native": ">=0.72.0"
+  },
+  "devDependencies": {
+    "@radix-ui/colors": "latest",
+    "@types/node": "latest",
+    "tsx": "latest",
+    "typescript": "latest",
+    "unbuild": "latest"
+  }
+}

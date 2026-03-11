@@ -1,0 +1,14 @@
+node_modules/
+.yarn/install-state.gz
+dist/
+.turbo/
+*.log
+.expo/
+.DS_Store
+Thumbs.db
+android/
+ios/
+.env
+.env.local
+.vscode/
+*.tsbuildinfo
