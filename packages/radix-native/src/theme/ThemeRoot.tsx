@@ -1,7 +1,8 @@
 import React from 'react'
-import { useColorScheme } from 'react-native'
+import { View, useColorScheme } from 'react-native'
 import { ThemeContext } from './ThemeContext'
 import { resolveGrayColor } from './resolveGrayColor'
+import { resolveColor } from '../utils/resolveColor'
 import type { ThemeProps, ThemeContextValue } from './theme.types'
 
 export function ThemeRoot({
@@ -10,6 +11,7 @@ export function ThemeRoot({
   grayColor: grayColorProp = 'auto',
   radius: radiusProp = 'medium',
   scaling: scalingProp = '100%',
+  hasBackground: hasBackgroundProp = true,
   fonts: fontsProp = {},
   colorOverrides: colorOverridesProp = {},
   children,
@@ -60,6 +62,16 @@ export function ThemeRoot({
     [appearance, accentColor, grayColor, resolvedGrayColor, radius, scaling, fontsProp, colorOverridesProp],
   )
 
-  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
+  const backgroundColor = hasBackgroundProp
+    ? appearance === 'light'
+      ? '#fff'
+      : resolveColor('gray-1', appearance, accentColor, resolvedGrayColor, colorOverridesProp)
+    : undefined
+
+  return (
+    <ThemeContext.Provider value={value}>
+      <View style={{ flex: 1, backgroundColor }}>{children}</View>
+    </ThemeContext.Provider>
+  )
 }
 ThemeRoot.displayName = 'ThemeRoot'

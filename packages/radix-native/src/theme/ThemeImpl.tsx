@@ -1,6 +1,8 @@
 import React from 'react'
+import { View } from 'react-native'
 import { ThemeContext } from './ThemeContext'
 import { resolveGrayColor } from './resolveGrayColor'
+import { resolveColor } from '../utils/resolveColor'
 import type { ThemeProps, ThemeContextValue } from './theme.types'
 
 export function ThemeImpl({
@@ -9,6 +11,7 @@ export function ThemeImpl({
   grayColor: grayColorProp,
   radius: radiusProp,
   scaling: scalingProp,
+  hasBackground: hasBackgroundProp,
   fonts: fontsProp,
   colorOverrides: colorOverridesProp,
   children,
@@ -28,6 +31,7 @@ export function ThemeImpl({
   const radius = radiusProp ?? parent.radius
   const scaling = scalingProp ?? parent.scaling
   const resolvedGrayColor = grayColor === 'auto' ? resolveGrayColor(accentColor) : grayColor
+  const resolvedColorOverrides = colorOverridesProp ?? parent.colorOverrides
 
   const value = React.useMemo<ThemeContextValue>(
     () => ({
@@ -38,7 +42,7 @@ export function ThemeImpl({
       radius,
       scaling,
       fonts: fontsProp ?? parent.fonts,
-      colorOverrides: colorOverridesProp ?? parent.colorOverrides,
+      colorOverrides: resolvedColorOverrides,
       // Handlers always bubble up to ThemeRoot
       onAppearanceChange: parent.onAppearanceChange,
       onAccentColorChange: parent.onAccentColorChange,
@@ -46,9 +50,26 @@ export function ThemeImpl({
       onRadiusChange: parent.onRadiusChange,
       onScalingChange: parent.onScalingChange,
     }),
-    [appearance, accentColor, grayColor, resolvedGrayColor, radius, scaling, fontsProp, colorOverridesProp, parent],
+    [appearance, accentColor, grayColor, resolvedGrayColor, radius, scaling, fontsProp, resolvedColorOverrides, parent],
   )
 
-  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
+  // Radix web: nested <Theme> gets hasBackground when it has an explicit
+  // appearance prop set to 'light' or 'dark' (not 'inherit' / undefined).
+  const hasExplicitAppearance =
+    appearanceProp !== undefined && appearanceProp !== 'inherit'
+
+  const showBackground = hasBackgroundProp ?? hasExplicitAppearance
+
+  const backgroundColor = showBackground
+    ? appearance === 'light'
+      ? '#fff'
+      : resolveColor('gray-1', appearance, accentColor, resolvedGrayColor, resolvedColorOverrides)
+    : undefined
+
+  const content = backgroundColor != null
+    ? <View style={{ flex: 1, backgroundColor }}>{children}</View>
+    : children
+
+  return <ThemeContext.Provider value={value}>{content}</ThemeContext.Provider>
 }
 ThemeImpl.displayName = 'ThemeImpl'

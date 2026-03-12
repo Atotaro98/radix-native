@@ -87,6 +87,12 @@ export interface ThemeProps {
   grayColor?: GrayColor | 'auto'
   radius?: RadiusToken
   scaling?: ScalingMode
+  /**
+   * Whether the Theme renders a background color.
+   * Defaults to `true` — sets `backgroundColor` to white (light) or gray-1 (dark),
+   * matching Radix web's `--color-background` / `data-has-background`.
+   */
+  hasBackground?: boolean
   /** RN-only */
   fonts?: ThemeFonts
   /** RN-only */
