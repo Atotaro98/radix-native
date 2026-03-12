@@ -133,14 +133,16 @@ export function Link({
       if (onPress) {
         onPress(e)
       } else if (href) {
-        void Linking.openURL(href)
+        void Linking.openURL(href).catch(() => {
+          if (__DEV__) console.warn(`[Link] Failed to open URL: ${href}`)
+        })
       }
     },
     [onPress, href],
   )
 
   // ─── Style ──────────────────────────────────────────────────────────────────
-  const linkStyle: TextStyle = {
+  const linkStyle = React.useMemo<TextStyle>(() => ({
     fontSize:      resolvedSize,
     lineHeight:    resolvedLineHeight,
     letterSpacing: resolvedLetterSpacing,
@@ -149,15 +151,12 @@ export function Link({
     fontFamily,
     textDecorationLine,
     textDecorationColor,
-    // RN defaults flexShrink to 0; CSS defaults to 1. Without this, text
-    // inside a Flex row overflows instead of wrapping to the available width.
     flexShrink:    1,
-    // Margins
     marginTop:    sp(mt ?? my ?? m),
     marginBottom: sp(mb ?? my ?? m),
     marginLeft:   sp(ml ?? mx ?? m),
     marginRight:  sp(mr ?? mx ?? m),
-  }
+  }), [resolvedSize, resolvedLineHeight, resolvedLetterSpacing, linkColor, weight, fontFamily, textDecorationLine, textDecorationColor, mt, my, m, mb, ml, mx, mr, scaling])
 
   return (
     <RNText
