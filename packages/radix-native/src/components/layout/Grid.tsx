@@ -213,8 +213,8 @@ export function Grid({
 
   return (
     <View style={[containerStyle, style]} onLayout={handleLayout} {...rest}>
-      {items.map((child, i) => (
-        <View key={i} style={{ width: cellWidth }}>
+      {items.map((child) => (
+        <View key={(child as React.ReactElement).key} style={{ width: cellWidth }}>
           {child}
         </View>
       ))}
