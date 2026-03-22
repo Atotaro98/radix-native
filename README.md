@@ -7,20 +7,18 @@ React Native components that match the [Radix Themes](https://www.radix-ui.com/t
 ## Features
 
 - **Identical API** to `@radix-ui/themes` — same component names, same props, same variants
-- **Full theme system** — accent colors, gray scales, radius, scaling, dark mode
+- **30 components** — layout, typography, actions, forms, display, feedback
+- **Full theme system** — 26 accent colors, 6 gray scales, radius, scaling, dark mode, nested themes
 - **31 color scales** from `@radix-ui/colors` with light/dark modes and alpha variants
 - **Zero dependencies** — only `react` and `react-native` as peer deps
 - **TypeScript strict** — fully typed props, tokens, and theme values
-- **Accessible by default** — semantic roles, font scaling support
+- **Accessible** — semantic roles, accessibility states, screen reader support
+- **Press animation** — subtle scale-down on press for interactive components
 
 ## Installation
 
 ```bash
-# npm
 npm install radix-native
-
-# yarn
-yarn add radix-native
 ```
 
 ### Peer dependencies
@@ -34,94 +32,27 @@ yarn add radix-native
 
 ## Quick Start
 
-Wrap your app with `<Theme>` and start using components:
-
 ```tsx
-import { Theme, Text, Button, Flex } from 'radix-native'
+import { Theme, Text, Button, Flex, Avatar, Badge } from 'radix-native'
 
 export default function App() {
   return (
-    <Theme accentColor="indigo" appearance="light">
-      <Flex direction="column" gap={4} p={4}>
-        <Text size={5} weight="bold">
-          Hello, Radix Native
-        </Text>
-        <Button variant="solid" size={3}>
-          <Text>Get Started</Text>
+    <Theme accentColor="indigo" appearance="dark">
+      <Flex direction="row" gap={3} align="center" p={4}>
+        <Avatar src="https://example.com/photo.jpg" fallback="JD" size={5} />
+        <Flex gap={1}>
+          <Text size={4} weight="bold">
+            John Doe
+          </Text>
+          <Badge variant="soft" color="green">
+            Active
+          </Badge>
+        </Flex>
+        <Button variant="soft" ml="auto">
+          Edit
         </Button>
       </Flex>
     </Theme>
-  )
-}
-```
-
-## Theme Configuration
-
-```tsx
-<Theme
-  accentColor="blue"    // 25 accent colors
-  grayColor="auto"      // 6 gray scales or 'auto'
-  appearance="light"    // 'light' | 'dark' | 'inherit'
-  radius="medium"       // 'none' | 'small' | 'medium' | 'large' | 'full'
-  scaling="100%"        // '90%' | '95%' | '100%' | '105%' | '110%'
-  fonts={{              // RN-only: custom font families per weight
-    regular: 'Inter-Regular',
-    medium: 'Inter-Medium',
-    bold: 'Inter-Bold',
-    heading: 'Inter-Bold',
-    code: 'JetBrainsMono',
-  }}
->
-  {children}
-</Theme>
-```
-
-### Color overrides
-
-Override individual color steps per scale — the RN equivalent of overriding CSS custom properties like `--red-9: #custom` in Radix web:
-
-```tsx
-<Theme
-  accentColor="red"
-  colorOverrides={{
-    red: {
-      light: { 9: '#e54666', 10: '#dc3b5d' },
-      dark:  { 9: '#e5484d', 10: '#ec5d5e' },
-    },
-  }}
->
-  {children}
-</Theme>
-```
-
-You can override any step (1–12), alpha step (a1–a12), `contrast`, or `surface` for any of the 31 color scales, with separate values for light and dark modes. Only the steps you specify are overridden; the rest fall back to the built-in scale.
-
-### Nested themes
-
-Override any theme prop for a subtree, just like Radix web:
-
-```tsx
-<Theme accentColor="indigo" appearance="light">
-  <Text>Uses indigo + light</Text>
-
-  <Theme accentColor="red" appearance="dark">
-    <Text>Uses red + dark</Text>
-  </Theme>
-</Theme>
-```
-
-### Accessing theme values
-
-```tsx
-import { useThemeContext } from 'radix-native'
-
-function MyComponent() {
-  const { appearance, accentColor, onAppearanceChange } = useThemeContext()
-
-  return (
-    <Button onPress={() => onAppearanceChange(appearance === 'dark' ? 'light' : 'dark')}>
-      <Text>Toggle theme</Text>
-    </Button>
   )
 }
 ```
@@ -130,109 +61,176 @@ function MyComponent() {
 
 ### Layout
 
-| Component | Description |
-|-----------|-------------|
-| `Box` | Base layout container with padding, margin, and positioning props |
-| `Flex` | Flexbox container with `direction`, `align`, `justify`, `gap` |
-| `Grid` | Equal-width column grid with wrapping |
+| Component   | Description                                                    |
+| ----------- | -------------------------------------------------------------- |
+| `Box`       | Base container with padding, margin, and dimension props       |
+| `Flex`      | Flexbox container with `direction`, `align`, `justify`, `gap`  |
+| `Grid`      | Equal-width column grid with wrapping                          |
+| `Separator` | Visual divider (horizontal/vertical)                           |
+| `Card`      | Container with background, border, and optional press behavior |
 
 ### Typography
 
-| Component | Description |
-|-----------|-------------|
-| `Text` | Body text with size, weight, color, and alignment |
-| `Heading` | Heading text with semantic `header` role |
-| `Link` | Pressable text link with underline control |
-| `Blockquote` | Block quote with left accent border |
-| `Code` | Inline code with `solid`, `soft`, `outline`, `ghost` variants |
-| `Kbd` | Keyboard shortcut indicator |
-| `Em` | Italic emphasis (inline) |
-| `Strong` | Bold emphasis (inline) |
-| `Quote` | Inline quotation |
+| Component    | Description                                                   |
+| ------------ | ------------------------------------------------------------- |
+| `Text`       | Body text with size (1–9), weight, color, alignment           |
+| `Heading`    | Section headings with tighter line-heights                    |
+| `Link`       | Pressable text with underline control                         |
+| `Blockquote` | Block quote with left accent border                           |
+| `Code`       | Inline code with `solid`, `soft`, `outline`, `ghost` variants |
+| `Kbd`        | Keyboard key indicator                                        |
+| `Em`         | Italic emphasis                                               |
+| `Strong`     | Bold emphasis                                                 |
+| `Quote`      | Inline quotation with curly quotes                            |
+
+### Display
+
+| Component | Description                                                  |
+| --------- | ------------------------------------------------------------ |
+| `Avatar`  | Profile picture with image loading state, fallback text/icon |
+| `Badge`   | Annotation label with 4 variants                             |
 
 ### Actions
 
-| Component | Description |
-|-----------|-------------|
-| `Button` | 6 variants (`solid`, `soft`, `surface`, `outline`, `ghost`, `classic`), sizes 1–4 |
-| `Checkbox` | 3 variants (`surface`, `classic`, `soft`), sizes 1–3 |
-| `CheckboxGroup` | Compound `Root` + `Item` for grouped checkboxes |
-| `CheckboxCards` | Card-style checkbox selection |
+| Component       | Description                                                    |
+| --------------- | -------------------------------------------------------------- |
+| `Button`        | 6 variants, 4 sizes, loading state with dimension preservation |
+| `IconButton`    | Square button for icons, auto-passes color to children         |
+| `Checkbox`      | Toggle with View-based check/dash indicator                    |
+| `CheckboxGroup` | Compound `Root` + `Item` for labeled checkbox groups           |
+| `CheckboxCards` | Card-style checkbox grid                                       |
+| `Switch`        | Toggle with animated thumb (bezier easing)                     |
+| `Radio`         | Radio button with dot indicator                                |
+| `RadioGroup`    | Compound `Root` + `Item` for labeled radio groups              |
+| `RadioCards`    | Card-style radio selection (border indicator)                  |
 
-## Color System
+### Feedback
 
-31 color scales from `@radix-ui/colors`, each with 12 steps + alpha variants in light and dark modes:
+| Component  | Description                                         |
+| ---------- | --------------------------------------------------- |
+| `Spinner`  | 8-leaf staggered fade animation                     |
+| `Progress` | Determinate + indeterminate bar with variant colors |
 
+### Forms
+
+| Component   | Description                                               |
+| ----------- | --------------------------------------------------------- |
+| `TextField` | Single-line text input with 3 variants and disabled state |
+| `TextArea`  | Multi-line text input                                     |
+
+## Theme Configuration
+
+```tsx
+<Theme
+  accentColor="blue"    // 26 accent colors
+  grayColor="auto"      // 6 gray scales or 'auto' (matches accent)
+  appearance="dark"     // 'light' | 'dark' | 'inherit'
+  radius="medium"       // 'none' | 'small' | 'medium' | 'large' | 'full'
+  scaling="100%"        // '90%' | '95%' | '100%' | '105%' | '110%'
+  hasBackground         // applies background color
+  fonts={{
+    regular: 'Inter-Regular',
+    medium: 'Inter-Medium',
+    bold: 'Inter-Bold',
+    heading: 'Inter-Bold',
+    code: 'JetBrainsMono',
+  }}
+>
 ```
-Accent (25): tomato red ruby crimson pink plum purple violet iris indigo
-             blue cyan teal jade green grass bronze gold brown orange
-             amber yellow lime mint sky
 
-Gray (6):    gray mauve slate sage olive sand
+### Nested themes
+
+```tsx
+<Theme accentColor="indigo" appearance="light">
+  <Text>Uses indigo + light</Text>
+  <Theme accentColor="red" appearance="dark">
+    <Text>Uses red + dark</Text>
+  </Theme>
+</Theme>
 ```
+
+### Color resolution
+
+```tsx
+import { useResolveColor } from 'radix-native'
+
+const rc = useResolveColor()
+rc('accent', 9) // theme accent at step 9
+rc('gray', 'a6') // gray alpha step 6
+rc('blue', 'contrast') // blue contrast color
+rc(prefix, 'surface') // dynamic color + step
+```
+
+### Theme context
+
+```tsx
+import { useThemeContext } from 'radix-native'
+
+const { appearance, accentColor, onAppearanceChange } = useThemeContext()
+```
+
+## Hooks
+
+| Hook                | Description                                                       |
+| ------------------- | ----------------------------------------------------------------- |
+| `useThemeContext()` | Access resolved theme values and change handlers                  |
+| `useResolveColor()` | Resolve color tokens to hex — `rc('accent', 9)` or `rc('gray-1')` |
+| `useResolveSpace()` | Resolve spacing tokens to pixels                                  |
+| `useMargins()`      | Resolve margin props to memoized ViewStyle                        |
+| `usePressScale()`   | Subtle scale animation on press for custom components             |
 
 ## Design Tokens
 
 ### Spacing
 
-```tsx
-// SpaceToken: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
-<Box p={4} mx={2} />  // p=16px, mx=8px
-```
+| Token | 0   | 1   | 2   | 3   | 4   | 5   | 6   | 7   | 8   | 9   |
+| ----- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| px    | 0   | 4   | 8   | 12  | 16  | 24  | 32  | 40  | 48  | 64  |
 
-| Token | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
-|-------|---|---|---|---|---|---|---|---|---|---|
-| px    | 0 | 4 | 8 | 12 | 16 | 24 | 32 | 40 | 48 | 64 |
+### Typography
 
-### Typography sizes
+| Size       | 1   | 2   | 3   | 4   | 5   | 6   | 7   | 8   | 9   |
+| ---------- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| fontSize   | 12  | 14  | 16  | 18  | 20  | 24  | 28  | 35  | 60  |
+| lineHeight | 16  | 20  | 24  | 26  | 28  | 30  | 36  | 40  | 60  |
 
-```tsx
-<Text size={3} />  // 16px, lineHeight 24px
-```
+### Color System
 
-| Size | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
-|------|---|---|---|---|---|---|---|---|---|
-| fontSize | 12 | 14 | 16 | 18 | 20 | 24 | 28 | 35 | 60 |
-| lineHeight | 16 | 20 | 24 | 26 | 28 | 30 | 36 | 40 | 60 |
-
-### Radius
-
-```tsx
-<Button radius="full" />  // 'none' | 'small' | 'medium' | 'large' | 'full'
-```
+31 scales from `@radix-ui/colors` — 26 accent + 6 gray. Each scale has 12 solid steps, 12 alpha steps, plus `contrast` and `surface` tokens in both light and dark modes.
 
 ## Differences from Radix Web
 
-| Feature | Radix Web | Radix Native |
-|---------|-----------|--------------|
-| Styling | CSS variables + classes | `StyleSheet` (pure RN) |
-| Responsive props | `Responsive<T>` with breakpoints | Single values only |
-| `asChild` / `as` | Supported | Not applicable (no DOM) |
-| `panelBackground` | `'solid'` / `'translucent'` | Not supported (CSS-only) |
-| `fonts` prop | N/A | Custom font families per weight |
-| `colorOverrides` prop | N/A | Override individual color steps |
-| `display` prop | Responsive enum | Not needed (RN defaults to flex) |
+| Feature             | Radix Web                      | Radix Native                    |
+| ------------------- | ------------------------------ | ------------------------------- |
+| Styling             | CSS variables + classes        | Pure RN StyleSheet              |
+| Color resolution    | `var(--accent-9)`              | `rc('accent', 9)` hook          |
+| Margin props        | CSS classes via `extractProps` | `useMargins` hook               |
+| Responsive props    | `{ initial, sm, md }`          | Single values                   |
+| `asChild` / Slot    | Supported                      | Not yet                         |
+| Press feedback      | CSS `:active`                  | `usePressScale` animation       |
+| `Flex` default      | `row` (CSS)                    | `column` (mobile-first)         |
+| Separator thickness | `1px` CSS                      | `StyleSheet.hairlineWidth`      |
+| `fonts` prop        | N/A                            | Custom font families per weight |
+
+See `packages/radix-native/llm/differences.md` for the complete comparison.
+
+## Documentation
+
+- **LLM Skills**: `packages/radix-native/llm/` — 33 markdown files for AI assistants
+- **MDX Docs**: `docs/content/` — 35 MDX pages ready for Astro/Next.js
+- **CLAUDE.md**: `packages/radix-native/CLAUDE.md` — AI coding guide
 
 ## Development
 
-This is a monorepo powered by Turborepo + Yarn 4 Berry.
+Monorepo powered by Turborepo + Yarn 4 Berry.
 
 ```bash
-# Install dependencies
-yarn install
-
-# Build the library
-yarn build
-
-# Start the example app
-cd apps/example && yarn ios
-
-# Regenerate color tokens (after updating @radix-ui/colors)
-yarn generate:colors
-
-# Lint & typecheck
-yarn lint
-yarn typecheck
+yarn install           # Install dependencies
+yarn build             # Build the library
+cd apps/example        # Start the playground
+yarn ios               # or yarn android
+yarn generate:colors   # Regenerate color tokens
+yarn typecheck         # Type checking
 ```
 
 ### Project structure
@@ -240,16 +238,19 @@ yarn typecheck
 ```
 radix-native/
 ├── apps/
-│   └── example/          # Expo SDK 55 playground app
+│   └── example/              # Expo SDK 55 playground
+├── docs/
+│   └── content/              # MDX documentation (35 pages)
 ├── packages/
-│   └── radix-native/     # The library
+│   └── radix-native/
+│       ├── llm/              # LLM skills (33 files)
+│       ├── CLAUDE.md          # AI coding guide
 │       └── src/
-│           ├── tokens/       # colors, spacing, typography, radius, scaling
-│           ├── theme/        # Theme, ThemeRoot, ThemeImpl, createTheme
-│           ├── hooks/        # useThemeContext, useResolveColor
-│           ├── utils/        # resolveColor, resolveSpace, applyScaling
-│           └── components/   # layout, typography, actions
-└── scripts/
+│           ├── tokens/        # colors (31 scales), spacing, typography, radius
+│           ├── theme/         # Theme, ThemeRoot, ThemeImpl, createTheme
+│           ├── hooks/         # useThemeContext, useResolveColor, useMargins, usePressScale
+│           ├── utils/         # resolveColor, resolveSpace, classicEffect
+│           └── components/    # layout, typography, display, actions, feedback, forms
 ```
 
 ## License
