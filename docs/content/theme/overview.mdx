@@ -1,0 +1,67 @@
+---
+metaTitle: Theme overview
+metaDescription: Use the Theme component to change the look and feel of your UI.
+---
+
+# Theme overview
+
+Use the `Theme` component to set the visual tone of your app.
+
+```tsx
+<Theme
+  appearance="dark"
+  accentColor="blue"
+  grayColor="auto"
+  radius="medium"
+  scaling="100%"
+  hasBackground
+>
+  <App />
+</Theme>
+```
+
+## Nesting
+
+Themes can nest. Inner themes inherit from outer and override specific props:
+
+```tsx
+<Theme appearance="dark" accentColor="blue">
+  <Button>Blue button</Button>
+
+  <Theme accentColor="red">
+    <Button>Red button, still dark</Button>
+  </Theme>
+</Theme>
+```
+
+## Props
+
+| Prop | Type | Default |
+|------|------|---------|
+| `appearance` | `'inherit' \| 'light' \| 'dark'` | `'inherit'` |
+| `accentColor` | 26 accent colors | `'indigo'` |
+| `grayColor` | `'auto' \| 'gray' \| 'mauve' \| 'slate' \| 'sage' \| 'olive' \| 'sand'` | `'auto'` |
+| `radius` | `'none' \| 'small' \| 'medium' \| 'large' \| 'full'` | `'medium'` |
+| `scaling` | `'90%' \| '95%' \| '100%' \| '105%' \| '110%'` | `'100%'` |
+| `hasBackground` | `boolean` | — |
+| `fonts` | `ThemeFonts` | system fonts |
+
+## useThemeContext
+
+Access resolved theme values from any component:
+
+```tsx
+const {
+  appearance,        // 'light' | 'dark' (always resolved)
+  accentColor,       // AccentColor
+  resolvedGrayColor, // GrayColor (never 'auto')
+  radius,            // RadiusToken
+  scaling,           // ScalingMode
+  fonts,             // ThemeFonts
+  onAppearanceChange,
+  onAccentColorChange,
+  onGrayColorChange,
+  onRadiusChange,
+  onScalingChange,
+} = useThemeContext()
+```

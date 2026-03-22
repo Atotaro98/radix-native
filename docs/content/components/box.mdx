@@ -1,0 +1,24 @@
+---
+metaTitle: Box
+metaDescription: Generic layout container with spacing token props.
+sourcePath: components/layout/Box
+---
+
+# Box
+
+```tsx
+<Box p={4} width={9}>
+  <Text>Content in a padded box</Text>
+</Box>
+```
+
+## API Reference
+
+Inherits from View. Supports [margin props](/theme/spacing).
+
+| Prop | Type | Default |
+|------|------|---------|
+| `p, px, py` | `SpaceToken` | — |
+| `width, height, minWidth, minHeight, maxWidth` | `SpaceToken` | — |
+| `flexGrow, flexShrink` | `number` | — |
+| `overflow` | `'hidden' \| 'visible' \| 'scroll'` | — |

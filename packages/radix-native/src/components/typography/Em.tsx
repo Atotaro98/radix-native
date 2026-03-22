@@ -1,35 +1,24 @@
 import React from 'react'
 import { Text as RNText } from 'react-native'
-import type { TextProps as RNTextProps, StyleProp, TextStyle } from 'react-native'
-import { resolveSpace } from '../../utils/resolveSpace'
-import { useThemeContext } from '../../hooks/useThemeContext'
-import type { MarginToken } from '../../tokens/spacing'
+import type { StyleProp, TextStyle } from 'react-native'
+import { useMargins } from '../../hooks/useMargins'
 import type { TextWrap } from './Text'
+import type { NativeTextProps } from '../../types/nativeProps'
+import type { MarginProps } from '../../types/marginProps'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export interface EmProps extends Omit<RNTextProps, 'style'> {
+export interface EmProps extends NativeTextProps, MarginProps {
   /** Truncates text with an ellipsis when it overflows. */
   truncate?: boolean
   /** Controls text wrapping. 'pretty'/'balance' are not supported in React Native, no-op. */
   wrap?: TextWrap
-  // ─── Margin props ──────────────────────────────────────────────────────────
-  m?: MarginToken
-  mx?: MarginToken
-  my?: MarginToken
-  mt?: MarginToken
-  mr?: MarginToken
-  mb?: MarginToken
-  ml?: MarginToken
   style?: StyleProp<TextStyle>
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-/**
- * Inline italic text. Can be nested inside `<Text>` for inline use.
- * Can be nested inside `<Text>` for inline use.
- */
+/** Inline italic text. Can be nested inside `<Text>` for inline use. */
 export function Em({
   truncate,
   wrap,
@@ -37,10 +26,7 @@ export function Em({
   style,
   ...rest
 }: EmProps) {
-  const { scaling } = useThemeContext()
-
-  const sp = (token: MarginToken | undefined): number | undefined =>
-    token !== undefined ? resolveSpace(token, scaling) : undefined
+  const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
   const numberOfLines = truncate ? 1 : wrap === 'nowrap' ? 1 : undefined
   const ellipsizeMode = truncate ? 'tail' : wrap === 'nowrap' ? 'clip' : undefined
@@ -50,10 +36,7 @@ export function Em({
     // RN defaults flexShrink to 0; CSS defaults to 1. Without this, text
     // inside a Flex row overflows instead of wrapping to the available width.
     flexShrink:    1,
-    marginTop:    sp(mt ?? my ?? m),
-    marginBottom: sp(mb ?? my ?? m),
-    marginLeft:   sp(ml ?? mx ?? m),
-    marginRight:  sp(mr ?? mx ?? m),
+    ...margins,
   }
 
   return (

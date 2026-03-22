@@ -1,0 +1,25 @@
+---
+metaTitle: Code
+metaDescription: Inline code with variants and accent colors.
+sourcePath: components/typography/Code
+---
+
+# Code
+
+```tsx
+<Text>Run <Code>npm install radix-native</Code> to start.</Text>
+```
+
+## API Reference
+
+Inherits from Text (RN). Supports [margin props](/theme/spacing).
+
+| Prop | Type | Default |
+|------|------|---------|
+| `size` | `1-9` | `3` |
+| `variant` | `'solid' \| 'soft' \| 'outline' \| 'ghost'` | `'soft'` |
+| `weight` | `'light' \| 'regular' \| 'medium' \| 'bold'` | — |
+| `color` | `AccentColor` | theme accent |
+| `highContrast` | `boolean` | — |
+
+Font-size is 0.95x of the size token. Ghost variant has zero padding; others have 0.1em/0.25em. Uses the `code` font from ThemeFonts.

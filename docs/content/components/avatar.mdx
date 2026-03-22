@@ -1,0 +1,84 @@
+---
+metaTitle: Avatar
+metaDescription: Profile picture, user initials or fallback icon.
+sourcePath: components/display/Avatar
+---
+
+# Avatar
+
+```tsx
+<Flex direction="row" gap={3} align="center">
+  <Avatar src="https://i.pravatar.cc/100?img=1" fallback="JD" size={5} />
+  <Avatar fallback="A" variant="solid" />
+  <Avatar fallback="BG" variant="soft" color="red" />
+</Flex>
+```
+
+## API Reference
+
+Inherits from View. Supports [margin props](/theme/spacing).
+
+| Prop | Type | Default |
+|------|------|---------|
+| `src` | `string \| number \| { uri: string }` | — |
+| `fallback` | `ReactNode` | **required** |
+| `size` | `1-9` | `3` |
+| `variant` | `'solid' \| 'soft'` | `'soft'` |
+| `color` | `AccentColor` | theme accent |
+| `highContrast` | `boolean` | — |
+| `radius` | `RadiusToken` | theme radius |
+
+## Examples
+
+### Size
+
+```tsx
+<Flex direction="row" gap={3} align="end">
+  <Avatar fallback="A" size={1} />
+  <Avatar fallback="A" size={3} />
+  <Avatar fallback="A" size={5} />
+  <Avatar fallback="A" size={7} />
+  <Avatar fallback="A" size={9} />
+</Flex>
+```
+
+Sizes: 24, 32, 40, 48, 64, 80, 96, 128, 160 px.
+
+### Variant
+
+```tsx
+<Flex direction="row" gap={3}>
+  <Avatar fallback="A" variant="solid" />
+  <Avatar fallback="A" variant="soft" />
+</Flex>
+```
+
+### Color
+
+```tsx
+<Flex direction="row" gap={3}>
+  <Avatar fallback="A" color="indigo" />
+  <Avatar fallback="A" color="cyan" />
+  <Avatar fallback="A" color="orange" />
+  <Avatar fallback="A" color="crimson" />
+</Flex>
+```
+
+### Fallback
+
+Single-letter fallbacks get a larger font; two-letter fallbacks get a smaller font. All fallback text is auto-uppercased.
+
+```tsx
+<Avatar fallback="A" />    {/* larger font */}
+<Avatar fallback="JD" />   {/* smaller font */}
+```
+
+Non-string fallbacks (icons) automatically receive the correct `color` prop:
+
+```tsx
+<Avatar fallback={<PersonIcon />} variant="solid" />
+```
+
+### Loading behavior
+
+During image loading, the colored background (placeholder) is shown. Fallback content only appears on error or when no `src` is provided.

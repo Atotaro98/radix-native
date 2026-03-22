@@ -1,22 +1,23 @@
 import React from 'react'
 import { Text as RNText } from 'react-native'
-import type { TextProps as RNTextProps, StyleProp, TextStyle } from 'react-native'
+import type { StyleProp, TextStyle } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
-import { resolveSpace } from '../../utils/resolveSpace'
+import { useMargins } from '../../hooks/useMargins'
 import { fontSize, letterSpacingEm } from '../../tokens/typography'
 import { scalingMap } from '../../tokens/scaling'
 import { getRadius } from '../../tokens/radius'
 import type { FontSizeToken } from '../../tokens/typography'
-import type { MarginToken } from '../../tokens/spacing'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { TextWeight, TextWrap } from './Text'
+import type { NativeTextProps } from '../../types/nativeProps'
+import type { MarginProps } from '../../types/marginProps'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type CodeVariant = 'solid' | 'soft' | 'outline' | 'ghost'
 
-export interface CodeProps extends Omit<RNTextProps, 'style'> {
+export interface CodeProps extends NativeTextProps, MarginProps {
   /** Text size token (1–9). Default: inherits context — set to 3 (16px) if no parent. */
   size?: FontSizeToken
   /**
@@ -36,14 +37,6 @@ export interface CodeProps extends Omit<RNTextProps, 'style'> {
   truncate?: boolean
   /** Controls text wrapping. 'pretty'/'balance' are not supported in React Native, no-op. */
   wrap?: TextWrap
-  // ─── Margin props ──────────────────────────────────────────────────────────
-  m?: MarginToken
-  mx?: MarginToken
-  my?: MarginToken
-  mt?: MarginToken
-  mr?: MarginToken
-  mb?: MarginToken
-  ml?: MarginToken
   style?: StyleProp<TextStyle>
 }
 
@@ -60,7 +53,6 @@ const FONT_WEIGHT: Record<TextWeight, NonNullable<TextStyle['fontWeight']>> = {
 
 /**
  * Inline code. Can be nested inside `<Text>` for inline use.
- * Can be nested inside `<Text>` for inline use.
  *
  * Note: In RN, `backgroundColor` on inline Text fills the tight text bounds
  * without padding/borderRadius support when nested. For block-level code with
@@ -80,42 +72,42 @@ export function Code({
 }: CodeProps) {
   const { scaling, fonts, radius } = useThemeContext()
   const rc = useResolveColor()
-
-  const sp = (token: MarginToken | undefined): number | undefined =>
-    token !== undefined ? resolveSpace(token, scaling) : undefined
+  const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
   // ─── Typography ─────────────────────────────────────────────────────────────
   const scalingFactor = scalingMap[scaling]
-  // Rendered at 85% of the base size to visually match inline code conventions.
-  const resolvedSize = Math.round(fontSize[size] * scalingFactor * 0.85)
+  // Radix: inline code renders at 0.95em relative to parent font.
+  const resolvedSize = Math.round(fontSize[size] * scalingFactor * 0.95)
   const resolvedLetterSpacing = letterSpacingEm[size] * resolvedSize
 
   // ─── Color helpers ───────────────────────────────────────────────────────────
   // When `color` prop is set, use that color's steps; otherwise use 'accent-*'
   const prefix = color ?? 'accent'
 
+  const hc = highContrast
+
   const textColor = (() => {
     switch (variant) {
       case 'solid':
-        return rc(`${prefix}-contrast` as Parameters<typeof rc>[0])
+        return hc ? rc(prefix, 1) : rc(prefix, 'contrast')
       case 'soft':
       case 'outline':
       case 'ghost':
       default:
-        return rc((highContrast ? `${prefix}-12` : `${prefix}-a11`) as Parameters<typeof rc>[0])
+        return hc ? rc(prefix, 12) : rc(prefix, 'a11')
     }
   })()
 
   const backgroundColor = (() => {
     switch (variant) {
-      case 'solid': return rc(`${prefix}-9` as Parameters<typeof rc>[0])
-      case 'soft':  return rc(`${prefix}-a3` as Parameters<typeof rc>[0])
+      case 'solid': return hc ? rc(prefix, 12) : rc(prefix, 9)
+      case 'soft':  return rc(prefix, 'a3')
       default:      return undefined
     }
   })()
 
   const borderColor = variant === 'outline'
-    ? rc(`${prefix}-a7` as Parameters<typeof rc>[0])
+    ? rc(prefix, 'a8')
     : undefined
 
   // ─── Font family ─────────────────────────────────────────────────────────────
@@ -126,9 +118,10 @@ export function Code({
   const numberOfLines = truncate ? 1 : wrap === 'nowrap' ? 1 : undefined
   const ellipsizeMode = truncate ? 'tail' : wrap === 'nowrap' ? 'clip' : undefined
 
-  // ─── Padding — proportional to font size (mirrors Radix's 0.1em / 0.35em) ───
-  const paddingVertical   = Math.round(resolvedSize * 0.1)
-  const paddingHorizontal = Math.round(resolvedSize * 0.35)
+  // ─── Padding — Radix: 0.1em vertical, 0.25em horizontal. Ghost: no padding.
+  const isGhost = variant === 'ghost'
+  const paddingVertical   = isGhost ? 0 : Math.round(resolvedSize * 0.1)
+  const paddingHorizontal = isGhost ? 0 : Math.round(resolvedSize * 0.25)
 
   // ─── Style ──────────────────────────────────────────────────────────────────
   const codeStyle: TextStyle = {
@@ -146,10 +139,7 @@ export function Code({
     // Shrink to content width when used standalone (no-op when nested inline in Text).
     alignSelf:        variant !== 'ghost' ? 'flex-start' : undefined,
     // Margins
-    marginTop:    sp(mt ?? my ?? m),
-    marginBottom: sp(mb ?? my ?? m),
-    marginLeft:   sp(ml ?? mx ?? m),
-    marginRight:  sp(mr ?? mx ?? m),
+    ...margins,
   }
 
   return (

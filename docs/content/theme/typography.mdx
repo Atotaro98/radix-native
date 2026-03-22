@@ -1,0 +1,64 @@
+---
+metaTitle: Typography
+metaDescription: Font sizes, line heights, letter spacing, and custom fonts.
+---
+
+# Typography
+
+## Font size scale
+
+| Token | px |
+|-------|-----|
+| 1 | 12 |
+| 2 | 14 |
+| 3 | 16 |
+| 4 | 18 |
+| 5 | 20 |
+| 6 | 24 |
+| 7 | 28 |
+| 8 | 35 |
+| 9 | 60 |
+
+All values multiply by the theme `scaling` factor.
+
+## Line heights
+
+Text and Heading use different line-height scales. Heading line-heights are tighter:
+
+| Token | Text | Heading |
+|-------|------|---------|
+| 1 | 16 | 16 |
+| 2 | 20 | 18 |
+| 3 | 24 | 22 |
+| 4 | 26 | 24 |
+| 5 | 28 | 26 |
+| 6 | 30 | 30 |
+| 7 | 36 | 36 |
+| 8 | 40 | 40 |
+| 9 | 60 | 60 |
+
+## Font weights
+
+| Name | Value |
+|------|-------|
+| light | 300 |
+| regular | 400 |
+| medium | 500 |
+| bold | 700 |
+
+## Custom fonts
+
+Pass a `fonts` object to `Theme`:
+
+```tsx
+<Theme fonts={{
+  light: 'Inter-Light',
+  regular: 'Inter-Regular',
+  medium: 'Inter-Medium',
+  bold: 'Inter-Bold',
+  heading: 'Inter-Bold',
+  code: 'JetBrainsMono-Regular',
+}}>
+```
+
+Each component maps its `weight` prop to the corresponding font family.

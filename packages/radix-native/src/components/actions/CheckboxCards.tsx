@@ -3,10 +3,12 @@ import { Pressable, View } from 'react-native'
 import type { StyleProp, ViewStyle } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
+import { useMargins } from '../../hooks/useMargins'
 import { resolveSpace } from '../../utils/resolveSpace'
 import { scalingMap } from '../../tokens/scaling'
 import { getRadius } from '../../tokens/radius'
-import type { MarginToken, SpaceToken } from '../../tokens/spacing'
+import type { SpaceToken } from '../../tokens/spacing'
+import type { MarginProps } from '../../types/marginProps'
 import type { AccentColor } from '../../tokens/colors/types'
 import { Checkbox, type CheckboxSize } from './Checkbox'
 
@@ -30,7 +32,7 @@ const CheckboxCardsContext = createContext<CheckboxCardsContextValue | null>(nul
 
 // ─── Root Types ─────────────────────────────────────────────────────────────────
 
-export interface CheckboxCardsProps {
+export interface CheckboxCardsProps extends MarginProps {
   /** Card size (1–3). Default: 2. */
   size?: CheckboxSize
   /** Visual variant. Default: 'surface'. */
@@ -53,14 +55,6 @@ export interface CheckboxCardsProps {
   disabled?: boolean
   /** Card items. */
   children?: React.ReactNode
-  // ─── Margin props ──────────────────────────────────────────────────────────
-  m?: MarginToken
-  mx?: MarginToken
-  my?: MarginToken
-  mt?: MarginToken
-  mr?: MarginToken
-  mb?: MarginToken
-  ml?: MarginToken
   style?: StyleProp<ViewStyle>
 }
 
@@ -110,6 +104,7 @@ function CheckboxCardsRoot({
   style,
 }: CheckboxCardsProps) {
   const { scaling } = useThemeContext()
+  const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
   const [internal, setInternal] = React.useState<string[]>(defaultValue)
   const isControlled = valueProp !== undefined
@@ -127,9 +122,6 @@ function CheckboxCardsRoot({
     size, variant, color, highContrast, disabled, value, onItemToggle,
   }), [size, variant, color, highContrast, disabled, value, onItemToggle])
 
-  const sp = (token: MarginToken | undefined): number | undefined =>
-    token !== undefined ? resolveSpace(token, scaling) : undefined
-
   const resolvedGap = resolveSpace(gapProp, scaling)
 
   return (
@@ -140,21 +132,21 @@ function CheckboxCardsRoot({
             flexDirection: 'row',
             flexWrap: 'wrap',
             gap: resolvedGap,
-            marginTop: sp(mt ?? my ?? m),
-            marginBottom: sp(mb ?? my ?? m),
-            marginLeft: sp(ml ?? mx ?? m),
-            marginRight: sp(mr ?? mx ?? m),
+            ...margins,
           },
           style,
         ]}
       >
-        {React.Children.map(children, child => (
-          <View style={{
-            flexBasis: columns > 1 ? `${100 / columns}%` as unknown as number : undefined,
-            flexGrow: 1,
-            flexShrink: 1,
-            minWidth: 0,
-          }}>
+        {React.Children.map(children, (child, idx) => (
+          <View
+            key={React.isValidElement(child) ? child.key ?? `col-${idx}` : `col-${idx}`}
+            style={{
+              flexBasis: columns > 1 ? `${100 / columns}%` as unknown as number : undefined,
+              flexGrow: 1,
+              flexShrink: 1,
+              minWidth: 0,
+            }}
+          >
             {child}
           </View>
         ))}
@@ -195,13 +187,11 @@ function CheckboxCardsItem({
   const paddingRight = paddingLeft * 2 + checkboxSize
   const borderRadius = getRadius(radius, cfg.radiusLevel)
 
-  type C = Parameters<typeof rc>[0]
-
   // Card border & background — does NOT change on checked state (matches Radix)
   // Surface: box-shadow: 0 0 0 1px gray-a5 (simulated with borderWidth)
   // Classic: similar border + outer shadow
-  const borderColor = rc('gray-a5' as C)
-  const bgColor = rc('gray-surface' as C)
+  const borderColor = rc('gray', 'a5')
+  const bgColor = rc('gray', 'surface')
 
   const cardStyle: ViewStyle = {
     position: 'relative',
@@ -227,20 +217,23 @@ function CheckboxCardsItem({
     >
       {children}
       {/* Checkbox absolutely positioned on the right, matching Radix CSS */}
-      <View style={{
-        position: 'absolute',
-        right: paddingLeft,
-        top: 0,
-        bottom: 0,
-        justifyContent: 'center',
-      }}>
+      <View
+        pointerEvents="none"
+        importantForAccessibility="no-hide-descendants"
+        style={{
+          position: 'absolute',
+          right: paddingLeft,
+          top: 0,
+          bottom: 0,
+          justifyContent: 'center',
+        }}
+      >
         <Checkbox
           size={size}
           variant="surface"
           color={color}
           highContrast={highContrast}
           checked={isChecked}
-          onCheckedChange={() => onItemToggle(itemValue)}
           disabled={isDisabled}
         />
       </View>

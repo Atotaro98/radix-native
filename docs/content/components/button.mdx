@@ -1,0 +1,91 @@
+---
+metaTitle: Button
+metaDescription: Trigger an action or event.
+sourcePath: components/actions/Button
+---
+
+# Button
+
+```tsx
+<Flex direction="row" gap={3}>
+  <Button>Default</Button>
+  <Button variant="soft">Soft</Button>
+  <Button variant="outline">Outline</Button>
+</Flex>
+```
+
+## API Reference
+
+Inherits from Pressable. Supports [margin props](/theme/spacing).
+
+| Prop | Type | Default |
+|------|------|---------|
+| `size` | `1 \| 2 \| 3 \| 4` | `2` |
+| `variant` | `'classic' \| 'solid' \| 'soft' \| 'surface' \| 'outline' \| 'ghost'` | `'solid'` |
+| `color` | `AccentColor` | theme accent |
+| `highContrast` | `boolean` | — |
+| `radius` | `RadiusToken` | theme radius |
+| `loading` | `boolean` | `false` |
+| `disabled` | `boolean` | `false` |
+
+## Examples
+
+### Size
+
+```tsx
+<Flex direction="row" gap={3} align="center">
+  <Button size={1}>Size 1</Button>
+  <Button size={2}>Size 2</Button>
+  <Button size={3}>Size 3</Button>
+  <Button size={4}>Size 4</Button>
+</Flex>
+```
+
+### Variant
+
+```tsx
+<Flex direction="row" gap={3}>
+  <Button variant="classic">Classic</Button>
+  <Button variant="solid">Solid</Button>
+  <Button variant="soft">Soft</Button>
+  <Button variant="surface">Surface</Button>
+  <Button variant="outline">Outline</Button>
+  <Button variant="ghost">Ghost</Button>
+</Flex>
+```
+
+### Color
+
+```tsx
+<Flex direction="row" gap={3}>
+  <Button color="indigo">Indigo</Button>
+  <Button color="cyan">Cyan</Button>
+  <Button color="orange">Orange</Button>
+  <Button color="crimson">Crimson</Button>
+</Flex>
+```
+
+### High-contrast
+
+```tsx
+<Flex direction="row" gap={3}>
+  <Button>Default</Button>
+  <Button highContrast>High contrast</Button>
+</Flex>
+```
+
+### Loading
+
+```tsx
+<Button loading>Saving...</Button>
+```
+
+The button maintains its dimensions during loading. The spinner size scales with the button size.
+
+### With icons
+
+Icons passed as children automatically receive the correct color:
+
+```tsx
+<Button><SaveIcon /> Save</Button>
+```

@@ -3,18 +3,18 @@ import { Platform, View, Text as RNText } from 'react-native'
 import type { StyleProp, ViewStyle, TextStyle } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
-import { resolveSpace } from '../../utils/resolveSpace'
+import { useMargins } from '../../hooks/useMargins'
 import { fontSize, letterSpacingEm } from '../../tokens/typography'
 import { scalingMap } from '../../tokens/scaling'
 import { getRadius } from '../../tokens/radius'
 import type { FontSizeToken } from '../../tokens/typography'
-import type { MarginToken } from '../../tokens/spacing'
+import type { MarginProps } from '../../types/marginProps'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type KbdVariant = 'classic' | 'soft'
 
-export interface KbdProps {
+export interface KbdProps extends MarginProps {
   /**
    * Text size token (1–9).
    *
@@ -25,14 +25,6 @@ export interface KbdProps {
   size?: FontSizeToken
   /** Visual variant. Default: `'classic'`. */
   variant?: KbdVariant
-  // ─── Margin props (Radix layout) ──────────────────────────────────────────
-  m?: MarginToken
-  mx?: MarginToken
-  my?: MarginToken
-  mt?: MarginToken
-  mr?: MarginToken
-  mb?: MarginToken
-  ml?: MarginToken
   style?: StyleProp<ViewStyle>
   children?: React.ReactNode
 }
@@ -60,14 +52,12 @@ export function Kbd({
 }: KbdProps) {
   const { scaling, fonts, radius } = useThemeContext()
   const rc = useResolveColor()
-
-  const sp = (token: MarginToken | undefined): number | undefined =>
-    token !== undefined ? resolveSpace(token, scaling) : undefined
+  const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
   const sf = scalingMap[scaling]
 
-  // Radix: font-size = fontSize[size] * 0.8
-  const kbdFontSize = Math.round(fontSize[size] * sf * 0.8)
+  // Radix: font-size = 0.75em relative to parent (we use token * 0.75)
+  const kbdFontSize = Math.round(fontSize[size] * sf * 0.75)
   // Radix: border-radius = radiusFactor * 0.35em (relative to kbdFontSize)
   const borderR = Math.max(2, Math.round(getRadius(radius, 2) * 0.35 * (kbdFontSize / 14)))
   // Radix: min-width 1.75em, line-height 1.7em (em = kbdFontSize)
@@ -96,14 +86,14 @@ export function Kbd({
     paddingHorizontal: ph,
     paddingBottom: pb,
     borderRadius: borderR,
-    backgroundColor: isClassic ? rc('gray-1') : rc('gray-a3'),
+    backgroundColor: isClassic ? rc('gray', 1) : rc('gray', 'a3'),
     // Classic uses border to approximate box-shadow outline + bottom shadow
     ...(isClassic
       ? {
           borderWidth: 1,
-          borderColor: rc('gray-a5'),
+          borderColor: rc('gray', 'a5'),
           borderBottomWidth: 2,
-          borderBottomColor: rc('gray-a7'),
+          borderBottomColor: rc('gray', 'a7'),
         }
       : {}),
     transform: [{ translateY }],
@@ -111,7 +101,7 @@ export function Kbd({
     ...(isClassic
       ? Platform.select({
           ios: {
-            shadowColor: rc('gray-12'),
+            shadowColor: rc('gray', 12),
             shadowOffset: { width: 0, height: 1 },
             shadowOpacity: 0.12,
             shadowRadius: 1,
@@ -121,19 +111,15 @@ export function Kbd({
           },
         })
       : {}),
-    // Margins
-    marginTop: sp(mt ?? my ?? m),
-    marginBottom: sp(mb ?? my ?? m),
-    marginLeft: sp(ml ?? mx ?? m),
-    marginRight: sp(mr ?? mx ?? m),
+    ...margins,
   }
 
   const textStyle: TextStyle = {
     fontSize: kbdFontSize,
     // Radix uses the default (body) font, NOT monospace
     fontFamily: fonts.regular,
-    fontWeight: 'normal',
-    color: rc('gray-12'),
+    fontWeight: '400',
+    color: rc('gray', 12),
     letterSpacing: letterSpacingEm[size] * kbdFontSize,
   }
 
@@ -146,7 +132,7 @@ export function Kbd({
         left: 1,
         right: 1,
         height: 1,
-        backgroundColor: rc('gray-a3'),
+        backgroundColor: rc('gray', 'a3'),
         borderTopLeftRadius: Math.max(0, borderR - 1),
         borderTopRightRadius: Math.max(0, borderR - 1),
       }

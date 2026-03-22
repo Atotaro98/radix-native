@@ -1,0 +1,61 @@
+---
+metaTitle: Badge
+metaDescription: Annotation label with variants and colors.
+sourcePath: components/display/Badge
+---
+
+# Badge
+
+```tsx
+<Flex direction="row" gap={2}>
+  <Badge>Default</Badge>
+  <Badge variant="solid" color="green">Active</Badge>
+  <Badge variant="outline" color="red">Error</Badge>
+</Flex>
+```
+
+## API Reference
+
+Inherits from View. Supports [margin props](/theme/spacing).
+
+| Prop | Type | Default |
+|------|------|---------|
+| `size` | `1 \| 2 \| 3` | `1` |
+| `variant` | `'solid' \| 'soft' \| 'surface' \| 'outline'` | `'soft'` |
+| `color` | `AccentColor` | theme accent |
+| `highContrast` | `boolean` | — |
+| `radius` | `RadiusToken` | theme radius |
+
+## Examples
+
+### Size
+
+```tsx
+<Flex direction="row" gap={2} align="center">
+  <Badge size={1}>Size 1</Badge>
+  <Badge size={2}>Size 2</Badge>
+  <Badge size={3}>Size 3</Badge>
+</Flex>
+```
+
+### Variant
+
+```tsx
+<Flex direction="row" gap={2}>
+  <Badge variant="solid">Solid</Badge>
+  <Badge variant="soft">Soft</Badge>
+  <Badge variant="surface">Surface</Badge>
+  <Badge variant="outline">Outline</Badge>
+</Flex>
+```
+
+### Color
+
+```tsx
+<Flex direction="row" gap={2}>
+  <Badge color="indigo">Indigo</Badge>
+  <Badge color="cyan">Cyan</Badge>
+  <Badge color="orange">Orange</Badge>
+  <Badge color="crimson">Crimson</Badge>
+</Flex>
+```

@@ -1,0 +1,39 @@
+---
+metaTitle: Link
+metaDescription: Pressable text that opens URLs or triggers navigation.
+sourcePath: components/typography/Link
+---
+
+# Link
+
+```tsx
+<Text>
+  Read the <Link href="https://example.com">documentation</Link> for more.
+</Text>
+```
+
+## API Reference
+
+Inherits from Text (RN). Supports [margin props](/theme/spacing).
+
+| Prop | Type | Default |
+|------|------|---------|
+| `href` | `string` | — |
+| `onPress` | `(e) => void` | — |
+| `size` | `1-9` | `3` |
+| `weight` | `'light' \| 'regular' \| 'medium' \| 'bold'` | — |
+| `underline` | `'auto' \| 'always' \| 'hover' \| 'none'` | `'auto'` |
+| `color` | `AccentColor` | theme accent |
+| `highContrast` | `boolean` | — |
+| `truncate` | `boolean` | — |
+
+## Examples
+
+### Underline
+
+```tsx
+<Link underline="always" href="https://example.com">Always underlined</Link>
+<Link underline="none" href="https://example.com">Never underlined</Link>
+```
+
+`'auto'` shows underline only when `highContrast` is set (no hover on mobile).

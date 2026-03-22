@@ -1,14 +1,15 @@
 import React from 'react'
 import { Text as RNText } from 'react-native'
-import type { TextProps as RNTextProps, StyleProp, TextStyle } from 'react-native'
+import type { StyleProp, TextStyle } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
-import { resolveSpace } from '../../utils/resolveSpace'
+import { useMargins } from '../../hooks/useMargins'
 import { fontSize, lineHeight, letterSpacingEm } from '../../tokens/typography'
 import { scalingMap } from '../../tokens/scaling'
 import type { FontSizeToken } from '../../tokens/typography'
-import type { SpaceToken, MarginToken } from '../../tokens/spacing'
 import type { AccentColor } from '../../tokens/colors/types'
+import type { MarginProps } from '../../types/marginProps'
+import type { NativeTextProps } from '../../types/nativeProps'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -18,7 +19,7 @@ export type TextAlign = 'left' | 'center' | 'right'
 /** 'pretty' and 'balance' are not supported in React Native and have no effect. */
 export type TextWrap = 'wrap' | 'nowrap' | 'pretty' | 'balance'
 
-export interface TextProps extends Omit<RNTextProps, 'style'> {
+export interface TextProps extends NativeTextProps, MarginProps {
   /** Text size token (1–9). Default: 3 (16px). */
   size?: TextSize
   /** Font weight. Each weight maps to its own fontFamily when configured in ThemeFonts. */
@@ -44,14 +45,6 @@ export interface TextProps extends Omit<RNTextProps, 'style'> {
    * Has no effect when `color` is not set (gray-12 is already maximum contrast).
    */
   highContrast?: boolean
-  // ─── Margin props ──────────────────────────────────────────────────────────
-  m?: MarginToken
-  mx?: MarginToken
-  my?: MarginToken
-  mt?: MarginToken
-  mr?: MarginToken
-  mb?: MarginToken
-  ml?: MarginToken
   style?: StyleProp<TextStyle>
 }
 
@@ -80,9 +73,7 @@ export function Text({
 }: TextProps) {
   const { scaling, fonts } = useThemeContext()
   const rc = useResolveColor()
-
-  const sp = (token: MarginToken | undefined): number | undefined =>
-    token !== undefined ? resolveSpace(token, scaling) : undefined
+  const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
   // ─── Typography ─────────────────────────────────────────────────────────────
   const scalingFactor = scalingMap[scaling]
@@ -95,8 +86,8 @@ export function Text({
   //   color prop           → {color}-a11    (alpha step 11 — accessible foreground)
   //   color + highContrast → {color}-12     (solid step 12 — maximum contrast)
   const textColor = color
-    ? rc(highContrast ? `${color}-12` : `${color}-a11`)
-    : rc('gray-12')
+    ? rc(color, highContrast ? 12 : 'a11')
+    : rc('gray', 12)
 
   // ─── Font family ─────────────────────────────────────────────────────────────
   // Each weight maps to its own fontFamily — in RN, fontWeight alone doesn't
@@ -119,11 +110,8 @@ export function Text({
     fontWeight:    weight ? FONT_WEIGHT[weight] : undefined,
     fontFamily,
     flexShrink:    1,
-    marginTop:    sp(mt ?? my ?? m),
-    marginBottom: sp(mb ?? my ?? m),
-    marginLeft:   sp(ml ?? mx ?? m),
-    marginRight:  sp(mr ?? mx ?? m),
-  }), [resolvedSize, resolvedLineHeight, resolvedLetterSpacing, textColor, align, weight, fontFamily, mt, my, m, mb, ml, mx, mr, scaling])
+    ...margins,
+  }), [resolvedSize, resolvedLineHeight, resolvedLetterSpacing, textColor, align, weight, fontFamily, margins])
 
   return (
     <RNText

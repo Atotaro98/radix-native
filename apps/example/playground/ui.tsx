@@ -4,7 +4,7 @@
  */
 import React from 'react'
 import { Pressable, ScrollView } from 'react-native'
-import { Box, Flex, Text, Heading, useResolveColor } from 'radix-native'
+import { Box, Flex, Text, Heading, Separator, useResolveColor } from 'radix-native'
 
 // ─── Tab system ───────────────────────────────────────────────────────────────
 
@@ -14,21 +14,39 @@ export type TabDef = {
   render: () => React.ReactNode
 }
 
-export function ComponentSection({ title, tabs, children }: { title: string; tabs?: TabDef[]; children?: React.ReactNode }) {
+export function ComponentSection({
+  title,
+  tabs,
+  children,
+}: {
+  title: string
+  tabs?: TabDef[]
+  children?: React.ReactNode
+}) {
   const rc = useResolveColor()
   const [active, setActive] = React.useState(tabs?.[0]?.id ?? '')
   const activeTab = tabs?.find((t) => t.id === active) ?? tabs?.[0]
 
   return (
     <Box mb={8}>
-      <Heading size={6} style={{ marginBottom: 12 }}>{title}</Heading>
+      <Heading size={6} style={{ marginBottom: 12 }}>
+        {title}
+      </Heading>
 
       {tabs && tabs.length > 1 && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexDirection: 'row' }}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ flexDirection: 'row' }}
+        >
           {tabs.map((tab) => {
             const isActive = tab.id === active
             return (
-              <Pressable key={tab.id} onPress={() => setActive(tab.id)} style={{ paddingBottom: 8, marginRight: 24 }}>
+              <Pressable
+                key={tab.id}
+                onPress={() => setActive(tab.id)}
+                style={{ paddingBottom: 8, marginRight: 24 }}
+              >
                 <Text
                   size={2}
                   weight="medium"
@@ -38,7 +56,11 @@ export function ComponentSection({ title, tabs, children }: { title: string; tab
                 </Text>
                 <Box
                   height={2}
-                  style={{ marginTop: 6, borderRadius: 1, backgroundColor: isActive ? rc('accent-9') : 'transparent' }}
+                  style={{
+                    marginTop: 6,
+                    borderRadius: 1,
+                    backgroundColor: isActive ? rc('accent-9') : 'transparent',
+                  }}
                 />
               </Pressable>
             )
@@ -46,7 +68,7 @@ export function ComponentSection({ title, tabs, children }: { title: string; tab
         </ScrollView>
       )}
 
-      <Box height={1} mb={5} style={{ backgroundColor: rc('gray-4') }} />
+      <Separator mb={5} size={4} />
       <Box width="100%">{activeTab ? activeTab.render() : children}</Box>
     </Box>
   )
@@ -61,7 +83,12 @@ export function RowLabel({ label }: { label: string }) {
     <Text
       size={1}
       weight="bold"
-      style={{ textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 8, color: rc('gray-9') }}
+      style={{
+        textTransform: 'uppercase',
+        letterSpacing: 0.6,
+        marginBottom: 8,
+        color: rc('gray-9'),
+      }}
     >
       {label}
     </Text>
@@ -87,7 +114,9 @@ export function LabeledRow({
       <Text size={1} style={{ color: rc('gray-9'), width: labelWidth, flexShrink: 0 }}>
         {label}
       </Text>
-      <Box flexGrow={1} flexShrink={1}>{children}</Box>
+      <Box flexGrow={1} flexShrink={1}>
+        {children}
+      </Box>
     </Flex>
   )
 }

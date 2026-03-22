@@ -12,3 +12,4 @@ ios/
 .env.local
 .vscode/
 *.tsbuildinfo
+.vscode/private-folder-alias.json

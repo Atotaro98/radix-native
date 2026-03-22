@@ -1,0 +1,68 @@
+---
+metaTitle: Text
+metaDescription: Body text with size, weight, color, alignment, and wrapping controls.
+sourcePath: components/typography/Text
+---
+
+# Text
+
+```tsx
+<Text>The quick brown fox jumps over the lazy dog.</Text>
+```
+
+## API Reference
+
+Inherits from Text (RN). Supports [margin props](/theme/spacing).
+
+| Prop | Type | Default |
+|------|------|---------|
+| `size` | `1-9` | `3` |
+| `weight` | `'light' \| 'regular' \| 'medium' \| 'bold'` | — |
+| `align` | `'left' \| 'center' \| 'right'` | — |
+| `wrap` | `'wrap' \| 'nowrap'` | — |
+| `truncate` | `boolean` | — |
+| `color` | `AccentColor` | — |
+| `highContrast` | `boolean` | — |
+
+## Examples
+
+### Size
+
+```tsx
+<Flex gap={2}>
+  <Text size={1}>Size 1 — 12px</Text>
+  <Text size={3}>Size 3 — 16px</Text>
+  <Text size={5}>Size 5 — 20px</Text>
+  <Text size={7}>Size 7 — 28px</Text>
+  <Text size={9}>Size 9 — 60px</Text>
+</Flex>
+```
+
+### Weight
+
+```tsx
+<Flex gap={2}>
+  <Text weight="light">Light</Text>
+  <Text weight="regular">Regular</Text>
+  <Text weight="medium">Medium</Text>
+  <Text weight="bold">Bold</Text>
+</Flex>
+```
+
+### Color
+
+```tsx
+<Flex gap={2}>
+  <Text color="indigo">Indigo text</Text>
+  <Text color="crimson">Crimson text</Text>
+  <Text color="green" highContrast>High contrast green</Text>
+</Flex>
+```
+
+### Truncate
+
+```tsx
+<Text truncate>
+  This very long text will be truncated with an ellipsis when it overflows...
+</Text>
+```

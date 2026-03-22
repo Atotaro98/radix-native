@@ -1,0 +1,51 @@
+---
+metaTitle: Icon Button
+metaDescription: Square button designed for a single icon.
+sourcePath: components/actions/IconButton
+---
+
+# Icon Button
+
+```tsx
+<Flex direction="row" gap={3}>
+  <IconButton><TrashIcon /></IconButton>
+  <IconButton variant="soft"><EditIcon /></IconButton>
+  <IconButton variant="ghost"><CloseIcon /></IconButton>
+</Flex>
+```
+
+## API Reference
+
+Same props as Button but square (width = height). Children receive `color` prop automatically via `cloneElement`.
+
+| Prop | Type | Default |
+|------|------|---------|
+| `size` | `1 \| 2 \| 3 \| 4` | `2` |
+| `variant` | `'classic' \| 'solid' \| 'soft' \| 'surface' \| 'outline' \| 'ghost'` | `'solid'` |
+| `color` | `AccentColor` | theme accent |
+| `highContrast` | `boolean` | — |
+| `radius` | `RadiusToken` | theme radius |
+| `loading` | `boolean` | `false` |
+| `disabled` | `boolean` | `false` |
+
+## Examples
+
+### Icon color
+
+Icon children automatically receive the correct variant color:
+
+```tsx
+<IconButton variant="solid"><MyIcon size={16} /></IconButton>
+{/* MyIcon receives { color: '#fff' } automatically */}
+```
+
+### Size
+
+```tsx
+<Flex direction="row" gap={3} align="center">
+  <IconButton size={1}><StarIcon /></IconButton>
+  <IconButton size={2}><StarIcon /></IconButton>
+  <IconButton size={3}><StarIcon /></IconButton>
+  <IconButton size={4}><StarIcon /></IconButton>
+</Flex>
+```

@@ -1,0 +1,59 @@
+---
+metaTitle: Dark mode
+metaDescription: How to implement dark mode with radix-native.
+---
+
+# Dark mode
+
+## Automatic
+
+Set `appearance="inherit"` (the default) to follow the device color scheme:
+
+```tsx
+<Theme appearance="inherit">
+  {/* Automatically light or dark based on device settings */}
+</Theme>
+```
+
+## Explicit
+
+Force a specific mode:
+
+```tsx
+<Theme appearance="dark">
+  {/* Always dark */}
+</Theme>
+```
+
+## Toggle at runtime
+
+Use `onAppearanceChange` from the theme context:
+
+```tsx
+function DarkModeToggle() {
+  const { appearance, onAppearanceChange } = useThemeContext()
+
+  return (
+    <Switch
+      checked={appearance === 'dark'}
+      onCheckedChange={(dark) =>
+        onAppearanceChange(dark ? 'dark' : 'light')
+      }
+    />
+  )
+}
+```
+
+## Nested overrides
+
+Override appearance for a section of the UI:
+
+```tsx
+<Theme appearance="light">
+  <Card>Light card content</Card>
+
+  <Theme appearance="dark">
+    <Card>Dark card inside light app</Card>
+  </Theme>
+</Theme>
+```

@@ -123,7 +123,7 @@ export function ThemeControls({ showCopyTheme, onCopyTheme, defaultOpen = false 
             {ACCENT_COLORS.map((c) => (
               <ColorDot
                 key={c}
-                color={`${c}-9` as ThemeColor}
+                color={`${c}-9`}
                 selected={accentColor === c}
                 onPress={() => onAccentColorChange(c)}
                 rc={rc}
@@ -137,8 +137,8 @@ export function ThemeControls({ showCopyTheme, onCopyTheme, defaultOpen = false 
           <View style={styles.dotGrid}>
             {GRAY_OPTIONS.map((g) => {
               const dotColor = g === 'auto'
-                ? `${resolvedGrayColor}-9` as ThemeColor
-                : `${g}-9` as ThemeColor
+                ? `${resolvedGrayColor}-9`
+                : `${g}-9`
               return (
                 <ColorDot
                   key={g}

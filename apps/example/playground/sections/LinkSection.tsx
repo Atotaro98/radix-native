@@ -1,49 +1,11 @@
 import React from 'react'
 import { Text, Link, Flex, useResolveColor } from 'radix-native'
-import type { TextSize, TextWeight, LinkUnderline } from 'radix-native'
-import { ComponentSection, LabeledRow, RowLabel } from '../ui'
+import type { TextSize, TextWeight } from 'radix-native'
+import { ComponentSection, LabeledRow } from '../ui'
 import { ALL_COLORS } from '../constants'
 
 const SIZES: TextSize[] = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 const WEIGHTS: TextWeight[] = ['light', 'regular', 'medium', 'bold']
-
-function InlineParagraph({ size, gray, underline }: { size: TextSize; gray?: boolean; underline?: LinkUnderline }) {
-  const color = gray ? 'gray' : undefined
-  return (
-    <Text size={size} color={color}>
-      {'Susan Kare is an American artist and '}
-      <Link size={size} color={color} underline={underline}>graphic designer</Link>
-      {', who contributed '}
-      <Link size={size} color={color} underline={underline}>interface</Link>
-      {' elements and '}
-      <Link size={size} color={color} underline={underline}>typefaces</Link>
-      {' for the first '}
-      <Link size={size} color={color} underline={underline}>Apple Macintosh</Link>
-      {' personal computer from 1983 to 1986.'}
-    </Text>
-  )
-}
-
-function Specimen() {
-  return (
-    <Flex direction="row" gapX={4}>
-      {/* Accent column */}
-      <Flex gapY={4} style={{ flex: 1 }}>
-        <RowLabel label="Accent" />
-        <InlineParagraph size={4} />
-        <InlineParagraph size={3} />
-        <InlineParagraph size={2} />
-      </Flex>
-      {/* Gray column — underline="always" so gray links are distinguishable inline */}
-      <Flex gapY={4} style={{ flex: 1 }}>
-        <RowLabel label="Gray" />
-        <InlineParagraph size={4} gray underline="always" />
-        <InlineParagraph size={3} gray underline="always" />
-        <InlineParagraph size={2} gray underline="always" />
-      </Flex>
-    </Flex>
-  )
-}
 
 function AllColors() {
   const rc = useResolveColor()
@@ -91,7 +53,6 @@ export function LinkSection() {
     <ComponentSection
       title="Link"
       tabs={[
-        { id: 'specimen',    label: 'Specimen',    render: () => <Specimen /> },
         { id: 'all-colors',  label: 'All colors',  render: () => <AllColors /> },
         { id: 'all-sizes',   label: 'All sizes',   render: () => <AllSizes /> },
         { id: 'all-weights', label: 'All weights', render: () => <AllWeights /> },

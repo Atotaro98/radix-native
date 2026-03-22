@@ -1,0 +1,40 @@
+---
+metaTitle: Checkbox Cards
+metaDescription: Card-style checkbox grid with shared selection state.
+sourcePath: components/actions/CheckboxCards
+---
+
+# Checkbox Cards
+
+```tsx
+<CheckboxCards.Root columns={2} defaultValue={['a']}>
+  <CheckboxCards.Item value="a">Plan A</CheckboxCards.Item>
+  <CheckboxCards.Item value="b">Plan B</CheckboxCards.Item>
+  <CheckboxCards.Item value="c">Plan C</CheckboxCards.Item>
+</CheckboxCards.Root>
+```
+
+## API Reference
+
+### Root
+
+| Prop | Type | Default |
+|------|------|---------|
+| `size` | `1 \| 2 \| 3` | `2` |
+| `variant` | `'surface' \| 'classic'` | `'surface'` |
+| `color` | `AccentColor` | theme accent |
+| `highContrast` | `boolean` | — |
+| `columns` | `number` | `1` |
+| `gap` | `SpaceToken` | `4` |
+| `value` | `string[]` | — |
+| `defaultValue` | `string[]` | `[]` |
+| `onValueChange` | `(value: string[]) => void` | — |
+| `disabled` | `boolean` | `false` |
+
+### Item
+
+| Prop | Type | Default |
+|------|------|---------|
+| `value` | `string` | **required** |
+| `disabled` | `boolean` | — |
+| `children` | `ReactNode` | card content |

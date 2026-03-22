@@ -1,0 +1,45 @@
+---
+metaTitle: Spacing
+metaDescription: Space tokens and margin props.
+---
+
+# Spacing
+
+## Space scale
+
+| Token | px |
+|-------|-----|
+| 0 | 0 |
+| 1 | 4 |
+| 2 | 8 |
+| 3 | 12 |
+| 4 | 16 |
+| 5 | 24 |
+| 6 | 32 |
+| 7 | 40 |
+| 8 | 48 |
+| 9 | 64 |
+
+All values multiply by the theme `scaling` factor.
+
+## Usage in components
+
+Layout components accept space tokens for gap, padding, and dimensions:
+
+```tsx
+<Flex gap={3} p={4}>           {/* gap: 12px, padding: 16px */}
+<Box width={9} height={5}>     {/* 64x24px */}
+<Grid columns={2} gap={3}>     {/* 12px gap */}
+```
+
+## Margin props
+
+Every component accepts margin shorthand props using the same token scale:
+
+```tsx
+<Button mt={3}>     {/* marginTop: 12px */}
+<Avatar mx={2}>     {/* marginHorizontal: 8px */}
+<Card m={4}>        {/* margin: 16px all sides */}
+```
+
+Negative values supported for margins: `mt={-2}` gives `marginTop: -8px`.

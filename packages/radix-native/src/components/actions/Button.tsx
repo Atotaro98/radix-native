@@ -1,30 +1,26 @@
 import React, { useCallback, useMemo } from 'react'
-import { Pressable, ActivityIndicator, View } from 'react-native'
+import { Pressable, ActivityIndicator, View, Animated } from 'react-native'
 import { Text as RNText } from 'react-native'
-import type {
-  PressableProps,
-  StyleProp,
-  ViewStyle,
-  TextStyle,
-  GestureResponderEvent,
-} from 'react-native'
+import type { StyleProp, ViewStyle, TextStyle, GestureResponderEvent } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
-import { resolveSpace } from '../../utils/resolveSpace'
+import { useMargins } from '../../hooks/useMargins'
+import { usePressScale } from '../../hooks/usePressScale'
 import { fontSize, lineHeight, letterSpacingEm } from '../../tokens/typography'
 import { scalingMap } from '../../tokens/scaling'
 import { getRadius, getFullRadius } from '../../tokens/radius'
 import type { RadiusToken, RadiusLevel } from '../../tokens/radius'
-import type { MarginToken } from '../../tokens/spacing'
 import type { AccentColor } from '../../tokens/colors/types'
 import { getClassicEffect } from '../../utils/classicEffect'
+import type { NativePressableProps } from '../../types/nativeProps'
+import type { MarginProps } from '../../types/marginProps'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type ButtonSize = 1 | 2 | 3 | 4
 export type ButtonVariant = 'classic' | 'solid' | 'soft' | 'surface' | 'outline' | 'ghost'
 
-export interface ButtonProps extends Omit<PressableProps, 'style' | 'children'> {
+export interface ButtonProps extends NativePressableProps, MarginProps {
   /** Button size (1–4). Default: 2. */
   size?: ButtonSize
   /** Visual variant. Default: 'solid'. */
@@ -41,14 +37,6 @@ export interface ButtonProps extends Omit<PressableProps, 'style' | 'children'> 
   disabled?: boolean
   /** Button content (usually a string). */
   children?: React.ReactNode
-  // ─── Margin props ──────────────────────────────────────────────────────────
-  m?: MarginToken
-  mx?: MarginToken
-  my?: MarginToken
-  mt?: MarginToken
-  mr?: MarginToken
-  mb?: MarginToken
-  ml?: MarginToken
   style?: StyleProp<ViewStyle>
 }
 
@@ -70,6 +58,8 @@ const GHOST_GAP: Record<ButtonSize, number> = { 1: 4, 2: 4, 3: 8, 4: 8 }
 const SIZE_FONT: Record<ButtonSize, 1 | 2 | 3 | 4> = { 1: 1, 2: 2, 3: 3, 4: 4 }
 /** radius level per size */
 const SIZE_RADIUS_LEVEL: Record<ButtonSize, RadiusLevel> = { 1: 1, 2: 2, 3: 3, 4: 4 }
+/** Spinner pixel size per button size (Radix: 1→1, 2→2, 3→2, 4→3) */
+const SIZE_SPINNER: Record<ButtonSize, number> = { 1: 16, 2: 20, 3: 20, 4: 24 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -89,14 +79,12 @@ export function Button({
 }: ButtonProps) {
   const { appearance, scaling, fonts, radius: themeRadius } = useThemeContext()
   const rc = useResolveColor()
+  const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
+  const { scaleStyle, handlePressIn: scalePressIn, handlePressOut: scalePressOut } = usePressScale(!disabled && !loading)
 
   const effectiveRadius = radiusProp ?? themeRadius
   const isDisabled = disabled || loading
   const prefix = color ?? 'accent'
-
-  // ─── Space helper ──────────────────────────────────────────────────────────
-  const sp = (token: MarginToken | undefined): number | undefined =>
-    token !== undefined ? resolveSpace(token, scaling) : undefined
 
   // ─── Typography ────────────────────────────────────────────────────────────
   const scalingFactor = scalingMap[scaling]
@@ -121,40 +109,39 @@ export function Button({
   const borderRadius = Math.max(getRadius(effectiveRadius, level), getFullRadius(effectiveRadius))
 
   // ─── Color helpers ─────────────────────────────────────────────────────────
-  type C = Parameters<typeof rc>[0]
 
   const colors = useMemo(() => {
     // Radix: loading sets [data-disabled], so both disabled AND loading use disabled styling
     if (isDisabled) {
-      const disabledText = rc('gray-a8' as C)
+      const disabledText = rc('gray', 'a8')
       switch (variant) {
         case 'classic':
           return {
-            bg: rc('gray-2' as C),
+            bg: rc('gray', 2),
             text: disabledText,
             border: undefined,
-            pressedBg: rc('gray-2' as C),
+            pressedBg: rc('gray', 2),
           }
         case 'solid':
         case 'soft':
           return {
-            bg: rc('gray-a3' as C),
+            bg: rc('gray', 'a3'),
             text: disabledText,
             border: undefined,
-            pressedBg: rc('gray-a3' as C),
+            pressedBg: rc('gray', 'a3'),
           }
         case 'surface':
           return {
-            bg: rc('gray-a2' as C),
+            bg: rc('gray', 'a2'),
             text: disabledText,
-            border: rc('gray-a6' as C),
-            pressedBg: rc('gray-a2' as C),
+            border: rc('gray', 'a6'),
+            pressedBg: rc('gray', 'a2'),
           }
         case 'outline':
           return {
             bg: 'transparent',
             text: disabledText,
-            border: rc('gray-a7' as C),
+            border: rc('gray', 'a7'),
             pressedBg: 'transparent',
           }
         case 'ghost':
@@ -173,36 +160,36 @@ export function Button({
     switch (variant) {
       case 'classic':
       case 'solid': {
-        const bg = hc ? rc(`${prefix}-12` as C) : rc(`${prefix}-9` as C)
-        const text = hc ? rc('gray-1' as C) : rc(`${prefix}-contrast` as C)
-        const pressedBg = hc ? rc(`${prefix}-12` as C) : rc(`${prefix}-10` as C)
+        const bg = hc ? rc(prefix, 12) : rc(prefix, 9)
+        const text = hc ? rc('gray', 1) : rc(prefix, 'contrast')
+        const pressedBg = hc ? rc(prefix, 12) : rc(prefix, 10)
         // highContrast: accent-12 bg and pressedBg are identical, use opacity for press feedback
         const pressedOpacity = hc ? 0.88 : undefined
         return { bg, text, border: undefined, pressedBg, pressedOpacity }
       }
       case 'soft': {
-        const bg = rc(`${prefix}-a3` as C)
-        const text = hc ? rc(`${prefix}-12` as C) : rc(`${prefix}-a11` as C)
-        const pressedBg = rc(`${prefix}-a5` as C)
+        const bg = rc(prefix, 'a3')
+        const text = hc ? rc(prefix, 12) : rc(prefix, 'a11')
+        const pressedBg = rc(prefix, 'a5')
         return { bg, text, border: undefined, pressedBg }
       }
       case 'surface': {
-        const bg = rc(`${prefix}-surface` as C)
-        const text = hc ? rc(`${prefix}-12` as C) : rc(`${prefix}-a11` as C)
-        const border = rc(`${prefix}-a7` as C)
-        const pressedBg = rc(`${prefix}-a3` as C)
+        const bg = rc(prefix, 'surface')
+        const text = hc ? rc(prefix, 12) : rc(prefix, 'a11')
+        const border = rc(prefix, 'a7')
+        const pressedBg = rc(prefix, 'a3')
         return { bg, text, border, pressedBg }
       }
       case 'outline': {
-        const text = hc ? rc(`${prefix}-12` as C) : rc(`${prefix}-a11` as C)
+        const text = hc ? rc(prefix, 12) : rc(prefix, 'a11')
         // Radix highContrast: double inset shadow with accent-a7 + gray-a11
-        const border = hc ? rc('gray-a11' as C) : rc(`${prefix}-a8` as C)
-        const pressedBg = hc ? rc(`${prefix}-a3` as C) : rc(`${prefix}-a2` as C)
+        const border = hc ? rc('gray', 'a11') : rc(prefix, 'a8')
+        const pressedBg = rc(prefix, 'a3')
         return { bg: 'transparent', text, border, pressedBg }
       }
       case 'ghost': {
-        const text = hc ? rc(`${prefix}-12` as C) : rc(`${prefix}-a11` as C)
-        const pressedBg = rc(`${prefix}-a4` as C)
+        const text = hc ? rc(prefix, 12) : rc(prefix, 'a11')
+        const pressedBg = rc(prefix, 'a4')
         return { bg: 'transparent', text, border: undefined, pressedBg }
       }
     }
@@ -225,8 +212,11 @@ export function Button({
 
   // ─── Render ────────────────────────────────────────────────────────────────
   return (
+    <Animated.View style={scaleStyle}>
     <Pressable
       onPress={handlePress}
+      onPressIn={scalePressIn}
+      onPressOut={scalePressOut}
       disabled={isDisabled}
       accessibilityRole="button"
       accessibilityState={{ disabled: isDisabled, busy: loading }}
@@ -252,10 +242,7 @@ export function Button({
           borderColor: colors.border,
           opacity,
           // Margins
-          marginTop: sp(mt ?? my ?? m),
-          marginBottom: sp(mb ?? my ?? m),
-          marginLeft: sp(ml ?? mx ?? m),
-          marginRight: sp(mr ?? mx ?? m),
+          ...margins,
         }
 
         // Classic 3D effect (shadow + bevel)
@@ -305,11 +292,11 @@ export function Button({
               color: colors.text,
               fontWeight: isGhost ? '400' : '500',
               fontFamily,
-            })}
+            }, colors.text)}
           </View>
           {/* Spinner overlay */}
           <View style={{ position: 'absolute', alignItems: 'center', justifyContent: 'center' }}>
-            <ActivityIndicator size="small" color={colors.text} />
+            <ActivityIndicator size={Math.round(SIZE_SPINNER[size] * scalingFactor)} color={colors.text} />
           </View>
         </View>
       ) : (
@@ -320,18 +307,23 @@ export function Button({
           color: colors.text,
           fontWeight: isGhost ? '400' : '500',
           fontFamily,
-        })
+        }, colors.text)
       )}
     </Pressable>
+    </Animated.View>
   )
 }
 Button.displayName = 'Button'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function renderContent(children: React.ReactNode, textStyle: TextStyle): React.ReactNode {
+function renderContent(children: React.ReactNode, textStyle: TextStyle, iconColor: string): React.ReactNode {
   if (typeof children === 'string' || typeof children === 'number') {
     return <RNText style={textStyle}>{children}</RNText>
   }
-  return children
+  return React.Children.map(children, child =>
+    React.isValidElement(child)
+      ? React.cloneElement(child as React.ReactElement<{ color?: string }>, { color: iconColor })
+      : child
+  )
 }

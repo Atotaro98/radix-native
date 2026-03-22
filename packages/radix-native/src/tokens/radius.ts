@@ -54,3 +54,28 @@ export function getRadius(token: RadiusToken, level: RadiusLevel): number {
 export function getFullRadius(token: RadiusToken): number {
   return RADIUS_FULL[token]
 }
+
+/**
+ * Thumb/switch radius per token.
+ * Pill-shaped for medium/large/full; nearly square for none/small.
+ */
+const RADIUS_THUMB: Record<RadiusToken, number> = {
+  none: 0.5,
+  small: 0.5,
+  medium: 9999,
+  large: 9999,
+  full: 9999,
+}
+
+export function getRadiusThumb(token: RadiusToken): number {
+  return RADIUS_THUMB[token]
+}
+
+/**
+ * Returns the raw radius factor for a token.
+ * none=0, small=0.75, medium=1, large=1.5, full=1.5.
+ * Used by Progress to compute height-relative radius.
+ */
+export function getRadiusFactor(token: RadiusToken): number {
+  return RADIUS_FACTOR[token]
+}

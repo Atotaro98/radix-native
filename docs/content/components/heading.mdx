@@ -1,0 +1,49 @@
+---
+metaTitle: Heading
+metaDescription: Section headings with semantic sizing.
+sourcePath: components/typography/Heading
+---
+
+# Heading
+
+```tsx
+<Flex gap={3}>
+  <Heading size={8}>Page title</Heading>
+  <Heading size={4}>Section heading</Heading>
+</Flex>
+```
+
+## API Reference
+
+Inherits from Text (RN). Supports [margin props](/theme/spacing).
+
+| Prop | Type | Default |
+|------|------|---------|
+| `size` | `1-9` | `6` |
+| `weight` | `'light' \| 'regular' \| 'medium' \| 'bold'` | `'bold'` |
+| `align` | `'left' \| 'center' \| 'right'` | — |
+| `truncate` | `boolean` | — |
+| `color` | `AccentColor` | — |
+| `highContrast` | `boolean` | — |
+
+Uses tighter line-heights than Text and the heading font family.
+
+## Examples
+
+### Size
+
+```tsx
+<Flex gap={2}>
+  <Heading size={9}>Size 9</Heading>
+  <Heading size={6}>Size 6</Heading>
+  <Heading size={3}>Size 3</Heading>
+  <Heading size={1}>Size 1</Heading>
+</Flex>
+```
+
+### Color
+
+```tsx
+<Heading color="indigo">Colored heading</Heading>
+<Heading color="crimson" highContrast>High contrast</Heading>
+```

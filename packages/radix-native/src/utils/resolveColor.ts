@@ -63,7 +63,12 @@ export function resolveColor(
 
   // Fall back to built-in scale
   const scale = colorMap[colorName]?.[appearance]
-  if (!scale) return color as string
+  if (!scale) {
+    if (__DEV__ && !color.startsWith('#') && !color.startsWith('rgb')) {
+      console.warn(`[radix-native] Unknown color token: "${color}"`)
+    }
+    return color as string
+  }
 
   return (scale as unknown as Record<string, string>)[step] ?? (color as string)
 }

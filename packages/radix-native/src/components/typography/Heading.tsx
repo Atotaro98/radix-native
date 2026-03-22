@@ -3,19 +3,20 @@ import { Text as RNText } from 'react-native'
 import type { StyleProp, TextStyle } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
-import { resolveSpace } from '../../utils/resolveSpace'
+import { useMargins } from '../../hooks/useMargins'
 import { fontSize, headingLineHeight, letterSpacingEm } from '../../tokens/typography'
 import { scalingMap } from '../../tokens/scaling'
 import type { FontSizeToken } from '../../tokens/typography'
-import type { MarginToken } from '../../tokens/spacing'
 import type { AccentColor } from '../../tokens/colors/types'
+import type { MarginProps } from '../../types/marginProps'
+import type { NativeTextProps } from '../../types/nativeProps'
 import type { TextWeight, TextAlign, TextWrap } from './Text'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type HeadingSize = FontSizeToken
 
-export interface HeadingProps {
+export interface HeadingProps extends NativeTextProps, MarginProps {
   /** Heading size token (1–9). Default: 6 (24px). */
   size?: HeadingSize
   /** Font weight. Default: 'bold'. */
@@ -36,17 +37,7 @@ export interface HeadingProps {
   color?: AccentColor
   /** Increases color contrast when `color` is set (a11 → solid 12). */
   highContrast?: boolean
-  // ─── Margin props ──────────────────────────────────────────────────────────
-  m?: MarginToken
-  mx?: MarginToken
-  my?: MarginToken
-  mt?: MarginToken
-  mr?: MarginToken
-  mb?: MarginToken
-  ml?: MarginToken
   style?: StyleProp<TextStyle>
-  children?: React.ReactNode
-  accessibilityLabel?: string
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -75,9 +66,7 @@ export function Heading({
 }: HeadingProps) {
   const { scaling, fonts } = useThemeContext()
   const rc = useResolveColor()
-
-  const sp = (token: MarginToken | undefined): number | undefined =>
-    token !== undefined ? resolveSpace(token, scaling) : undefined
+  const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
   // ─── Typography ─────────────────────────────────────────────────────────────
   // Heading uses the same font size scale as Text but has its own tighter
@@ -90,8 +79,8 @@ export function Heading({
   // ─── Color ──────────────────────────────────────────────────────────────────
   // Same logic as Text.
   const textColor = color
-    ? rc(highContrast ? `${color}-12` : `${color}-a11`)
-    : rc('gray-12')
+    ? rc(color, highContrast ? 12 : 'a11')
+    : rc('gray', 12)
 
   // ─── Font family ─────────────────────────────────────────────────────────────
   // Heading prefers fonts.heading, then the specific weight's font, then bold, then regular.
@@ -112,11 +101,8 @@ export function Heading({
     fontWeight:             FONT_WEIGHT[weight],
     fontFamily,
     flexShrink:    1,
-    marginTop:    sp(mt ?? my ?? m),
-    marginBottom: sp(mb ?? my ?? m),
-    marginLeft:   sp(ml ?? mx ?? m),
-    marginRight:  sp(mr ?? mx ?? m),
-  }), [resolvedSize, resolvedLineHeight, resolvedLetterSpacing, textColor, align, weight, fontFamily, mt, my, m, mb, ml, mx, mr, scaling])
+    ...margins,
+  }), [resolvedSize, resolvedLineHeight, resolvedLetterSpacing, textColor, align, weight, fontFamily, margins])
 
   return (
     <RNText

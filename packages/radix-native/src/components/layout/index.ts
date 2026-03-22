@@ -7,3 +7,5 @@ export {
   Grid, type GridProps,
   type GridAlign, type GridJustify,
 } from './Grid'
+export { Separator, type SeparatorProps, type SeparatorSize } from './Separator'
+export { Card, type CardProps, type CardSize, type CardVariant } from './Card'

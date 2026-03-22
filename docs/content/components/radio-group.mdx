@@ -1,0 +1,80 @@
+---
+metaTitle: Radio Group
+metaDescription: Group of labeled radio buttons with shared selection state.
+sourcePath: components/actions/RadioGroup
+---
+
+# Radio Group
+
+```tsx
+<RadioGroup.Root defaultValue="comfortable">
+  <RadioGroup.Item value="compact">Compact</RadioGroup.Item>
+  <RadioGroup.Item value="comfortable">Comfortable</RadioGroup.Item>
+  <RadioGroup.Item value="spacious">Spacious</RadioGroup.Item>
+</RadioGroup.Root>
+```
+
+## API Reference
+
+### Root
+
+| Prop | Type | Default |
+|------|------|---------|
+| `size` | `1 \| 2 \| 3` | `2` |
+| `variant` | `'classic' \| 'surface' \| 'soft'` | `'surface'` |
+| `color` | `AccentColor` | theme accent |
+| `highContrast` | `boolean` | — |
+| `value` | `string` | — |
+| `defaultValue` | `string` | `''` |
+| `onValueChange` | `(value: string) => void` | — |
+| `disabled` | `boolean` | `false` |
+
+### Item
+
+| Prop | Type | Default |
+|------|------|---------|
+| `value` | `string` | **required** |
+| `disabled` | `boolean` | — |
+| `children` | `ReactNode` | label |
+
+## Examples
+
+### Controlled
+
+```tsx
+function PlanSelector() {
+  const [plan, setPlan] = useState('free')
+  return (
+    <RadioGroup.Root value={plan} onValueChange={setPlan}>
+      <RadioGroup.Item value="free">Free</RadioGroup.Item>
+      <RadioGroup.Item value="pro">Pro</RadioGroup.Item>
+      <RadioGroup.Item value="enterprise">Enterprise</RadioGroup.Item>
+    </RadioGroup.Root>
+  )
+}
+```
+
+### Variant
+
+```tsx
+<RadioGroup.Root variant="soft" defaultValue="a">
+  <RadioGroup.Item value="a">Soft A</RadioGroup.Item>
+  <RadioGroup.Item value="b">Soft B</RadioGroup.Item>
+</RadioGroup.Root>
+```
+
+### Size
+
+```tsx
+<Flex direction="row" gap={6}>
+  <RadioGroup.Root size={1} defaultValue="a">
+    <RadioGroup.Item value="a">Small</RadioGroup.Item>
+  </RadioGroup.Root>
+  <RadioGroup.Root size={2} defaultValue="a">
+    <RadioGroup.Item value="a">Default</RadioGroup.Item>
+  </RadioGroup.Root>
+  <RadioGroup.Root size={3} defaultValue="a">
+    <RadioGroup.Item value="a">Large</RadioGroup.Item>
+  </RadioGroup.Root>
+</Flex>
+```
