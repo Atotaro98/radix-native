@@ -1,0 +1,48 @@
+---
+metaTitle: Radius
+metaDescription: Border radius tokens and how they apply across components.
+---
+
+# Radius
+
+Set via `<Theme radius="medium">`. Controls corner rounding across all components.
+
+## Radius tokens
+
+| Token | Factor | Effect |
+|-------|--------|--------|
+| `none` | 0 | Square corners |
+| `small` | 0.75 | Subtle rounding |
+| `medium` | 1 | Default rounding |
+| `large` | 1.5 | Pronounced rounding |
+| `full` | 1.5 + pill (9999) | Fully rounded / pill shape |
+
+## Base radius values
+
+Each component picks a radius "level" based on its visual size:
+
+| Level | Base px | small | medium | large/full |
+|-------|---------|-------|--------|-----------|
+| 1 | 3 | 2.25 | 3 | 4.5 |
+| 2 | 4 | 3 | 4 | 6 |
+| 3 | 6 | 4.5 | 6 | 9 |
+| 4 | 8 | 6 | 8 | 12 |
+| 5 | 12 | 9 | 12 | 18 |
+| 6 | 16 | 12 | 16 | 24 |
+
+## Per-component overrides
+
+Most components accept a `radius` prop to override the theme setting:
+
+```tsx
+<Button radius="full">Pill button</Button>
+<Avatar radius="none" />
+<TextField radius="large" />
+```
+
+## Component behaviors
+
+- **Button, IconButton, Badge, Avatar, TextField**: use `max(radius, radiusFull)` — become pill-shaped with `radius="full"`
+- **Card, TextArea**: use bare radius — never become pill-shaped
+- **Switch**: uses `radiusThumb` — pill for medium+, square-ish for none/small
+- **Checkbox**: uses `radius-1` scaled by a size multiplier

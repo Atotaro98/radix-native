@@ -1,0 +1,61 @@
+---
+metaTitle: Switch
+metaDescription: Toggle control for on/off states.
+sourcePath: components/actions/Switch
+---
+
+# Switch
+
+```tsx
+<Flex direction="row" gap={4}>
+  <Switch defaultChecked />
+  <Switch />
+</Flex>
+```
+
+## API Reference
+
+Inherits from Pressable. Supports [margin props](/theme/spacing).
+
+| Prop | Type | Default |
+|------|------|---------|
+| `size` | `1 \| 2 \| 3` | `2` |
+| `variant` | `'classic' \| 'surface' \| 'soft'` | `'surface'` |
+| `color` | `AccentColor` | theme accent |
+| `highContrast` | `boolean` | — |
+| `radius` | `RadiusToken` | theme radius |
+| `checked` | `boolean` | — |
+| `defaultChecked` | `boolean` | `false` |
+| `onCheckedChange` | `(checked: boolean) => void` | — |
+| `disabled` | `boolean` | `false` |
+
+## Examples
+
+### Size
+
+```tsx
+<Flex direction="row" gap={4} align="center">
+  <Switch size={1} defaultChecked />
+  <Switch size={2} defaultChecked />
+  <Switch size={3} defaultChecked />
+</Flex>
+```
+
+### Variant
+
+```tsx
+<Flex direction="row" gap={4}>
+  <Switch variant="classic" defaultChecked />
+  <Switch variant="surface" defaultChecked />
+  <Switch variant="soft" defaultChecked />
+</Flex>
+```
+
+### Controlled
+
+```tsx
+function DarkMode() {
+  const [dark, setDark] = useState(false)
+  return <Switch checked={dark} onCheckedChange={setDark} />
+}
+```

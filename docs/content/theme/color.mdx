@@ -1,0 +1,58 @@
+---
+metaTitle: Color
+metaDescription: Understanding the color system — 31 scales, accent, gray, and alpha steps.
+---
+
+# Color
+
+radix-native uses the full Radix Colors system — 31 color scales, each with 12 solid steps, 12 alpha steps, plus `contrast` and `surface` special tokens.
+
+## Accent color
+
+Set via `<Theme accentColor="blue">`. Used by all components for their primary visual color.
+
+```tsx
+<Theme accentColor="blue">
+  <Button>Blue button</Button>
+  <Badge>Blue badge</Badge>
+</Theme>
+```
+
+Available accent colors: gray, gold, bronze, brown, yellow, amber, orange, tomato, red, ruby, crimson, pink, plum, purple, violet, iris, indigo, blue, cyan, teal, jade, green, grass, lime, mint, sky.
+
+## Gray color
+
+Set via `<Theme grayColor="auto">`. Controls the neutral gray scale used for text, borders, and backgrounds.
+
+When `'auto'`, the gray scale automatically matches the accent color:
+- Blue/Indigo/Violet/Iris/Sky/Cyan → Slate
+- Pink/Crimson/Ruby/Plum/Purple/Violet/Tomato/Red → Mauve
+- Teal/Jade/Mint/Green → Sage
+- Grass/Lime → Olive
+- Yellow/Amber/Orange/Brown/Gold/Bronze → Sand
+
+## Color steps
+
+| Step | Usage |
+|------|-------|
+| 1-2 | Backgrounds |
+| 3-5 | Interactive backgrounds (hover, active) |
+| 6-7 | Borders |
+| 8 | Focus ring |
+| 9-10 | Solid backgrounds (primary, hover) |
+| 11 | Text (low contrast) |
+| 12 | Text (high contrast) |
+| contrast | Text on step 9 background |
+| surface | Translucent tinted surface |
+
+## Using colors in code
+
+```tsx
+const rc = useResolveColor()
+
+rc('accent', 9)         // theme accent, step 9
+rc('accent', 'a3')      // alpha step 3
+rc('accent', 'contrast') // contrast text
+rc('gray', 'surface')   // gray surface
+rc('blue', 5)           // specific named color
+```

@@ -42,7 +42,7 @@ export function KbdSection() {
     <ComponentSection
       title="Kbd"
       tabs={[
-        { id: 'specimen',  label: 'Specimen',  render: () => <Specimen /> },
+        { id: 'example',   label: 'Example',   render: () => <Specimen /> },
         { id: 'all-sizes', label: 'All sizes', render: () => <AllSizes /> },
       ]}
     />

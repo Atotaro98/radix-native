@@ -3,18 +3,19 @@ import { View, Text as RNText } from 'react-native'
 import type { StyleProp, ViewStyle, TextStyle } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
-import { resolveSpace } from '../../utils/resolveSpace'
+import { useMargins } from '../../hooks/useMargins'
 import { fontSize as fontSizeMap, lineHeight, letterSpacingEm } from '../../tokens/typography'
 import { scalingMap } from '../../tokens/scaling'
 import { space } from '../../tokens/spacing'
 import type { FontSizeToken } from '../../tokens/typography'
-import type { MarginToken } from '../../tokens/spacing'
+import type { MarginProps } from '../../types/marginProps'
+import type { NativeViewProps } from '../../types/nativeProps'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { TextWeight, TextWrap } from './Text'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export interface BlockquoteProps {
+export interface BlockquoteProps extends NativeViewProps, MarginProps {
   /** Text size token (1–9). Default: 3 (16px). */
   size?: FontSizeToken
   /** Font weight. Default: 'regular'. */
@@ -27,14 +28,6 @@ export interface BlockquoteProps {
   truncate?: boolean
   /** Controls text wrapping. 'pretty'/'balance' are not supported in React Native, no-op. */
   wrap?: TextWrap
-  // ─── Margin props ──────────────────────────────────────────────────────────
-  m?: MarginToken
-  mx?: MarginToken
-  my?: MarginToken
-  mt?: MarginToken
-  mr?: MarginToken
-  mb?: MarginToken
-  ml?: MarginToken
   style?: StyleProp<ViewStyle>
   children?: React.ReactNode
 }
@@ -60,12 +53,11 @@ export function Blockquote({
   m, mx, my, mt, mr, mb, ml,
   style,
   children,
+  ...rest
 }: BlockquoteProps) {
   const { scaling, fonts } = useThemeContext()
   const rc = useResolveColor()
-
-  const sp = (token: MarginToken | undefined): number | undefined =>
-    token !== undefined ? resolveSpace(token, scaling) : undefined
+  const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
   // ─── Typography ─────────────────────────────────────────────────────────────
   const scalingFactor = scalingMap[scaling]
@@ -76,10 +68,10 @@ export function Blockquote({
   // ─── Color ──────────────────────────────────────────────────────────────────
   // Radix scopes --accent-a6 per-component via data-accent-color.
   // In RN we resolve the border color from the explicit color prop (or accent fallback).
-  const borderColor = rc(color ? `${color}-a6` : 'accent-a6')
+  const borderColor = rc(color ?? 'accent', 'a6')
   const textColor = color
-    ? rc(highContrast ? `${color}-12` : `${color}-a11`)
-    : rc('gray-12')
+    ? rc(color, highContrast ? 12 : 'a11')
+    : rc('gray', 12)
 
   // ─── Font family ─────────────────────────────────────────────────────────────
   const fontFamily = fonts[weight] ?? fonts.regular
@@ -106,11 +98,7 @@ export function Blockquote({
     // RN defaults flexShrink to 0; CSS defaults to 1. Without this, text
     // inside a Flex row overflows instead of wrapping to the available width.
     flexShrink:    1,
-    // Margins
-    marginTop:    sp(mt ?? my ?? m),
-    marginBottom: sp(mb ?? my ?? m),
-    marginLeft:   sp(ml ?? mx ?? m),
-    marginRight:  sp(mr ?? mx ?? m),
+    ...margins,
   }
 
   const textStyle: TextStyle = {
@@ -123,7 +111,7 @@ export function Blockquote({
   }
 
   return (
-    <View style={[containerStyle, style]}>
+    <View style={[containerStyle, style]} {...rest}>
       <RNText
         numberOfLines={numberOfLines}
         ellipsizeMode={ellipsizeMode}

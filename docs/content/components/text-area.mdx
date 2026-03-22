@@ -1,0 +1,40 @@
+---
+metaTitle: Text Area
+metaDescription: Multi-line text input.
+sourcePath: components/forms/TextArea
+---
+
+# Text Area
+
+```tsx
+<Flex gap={3}>
+  <TextArea placeholder="Write a message..." />
+  <TextArea variant="soft" placeholder="Soft variant" />
+</Flex>
+```
+
+## API Reference
+
+Same as TextField but always multiline. Extends `TextInputProps` (minus `multiline`). Supports [margin props](/theme/spacing).
+
+| Prop | Type | Default |
+|------|------|---------|
+| `size` | `1 \| 2 \| 3` | `2` |
+| `variant` | `'classic' \| 'surface' \| 'soft'` | `'surface'` |
+| `color` | `AccentColor` | theme accent |
+| `radius` | `RadiusToken` | theme radius |
+| `disabled` | `boolean` | `false` |
+
+## Examples
+
+### Size
+
+```tsx
+<Flex gap={3}>
+  <TextArea size={1} placeholder="Small" />
+  <TextArea size={2} placeholder="Default" />
+  <TextArea size={3} placeholder="Large" />
+</Flex>
+```
+
+TextArea never becomes pill-shaped (uses bare `getRadius`, no `getFullRadius`).

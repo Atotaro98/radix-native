@@ -1,0 +1,50 @@
+---
+metaTitle: Flex
+metaDescription: Flexbox layout container with spacing tokens.
+sourcePath: components/layout/Flex
+---
+
+# Flex
+
+```tsx
+<Flex direction="row" gap={3} align="center">
+  <Avatar fallback="A" />
+  <Text>John Doe</Text>
+  <Badge ml="auto">Admin</Badge>
+</Flex>
+```
+
+## API Reference
+
+Inherits from View. Supports [margin props](/theme/spacing).
+
+| Prop | Type | Default |
+|------|------|---------|
+| `direction` | `'row' \| 'column' \| 'row-reverse' \| 'column-reverse'` | `'column'` |
+| `align` | `'start' \| 'center' \| 'end' \| 'stretch' \| 'baseline'` | — |
+| `justify` | `'start' \| 'center' \| 'end' \| 'between' \| 'around' \| 'evenly'` | — |
+| `wrap` | `'nowrap' \| 'wrap' \| 'wrap-reverse'` | — |
+| `gap` | `SpaceToken` | — |
+| `p, px, py` | `SpaceToken` | — |
+| `width, height` | `SpaceToken` | — |
+
+## Examples
+
+### Vertical stack
+
+```tsx
+<Flex gap={4}>
+  <Heading>Title</Heading>
+  <Text>Body</Text>
+  <Button>Action</Button>
+</Flex>
+```
+
+### Horizontal row
+
+```tsx
+<Flex direction="row" gap={3} align="center">
+  <Text>Left</Text>
+  <Text>Right</Text>
+</Flex>
+```

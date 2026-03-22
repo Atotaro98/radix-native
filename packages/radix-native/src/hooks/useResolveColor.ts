@@ -2,23 +2,54 @@ import React from 'react'
 import { useThemeContext } from './useThemeContext'
 import { resolveColor } from '../utils/resolveColor'
 import type { ThemeColor } from '../theme/theme.types'
+import type { AccentColor } from '../tokens/colors/types'
+
+// ─── Public types for the two-param form ──────────────────────────────────────
+
+export type ColorName = AccentColor | 'accent' | 'gray'
+
+export type SolidStep = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12
+
+export type AlphaStep =
+  | 'a1' | 'a2' | 'a3' | 'a4' | 'a5' | 'a6'
+  | 'a7' | 'a8' | 'a9' | 'a10' | 'a11' | 'a12'
+
+export type ColorStep = SolidStep | AlphaStep | 'contrast' | 'surface'
+
+// ─── Overloaded return type ───────────────────────────────────────────────────
+
+export interface ResolveColorFn {
+  /** Resolve a full token: `rc('gray-1')`, `rc('accent-9')` */
+  (token: ThemeColor): string
+  /** Resolve by color + step: `rc('accent', 9)`, `rc(prefix, 'a3')` */
+  (color: ColorName, step: ColorStep): string
+}
+
+// ─── Hook ─────────────────────────────────────────────────────────────────────
 
 /**
  * Returns a resolver function bound to the current theme context.
- * Use this to resolve ThemeColor tokens to hex strings inside components.
+ * Supports two calling styles:
  *
  * @example
  * const rc = useResolveColor()
- * const bg = rc('gray-1')
- * const accent = rc('accent-9')
- * const blue = rc('blue-5')
+ *
+ * // Two-param (preferred — no casts, works with dynamic prefix):
+ * rc('accent', 9)
+ * rc(prefix, 'a3')
+ * rc('gray', 'surface')
+ *
+ * // Single-param (for static tokens):
+ * rc('gray-1')
  */
-export function useResolveColor(): (color: ThemeColor) => string {
+export function useResolveColor(): ResolveColorFn {
   const { appearance, accentColor, resolvedGrayColor, colorOverrides } = useThemeContext()
 
   return React.useCallback(
-    (color: ThemeColor) =>
-      resolveColor(color, appearance, accentColor, resolvedGrayColor, colorOverrides),
+    ((first: ThemeColor | ColorName, step?: ColorStep): string => {
+      const token = step !== undefined ? `${first}-${step}` : first
+      return resolveColor(token, appearance, accentColor, resolvedGrayColor, colorOverrides)
+    }) as ResolveColorFn,
     [appearance, accentColor, resolvedGrayColor, colorOverrides],
   )
 }

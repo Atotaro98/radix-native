@@ -1,0 +1,55 @@
+---
+metaTitle: Text Field
+metaDescription: Single-line text input with variants and focus state.
+sourcePath: components/forms/TextField
+---
+
+# Text Field
+
+```tsx
+<Flex gap={3}>
+  <TextField placeholder="Surface (default)" />
+  <TextField variant="classic" placeholder="Classic" />
+  <TextField variant="soft" placeholder="Soft" />
+</Flex>
+```
+
+## API Reference
+
+Extends `TextInputProps`. Supports [margin props](/theme/spacing).
+
+| Prop | Type | Default |
+|------|------|---------|
+| `size` | `1 \| 2 \| 3` | `2` |
+| `variant` | `'classic' \| 'surface' \| 'soft'` | `'surface'` |
+| `color` | `AccentColor` | theme accent |
+| `radius` | `RadiusToken` | theme radius |
+| `disabled` | `boolean` | `false` |
+
+Plus all standard `TextInput` props (`placeholder`, `value`, `onChangeText`, `keyboardType`, etc.).
+
+## Examples
+
+### Size
+
+```tsx
+<Flex gap={3}>
+  <TextField size={1} placeholder="Small" />
+  <TextField size={2} placeholder="Default" />
+  <TextField size={3} placeholder="Large" />
+</Flex>
+```
+
+### Disabled
+
+```tsx
+<TextField disabled placeholder="Cannot edit" value="Disabled input" />
+```
+
+### Soft variant
+
+The soft variant uses the accent color for background, text, and placeholder:
+
+```tsx
+<TextField variant="soft" color="blue" placeholder="Soft blue" />
+```

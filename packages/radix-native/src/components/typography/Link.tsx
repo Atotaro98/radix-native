@@ -1,15 +1,16 @@
 import React from 'react'
 import { Text as RNText, Linking } from 'react-native'
-import type { TextProps as RNTextProps, StyleProp, TextStyle } from 'react-native'
+import type { StyleProp, TextStyle } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
-import { resolveSpace } from '../../utils/resolveSpace'
+import { useMargins } from '../../hooks/useMargins'
 import { fontSize, lineHeight, letterSpacingEm } from '../../tokens/typography'
 import { scalingMap } from '../../tokens/scaling'
 import type { FontSizeToken } from '../../tokens/typography'
-import type { MarginToken } from '../../tokens/spacing'
 import type { AccentColor } from '../../tokens/colors/types'
+import type { MarginProps } from '../../types/marginProps'
 import type { TextWeight, TextWrap } from './Text'
+import type { NativeTextProps } from '../../types/nativeProps'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -23,7 +24,7 @@ import type { TextWeight, TextWrap } from './Text'
  */
 export type LinkUnderline = 'auto' | 'always' | 'hover' | 'none'
 
-export interface LinkProps extends Omit<RNTextProps, 'style'> {
+export interface LinkProps extends NativeTextProps, MarginProps {
   /** Text size token (1–9). Default: inherits — set to 3 (16px) if no parent. */
   size?: FontSizeToken
   weight?: TextWeight
@@ -46,14 +47,6 @@ export interface LinkProps extends Omit<RNTextProps, 'style'> {
    * If both `href` and `onPress` are provided, `onPress` takes precedence.
    */
   href?: string
-  // ─── Margin props ──────────────────────────────────────────────────────────
-  m?: MarginToken
-  mx?: MarginToken
-  my?: MarginToken
-  mt?: MarginToken
-  mr?: MarginToken
-  mb?: MarginToken
-  ml?: MarginToken
   style?: StyleProp<TextStyle>
 }
 
@@ -84,9 +77,7 @@ export function Link({
 }: LinkProps) {
   const { scaling, fonts } = useThemeContext()
   const rc = useResolveColor()
-
-  const sp = (token: MarginToken | undefined): number | undefined =>
-    token !== undefined ? resolveSpace(token, scaling) : undefined
+  const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
   // ─── Typography ─────────────────────────────────────────────────────────────
   const scalingFactor = scalingMap[scaling]
@@ -95,13 +86,9 @@ export function Link({
   const resolvedLetterSpacing = letterSpacingEm[size] * resolvedSize
 
   // ─── Color ──────────────────────────────────────────────────────────────────
-  // Radix: accent links use a11 (vibrant foreground), highContrast → step 12.
-  // Gray links always use gray-12 (distinguishes via underline/weight, not color).
+  // Radix: colored links use a11, highContrast → step 12. Same as Text.
   const prefix = color ?? 'accent'
-  const isGray = color === 'gray'
-  const linkColor = rc(
-    isGray || highContrast ? `${prefix}-12` : `${prefix}-a11`,
-  )
+  const linkColor = rc(prefix, highContrast ? 12 : 'a11')
 
   // ─── Font family ─────────────────────────────────────────────────────────────
   const effectiveWeight: TextWeight = weight ?? 'regular'
@@ -120,7 +107,7 @@ export function Link({
     showUnderline ? 'underline' : 'none'
   // Radix: accent-a5 for normal underline, accent-a6 for highContrast
   const textDecorationColor = showUnderline
-    ? rc(highContrast ? `${prefix}-a6` : `${prefix}-a5`)
+    ? rc(prefix, highContrast ? 'a6' : 'a5')
     : undefined
 
   // ─── Wrapping / truncation ──────────────────────────────────────────────────
@@ -129,7 +116,7 @@ export function Link({
 
   // ─── Press handler ──────────────────────────────────────────────────────────
   const handlePress = React.useCallback(
-    (e: Parameters<NonNullable<RNTextProps['onPress']>>[0]) => {
+    (e: Parameters<NonNullable<LinkProps['onPress']>>[0]) => {
       if (onPress) {
         onPress(e)
       } else if (href) {
@@ -152,11 +139,8 @@ export function Link({
     textDecorationLine,
     textDecorationColor,
     flexShrink:    1,
-    marginTop:    sp(mt ?? my ?? m),
-    marginBottom: sp(mb ?? my ?? m),
-    marginLeft:   sp(ml ?? mx ?? m),
-    marginRight:  sp(mr ?? mx ?? m),
-  }), [resolvedSize, resolvedLineHeight, resolvedLetterSpacing, linkColor, weight, fontFamily, textDecorationLine, textDecorationColor, mt, my, m, mb, ml, mx, mr, scaling])
+    ...margins,
+  }), [resolvedSize, resolvedLineHeight, resolvedLetterSpacing, linkColor, weight, fontFamily, textDecorationLine, textDecorationColor, margins])
 
   return (
     <RNText

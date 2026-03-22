@@ -122,7 +122,7 @@ export function TextSection() {
     <ComponentSection
       title="Text"
       tabs={[
-        { id: 'specimen',    label: 'Specimen',    render: () => <Specimen /> },
+        { id: 'example',     label: 'Example',     render: () => <Specimen /> },
         { id: 'all-colors',  label: 'All colors',  render: () => <AllColors /> },
         { id: 'all-sizes',   label: 'All sizes',   render: () => <AllSizes /> },
         { id: 'all-weights', label: 'All weights', render: () => <AllWeights /> },

@@ -1,0 +1,30 @@
+---
+metaTitle: Grid
+metaDescription: Responsive grid layout with columns and gap.
+sourcePath: components/layout/Grid
+---
+
+# Grid
+
+```tsx
+<Grid columns={2} gap={3}>
+  <Card><Text>1</Text></Card>
+  <Card><Text>2</Text></Card>
+  <Card><Text>3</Text></Card>
+  <Card><Text>4</Text></Card>
+</Grid>
+```
+
+## API Reference
+
+Inherits from View. Supports [margin props](/theme/spacing).
+
+| Prop | Type | Default |
+|------|------|---------|
+| `columns` | `number` | `1` |
+| `gap, gapX, gapY` | `SpaceToken` | — |
+| `align` | `'start' \| 'center' \| 'end' \| 'stretch'` | `'stretch'` |
+| `justify` | `'start' \| 'center' \| 'end'` | — |
+| `width, height, p, px, py` | `SpaceToken` | — |
+
+Uses `onLayout` to measure container width and compute cell dimensions.

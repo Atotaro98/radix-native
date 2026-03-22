@@ -30,20 +30,23 @@
  */
 import React, { useState, useCallback } from 'react'
 import { View } from 'react-native'
-import type { ViewProps, ViewStyle, LayoutChangeEvent } from 'react-native'
+import type { ViewStyle, LayoutChangeEvent, StyleProp } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
+import { useMargins } from '../../hooks/useMargins'
 import { resolveSpace } from '../../utils/resolveSpace'
 import { getRadius, getFullRadius } from '../../tokens/radius'
-import type { SpaceToken, MarginToken } from '../../tokens/spacing'
+import type { SpaceToken } from '../../tokens/spacing'
 import type { ThemeColor, RadiusToken } from '../../theme/theme.types'
+import type { MarginProps } from '../../types/marginProps'
+import type { NativeViewProps } from '../../types/nativeProps'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type GridAlign = 'start' | 'center' | 'end' | 'stretch'
 export type GridJustify = 'start' | 'center' | 'end' | 'between'
 
-export interface GridProps extends Omit<ViewProps, 'style'> {
+export interface GridProps extends NativeViewProps, MarginProps {
   /** Number of equal-width columns. Default: 1. */
   columns?: number
   /** Space token applied to both row and column gaps. */
@@ -64,14 +67,6 @@ export interface GridProps extends Omit<ViewProps, 'style'> {
   pr?: SpaceToken
   pb?: SpaceToken
   pl?: SpaceToken
-  // ─── Margin ───────────────────────────────────────────────────────
-  m?: MarginToken
-  mx?: MarginToken
-  my?: MarginToken
-  mt?: MarginToken
-  mr?: MarginToken
-  mb?: MarginToken
-  ml?: MarginToken
   // ─── Size ─────────────────────────────────────────────────────────
   width?: number | string
   minWidth?: number | string
@@ -93,7 +88,7 @@ export interface GridProps extends Omit<ViewProps, 'style'> {
   // ─── Theme ────────────────────────────────────────────────────────
   bg?: ThemeColor
   radius?: RadiusToken
-  style?: ViewProps['style']
+  style?: StyleProp<ViewStyle>
 }
 
 // ─── Alignment helpers ────────────────────────────────────────────────────────
@@ -138,8 +133,9 @@ export function Grid({
 }: GridProps) {
   const { scaling } = useThemeContext()
   const rc = useResolveColor()
+  const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
-  const sp = (token: MarginToken | SpaceToken | undefined): number | undefined =>
+  const sp = (token: SpaceToken | undefined): number | undefined =>
     token !== undefined ? resolveSpace(token, scaling) : undefined
 
   const columnGap = sp(gapX ?? gap) ?? 0
@@ -179,10 +175,7 @@ export function Grid({
     paddingLeft:   sp(pl ?? px ?? p),
     paddingRight:  sp(pr ?? px ?? p),
     // Margin
-    marginTop:    sp(mt ?? my ?? m),
-    marginBottom: sp(mb ?? my ?? m),
-    marginLeft:   sp(ml ?? mx ?? m),
-    marginRight:  sp(mr ?? mx ?? m),
+    ...margins,
     // Size
     width:     width     as ViewStyle['width'],
     minWidth:  minWidth  as ViewStyle['minWidth'],
@@ -213,8 +206,8 @@ export function Grid({
 
   return (
     <View style={[containerStyle, style]} onLayout={handleLayout} {...rest}>
-      {items.map((child) => (
-        <View key={(child as React.ReactElement).key} style={{ width: cellWidth }}>
+      {items.map((child, idx) => (
+        <View key={(child as React.ReactElement).key ?? `cell-${idx}`} style={{ width: cellWidth }}>
           {child}
         </View>
       ))}

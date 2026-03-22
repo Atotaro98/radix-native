@@ -1,0 +1,61 @@
+---
+metaTitle: Checkbox
+metaDescription: Toggle control for boolean or indeterminate state.
+sourcePath: components/actions/Checkbox
+---
+
+# Checkbox
+
+```tsx
+<Flex direction="row" gap={4}>
+  <Checkbox defaultChecked />
+  <Checkbox />
+  <Checkbox checked="indeterminate" />
+</Flex>
+```
+
+## API Reference
+
+Inherits from Pressable. Supports [margin props](/theme/spacing).
+
+| Prop | Type | Default |
+|------|------|---------|
+| `size` | `1 \| 2 \| 3` | `2` |
+| `variant` | `'classic' \| 'surface' \| 'soft'` | `'surface'` |
+| `color` | `AccentColor` | theme accent |
+| `highContrast` | `boolean` | — |
+| `checked` | `boolean \| 'indeterminate'` | — |
+| `defaultChecked` | `boolean \| 'indeterminate'` | `false` |
+| `onCheckedChange` | `(checked: CheckedState) => void` | — |
+| `disabled` | `boolean` | `false` |
+
+## Examples
+
+### Variant
+
+```tsx
+<Flex direction="row" gap={4}>
+  <Checkbox variant="classic" defaultChecked />
+  <Checkbox variant="surface" defaultChecked />
+  <Checkbox variant="soft" defaultChecked />
+</Flex>
+```
+
+### Size
+
+```tsx
+<Flex direction="row" gap={4} align="center">
+  <Checkbox size={1} defaultChecked />
+  <Checkbox size={2} defaultChecked />
+  <Checkbox size={3} defaultChecked />
+</Flex>
+```
+
+### Controlled
+
+```tsx
+function Example() {
+  const [checked, setChecked] = useState(false)
+  return <Checkbox checked={checked} onCheckedChange={setChecked} />
+}
+```

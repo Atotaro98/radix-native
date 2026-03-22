@@ -1,0 +1,68 @@
+---
+metaTitle: Getting started
+metaDescription: Install radix-native and start building in minutes.
+---
+
+# Getting started
+
+## Installation
+
+```bash
+npm install radix-native
+```
+
+No additional setup, no CSS imports, no babel plugins.
+
+## Add the Theme component
+
+Wrap your app with `Theme` to provide the design system:
+
+```tsx
+import { Theme } from 'radix-native'
+
+export default function App() {
+  return (
+    <Theme appearance="dark" accentColor="indigo">
+      {/* Your app */}
+    </Theme>
+  )
+}
+```
+
+## Start building
+
+```tsx
+import { Flex, Text, Button, Avatar, Badge } from 'radix-native'
+
+function Profile() {
+  return (
+    <Flex direction="row" gap={3} align="center">
+      <Avatar src="https://example.com/photo.jpg" fallback="JD" size={5} />
+      <Flex gap={1}>
+        <Text size={4} weight="bold">John Doe</Text>
+        <Badge variant="soft" color="green">Active</Badge>
+      </Flex>
+      <Button variant="soft" ml="auto">Edit</Button>
+    </Flex>
+  )
+}
+```
+
+## Custom fonts
+
+```tsx
+<Theme
+  fonts={{
+    regular: 'Inter-Regular',
+    medium: 'Inter-Medium',
+    bold: 'Inter-Bold',
+    heading: 'Inter-Bold',
+    code: 'JetBrainsMono-Regular',
+  }}
+>
+```
+
+## Requirements
+
+- React Native 0.72+
+- React 18.0+

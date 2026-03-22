@@ -4,7 +4,7 @@
  */
 import React from 'react'
 import { Pressable, ScrollView } from 'react-native'
-import { Box, Flex, Text, Heading, useResolveColor } from 'radix-native'
+import { Box, Flex, Text, Heading, Separator, useResolveColor } from 'radix-native'
 
 // ─── Tab system ───────────────────────────────────────────────────────────────
 
@@ -46,7 +46,7 @@ export function ComponentSection({ title, tabs, children }: { title: string; tab
         </ScrollView>
       )}
 
-      <Box height={1} mb={5} style={{ backgroundColor: rc('gray-4') }} />
+      <Separator mb={5} />
       <Box width="100%">{activeTab ? activeTab.render() : children}</Box>
     </Box>
   )

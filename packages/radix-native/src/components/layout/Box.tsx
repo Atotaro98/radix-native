@@ -1,14 +1,17 @@
 import React from 'react'
 import { View } from 'react-native'
-import type { ViewProps, ViewStyle } from 'react-native'
+import type { ViewStyle } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
+import { useMargins } from '../../hooks/useMargins'
 import { resolveSpace } from '../../utils/resolveSpace'
 import { getRadius, getFullRadius } from '../../tokens/radius'
-import type { SpaceToken, MarginToken } from '../../tokens/spacing'
+import type { SpaceToken } from '../../tokens/spacing'
 import type { ThemeColor, RadiusToken } from '../../theme/theme.types'
+import type { MarginProps } from '../../types/marginProps'
+import type { NativeViewProps } from '../../types/nativeProps'
 
-export interface BoxProps extends ViewProps {
+export interface BoxProps extends NativeViewProps, MarginProps {
   // ─── Padding ──────────────────────────────────────────────────────
   p?: SpaceToken
   px?: SpaceToken
@@ -17,14 +20,6 @@ export interface BoxProps extends ViewProps {
   pr?: SpaceToken
   pb?: SpaceToken
   pl?: SpaceToken
-  // ─── Margin ───────────────────────────────────────────────────────
-  m?: MarginToken
-  mx?: MarginToken
-  my?: MarginToken
-  mt?: MarginToken
-  mr?: MarginToken
-  mb?: MarginToken
-  ml?: MarginToken
   // ─── Size ─────────────────────────────────────────────────────────
   width?: number | string
   minWidth?: number | string
@@ -67,8 +62,9 @@ export function Box({
 }: BoxProps) {
   const { scaling } = useThemeContext()
   const rc = useResolveColor()
+  const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
-  const sp = (token: MarginToken | SpaceToken | undefined): number | undefined =>
+  const sp = (token: SpaceToken | undefined): number | undefined =>
     token !== undefined ? resolveSpace(token, scaling) : undefined
 
   const boxStyle: ViewStyle = {
@@ -77,11 +73,8 @@ export function Box({
     paddingBottom: sp(pb ?? py ?? p),
     paddingLeft:   sp(pl ?? px ?? p),
     paddingRight:  sp(pr ?? px ?? p),
-    // Margin — specific > axis > all
-    marginTop:    sp(mt ?? my ?? m),
-    marginBottom: sp(mb ?? my ?? m),
-    marginLeft:   sp(ml ?? mx ?? m),
-    marginRight:  sp(mr ?? mx ?? m),
+    // Margin
+    ...margins,
     // Size
     width:     width     as ViewStyle['width'],
     minWidth:  minWidth  as ViewStyle['minWidth'],

@@ -4,10 +4,11 @@ import { Text as RNText } from 'react-native'
 import type { StyleProp, ViewStyle, TextStyle } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
+import { useMargins } from '../../hooks/useMargins'
 import { resolveSpace } from '../../utils/resolveSpace'
 import { fontSize, lineHeight, letterSpacingEm } from '../../tokens/typography'
 import { scalingMap } from '../../tokens/scaling'
-import type { MarginToken } from '../../tokens/spacing'
+import type { MarginProps } from '../../types/marginProps'
 import type { AccentColor } from '../../tokens/colors/types'
 import { Checkbox, type CheckboxSize, type CheckboxVariant } from './Checkbox'
 
@@ -27,7 +28,7 @@ const CheckboxGroupContext = createContext<CheckboxGroupContextValue | null>(nul
 
 // ─── Root Types ─────────────────────────────────────────────────────────────────
 
-export interface CheckboxGroupProps {
+export interface CheckboxGroupProps extends MarginProps {
   /** Checkbox size (1–3). Default: 2. */
   size?: CheckboxSize
   /** Visual variant. Default: 'surface'. */
@@ -46,34 +47,18 @@ export interface CheckboxGroupProps {
   disabled?: boolean
   /** Group children (CheckboxGroup.Item). */
   children?: React.ReactNode
-  // ─── Margin props ──────────────────────────────────────────────────────────
-  m?: MarginToken
-  mx?: MarginToken
-  my?: MarginToken
-  mt?: MarginToken
-  mr?: MarginToken
-  mb?: MarginToken
-  ml?: MarginToken
   style?: StyleProp<ViewStyle>
 }
 
 // ─── Item Types ─────────────────────────────────────────────────────────────────
 
-export interface CheckboxGroupItemProps {
+export interface CheckboxGroupItemProps extends MarginProps {
   /** Unique value identifying this item. */
   value: string
   /** Disables this individual item. */
   disabled?: boolean
   /** Label text or custom content. */
   children?: React.ReactNode
-  // ─── Margin props ──────────────────────────────────────────────────────────
-  m?: MarginToken
-  mx?: MarginToken
-  my?: MarginToken
-  mt?: MarginToken
-  mr?: MarginToken
-  mb?: MarginToken
-  ml?: MarginToken
   style?: StyleProp<ViewStyle>
 }
 
@@ -98,6 +83,7 @@ function CheckboxGroupRoot({
   style,
 }: CheckboxGroupProps) {
   const { scaling } = useThemeContext()
+  const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
   const [internal, setInternal] = React.useState<string[]>(defaultValue)
   const isControlled = valueProp !== undefined
@@ -115,21 +101,12 @@ function CheckboxGroupRoot({
     size, variant, color, highContrast, disabled, value, onItemToggle,
   }), [size, variant, color, highContrast, disabled, value, onItemToggle])
 
-  const sp = (token: MarginToken | undefined): number | undefined =>
-    token !== undefined ? resolveSpace(token, scaling) : undefined
-
   return (
     <CheckboxGroupContext.Provider value={ctx}>
       <View
-        accessibilityRole="none"
         style={[
           { flexDirection: 'column', gap: resolveSpace(2, scaling) },
-          {
-            marginTop: sp(mt ?? my ?? m),
-            marginBottom: sp(mb ?? my ?? m),
-            marginLeft: sp(ml ?? mx ?? m),
-            marginRight: sp(mr ?? mx ?? m),
-          },
+          margins,
           style,
         ]}
       >
@@ -155,6 +132,7 @@ function CheckboxGroupItem({
   const { size, variant, color, highContrast, disabled: groupDisabled, value, onItemToggle } = ctx
   const { scaling, fonts } = useThemeContext()
   const rc = useResolveColor()
+  const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
   const isDisabled = disabledProp ?? groupDisabled
   const isChecked = value.includes(itemValue)
@@ -163,9 +141,6 @@ function CheckboxGroupItem({
     if (!isDisabled) onItemToggle(itemValue)
   }, [isDisabled, onItemToggle, itemValue])
 
-  const sp = (token: MarginToken | undefined): number | undefined =>
-    token !== undefined ? resolveSpace(token, scaling) : undefined
-
   const scalingFactor = scalingMap[scaling]
   const fontIdx = LABEL_FONT_SIZE[size]
   const resolvedFontSize = Math.round(fontSize[fontIdx] * scalingFactor)
@@ -173,8 +148,7 @@ function CheckboxGroupItem({
   const resolvedLetterSpacing = letterSpacingEm[fontIdx] * resolvedFontSize
   const gap = Math.round(LABEL_GAP[size] * scalingFactor)
 
-  type C = Parameters<typeof rc>[0]
-  const textColor = rc('gray-12' as C)
+  const textColor = rc('gray', 12)
   const fontFamily = fonts.regular
 
   const hasLabel = children != null
@@ -199,7 +173,7 @@ function CheckboxGroupItem({
     fontSize: resolvedFontSize,
     lineHeight: resolvedLineHeight,
     letterSpacing: resolvedLetterSpacing,
-    color: isDisabled ? rc('gray-a8' as C) : textColor,
+    color: isDisabled ? rc('gray', 'a8') : textColor,
     fontFamily,
   }
 
@@ -214,23 +188,21 @@ function CheckboxGroupItem({
           flexDirection: 'row',
           alignItems: 'center',
           gap,
-          marginTop: sp(mt ?? my ?? m),
-          marginBottom: sp(mb ?? my ?? m),
-          marginLeft: sp(ml ?? mx ?? m),
-          marginRight: sp(mr ?? mx ?? m),
+          ...margins,
         },
         style,
       ]}
     >
-      <Checkbox
-        size={size}
-        variant={variant}
-        color={color}
-        highContrast={highContrast}
-        checked={isChecked}
-        onCheckedChange={() => onItemToggle(itemValue)}
-        disabled={isDisabled}
-      />
+      <View pointerEvents="none" importantForAccessibility="no-hide-descendants">
+        <Checkbox
+          size={size}
+          variant={variant}
+          color={color}
+          highContrast={highContrast}
+          checked={isChecked}
+          disabled={isDisabled}
+        />
+      </View>
       {typeof children === 'string' || typeof children === 'number' ? (
         <RNText style={labelStyle}>{children}</RNText>
       ) : (

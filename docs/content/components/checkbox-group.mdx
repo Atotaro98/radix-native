@@ -1,0 +1,38 @@
+---
+metaTitle: Checkbox Group
+metaDescription: Group of labeled checkboxes with shared state.
+sourcePath: components/actions/CheckboxGroup
+---
+
+# Checkbox Group
+
+```tsx
+<CheckboxGroup.Root defaultValue={['a']} onValueChange={setValues}>
+  <CheckboxGroup.Item value="a">Option A</CheckboxGroup.Item>
+  <CheckboxGroup.Item value="b">Option B</CheckboxGroup.Item>
+  <CheckboxGroup.Item value="c" disabled>Option C</CheckboxGroup.Item>
+</CheckboxGroup.Root>
+```
+
+## API Reference
+
+### Root
+
+| Prop | Type | Default |
+|------|------|---------|
+| `size` | `1 \| 2 \| 3` | `2` |
+| `variant` | `'classic' \| 'surface' \| 'soft'` | `'surface'` |
+| `color` | `AccentColor` | theme accent |
+| `highContrast` | `boolean` | — |
+| `value` | `string[]` | — |
+| `defaultValue` | `string[]` | `[]` |
+| `onValueChange` | `(value: string[]) => void` | — |
+| `disabled` | `boolean` | `false` |
+
+### Item
+
+| Prop | Type | Default |
+|------|------|---------|
+| `value` | `string` | **required** |
+| `disabled` | `boolean` | — |
+| `children` | `ReactNode` | label text |

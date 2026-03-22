@@ -9,7 +9,14 @@
     "url": "https://github.com/Atotaro98/radix-native"
   },
   "homepage": "https://github.com/Atotaro98/radix-native",
-  "keywords": ["react-native", "radix", "ui", "components", "expo", "themes"],
+  "keywords": [
+    "react-native",
+    "radix",
+    "ui",
+    "components",
+    "expo",
+    "themes"
+  ],
   "type": "module",
   "sideEffects": false,
   "source": "src/index",

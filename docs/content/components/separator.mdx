@@ -1,0 +1,66 @@
+---
+metaTitle: Separator
+metaDescription: Visual divider between content sections.
+sourcePath: components/layout/Separator
+---
+
+# Separator
+
+```tsx
+<Flex gap={4}>
+  <Text>Tools for building high-quality, accessible UI.</Text>
+  <Separator size={4} color="gray" />
+  <Flex direction="row" align="center" gap={3}>
+    <Text size={2}>Themes</Text>
+    <Separator orientation="vertical" size={2} color="gray" />
+    <Text size={2}>Primitives</Text>
+    <Separator orientation="vertical" size={2} color="gray" />
+    <Text size={2}>Icons</Text>
+  </Flex>
+</Flex>
+```
+
+## API Reference
+
+Inherits from View. Supports [margin props](/theme/spacing).
+
+| Prop | Type | Default |
+|------|------|---------|
+| `size` | `1 \| 2 \| 3 \| 4` | `1` |
+| `color` | `AccentColor` | `'gray'` |
+| `orientation` | `'horizontal' \| 'vertical'` | `'horizontal'` |
+| `decorative` | `boolean` | `true` |
+
+## Examples
+
+### Size
+
+```tsx
+<Flex gap={4}>
+  <Separator size={1} />
+  <Separator size={2} />
+  <Separator size={3} />
+  <Separator size={4} />
+</Flex>
+```
+
+### Color
+
+```tsx
+<Flex gap={4}>
+  <Separator size={4} color="indigo" />
+  <Separator size={4} color="cyan" />
+  <Separator size={4} color="orange" />
+  <Separator size={4} color="crimson" />
+</Flex>
+```
+
+### Orientation
+
+```tsx
+<Flex direction="row" gap={4} style={{ height: 40 }}>
+  <Separator orientation="vertical" size={4} />
+</Flex>
+```
+
+Thickness is always `StyleSheet.hairlineWidth` (1 physical pixel).

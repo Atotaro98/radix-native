@@ -1,0 +1,58 @@
+---
+metaTitle: Card
+metaDescription: Container with background, border, and optional press behavior.
+sourcePath: components/layout/Card
+---
+
+# Card
+
+```tsx
+<Card>
+  <Flex gap={2}>
+    <Heading size={4}>Card title</Heading>
+    <Text>Card body content goes here.</Text>
+  </Flex>
+</Card>
+```
+
+## API Reference
+
+Inherits from View. Supports [margin props](/theme/spacing).
+
+| Prop | Type | Default |
+|------|------|---------|
+| `size` | `1-5` | `1` |
+| `variant` | `'surface' \| 'classic' \| 'ghost'` | `'surface'` |
+| `onPress` | `() => void` | — |
+
+## Examples
+
+### Size
+
+```tsx
+<Flex gap={3}>
+  <Card size={1}><Text>Size 1</Text></Card>
+  <Card size={3}><Text>Size 3</Text></Card>
+  <Card size={5}><Text>Size 5</Text></Card>
+</Flex>
+```
+
+### Variant
+
+```tsx
+<Flex gap={3}>
+  <Card variant="surface"><Text>Surface</Text></Card>
+  <Card variant="classic"><Text>Classic</Text></Card>
+  <Card variant="ghost"><Text>Ghost</Text></Card>
+</Flex>
+```
+
+### Pressable
+
+```tsx
+<Card onPress={() => navigate('/detail')}>
+  <Text>Tap to navigate</Text>
+</Card>
+```
+
+Ghost cards show a `gray-a4` background on press. Surface and classic cards dim with opacity.
