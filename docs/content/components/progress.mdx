@@ -1,0 +1,65 @@
+---
+metaTitle: Progress
+metaDescription: Progress bar for determinate and indeterminate loading states.
+sourcePath: components/feedback/Progress
+---
+
+# Progress
+
+```tsx
+<Flex gap={4}>
+  <Progress value={60} />
+  <Progress />
+</Flex>
+```
+
+## API Reference
+
+Inherits from View. Supports [margin props](/theme/spacing).
+
+| Prop | Type | Default |
+|------|------|---------|
+| `size` | `1 \| 2 \| 3` | `2` |
+| `variant` | `'classic' \| 'surface' \| 'soft'` | `'surface'` |
+| `color` | `AccentColor` | theme accent |
+| `highContrast` | `boolean` | — |
+| `radius` | `RadiusToken` | theme radius |
+| `value` | `number` | — (indeterminate) |
+| `max` | `number` | `100` |
+
+## Examples
+
+### Determinate
+
+```tsx
+<Progress value={75} />
+<Progress value={30} max={50} color="green" />
+```
+
+### Indeterminate
+
+Omit `value` for an animated indeterminate bar:
+
+```tsx
+<Progress />
+```
+
+### Size
+
+```tsx
+<Flex gap={3}>
+  <Progress size={1} value={60} />
+  <Progress size={2} value={60} />
+  <Progress size={3} value={60} />
+</Flex>
+```
+
+### Color
+
+```tsx
+<Flex gap={3}>
+  <Progress value={80} color="green" />
+  <Progress value={50} color="orange" />
+  <Progress value={20} color="red" />
+</Flex>
+```

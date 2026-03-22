@@ -1,0 +1,46 @@
+---
+metaTitle: Spinner
+metaDescription: Loading indicator with staggered fade animation.
+sourcePath: components/feedback/Spinner
+---
+
+# Spinner
+
+```tsx
+<Flex direction="row" gap={4} align="center">
+  <Spinner size={1} />
+  <Spinner size={2} />
+  <Spinner size={3} />
+</Flex>
+```
+
+## API Reference
+
+Inherits from View. Supports [margin props](/theme/spacing).
+
+| Prop | Type | Default |
+|------|------|---------|
+| `size` | `1 \| 2 \| 3` | `2` |
+| `loading` | `boolean` | `true` |
+
+## Examples
+
+### Size
+
+```tsx
+<Flex direction="row" gap={4} align="center">
+  <Spinner size={1} />
+  <Spinner size={2} />
+  <Spinner size={3} />
+</Flex>
+```
+
+### Loading wrapper
+
+When `loading` is false, children render instead:
+
+```tsx
+<Spinner loading={isLoading}>
+  <Text>Content appears when loaded</Text>
+</Spinner>
+```

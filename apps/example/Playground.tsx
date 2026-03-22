@@ -25,6 +25,11 @@ import { SwitchSection } from './playground/sections/SwitchSection'
 import { TextSection } from './playground/sections/TextSection'
 import { TextAreaSection } from './playground/sections/TextAreaSection'
 import { TextFieldSection } from './playground/sections/TextFieldSection'
+import { SpinnerSection } from './playground/sections/SpinnerSection'
+import { ProgressSection } from './playground/sections/ProgressSection'
+import { RadioSection } from './playground/sections/RadioSection'
+import { RadioGroupSection } from './playground/sections/RadioGroupSection'
+import { RadioCardsSection } from './playground/sections/RadioCardsSection'
 
 interface PlaygroundProps {
   fontIndex: number
@@ -91,8 +96,13 @@ export function Playground({ fontIndex, onFontChange }: PlaygroundProps) {
         <IconButtonSection />
         <KbdSection />
         <LinkSection />
+        <ProgressSection />
         <QuoteSection />
+        <RadioSection />
+        <RadioGroupSection />
+        <RadioCardsSection />
         <SeparatorSection />
+        <SpinnerSection />
         <StrongSection />
         <SwitchSection />
         <TextSection />

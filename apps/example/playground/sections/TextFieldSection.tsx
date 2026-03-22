@@ -8,36 +8,12 @@ import { ALL_COLORS } from '../constants'
 const VARIANTS: TextFieldVariant[] = ['classic', 'surface', 'soft']
 const SIZES: TextFieldSize[] = [1, 2, 3]
 
-function ColHeader({ label, center }: { label: string; center?: boolean }) {
-  const rc = useResolveColor()
-  return (
-    <Text size={1} weight="medium" style={{ color: rc('gray-9'), textAlign: center ? 'center' : undefined }}>
-      {label}
-    </Text>
-  )
-}
-
 function RowLbl({ label }: { label: string }) {
   const rc = useResolveColor()
   return (
     <Box width={72} flexShrink={0}>
       <Text size={2} style={{ color: rc('gray-11') }}>{label}</Text>
     </Box>
-  )
-}
-
-function Specimen() {
-  return (
-    <Flex gap={4}>
-      {VARIANTS.map(variant => (
-        <Flex key={variant} gap={2}>
-          <Text size={1} weight="bold" style={{ textTransform: 'uppercase', letterSpacing: 0.6, opacity: 0.5 }}>
-            {variant}
-          </Text>
-          <TextField variant={variant} placeholder={`${capitalize(variant)} text field`} />
-        </Flex>
-      ))}
-    </Flex>
   )
 }
 
@@ -52,6 +28,19 @@ function ThemeColors() {
             <TextField variant={variant} placeholder="Accent color" color="blue" />
             <TextField variant={variant} placeholder="Gray color" color="gray" />
           </Flex>
+        </Flex>
+      ))}
+    </Flex>
+  )
+}
+
+function AllColors() {
+  return (
+    <Flex gap={3}>
+      {ALL_COLORS.map(color => (
+        <Flex key={color} gap={1}>
+          <RowLbl label={capitalize(color)} />
+          <TextField variant="soft" color={color as AccentColor} placeholder={capitalize(color)} />
         </Flex>
       ))}
     </Flex>
@@ -80,8 +69,8 @@ export function TextFieldSection() {
     <ComponentSection
       title="Text Field"
       tabs={[
-        { id: 'example',  label: 'Example',  render: () => <Specimen /> },
         { id: 'theme-colors', label: 'Theme colors', render: () => <ThemeColors /> },
+        { id: 'all-colors', label: 'All colors', render: () => <AllColors /> },
         { id: 'all-sizes', label: 'All sizes', render: () => <AllSizes /> },
       ]}
     />

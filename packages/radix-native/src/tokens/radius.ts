@@ -70,3 +70,12 @@ const RADIUS_THUMB: Record<RadiusToken, number> = {
 export function getRadiusThumb(token: RadiusToken): number {
   return RADIUS_THUMB[token]
 }
+
+/**
+ * Returns the raw radius factor for a token.
+ * none=0, small=0.75, medium=1, large=1.5, full=1.5.
+ * Used by Progress to compute height-relative radius.
+ */
+export function getRadiusFactor(token: RadiusToken): number {
+  return RADIUS_FACTOR[token]
+}

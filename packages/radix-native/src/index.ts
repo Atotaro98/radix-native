@@ -72,7 +72,16 @@ export {
   CheckboxGroup, type CheckboxGroupProps, type CheckboxGroupItemProps,
   CheckboxCards, type CheckboxCardsProps, type CheckboxCardsItemProps, type CheckboxCardsVariant,
   Switch, type SwitchProps, type SwitchSize, type SwitchVariant,
+  Radio, type RadioProps, type RadioSize, type RadioVariant,
+  RadioGroup, type RadioGroupProps, type RadioGroupItemProps,
+  RadioCards, type RadioCardsProps, type RadioCardsItemProps, type RadioCardsVariant,
 } from './components/actions'
+
+// Components — Feedback
+export {
+  Spinner, type SpinnerProps, type SpinnerSize,
+  Progress, type ProgressProps, type ProgressSize, type ProgressVariant,
+} from './components/feedback'
 
 // Components — Forms
 export {

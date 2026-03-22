@@ -85,12 +85,16 @@ These are the EXACT token mappings that intentionally differ between Radix web a
 | Feature | Radix web | Status |
 |---------|-----------|--------|
 | `ghost-offset` variant | Button/IconButton toolbar variant with negative margin | Not implemented |
-| `asChild` / Slot composition | Supported | Planned (Fase 0E) |
-| Haptic feedback | N/A (web) | Planned (Fase 0C) |
-| Press scale animation | N/A (web) | Planned (Fase 0D) |
+| Progress shine overlay | Indeterminate gradient sweep effect | Not implemented (requires LinearGradient) |
+| Spinner `currentColor` | Inherits CSS text color | Uses `gray-a11` (no CSS cascade in RN) |
+| `asChild` / Slot composition | Supported | Planned |
+| Haptic feedback | N/A (web) | Planned |
 | Responsive props | `{ initial, sm, md, lg, xl }` | Not planned (use `useWindowDimensions`) |
 | `Container` component | Centering container | Not implemented |
 | `Section` component | Semantic sections | Not implemented |
 | Dialog, Popover, Tooltip, etc. | Overlay components | Not implemented |
-| Radio, Select, Tabs, etc. | Selection components | Not implemented |
-| Skeleton, Spinner, Progress | Loading components | Not implemented |
+| Select, Tabs, SegmentedControl | Selection components | Not implemented |
+| Skeleton | Loading placeholder | Not implemented |
+| Slider | Range input | Not implemented |
+| Table, DataList | Data display | Not implemented |
+| ScrollArea | Custom scroll container | Not implemented |

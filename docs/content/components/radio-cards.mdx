@@ -1,0 +1,57 @@
+---
+metaTitle: Radio Cards
+metaDescription: Card-style radio grid with shared selection state.
+sourcePath: components/actions/RadioCards
+---
+
+# Radio Cards
+
+```tsx
+<RadioCards.Root columns={2} defaultValue="comfortable">
+  <RadioCards.Item value="compact">Compact</RadioCards.Item>
+  <RadioCards.Item value="comfortable">Comfortable</RadioCards.Item>
+  <RadioCards.Item value="spacious">Spacious</RadioCards.Item>
+</RadioCards.Root>
+```
+
+## API Reference
+
+### Root
+
+| Prop | Type | Default |
+|------|------|---------|
+| `size` | `1 \| 2 \| 3` | `2` |
+| `variant` | `'surface' \| 'classic'` | `'surface'` |
+| `color` | `AccentColor` | theme accent |
+| `highContrast` | `boolean` | — |
+| `columns` | `number` | `1` |
+| `gap` | `SpaceToken` | `4` |
+| `value` | `string` | — |
+| `defaultValue` | `string` | `''` |
+| `onValueChange` | `(value: string) => void` | — |
+| `disabled` | `boolean` | `false` |
+
+### Item
+
+| Prop | Type | Default |
+|------|------|---------|
+| `value` | `string` | **required** |
+| `disabled` | `boolean` | — |
+| `children` | `ReactNode` | card content |
+
+## Examples
+
+### Controlled
+
+```tsx
+function PlanSelector() {
+  const [plan, setPlan] = useState('free')
+  return (
+    <RadioCards.Root columns={3} value={plan} onValueChange={setPlan}>
+      <RadioCards.Item value="free">Free</RadioCards.Item>
+      <RadioCards.Item value="pro">Pro</RadioCards.Item>
+      <RadioCards.Item value="enterprise">Enterprise</RadioCards.Item>
+    </RadioCards.Root>
+  )
+}
+```

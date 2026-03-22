@@ -29,7 +29,8 @@ A React Native UI component library that mirrors the [Radix Themes](https://www.
 - **Layout**: Box, Flex, Grid, Separator, Card
 - **Typography**: Text, Heading, Link, Blockquote, Code, Em, Strong, Quote, Kbd
 - **Display**: Avatar, Badge
-- **Actions**: Button, IconButton, Checkbox, CheckboxGroup, CheckboxCards, Switch
+- **Actions**: Button, IconButton, Checkbox, CheckboxGroup, CheckboxCards, Switch, Radio, RadioGroup
+- **Feedback**: Spinner, Progress
 - **Forms**: TextField, TextArea
 
 **Theme system**: Nested themes, 26 accent colors, 6 gray scales, auto gray matching, dark/light mode, radius and scaling tokens.
