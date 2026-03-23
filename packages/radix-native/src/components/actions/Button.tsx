@@ -5,6 +5,7 @@ import type { StyleProp, ViewStyle, TextStyle, GestureResponderEvent } from 'rea
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
+import { resolveFont } from '../../utils/resolveFont'
 import { usePressScale } from '../../hooks/usePressScale'
 import { fontSize, lineHeight, letterSpacingEm } from '../../tokens/typography'
 import { scalingMap } from '../../tokens/scaling'
@@ -197,7 +198,10 @@ export function Button({
 
   // ─── Font family ───────────────────────────────────────────────────────────
   // Radix: only non-ghost uses font-weight: medium; ghost uses regular
-  const fontFamily = isGhost ? (fonts.regular) : (fonts.medium ?? fonts.regular)
+  const font = resolveFont(
+    isGhost ? fonts.regular : (fonts.medium ?? fonts.regular),
+    isGhost ? '400' : '500',
+  )
 
   // ─── Press handler ─────────────────────────────────────────────────────────
   const handlePress = useCallback(
@@ -290,8 +294,8 @@ export function Button({
               lineHeight: resolvedLineHeight,
               letterSpacing: resolvedLetterSpacing,
               color: colors.text,
-              fontWeight: isGhost ? '400' : '500',
-              fontFamily,
+              fontWeight: font.fontWeight,
+              fontFamily: font.fontFamily,
             }, colors.text)}
           </View>
           {/* Spinner overlay */}
@@ -305,8 +309,8 @@ export function Button({
           lineHeight: resolvedLineHeight,
           letterSpacing: resolvedLetterSpacing,
           color: colors.text,
-          fontWeight: isGhost ? '400' : '500',
-          fontFamily,
+          fontWeight: font.fontWeight,
+          fontFamily: font.fontFamily,
         }, colors.text)
       )}
     </Pressable>

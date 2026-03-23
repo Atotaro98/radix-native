@@ -4,6 +4,7 @@ import type { ViewStyle, TextStyle, StyleProp } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
+import { resolveFont } from '../../utils/resolveFont'
 import { fontSize, lineHeight, letterSpacingEm } from '../../tokens/typography'
 import { scalingMap } from '../../tokens/scaling'
 import { getRadius, getFullRadius } from '../../tokens/radius'
@@ -124,8 +125,7 @@ export function Badge({
     fontSize: resolvedFontSize,
     lineHeight: resolvedLineHeight,
     letterSpacing: resolvedLetterSpacing,
-    fontWeight: '500',
-    fontFamily: fonts.medium ?? fonts.regular,
+    ...resolveFont(fonts.medium ?? fonts.regular, '500'),
     color: colors.text,
   }), [resolvedFontSize, resolvedLineHeight, resolvedLetterSpacing, fonts, colors.text])
 

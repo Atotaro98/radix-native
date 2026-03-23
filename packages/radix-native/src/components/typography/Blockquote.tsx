@@ -4,6 +4,7 @@ import type { StyleProp, ViewStyle, TextStyle } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
+import { resolveFont, FONT_WEIGHT } from '../../utils/resolveFont'
 import { fontSize as fontSizeMap, lineHeight, letterSpacingEm } from '../../tokens/typography'
 import { scalingMap } from '../../tokens/scaling'
 import { space } from '../../tokens/spacing'
@@ -34,12 +35,6 @@ export interface BlockquoteProps extends NativeViewProps, MarginProps {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const FONT_WEIGHT: Record<TextWeight, NonNullable<TextStyle['fontWeight']>> = {
-  light:   '300',
-  regular: '400',
-  medium:  '500',
-  bold:    '700',
-}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -74,7 +69,7 @@ export function Blockquote({
     : rc('gray', 12)
 
   // ─── Font family ─────────────────────────────────────────────────────────────
-  const fontFamily = fonts[weight] ?? fonts.regular
+  const font = resolveFont(fonts[weight] ?? fonts.regular, FONT_WEIGHT[weight])
 
   // ─── Wrapping / truncation ──────────────────────────────────────────────────
   const numberOfLines = truncate ? 1 : wrap === 'nowrap' ? 1 : undefined
@@ -105,8 +100,8 @@ export function Blockquote({
     fontSize:      resolvedSize,
     lineHeight:    resolvedLineHeight,
     letterSpacing: resolvedLetterSpacing,
-    fontWeight:    FONT_WEIGHT[weight],
-    fontFamily,
+    fontWeight:    font.fontWeight,
+    fontFamily:    font.fontFamily,
     color:         textColor,
   }
 

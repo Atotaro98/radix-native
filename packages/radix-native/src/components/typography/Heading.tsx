@@ -4,6 +4,7 @@ import type { StyleProp, TextStyle } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
+import { resolveFont, FONT_WEIGHT } from '../../utils/resolveFont'
 import { fontSize, headingLineHeight, letterSpacingEm } from '../../tokens/typography'
 import { scalingMap } from '../../tokens/scaling'
 import type { FontSizeToken } from '../../tokens/typography'
@@ -42,12 +43,6 @@ export interface HeadingProps extends NativeTextProps, MarginProps {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const FONT_WEIGHT: Record<TextWeight, NonNullable<TextStyle['fontWeight']>> = {
-  light:   '300',
-  regular: '400',
-  medium:  '500',
-  bold:    '700',
-}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -85,7 +80,10 @@ export function Heading({
   // ─── Font family ─────────────────────────────────────────────────────────────
   // Heading prefers fonts.heading, then the specific weight's font, then bold, then regular.
   const effectiveWeight: TextWeight = weight ?? 'bold'
-  const fontFamily = fonts.heading ?? fonts[effectiveWeight] ?? fonts.bold ?? fonts.regular
+  const font = resolveFont(
+    fonts.heading ?? fonts[effectiveWeight] ?? fonts.bold ?? fonts.regular,
+    FONT_WEIGHT[weight],
+  )
 
   // ─── Wrapping / truncation ──────────────────────────────────────────────────
   const numberOfLines = truncate ? 1 : wrap === 'nowrap' ? 1 : undefined
@@ -98,11 +96,11 @@ export function Heading({
     letterSpacing:          resolvedLetterSpacing,
     color:                  textColor,
     textAlign:              align,
-    fontWeight:             FONT_WEIGHT[weight],
-    fontFamily,
+    fontWeight:             font.fontWeight,
+    fontFamily:             font.fontFamily,
     flexShrink:    1,
     ...margins,
-  }), [resolvedSize, resolvedLineHeight, resolvedLetterSpacing, textColor, align, weight, fontFamily, margins])
+  }), [resolvedSize, resolvedLineHeight, resolvedLetterSpacing, textColor, align, font.fontWeight, font.fontFamily, margins])
 
   return (
     <RNText

@@ -4,6 +4,7 @@ import type { StyleProp, TextStyle } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
+import { resolveFont, FONT_WEIGHT } from '../../utils/resolveFont'
 import { fontSize, lineHeight, letterSpacingEm } from '../../tokens/typography'
 import { scalingMap } from '../../tokens/scaling'
 import type { FontSizeToken } from '../../tokens/typography'
@@ -52,12 +53,6 @@ export interface LinkProps extends NativeTextProps, MarginProps {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const FONT_WEIGHT: Record<TextWeight, NonNullable<TextStyle['fontWeight']>> = {
-  light:   '300',
-  regular: '400',
-  medium:  '500',
-  bold:    '700',
-}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -92,7 +87,7 @@ export function Link({
 
   // ─── Font family ─────────────────────────────────────────────────────────────
   const effectiveWeight: TextWeight = weight ?? 'regular'
-  const fontFamily = fonts[effectiveWeight] ?? fonts.regular
+  const font = resolveFont(fonts[effectiveWeight] ?? fonts.regular, weight ? FONT_WEIGHT[weight] : undefined)
 
   // ─── Underline ──────────────────────────────────────────────────────────────
   // Radix CSS rules for .rt-underline-auto:
@@ -134,13 +129,13 @@ export function Link({
     lineHeight:    resolvedLineHeight,
     letterSpacing: resolvedLetterSpacing,
     color:         linkColor,
-    fontWeight:    weight ? FONT_WEIGHT[weight] : undefined,
-    fontFamily,
+    fontWeight:    font.fontWeight,
+    fontFamily:    font.fontFamily,
     textDecorationLine,
     textDecorationColor,
     flexShrink:    1,
     ...margins,
-  }), [resolvedSize, resolvedLineHeight, resolvedLetterSpacing, linkColor, weight, fontFamily, textDecorationLine, textDecorationColor, margins])
+  }), [resolvedSize, resolvedLineHeight, resolvedLetterSpacing, linkColor, font.fontWeight, font.fontFamily, textDecorationLine, textDecorationColor, margins])
 
   return (
     <RNText

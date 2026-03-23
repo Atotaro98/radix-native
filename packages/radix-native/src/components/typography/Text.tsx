@@ -4,6 +4,7 @@ import type { StyleProp, TextStyle } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
+import { resolveFont, FONT_WEIGHT } from '../../utils/resolveFont'
 import { fontSize, lineHeight, letterSpacingEm } from '../../tokens/typography'
 import { scalingMap } from '../../tokens/scaling'
 import type { FontSizeToken } from '../../tokens/typography'
@@ -50,12 +51,6 @@ export interface TextProps extends NativeTextProps, MarginProps {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const FONT_WEIGHT: Record<TextWeight, NonNullable<TextStyle['fontWeight']>> = {
-  light:   '300',
-  regular: '400',
-  medium:  '500',
-  bold:    '700',
-}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -93,7 +88,7 @@ export function Text({
   // Each weight maps to its own fontFamily — in RN, fontWeight alone doesn't
   // load a different font file; the fontFamily must be registered per weight.
   const effectiveWeight: TextWeight = weight ?? 'regular'
-  const fontFamily = fonts[effectiveWeight] ?? fonts.regular
+  const font = resolveFont(fonts[effectiveWeight] ?? fonts.regular, weight ? FONT_WEIGHT[weight] : undefined)
 
   // ─── Wrapping / truncation ──────────────────────────────────────────────────
   // truncate takes precedence over wrap
@@ -107,11 +102,11 @@ export function Text({
     letterSpacing: resolvedLetterSpacing,
     color:         textColor,
     textAlign:     align,
-    fontWeight:    weight ? FONT_WEIGHT[weight] : undefined,
-    fontFamily,
+    fontWeight:    font.fontWeight,
+    fontFamily:    font.fontFamily,
     flexShrink:    1,
     ...margins,
-  }), [resolvedSize, resolvedLineHeight, resolvedLetterSpacing, textColor, align, weight, fontFamily, margins])
+  }), [resolvedSize, resolvedLineHeight, resolvedLetterSpacing, textColor, align, font.fontWeight, font.fontFamily, margins])
 
   return (
     <RNText

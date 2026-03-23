@@ -3,6 +3,7 @@ import { Text as RNText } from 'react-native'
 import type { StyleProp, TextStyle } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useMargins } from '../../hooks/useMargins'
+import { resolveFont } from '../../utils/resolveFont'
 import type { TextWrap } from './Text'
 import type { NativeTextProps } from '../../types/nativeProps'
 import type { MarginProps } from '../../types/marginProps'
@@ -37,8 +38,7 @@ export function Strong({
   const ellipsizeMode = truncate ? 'tail' : wrap === 'nowrap' ? 'clip' : undefined
 
   const strongStyle: TextStyle = {
-    fontWeight: '700',
-    fontFamily: fonts.bold ?? fonts.regular,
+    ...resolveFont(fonts.bold ?? fonts.regular, '700'),
     // RN defaults flexShrink to 0; CSS defaults to 1. Without this, text
     // inside a Flex row overflows instead of wrapping to the available width.
     flexShrink:    1,

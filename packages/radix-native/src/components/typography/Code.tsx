@@ -4,6 +4,7 @@ import type { StyleProp, TextStyle } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
+import { resolveFont, FONT_WEIGHT } from '../../utils/resolveFont'
 import { fontSize, letterSpacingEm } from '../../tokens/typography'
 import { scalingMap } from '../../tokens/scaling'
 import { getRadius } from '../../tokens/radius'
@@ -42,12 +43,6 @@ export interface CodeProps extends NativeTextProps, MarginProps {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const FONT_WEIGHT: Record<TextWeight, NonNullable<TextStyle['fontWeight']>> = {
-  light:   '300',
-  regular: '400',
-  medium:  '500',
-  bold:    '700',
-}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -112,7 +107,7 @@ export function Code({
 
   // ─── Font family ─────────────────────────────────────────────────────────────
   const effectiveWeight: TextWeight = weight ?? 'regular'
-  const fontFamily = fonts.code ?? fonts[effectiveWeight] ?? fonts.regular
+  const font = resolveFont(fonts.code ?? fonts[effectiveWeight] ?? fonts.regular, weight ? FONT_WEIGHT[weight] : undefined)
 
   // ─── Wrapping / truncation ──────────────────────────────────────────────────
   const numberOfLines = truncate ? 1 : wrap === 'nowrap' ? 1 : undefined
@@ -127,8 +122,8 @@ export function Code({
   const codeStyle: TextStyle = {
     fontSize:         resolvedSize,
     letterSpacing:    resolvedLetterSpacing,
-    fontWeight:       weight ? FONT_WEIGHT[weight] : undefined,
-    fontFamily,
+    fontWeight:       font.fontWeight,
+    fontFamily:       font.fontFamily,
     color:            textColor,
     backgroundColor,
     borderRadius:     getRadius(radius, 1),

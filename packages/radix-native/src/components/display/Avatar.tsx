@@ -4,6 +4,7 @@ import type { ViewStyle, TextStyle, ImageStyle, StyleProp, ImageProps } from 're
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
+import { resolveFont } from '../../utils/resolveFont'
 import { scalingMap } from '../../tokens/scaling'
 import { getRadius, getFullRadius } from '../../tokens/radius'
 import type { RadiusToken, RadiusLevel } from '../../tokens/radius'
@@ -152,8 +153,7 @@ export function Avatar({
       fontSize: resolvedFontSize,
       letterSpacing: letterSpacingEm[fontToken] * resolvedFontSize,
       lineHeight: resolvedFontSize,
-      fontWeight: '500',
-      fontFamily: fonts.medium ?? fonts.regular,
+      ...resolveFont(fonts.medium ?? fonts.regular, '500'),
       textTransform: 'uppercase',
       color: colors.text,
     }

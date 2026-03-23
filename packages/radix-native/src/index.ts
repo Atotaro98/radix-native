@@ -33,6 +33,7 @@ export { applyScaling } from './utils/applyScaling'
 export { resolveSpace } from './utils/resolveSpace'
 export { resolveColor } from './utils/resolveColor'
 export { getClassicEffect } from './utils/classicEffect'
+export { resolveFont, FONT_WEIGHT } from './utils/resolveFont'
 
 // Components — Layout
 export { Box, type BoxProps } from './components/layout'

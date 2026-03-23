@@ -4,6 +4,7 @@ import type { StyleProp, ViewStyle, TextStyle } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
+import { resolveFont } from '../../utils/resolveFont'
 import { fontSize, letterSpacingEm } from '../../tokens/typography'
 import { scalingMap } from '../../tokens/scaling'
 import { getRadius } from '../../tokens/radius'
@@ -117,8 +118,7 @@ export function Kbd({
   const textStyle: TextStyle = {
     fontSize: kbdFontSize,
     // Radix uses the default (body) font, NOT monospace
-    fontFamily: fonts.regular,
-    fontWeight: '400',
+    ...resolveFont(fonts.regular, '400'),
     color: rc('gray', 12),
     letterSpacing: letterSpacingEm[size] * kbdFontSize,
   }
