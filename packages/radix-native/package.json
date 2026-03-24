@@ -42,7 +42,10 @@
     "dev": "unbuild --watch",
     "generate:colors": "tsx scripts/generate-colors.ts",
     "lint": "eslint src",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "release": "npm version patch && unbuild && npm publish",
+    "release:minor": "npm version minor && unbuild && npm publish",
+    "release:major": "npm version major && unbuild && npm publish"
   },
   "peerDependencies": {
     "react": ">=18.0.0",
