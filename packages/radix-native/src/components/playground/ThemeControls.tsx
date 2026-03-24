@@ -89,7 +89,7 @@ export function ThemeControls({ showCopyTheme, onCopyTheme, defaultOpen = false 
           },
         ]}
       >
-        <Text size={2} weight="bold" style={{ color: rc('gray-12') }}>T</Text>
+        <Text size={2} weight="bold" maxFontSizeMultiplier={1} style={{ color: rc('gray-12') }}>T</Text>
       </Pressable>
 
       {/* Sliding panel */}
@@ -106,14 +106,14 @@ export function ThemeControls({ showCopyTheme, onCopyTheme, defaultOpen = false 
         >
           {/* Header */}
           <View style={styles.headerRow}>
-            <Heading size={5} style={{ color: rc('gray-12') }}>Theme</Heading>
+            <Heading size={5} maxFontSizeMultiplier={1} style={{ color: rc('gray-12') }}>Theme</Heading>
             <Pressable
               onPress={toggle}
               accessibilityRole="button"
               accessibilityLabel="Close theme panel"
               style={[styles.closeButton, { borderColor: rc('gray-6') }]}
             >
-              <Text size={2} weight="bold" style={{ color: rc('gray-12') }}>T</Text>
+              <Text size={2} weight="bold" maxFontSizeMultiplier={1} style={{ color: rc('gray-12') }}>T</Text>
             </Pressable>
           </View>
 
@@ -205,7 +205,7 @@ export function ThemeControls({ showCopyTheme, onCopyTheme, defaultOpen = false 
               style={[styles.copyButton, { backgroundColor: rc('accent-9') }]}
               onPress={handleCopyTheme}
             >
-              <Text size={2} weight="bold" style={{ color: rc('accent-contrast') }}>
+              <Text size={2} weight="bold" maxFontSizeMultiplier={1} style={{ color: rc('accent-contrast') }}>
                 Copy Theme
               </Text>
             </Pressable>
@@ -223,7 +223,7 @@ type RC = (color: ThemeColor) => string
 
 function SectionLabel({ children, rc }: { children: string; rc: RC }) {
   return (
-    <Text size={2} weight="medium" style={{ color: rc('accent-11'), marginTop: 4 }}>
+    <Text size={2} weight="medium" maxFontSizeMultiplier={1} style={{ color: rc('accent-11'), marginTop: 4 }}>
       {children}
     </Text>
   )
@@ -263,8 +263,8 @@ function SegmentedButton({
         },
       ]}
     >
-      <Text size={2} style={{ color: rc('gray-12') }}>{icon}</Text>
-      <Text size={2} weight="medium" style={{ color: rc('gray-12') }}>{label}</Text>
+      <Text size={2} maxFontSizeMultiplier={1} style={{ color: rc('gray-12') }}>{icon}</Text>
+      <Text size={2} weight="medium" maxFontSizeMultiplier={1} style={{ color: rc('gray-12') }}>{label}</Text>
     </Pressable>
   )
 }
@@ -304,7 +304,7 @@ function RadiusPreview({
           ]}
         />
       </View>
-      <Text size={1} style={{ color: rc('gray-11'), textAlign: 'center' }}>{label}</Text>
+      <Text size={1} maxFontSizeMultiplier={1} style={{ color: rc('gray-11'), textAlign: 'center' }}>{label}</Text>
     </Pressable>
   )
 }
@@ -327,6 +327,7 @@ function Chip({
       <Text
         size={2}
         weight={selected ? 'bold' : 'regular'}
+        maxFontSizeMultiplier={1}
         style={{ color: rc('gray-12') }}
       >
         {label}

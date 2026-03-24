@@ -1,6 +1,7 @@
 import React from 'react'
 import { Text as RNText } from 'react-native'
 import type { StyleProp, TextStyle } from 'react-native'
+import { useThemeContext } from '../../hooks/useThemeContext'
 import { useMargins } from '../../hooks/useMargins'
 import type { TextWrap } from './Text'
 import type { NativeTextProps } from '../../types/nativeProps'
@@ -22,10 +23,13 @@ export interface EmProps extends NativeTextProps, MarginProps {
 export function Em({
   truncate,
   wrap,
+  maxFontSizeMultiplier,
   m, mx, my, mt, mr, mb, ml,
   style,
   ...rest
 }: EmProps) {
+  const { maxFontSizeMultiplier: globalMax } = useThemeContext()
+  const effectiveMaxFont = maxFontSizeMultiplier ?? globalMax
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
   const numberOfLines = truncate ? 1 : wrap === 'nowrap' ? 1 : undefined
@@ -43,6 +47,7 @@ export function Em({
     <RNText
       numberOfLines={numberOfLines}
       ellipsizeMode={ellipsizeMode}
+      maxFontSizeMultiplier={effectiveMaxFont}
       style={[emStyle, style]}
       {...rest}
     />

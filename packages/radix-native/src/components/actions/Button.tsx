@@ -36,6 +36,8 @@ export interface ButtonProps extends NativePressableProps, MarginProps {
   loading?: boolean
   /** Disables the button. */
   disabled?: boolean
+  /** Specifies the largest possible scale a font can reach. */
+  maxFontSizeMultiplier?: number
   /** Button content (usually a string). */
   children?: React.ReactNode
   style?: StyleProp<ViewStyle>
@@ -72,13 +74,15 @@ export function Button({
   radius: radiusProp,
   loading = false,
   disabled = false,
+  maxFontSizeMultiplier,
   children,
   m, mx, my, mt, mr, mb, ml,
   style,
   onPress,
   ...rest
 }: ButtonProps) {
-  const { appearance, scaling, fonts, radius: themeRadius } = useThemeContext()
+  const { appearance, scaling, fonts, radius: themeRadius, maxFontSizeMultiplier: globalMax } = useThemeContext()
+  const effectiveMaxFont = maxFontSizeMultiplier ?? globalMax ?? 2
   const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
   const { scaleStyle, handlePressIn: scalePressIn, handlePressOut: scalePressOut } = usePressScale(!disabled && !loading)
@@ -236,7 +240,7 @@ export function Button({
           justifyContent: 'center',
           alignSelf: 'flex-start',
           overflow: 'hidden',
-          height: isGhost ? undefined : resolvedHeight,
+          minHeight: isGhost ? undefined : resolvedHeight,
           paddingHorizontal: resolvedPaddingX,
           paddingVertical: isGhost ? resolvedPaddingY : undefined,
           gap: resolvedGap,
@@ -296,7 +300,7 @@ export function Button({
               color: colors.text,
               fontWeight: font.fontWeight,
               fontFamily: font.fontFamily,
-            }, colors.text)}
+            }, colors.text, effectiveMaxFont)}
           </View>
           {/* Spinner overlay */}
           <View style={{ position: 'absolute', alignItems: 'center', justifyContent: 'center' }}>
@@ -311,7 +315,7 @@ export function Button({
           color: colors.text,
           fontWeight: font.fontWeight,
           fontFamily: font.fontFamily,
-        }, colors.text)
+        }, colors.text, effectiveMaxFont)
       )}
     </Pressable>
     </Animated.View>
@@ -321,9 +325,9 @@ Button.displayName = 'Button'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function renderContent(children: React.ReactNode, textStyle: TextStyle, iconColor: string): React.ReactNode {
+function renderContent(children: React.ReactNode, textStyle: TextStyle, iconColor: string, maxFontSizeMultiplier?: number): React.ReactNode {
   if (typeof children === 'string' || typeof children === 'number') {
-    return <RNText style={textStyle}>{children}</RNText>
+    return <RNText style={textStyle} maxFontSizeMultiplier={maxFontSizeMultiplier}>{children}</RNText>
   }
   return React.Children.map(children, child =>
     React.isValidElement(child)

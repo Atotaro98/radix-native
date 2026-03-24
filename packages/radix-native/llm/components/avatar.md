@@ -19,6 +19,7 @@ import { Avatar } from 'radix-native'
 | color | `AccentColor` | theme accent | Accent color |
 | highContrast | `boolean` | — | Increases color contrast |
 | radius | `RadiusToken` | theme radius | Override border radius |
+| maxFontSizeMultiplier | `number` | — | Caps font scaling for fallback text |
 | m, mx, my, mt, mr, mb, ml | `MarginToken` | — | Margin spacing tokens |
 
 ## Size reference

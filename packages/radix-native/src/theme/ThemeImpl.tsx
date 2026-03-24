@@ -14,6 +14,7 @@ export function ThemeImpl({
   hasBackground: hasBackgroundProp,
   fonts: fontsProp,
   colorOverrides: colorOverridesProp,
+  maxFontSizeMultiplier: maxFontSizeMultiplierProp,
   children,
 }: ThemeProps) {
   // Always defined here — ThemeImpl is only rendered when context exists
@@ -43,6 +44,7 @@ export function ThemeImpl({
       scaling,
       fonts: fontsProp ?? parent.fonts,
       colorOverrides: resolvedColorOverrides,
+      maxFontSizeMultiplier: maxFontSizeMultiplierProp ?? parent.maxFontSizeMultiplier,
       // Handlers always bubble up to ThemeRoot
       onAppearanceChange: parent.onAppearanceChange,
       onAccentColorChange: parent.onAccentColorChange,
@@ -50,7 +52,7 @@ export function ThemeImpl({
       onRadiusChange: parent.onRadiusChange,
       onScalingChange: parent.onScalingChange,
     }),
-    [appearance, accentColor, grayColor, resolvedGrayColor, radius, scaling, fontsProp, resolvedColorOverrides, parent],
+    [appearance, accentColor, grayColor, resolvedGrayColor, radius, scaling, fontsProp, resolvedColorOverrides, maxFontSizeMultiplierProp, parent],
   )
 
   // Radix web: nested <Theme> gets hasBackground when it has an explicit

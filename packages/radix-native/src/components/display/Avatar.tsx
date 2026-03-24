@@ -167,7 +167,7 @@ export function Avatar({
       {/* Fallback: shown only when no src or image failed */}
       {showFallback && (
         typeof fallback === 'string' || typeof fallback === 'number'
-          ? <RNText style={textStyle}>{fallback}</RNText>
+          ? <RNText style={textStyle} maxFontSizeMultiplier={1}>{fallback}</RNText>
           : React.isValidElement(fallback)
             ? React.cloneElement(fallback as React.ReactElement<{ color?: string }>, { color: colors.text })
             : fallback

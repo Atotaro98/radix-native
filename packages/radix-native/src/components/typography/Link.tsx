@@ -66,11 +66,13 @@ export function Link({
   highContrast,
   href,
   onPress,
+  maxFontSizeMultiplier,
   m, mx, my, mt, mr, mb, ml,
   style,
   ...rest
 }: LinkProps) {
-  const { scaling, fonts } = useThemeContext()
+  const { scaling, fonts, maxFontSizeMultiplier: globalMax } = useThemeContext()
+  const effectiveMaxFont = maxFontSizeMultiplier ?? globalMax
   const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
@@ -142,6 +144,7 @@ export function Link({
       accessibilityRole="link"
       numberOfLines={numberOfLines}
       ellipsizeMode={ellipsizeMode}
+      maxFontSizeMultiplier={effectiveMaxFont}
       onPress={handlePress}
       style={[linkStyle, style]}
       {...rest}

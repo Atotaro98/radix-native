@@ -57,6 +57,8 @@ export interface CheckboxGroupItemProps extends MarginProps {
   value: string
   /** Disables this individual item. */
   disabled?: boolean
+  /** Specifies the largest possible scale a font can reach. */
+  maxFontSizeMultiplier?: number
   /** Label text or custom content. */
   children?: React.ReactNode
   style?: StyleProp<ViewStyle>
@@ -122,6 +124,7 @@ CheckboxGroupRoot.displayName = 'CheckboxGroup.Root'
 function CheckboxGroupItem({
   value: itemValue,
   disabled: disabledProp,
+  maxFontSizeMultiplier,
   children,
   m, mx, my, mt, mr, mb, ml,
   style,
@@ -130,7 +133,8 @@ function CheckboxGroupItem({
   if (!ctx) throw new Error('CheckboxGroup.Item must be used within CheckboxGroup.Root')
 
   const { size, variant, color, highContrast, disabled: groupDisabled, value, onItemToggle } = ctx
-  const { scaling, fonts } = useThemeContext()
+  const { scaling, fonts, maxFontSizeMultiplier: globalMax } = useThemeContext()
+  const effectiveMaxFont = maxFontSizeMultiplier ?? globalMax
   const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
@@ -204,7 +208,7 @@ function CheckboxGroupItem({
         />
       </View>
       {typeof children === 'string' || typeof children === 'number' ? (
-        <RNText style={labelStyle}>{children}</RNText>
+        <RNText style={labelStyle} maxFontSizeMultiplier={effectiveMaxFont}>{children}</RNText>
       ) : (
         children
       )}

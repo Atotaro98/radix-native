@@ -27,11 +27,13 @@ export interface StrongProps extends NativeTextProps, MarginProps {
 export function Strong({
   truncate,
   wrap,
+  maxFontSizeMultiplier,
   m, mx, my, mt, mr, mb, ml,
   style,
   ...rest
 }: StrongProps) {
-  const { fonts } = useThemeContext()
+  const { fonts, maxFontSizeMultiplier: globalMax } = useThemeContext()
+  const effectiveMaxFont = maxFontSizeMultiplier ?? globalMax
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
   const numberOfLines = truncate ? 1 : wrap === 'nowrap' ? 1 : undefined
@@ -49,6 +51,7 @@ export function Strong({
     <RNText
       numberOfLines={numberOfLines}
       ellipsizeMode={ellipsizeMode}
+      maxFontSizeMultiplier={effectiveMaxFont}
       style={[strongStyle, style]}
       {...rest}
     />

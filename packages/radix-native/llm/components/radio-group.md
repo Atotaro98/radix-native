@@ -34,6 +34,7 @@ import { RadioGroup } from 'radix-native'
 | value | `string` | **required** | Unique value |
 | disabled | `boolean` | — | Disables this item |
 | children | `ReactNode` | — | Label text |
+| maxFontSizeMultiplier | `number` | — | Caps font scaling for label text |
 
 ## Examples
 ```tsx

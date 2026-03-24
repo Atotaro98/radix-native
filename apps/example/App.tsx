@@ -42,7 +42,12 @@ export default function App() {
   }
 
   return (
-    <Theme accentColor="indigo" appearance="inherit" fonts={FONT_PRESETS[fontIndex].fonts}>
+    <Theme
+      accentColor="indigo"
+      appearance="inherit"
+      fonts={FONT_PRESETS[fontIndex].fonts}
+      maxFontSizeMultiplier={2}
+    >
       <Playground fontIndex={fontIndex} onFontChange={setFontIndex} />
     </Theme>
   )

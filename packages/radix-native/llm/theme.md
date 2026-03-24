@@ -9,6 +9,7 @@
   grayColor="auto"        // 'auto' | 'gray' | 'mauve' | 'slate' | 'sage' | 'olive' | 'sand'
   radius="medium"         // 'none' | 'small' | 'medium' | 'large' | 'full'
   scaling="100%"          // '90%' | '95%' | '100%' | '105%' | '110%'
+  maxFontSizeMultiplier={2} // RN-only: global cap for accessibility font scaling
   hasBackground           // applies background color to the root view
   fonts={{ regular: 'Inter-Regular', bold: 'Inter-Bold' }}
 >
@@ -44,6 +45,7 @@ function MyComponent() {
     radius,               // RadiusToken
     scaling,              // ScalingMode
     fonts,                // ThemeFonts
+    maxFontSizeMultiplier,// number | undefined — global cap
     // Change handlers:
     onAppearanceChange,
     onAccentColorChange,

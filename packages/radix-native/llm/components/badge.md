@@ -18,6 +18,7 @@ import { Badge } from 'radix-native'
 | highContrast | `boolean` | — | Increases color contrast |
 | radius | `RadiusToken` | theme radius | Override border radius |
 | children | `ReactNode` | — | Badge content (string auto-wrapped in Text) |
+| maxFontSizeMultiplier | `number` | `2` (fallback) | Caps font scaling for accessibility. Local prop > Theme global > 2 |
 | m, mx, my, mt, mr, mb, ml | `MarginToken` | — | Margin spacing tokens |
 
 ## Size reference

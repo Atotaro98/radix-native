@@ -21,6 +21,7 @@ import { Button } from 'radix-native'
 | disabled | `boolean` | `false` | Disables button |
 | children | `ReactNode` | — | Button content (string auto-wrapped in Text) |
 | m, mx, my, mt, mr, mb, ml | `MarginToken` | — | Margin spacing tokens |
+| maxFontSizeMultiplier | `number` | `2` (fallback) | Caps font scaling for accessibility. Local prop > Theme global > 2 |
 | onPress | `(e) => void` | — | Press handler |
 
 ## Examples

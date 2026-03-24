@@ -15,6 +15,8 @@ import { Heading } from 'radix-native'
 | align | `'left' \| 'center' \| 'right'` | — |
 | trim, truncate | same as Text | — |
 | color, highContrast | `AccentColor`, `boolean` | — |
+| maxFontSizeMultiplier | `number` | — |
+| allowFontScaling | `boolean` | `true` |
 | m, mx, my, mt, mr, mb, ml | `MarginToken` | — |
 
 ## Size reference

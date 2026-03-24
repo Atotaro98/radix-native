@@ -29,6 +29,8 @@ export interface BlockquoteProps extends NativeViewProps, MarginProps {
   truncate?: boolean
   /** Controls text wrapping. 'pretty'/'balance' are not supported in React Native, no-op. */
   wrap?: TextWrap
+  /** Specifies the largest possible scale a font can reach. */
+  maxFontSizeMultiplier?: number
   style?: StyleProp<ViewStyle>
   children?: React.ReactNode
 }
@@ -45,12 +47,14 @@ export function Blockquote({
   highContrast,
   truncate,
   wrap,
+  maxFontSizeMultiplier,
   m, mx, my, mt, mr, mb, ml,
   style,
   children,
   ...rest
 }: BlockquoteProps) {
-  const { scaling, fonts } = useThemeContext()
+  const { scaling, fonts, maxFontSizeMultiplier: globalMax } = useThemeContext()
+  const effectiveMaxFont = maxFontSizeMultiplier ?? globalMax
   const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
@@ -110,6 +114,7 @@ export function Blockquote({
       <RNText
         numberOfLines={numberOfLines}
         ellipsizeMode={ellipsizeMode}
+        maxFontSizeMultiplier={effectiveMaxFont}
         style={textStyle}
       >
         {children}

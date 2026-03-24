@@ -29,6 +29,8 @@ export interface BadgeProps extends NativeViewProps, MarginProps {
   highContrast?: boolean
   /** Override the theme radius. */
   radius?: RadiusToken
+  /** Specifies the largest possible scale a font can reach. */
+  maxFontSizeMultiplier?: number
   /** Badge content (usually a string). */
   children?: React.ReactNode
   style?: StyleProp<ViewStyle>
@@ -50,12 +52,14 @@ export function Badge({
   color,
   highContrast,
   radius: radiusProp,
+  maxFontSizeMultiplier,
   children,
   m, mx, my, mt, mr, mb, ml,
   style,
   ...rest
 }: BadgeProps) {
-  const { scaling, fonts, radius: themeRadius } = useThemeContext()
+  const { scaling, fonts, radius: themeRadius, maxFontSizeMultiplier: globalMax } = useThemeContext()
+  const effectiveMaxFont = maxFontSizeMultiplier ?? globalMax ?? 2
   const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
@@ -111,7 +115,7 @@ export function Badge({
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    height: resolvedHeight,
+    minHeight: resolvedHeight,
     paddingHorizontal: resolvedPaddingX,
     gap: resolvedGap,
     backgroundColor: colors.bg,
@@ -131,7 +135,7 @@ export function Badge({
 
   return (
     <View style={[containerStyle, style]} {...rest}>
-      {renderContent(children, textStyle)}
+      {renderContent(children, textStyle, effectiveMaxFont)}
     </View>
   )
 }
@@ -139,9 +143,9 @@ Badge.displayName = 'Badge'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function renderContent(children: React.ReactNode, textStyle: TextStyle): React.ReactNode {
+function renderContent(children: React.ReactNode, textStyle: TextStyle, maxFontSizeMultiplier?: number): React.ReactNode {
   if (typeof children === 'string' || typeof children === 'number') {
-    return <RNText style={textStyle}>{children}</RNText>
+    return <RNText style={textStyle} maxFontSizeMultiplier={maxFontSizeMultiplier}>{children}</RNText>
   }
   return children
 }

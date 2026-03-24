@@ -14,6 +14,8 @@ import { Code } from 'radix-native'
 | variant | `'solid' \| 'soft' \| 'outline' \| 'ghost'` | `'soft'` |
 | weight | `'light' \| 'regular' \| 'medium' \| 'bold'` | `'regular'` |
 | color, highContrast | `AccentColor`, `boolean` | — |
+| maxFontSizeMultiplier | `number` | — |
+| allowFontScaling | `boolean` | `true` |
 
 ## Examples
 ```tsx

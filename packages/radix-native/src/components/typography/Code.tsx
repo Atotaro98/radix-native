@@ -61,11 +61,13 @@ export function Code({
   highContrast,
   truncate,
   wrap,
+  maxFontSizeMultiplier,
   m, mx, my, mt, mr, mb, ml,
   style,
   ...rest
 }: CodeProps) {
-  const { scaling, fonts, radius } = useThemeContext()
+  const { scaling, fonts, radius, maxFontSizeMultiplier: globalMax } = useThemeContext()
+  const effectiveMaxFont = maxFontSizeMultiplier ?? globalMax
   const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
@@ -141,6 +143,7 @@ export function Code({
     <RNText
       numberOfLines={numberOfLines}
       ellipsizeMode={ellipsizeMode}
+      maxFontSizeMultiplier={effectiveMaxFont}
       style={[codeStyle, style]}
       {...rest}
     />

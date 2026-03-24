@@ -36,7 +36,7 @@ function RowLbl({ label }: { label: string }) {
 }
 
 function Icon({ color }: { color?: string }) {
-  return <Text style={{ color, fontSize: 14 }}>{ICON}</Text>
+  return <Text maxFontSizeMultiplier={1} style={{ color, fontSize: 14 }}>{ICON}</Text>
 }
 
 function ThemeColors() {

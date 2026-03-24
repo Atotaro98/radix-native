@@ -14,6 +14,7 @@ export function ThemeRoot({
   hasBackground: hasBackgroundProp = true,
   fonts: fontsProp = {},
   colorOverrides: colorOverridesProp = {},
+  maxFontSizeMultiplier: maxFontSizeMultiplierProp,
   children,
 }: ThemeProps) {
   const systemColorScheme = useColorScheme()
@@ -53,13 +54,14 @@ export function ThemeRoot({
       scaling,
       fonts: fontsProp,
       colorOverrides: colorOverridesProp,
+      maxFontSizeMultiplier: maxFontSizeMultiplierProp,
       onAppearanceChange: setAppearance,
       onAccentColorChange: setAccentColor,
       onGrayColorChange: setGrayColor,
       onRadiusChange: setRadius,
       onScalingChange: setScaling,
     }),
-    [appearance, accentColor, grayColor, resolvedGrayColor, radius, scaling, fontsProp, colorOverridesProp],
+    [appearance, accentColor, grayColor, resolvedGrayColor, radius, scaling, fontsProp, colorOverridesProp, maxFontSizeMultiplierProp],
   )
 
   const backgroundColor = hasBackgroundProp

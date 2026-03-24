@@ -57,6 +57,8 @@ export interface RadioGroupItemProps extends MarginProps {
   value: string
   /** Disables this item. */
   disabled?: boolean
+  /** Specifies the largest possible scale a font can reach. */
+  maxFontSizeMultiplier?: number
   /** Label text or custom content. */
   children?: React.ReactNode
   style?: StyleProp<ViewStyle>
@@ -119,6 +121,7 @@ RadioGroupRoot.displayName = 'RadioGroup.Root'
 function RadioGroupItem({
   value: itemValue,
   disabled: disabledProp,
+  maxFontSizeMultiplier,
   children,
   m, mx, my, mt, mr, mb, ml,
   style,
@@ -127,7 +130,8 @@ function RadioGroupItem({
   if (!ctx) throw new Error('RadioGroup.Item must be used within RadioGroup.Root')
 
   const { size, variant, color, highContrast, disabled: groupDisabled, value, onItemSelect } = ctx
-  const { scaling, fonts } = useThemeContext()
+  const { scaling, fonts, maxFontSizeMultiplier: globalMax } = useThemeContext()
+  const effectiveMaxFont = maxFontSizeMultiplier ?? globalMax
   const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
@@ -201,7 +205,7 @@ function RadioGroupItem({
         />
       </View>
       {typeof children === 'string' || typeof children === 'number' ? (
-        <RNText style={labelStyle}>{children}</RNText>
+        <RNText style={labelStyle} maxFontSizeMultiplier={effectiveMaxFont}>{children}</RNText>
       ) : (
         children
       )}

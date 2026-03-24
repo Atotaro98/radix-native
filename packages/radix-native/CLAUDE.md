@@ -130,6 +130,7 @@ export function MyComponent({ size, variant, color, ..., m, mx, my, ..., style, 
   grayColor="auto"        // 'auto' | 6 gray variants
   radius="medium"         // 'none' | 'small' | 'medium' | 'large' | 'full'
   scaling="100%"          // '90%' | '95%' | '100%' | '105%' | '110%'
+  maxFontSizeMultiplier={2} // RN-only: global cap for accessibility font scaling
 >
   <App />
 </Theme>
@@ -139,7 +140,35 @@ Access via `useThemeContext()` which returns:
 - `appearance` (resolved: always `'light' | 'dark'`)
 - `accentColor`, `grayColor`, `resolvedGrayColor`, `radius`, `scaling`
 - `fonts` (ThemeFonts)
+- `maxFontSizeMultiplier` (optional global cap)
 - Change handlers: `onAppearanceChange`, `onAccentColorChange`, etc.
+
+## Font scaling (accessibility)
+
+All text components support `maxFontSizeMultiplier` and `allowFontScaling` props (from `NativeTextProps`).
+Components with internal text (Button, Badge, Kbd, Avatar, etc.) expose `maxFontSizeMultiplier` in their own interface.
+
+Priority: **local prop > global Theme prop > undefined (no limit)**
+
+Compact components (Button, Badge, Kbd) use `minHeight` instead of `height` so they grow with font scaling.
+Their `maxFontSizeMultiplier` defaults to `2` when neither local nor global is set (WCAG AA 200%).
+
+```tsx
+// Global cap — applies to all text components
+<Theme maxFontSizeMultiplier={1.5}>
+  <Button>Capped at 1.5x</Button>
+  <Button maxFontSizeMultiplier={2}>This one overrides to 2x</Button>
+  <Text>Also capped at 1.5x</Text>
+</Theme>
+
+// No global — components use their own defaults
+<Theme>
+  <Button>Default 2x cap (compact component)</Button>
+  <Text>No cap (body text)</Text>
+</Theme>
+```
+
+ThemeControls (dev tool) hardcodes `maxFontSizeMultiplier={1}` on all internal text.
 
 ## Tokens
 

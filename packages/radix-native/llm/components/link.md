@@ -17,6 +17,8 @@ import { Link } from 'radix-native'
 | underline | `'auto' \| 'always' \| 'hover' \| 'none'` | `'auto'` |
 | color, highContrast | `AccentColor`, `boolean` | — |
 | truncate | `boolean` | — |
+| maxFontSizeMultiplier | `number` | — |
+| allowFontScaling | `boolean` | `true` |
 
 ## Examples
 ```tsx

@@ -26,6 +26,8 @@ export interface KbdProps extends MarginProps {
   size?: FontSizeToken
   /** Visual variant. Default: `'classic'`. */
   variant?: KbdVariant
+  /** Specifies the largest possible scale a font can reach. */
+  maxFontSizeMultiplier?: number
   style?: StyleProp<ViewStyle>
   children?: React.ReactNode
 }
@@ -47,11 +49,13 @@ export interface KbdProps extends MarginProps {
 export function Kbd({
   size = 2,
   variant = 'classic',
+  maxFontSizeMultiplier,
   m, mx, my, mt, mr, mb, ml,
   style,
   children,
 }: KbdProps) {
-  const { scaling, fonts, radius } = useThemeContext()
+  const { scaling, fonts, radius, maxFontSizeMultiplier: globalMax } = useThemeContext()
+  const effectiveMaxFont = maxFontSizeMultiplier ?? globalMax ?? 2
   const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
@@ -82,7 +86,7 @@ export function Kbd({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    height: kbdHeight,
+    minHeight: kbdHeight,
     minWidth: minW,
     paddingHorizontal: ph,
     paddingBottom: pb,
@@ -141,7 +145,7 @@ export function Kbd({
   return (
     <View style={[containerStyle, style]}>
       {highlightStyle && <View style={highlightStyle} />}
-      <RNText style={textStyle}>{children}</RNText>
+      <RNText style={textStyle} maxFontSizeMultiplier={effectiveMaxFont}>{children}</RNText>
     </View>
   )
 }

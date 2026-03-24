@@ -54,12 +54,14 @@ export function Heading({
   wrap,
   color,
   highContrast,
+  maxFontSizeMultiplier,
   m, mx, my, mt, mr, mb, ml,
   style,
   children,
   ...rest
 }: HeadingProps) {
-  const { scaling, fonts } = useThemeContext()
+  const { scaling, fonts, maxFontSizeMultiplier: globalMax } = useThemeContext()
+  const effectiveMaxFont = maxFontSizeMultiplier ?? globalMax
   const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
@@ -107,6 +109,7 @@ export function Heading({
       accessibilityRole="header"
       numberOfLines={numberOfLines}
       ellipsizeMode={ellipsizeMode}
+      maxFontSizeMultiplier={effectiveMaxFont}
       style={[headingStyle, style]}
       {...rest}
     >

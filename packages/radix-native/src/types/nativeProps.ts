@@ -57,5 +57,9 @@ export interface NativeTextProps {
   accessibilityHint?: string
   accessibilityRole?: AccessibilityRole
   selectable?: boolean
+  /** Specifies whether fonts should scale to respect Text Size accessibility settings. Default: true. */
+  allowFontScaling?: boolean
+  /** Specifies the largest possible scale a font can reach when allowFontScaling is enabled. */
+  maxFontSizeMultiplier?: number
   onPress?: (event: GestureResponderEvent) => void
 }

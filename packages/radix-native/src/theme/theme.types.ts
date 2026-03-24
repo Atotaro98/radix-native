@@ -79,6 +79,8 @@ export interface ThemeContextValue extends ThemeChangeHandlers {
   fonts: ThemeFonts
   /** RN-only: override individual color steps */
   colorOverrides: ColorOverrides
+  /** RN-only: global cap for font scaling (accessibility). Components use this as fallback when no local prop is set. */
+  maxFontSizeMultiplier?: number
 }
 
 export interface ThemeProps {
@@ -97,5 +99,7 @@ export interface ThemeProps {
   fonts?: ThemeFonts
   /** RN-only */
   colorOverrides?: ColorOverrides
+  /** RN-only: global cap for font scaling. Applied to all text unless overridden per-component. */
+  maxFontSizeMultiplier?: number
   children: React.ReactNode
 }

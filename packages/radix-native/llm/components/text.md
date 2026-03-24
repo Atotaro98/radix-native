@@ -20,6 +20,8 @@ import { Text } from 'radix-native'
 | truncate | `boolean` | — | Truncate with ellipsis (single line) |
 | color | `AccentColor` | — | Override text color |
 | highContrast | `boolean` | — | Use step 12 instead of 11 for colored text |
+| maxFontSizeMultiplier | `number` | — | Caps font scaling. Falls back to Theme global if not set |
+| allowFontScaling | `boolean` | `true` | Whether fonts scale with accessibility settings |
 | m, mx, my, mt, mr, mb, ml | `MarginToken` | — | Margin spacing tokens |
 
 ## Size reference
