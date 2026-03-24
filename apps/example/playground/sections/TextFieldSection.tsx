@@ -8,42 +8,80 @@ import { ALL_COLORS } from '../constants'
 const VARIANTS: TextFieldVariant[] = ['classic', 'surface', 'soft']
 const SIZES: TextFieldSize[] = [1, 2, 3]
 
+function ColHeader({ label }: { label: string }) {
+  const rc = useResolveColor()
+  return (
+    <Text size={2} weight="medium" maxFontSizeMultiplier={1} style={{ color: rc('gray-11'), textAlign: 'center' }}>
+      {label}
+    </Text>
+  )
+}
+
 function RowLbl({ label }: { label: string }) {
   const rc = useResolveColor()
   return (
-    <Box width={72} flexShrink={0}>
-      <Text size={2} style={{ color: rc('gray-11') }}>{label}</Text>
-    </Box>
+    <Text size={2} maxFontSizeMultiplier={1} style={{ color: rc('gray-11') }}>
+      {label}
+    </Text>
   )
 }
 
 function ThemeColors() {
   return (
-    <Flex gap={3}>
-      {VARIANTS.map(variant => (
-        <Flex key={variant} gap={2}>
-          <RowLbl label={capitalize(variant)} />
-          <Flex gap={2}>
-            <TextField variant={variant} placeholder="Default" />
-            <TextField variant={variant} placeholder="Accent color" color="blue" />
-            <TextField variant={variant} placeholder="Gray color" color="gray" />
-          </Flex>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+      <Flex gap={3}>
+        {/* Column headers */}
+        <Flex direction="row" align="center" gap={2}>
+          <Box minWidth={72} flexShrink={0} />
+          <Flex style={{ flex: 1 }} align="center"><ColHeader label="Accent" /></Flex>
+          <Flex style={{ flex: 1 }} align="center"><ColHeader label="Gray" /></Flex>
+          <Flex style={{ flex: 1 }} align="center"><ColHeader label="Disabled" /></Flex>
+          <Flex style={{ flex: 1 }} align="center"><ColHeader label="Read-only" /></Flex>
         </Flex>
-      ))}
-    </Flex>
+
+        {/* Rows */}
+        {VARIANTS.map(variant => (
+          <Flex key={variant} direction="row" align="center" gap={2}>
+            <Box minWidth={72} flexShrink={0}>
+              <RowLbl label={capitalize(variant)} />
+            </Box>
+            <Box style={{ flex: 1 }}>
+              <TextField variant={variant} placeholder="Search" />
+            </Box>
+            <Box style={{ flex: 1 }}>
+              <TextField variant={variant} placeholder="Search" color="gray" />
+            </Box>
+            <Box style={{ flex: 1 }}>
+              <TextField variant={variant} disabled value="Quick brown fox" />
+            </Box>
+            <Box style={{ flex: 1 }}>
+              <TextField variant={variant} editable={false} value="Quick brown fox" />
+            </Box>
+          </Flex>
+        ))}
+      </Flex>
+    </ScrollView>
   )
 }
 
 function AllColors() {
   return (
-    <Flex gap={3}>
-      {ALL_COLORS.map(color => (
-        <Flex key={color} gap={1}>
-          <RowLbl label={capitalize(color)} />
-          <TextField variant="soft" color={color as AccentColor} placeholder={capitalize(color)} />
-        </Flex>
-      ))}
-    </Flex>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+      <Flex gap={3}>
+        {ALL_COLORS.map(color => (
+          <Flex key={color} direction="row" align="center" gap={2}>
+            <Box minWidth={72} flexShrink={0}>
+              <RowLbl label={capitalize(color)} />
+            </Box>
+            {VARIANTS.map(variant => (
+              <Box key={variant} style={{ flex: 1 }}>
+                <TextField variant={variant} color={color as AccentColor} placeholder="Search" />
+              </Box>
+            ))}
+          </Flex>
+        ))}
+      </Flex>
+    </ScrollView>
   )
 }
 
@@ -52,7 +90,7 @@ function AllSizes() {
     <Flex gap={5}>
       {VARIANTS.map(variant => (
         <Flex key={variant} gap={3}>
-          <Text size={1} weight="bold" style={{ textTransform: 'uppercase', letterSpacing: 0.6, opacity: 0.5 }}>
+          <Text size={1} weight="bold" maxFontSizeMultiplier={1} style={{ textTransform: 'uppercase', letterSpacing: 0.6, opacity: 0.5 }}>
             {variant}
           </Text>
           {SIZES.map(size => (

@@ -27,6 +27,8 @@ export interface TextFieldProps extends Omit<TextInputProps, 'style'>, MarginPro
   radius?: RadiusToken
   /** Disables the input. */
   disabled?: boolean
+  /** Specifies the largest possible scale a font can reach. */
+  maxFontSizeMultiplier?: number
   style?: StyleProp<ViewStyle>
 }
 
@@ -45,13 +47,15 @@ export function TextField({
   color,
   radius: radiusProp,
   disabled = false,
+  maxFontSizeMultiplier,
   m, mx, my, mt, mr, mb, ml,
   style,
   onFocus: onFocusProp,
   onBlur: onBlurProp,
   ...rest
 }: TextFieldProps) {
-  const { scaling, fonts, radius: themeRadius } = useThemeContext()
+  const { scaling, fonts, radius: themeRadius, maxFontSizeMultiplier: globalMax } = useThemeContext()
+  const effectiveMaxFont = maxFontSizeMultiplier ?? globalMax ?? 1.5
   const rc = useResolveColor()
   const [focused, setFocused] = useState(false)
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
@@ -89,7 +93,7 @@ export function TextField({
     switch (variant) {
       case 'classic':
         return {
-          bg: rc('gray', 1),
+          bg: rc('gray', 'surface'),
           border: focused ? focusBorder : rc('gray', 'a7'),
           text: rc('gray', 12),
           placeholder: rc('gray', 'a10'),
@@ -103,14 +107,20 @@ export function TextField({
           placeholder: rc('gray', 'a10'),
           placeholderOpacity: 1,
         }
-      case 'soft':
+      case 'soft': {
+        // Radix: placeholder is accent-12 at 60% opacity
+        const placeholderBase = rc(prefix, 12)
+        const placeholderColor = placeholderBase.startsWith('#')
+          ? placeholderBase + '99' // 0.6 * 255 ≈ 153 = 0x99
+          : placeholderBase
         return {
           bg: rc(prefix, 'a3'),
           border: focused ? focusBorder : 'transparent',
           text: rc(prefix, 12),
-          placeholder: rc(prefix, 'a10'),
+          placeholder: placeholderColor,
           placeholderOpacity: 1,
         }
+      }
     }
   }, [variant, prefix, focused, disabled, rc])
 
@@ -128,7 +138,7 @@ export function TextField({
 
   // ─── Styles ────────────────────────────────────────────────────────────────
   const containerStyle: ViewStyle = {
-    height: resolvedHeight,
+    minHeight: resolvedHeight,
     borderRadius,
     backgroundColor: colors.bg,
     borderWidth: 1,
@@ -139,9 +149,8 @@ export function TextField({
   }
 
   const inputStyle: TextStyle = {
-    flex: 1,
+    width: '100%',
     fontSize: resolvedFontSize,
-    lineHeight: resolvedLineHeight,
     letterSpacing: resolvedLetterSpacing,
     color: colors.text,
     fontFamily: fonts.regular,
@@ -154,6 +163,7 @@ export function TextField({
       <TextInput
         style={inputStyle}
         placeholderTextColor={colors.placeholder}
+        maxFontSizeMultiplier={effectiveMaxFont}
         onFocus={onFocus}
         onBlur={onBlur}
         editable={!disabled}
