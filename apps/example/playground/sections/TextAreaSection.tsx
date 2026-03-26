@@ -1,5 +1,5 @@
 import React from 'react'
-import { TextArea, Flex, Box, Text, useResolveColor } from 'radix-native'
+import { TextArea, Flex, Box, Text, useColor } from 'radix-native'
 import type { TextAreaSize, TextAreaVariant, AccentColor } from 'radix-native'
 import { ComponentSection } from '../ui'
 import { ALL_COLORS } from '../constants'
@@ -8,10 +8,10 @@ const VARIANTS: TextAreaVariant[] = ['classic', 'surface', 'soft']
 const SIZES: TextAreaSize[] = [1, 2, 3]
 
 function RowLbl({ label }: { label: string }) {
-  const rc = useResolveColor()
+  const color = useColor('gray-11')
   return (
     <Box width={72} flexShrink={0}>
-      <Text size={2} style={{ color: rc('gray-11') }}>{label}</Text>
+      <Text size={2} style={{ color }}>{label}</Text>
     </Box>
   )
 }

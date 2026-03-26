@@ -48,11 +48,11 @@ When `'auto'`, the gray scale automatically matches the accent color:
 ## Using colors in code
 
 ```tsx
-const rc = useResolveColor()
+import { useColor } from 'radix-native'
 
-rc('accent', 9)         // theme accent, step 9
-rc('accent', 'a3')      // alpha step 3
-rc('accent', 'contrast') // contrast text
-rc('gray', 'surface')   // gray surface
-rc('blue', 5)           // specific named color
+const accent9 = useColor('accent', 9)          // theme accent, step 9
+const softBg = useColor('accent', 'a3')        // alpha step 3
+const text = useColor('accent', 'contrast')     // contrast text
+const surface = useColor('gray', 'surface')     // gray surface
+const blue5 = useColor('blue', 5)              // specific named color
 ```

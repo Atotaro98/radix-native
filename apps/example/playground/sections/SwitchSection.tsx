@@ -1,6 +1,6 @@
 import React from 'react'
 import { ScrollView } from 'react-native'
-import { Switch, Flex, Box, Text, useResolveColor } from 'radix-native'
+import { Switch, Flex, Box, Text, useColor } from 'radix-native'
 import type { SwitchSize, SwitchVariant, AccentColor } from 'radix-native'
 import { ComponentSection } from '../ui'
 import { ALL_COLORS } from '../constants'
@@ -9,19 +9,19 @@ const VARIANTS: SwitchVariant[] = ['classic', 'surface', 'soft']
 const SIZES: SwitchSize[] = [1, 2, 3]
 
 function ColHeader({ label, center }: { label: string; center?: boolean }) {
-  const rc = useResolveColor()
+  const color = useColor('gray-9')
   return (
-    <Text size={1} weight="medium" style={{ color: rc('gray-9'), textAlign: center ? 'center' : undefined }}>
+    <Text size={1} weight="medium" style={{ color, textAlign: center ? 'center' : undefined }}>
       {label}
     </Text>
   )
 }
 
 function RowLbl({ label }: { label: string }) {
-  const rc = useResolveColor()
+  const color = useColor('gray-11')
   return (
     <Box width={72} flexShrink={0}>
-      <Text size={2} style={{ color: rc('gray-11') }}>{label}</Text>
+      <Text size={2} style={{ color }}>{label}</Text>
     </Box>
   )
 }

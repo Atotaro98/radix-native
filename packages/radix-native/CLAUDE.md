@@ -8,7 +8,7 @@ Same prop names, same variants, same tokens. Web devs use it instantly.
 ```
 packages/radix-native/src/
   theme/          ThemeRoot (stateful) + ThemeImpl (inheritable) + Theme (public)
-  hooks/          useThemeContext, useResolveColor, useResolveSpace, useMargins
+  hooks/          useThemeContext, useColor, useResolveColor (internal), useResolveSpace, useMargins
   tokens/         colors/ (31 scales), spacing, typography, radius, scaling
   types/          nativeProps, marginProps
   utils/          resolveColor, resolveSpace, applyScaling, classicEffect
@@ -30,20 +30,24 @@ Never add external deps — this is a hard rule.
 
 ## Key patterns
 
-### Color resolution — `rc(color, step)`
+### Color resolution — `useColor(color, step)`
+
+**Public API** (`useColor`): resolves a single color token per call. Used by consumers.
 
 ```tsx
-const rc = useResolveColor()
+import { useColor } from 'radix-native'
 
-// Two-param form (preferred — type-safe, no casts):
-rc('accent', 9)        // theme accent at step 9
-rc(prefix, 'a3')       // alpha step
-rc('gray', 'surface')  // special step
-rc(prefix, 'contrast') // contrast text
+// Two-param form (preferred):
+const bg = useColor('accent', 9)           // theme accent at step 9
+const alpha = useColor('accent', 'a3')     // alpha step
+const surface = useColor('gray', 'surface') // special step
+const text = useColor('accent', 'contrast') // contrast text
 
-// Single-param form (for static tokens):
-rc('gray-1')
+// Single-param form:
+const gray1 = useColor('gray-1')
 ```
+
+**Internal** (`useResolveColor`): returns a resolver function for components that resolve many colors in one `useMemo`. Not exported publicly.
 
 Steps: solid `1-12` (numbers), alpha `'a1'-'a12'` (strings), special `'contrast' | 'surface'`.
 
@@ -105,7 +109,7 @@ const colors = useMemo(() => {
 ```tsx
 export function MyComponent({ size, variant, color, ..., m, mx, my, ..., style, ...rest }) {
   const { scaling, fonts, radius: themeRadius } = useThemeContext()
-  const rc = useResolveColor()
+  const rc = useResolveColor() // internal hook — not exported
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
   const prefix = color ?? 'accent'
@@ -178,7 +182,7 @@ ThemeControls (dev tool) hardcodes `maxFontSizeMultiplier={1}` on all internal t
 | Font size | 1-9 → 12, 14, 16, 18, 20, 24, 28, 35, 60 px | `fontSize[token] * scalingFactor` |
 | Radius | none/small/medium/large/full | `getRadius(token, level)` |
 | Scaling | 90%-110% | `scalingMap[mode]` → 0.9-1.1 |
-| Colors | 31 scales × 12 solid + 12 alpha + contrast + surface | `rc(name, step)` |
+| Colors | 31 scales × 12 solid + 12 alpha + contrast + surface | `useColor(name, step)` |
 
 ## Press scale animation
 
@@ -215,7 +219,7 @@ See `llm/differences.md` for the complete list of API changes, visual difference
 ## TypeScript rules
 
 - **Never use `any`** — use specific types or `unknown`
-- **Never use `as ThemeColor`** — use the 2-param `rc(color, step)` form
+- **Never use `as ThemeColor`** — use the 2-param `useColor(color, step)` form (or `rc(color, step)` internally)
 - All styles should be memoized with `useMemo`
 - All handlers should be wrapped in `useCallback`
 - Interfaces extend `MarginProps` for margin props (not individual declarations)

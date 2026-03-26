@@ -28,19 +28,9 @@ export interface ResolveColorFn {
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 /**
- * Returns a resolver function bound to the current theme context.
- * Supports two calling styles:
- *
- * @example
- * const rc = useResolveColor()
- *
- * // Two-param (preferred — no casts, works with dynamic prefix):
- * rc('accent', 9)
- * rc(prefix, 'a3')
- * rc('gray', 'surface')
- *
- * // Single-param (for static tokens):
- * rc('gray-1')
+ * Internal hook — returns a memoized resolver function for components
+ * that resolve many colors inside a single `useMemo`.
+ * Not exported publicly — consumers should use `useColor` instead.
  */
 export function useResolveColor(): ResolveColorFn {
   const { appearance, accentColor, resolvedGrayColor, colorOverrides } = useThemeContext()

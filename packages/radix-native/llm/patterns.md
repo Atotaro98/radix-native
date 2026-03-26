@@ -5,20 +5,17 @@ Patterns shared by all radix-native components. Use these when building custom c
 ## Color resolution
 
 ```tsx
-import { useResolveColor } from 'radix-native'
-
-const rc = useResolveColor()
+import { useColor } from 'radix-native'
 
 // Two-param form (preferred):
-rc('accent', 9)         // solid background
-rc('accent', 'a3')      // soft background
-rc('accent', 'contrast') // text on solid bg
-rc('accent', 'surface')  // translucent surface
-rc('gray', 'a7')         // border color
+const bg = useColor('accent', 9)          // solid background
+const softBg = useColor('accent', 'a3')   // soft background
+const text = useColor('accent', 'contrast') // text on solid bg
+const surface = useColor('accent', 'surface') // translucent surface
+const border = useColor('gray', 'a7')     // border color
 
-// With dynamic prefix:
-const prefix = color ?? 'accent'
-rc(prefix, 9)            // no casts needed
+// Single-param form:
+const gray1 = useColor('gray-1')
 ```
 
 ## Margin props

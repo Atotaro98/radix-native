@@ -40,17 +40,15 @@ Every component accepts margin shorthand props:
 
 ## Color resolution
 
-Use `useResolveColor` to access theme colors in custom components:
+Use `useColor` to access theme colors in custom components:
 
 ```tsx
-import { useResolveColor } from 'radix-native'
+import { useColor } from 'radix-native'
 
 function MyComponent() {
-  const rc = useResolveColor()
-
-  const bg = rc('accent', 9)        // theme accent at step 9
-  const border = rc('gray', 'a6')   // gray alpha step 6
-  const text = rc('accent', 'contrast') // text on accent-9 bg
+  const bg = useColor('accent', 9)           // theme accent at step 9
+  const border = useColor('gray', 'a6')      // gray alpha step 6
+  const text = useColor('accent', 'contrast') // text on accent-9 bg
 
   return <View style={{ backgroundColor: bg, borderColor: border }} />
 }

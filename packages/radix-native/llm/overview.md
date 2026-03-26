@@ -15,7 +15,7 @@ A React Native UI component library that mirrors the [Radix Themes](https://www.
 
 | Radix web | radix-native | Why |
 |-----------|-------------|-----|
-| CSS variables (`var(--accent-9)`) | `rc('accent', 9)` hook | RN has no CSS cascade |
+| CSS variables (`var(--accent-9)`) | `useColor('accent', 9)` hook | RN has no CSS cascade |
 | `className` composition | `style` prop arrays | RN styling model |
 | `asChild` + Slot | Not yet supported | RN doesn't have DOM Slot semantics |
 | Responsive props (`{ initial, md }`) | Fixed values | RN has no media queries (use `useWindowDimensions`) |
@@ -35,4 +35,4 @@ A React Native UI component library that mirrors the [Radix Themes](https://www.
 
 **Theme system**: Nested themes, 26 accent colors, 6 gray scales, auto gray matching, dark/light mode, radius and scaling tokens.
 
-**4 hooks**: `useThemeContext`, `useResolveColor`, `useResolveSpace`, `useMargins`
+**5 hooks**: `useThemeContext`, `useColor`, `useResolveSpace`, `useMargins`, `usePressScale`

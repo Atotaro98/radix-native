@@ -1,6 +1,6 @@
 import React from 'react'
 import { ScrollView } from 'react-native'
-import { TextField, Flex, Box, Text, useResolveColor } from 'radix-native'
+import { TextField, Flex, Box, Text, useColor } from 'radix-native'
 import type { TextFieldSize, TextFieldVariant, AccentColor } from 'radix-native'
 import { ComponentSection } from '../ui'
 import { ALL_COLORS } from '../constants'
@@ -9,18 +9,18 @@ const VARIANTS: TextFieldVariant[] = ['classic', 'surface', 'soft']
 const SIZES: TextFieldSize[] = [1, 2, 3]
 
 function ColHeader({ label }: { label: string }) {
-  const rc = useResolveColor()
+  const color = useColor('gray-11')
   return (
-    <Text size={2} weight="medium" maxFontSizeMultiplier={1} style={{ color: rc('gray-11'), textAlign: 'center' }}>
+    <Text size={2} weight="medium" maxFontSizeMultiplier={1} style={{ color, textAlign: 'center' }}>
       {label}
     </Text>
   )
 }
 
 function RowLbl({ label }: { label: string }) {
-  const rc = useResolveColor()
+  const color = useColor('gray-11')
   return (
-    <Text size={2} maxFontSizeMultiplier={1} style={{ color: rc('gray-11') }}>
+    <Text size={2} maxFontSizeMultiplier={1} style={{ color }}>
       {label}
     </Text>
   )

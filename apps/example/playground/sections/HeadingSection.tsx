@@ -1,5 +1,5 @@
 import React from 'react'
-import { Heading, Text, Flex, useResolveColor } from 'radix-native'
+import { Heading, Text, Flex, useColor } from 'radix-native'
 import type { HeadingSize, TextWeight } from 'radix-native'
 import { ComponentSection, LabeledRow } from '../ui'
 import { ALL_COLORS } from '../constants'
@@ -9,12 +9,12 @@ const WEIGHTS: TextWeight[] = ['light', 'regular', 'medium', 'bold']
 const FOX = 'The quick brown fox jumps over the lazy dog'
 
 function AllColors() {
-  const rc = useResolveColor()
+  const gray9 = useColor('gray-9')
   return (
     <Flex gapY={3}>
       {ALL_COLORS.map(color => (
         <Flex key={color} direction="row" align="center" gapX={3}>
-          <Text size={1} style={{ width: 56, flexShrink: 0, color: rc('gray-9') }}>
+          <Text size={1} style={{ width: 56, flexShrink: 0, color: gray9 }}>
             {color.charAt(0).toUpperCase() + color.slice(1)}
           </Text>
           <Flex gapY={0} style={{ flex: 1, rowGap: 2 }}>

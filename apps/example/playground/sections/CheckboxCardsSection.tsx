@@ -1,5 +1,5 @@
 import React from 'react'
-import { Text, CheckboxCards, Flex, Grid, Box, useResolveColor } from 'radix-native'
+import { Text, CheckboxCards, Flex, Grid, Box, useColor } from 'radix-native'
 import type { CheckboxSize, CheckboxCardsVariant } from 'radix-native'
 import { ComponentSection } from '../ui'
 import { ALL_COLORS } from '../constants'
@@ -23,9 +23,9 @@ function ExampleCheckboxCards(props: React.ComponentPropsWithoutRef<typeof Check
 }
 
 function SectionLabel({ label }: { label: string }) {
-  const rc = useResolveColor()
+  const color = useColor('gray-9')
   return (
-    <Text size={1} weight="medium" style={{ color: rc('gray-9'), marginBottom: 8 }}>
+    <Text size={1} weight="medium" style={{ color, marginBottom: 8 }}>
       {label}
     </Text>
   )

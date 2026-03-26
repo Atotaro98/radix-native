@@ -152,13 +152,15 @@ export default function App() {
 ### Color resolution
 
 ```tsx
-import { useResolveColor } from 'radix-native'
+import { useColor } from 'radix-native'
 
-const rc = useResolveColor()
-rc('accent', 9) // theme accent at step 9
-rc('gray', 'a6') // gray alpha step 6
-rc('blue', 'contrast') // blue contrast color
-rc(prefix, 'surface') // dynamic color + step
+const accent9 = useColor('accent', 9)          // theme accent at step 9
+const border = useColor('gray', 'a6')          // gray alpha step 6
+const text = useColor('blue', 'contrast')       // blue contrast color
+const surface = useColor('accent', 'surface')   // dynamic color + step
+
+// Single-param form:
+const gray1 = useColor('gray-1')
 ```
 
 ### Theme context
@@ -174,7 +176,7 @@ const { appearance, accentColor, onAppearanceChange } = useThemeContext()
 | Hook                | Description                                                       |
 | ------------------- | ----------------------------------------------------------------- |
 | `useThemeContext()` | Access resolved theme values and change handlers                  |
-| `useResolveColor()` | Resolve color tokens to hex — `rc('accent', 9)` or `rc('gray-1')` |
+| `useColor()`        | Resolve color tokens to hex — `useColor('accent', 9)` or `useColor('gray-1')` |
 | `useResolveSpace()` | Resolve spacing tokens to pixels                                  |
 | `useMargins()`      | Resolve margin props to memoized ViewStyle                        |
 | `usePressScale()`   | Subtle scale animation on press for custom components             |
@@ -203,7 +205,7 @@ const { appearance, accentColor, onAppearanceChange } = useThemeContext()
 | Feature             | Radix Web                      | Radix Native                    |
 | ------------------- | ------------------------------ | ------------------------------- |
 | Styling             | CSS variables + classes        | Pure RN StyleSheet              |
-| Color resolution    | `var(--accent-9)`              | `rc('accent', 9)` hook          |
+| Color resolution    | `var(--accent-9)`              | `useColor('accent', 9)` hook    |
 | Margin props        | CSS classes via `extractProps` | `useMargins` hook               |
 | Responsive props    | `{ initial, sm, md }`          | Single values                   |
 | `asChild` / Slot    | Supported                      | Not yet                         |
@@ -248,7 +250,7 @@ radix-native/
 │       └── src/
 │           ├── tokens/        # colors (31 scales), spacing, typography, radius
 │           ├── theme/         # Theme, ThemeRoot, ThemeImpl, createTheme
-│           ├── hooks/         # useThemeContext, useResolveColor, useMargins, usePressScale
+│           ├── hooks/         # useThemeContext, useColor, useMargins, usePressScale
 │           ├── utils/         # resolveColor, resolveSpace, classicEffect
 │           └── components/    # layout, typography, display, actions, feedback, forms
 ```

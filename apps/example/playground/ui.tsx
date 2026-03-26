@@ -4,7 +4,7 @@
  */
 import React from 'react'
 import { Pressable, ScrollView } from 'react-native'
-import { Box, Flex, Text, Heading, Separator, useResolveColor } from 'radix-native'
+import { Box, Flex, Text, Heading, Separator, useColor } from 'radix-native'
 
 // ─── Tab system ───────────────────────────────────────────────────────────────
 
@@ -23,7 +23,9 @@ export function ComponentSection({
   tabs?: TabDef[]
   children?: React.ReactNode
 }) {
-  const rc = useResolveColor()
+  const gray12 = useColor('gray-12')
+  const gray10 = useColor('gray-10')
+  const accent9 = useColor('accent-9')
   const [active, setActive] = React.useState(tabs?.[0]?.id ?? '')
   const activeTab = tabs?.find((t) => t.id === active) ?? tabs?.[0]
 
@@ -50,7 +52,7 @@ export function ComponentSection({
                 <Text
                   size={2}
                   weight="medium"
-                  style={{ color: isActive ? rc('gray-12') : rc('gray-10') }}
+                  style={{ color: isActive ? gray12 : gray10 }}
                 >
                   {tab.label}
                 </Text>
@@ -59,7 +61,7 @@ export function ComponentSection({
                   style={{
                     marginTop: 6,
                     borderRadius: 1,
-                    backgroundColor: isActive ? rc('accent-9') : 'transparent',
+                    backgroundColor: isActive ? accent9 : 'transparent',
                   }}
                 />
               </Pressable>
@@ -78,7 +80,7 @@ export function ComponentSection({
 
 /** Small uppercase label used inside tab content */
 export function RowLabel({ label }: { label: string }) {
-  const rc = useResolveColor()
+  const color = useColor('gray-9')
   return (
     <Text
       size={1}
@@ -87,7 +89,7 @@ export function RowLabel({ label }: { label: string }) {
         textTransform: 'uppercase',
         letterSpacing: 0.6,
         marginBottom: 8,
-        color: rc('gray-9'),
+        color,
       }}
     >
       {label}
@@ -108,10 +110,10 @@ export function LabeledRow({
   labelWidth?: number
   children: React.ReactNode
 }) {
-  const rc = useResolveColor()
+  const color = useColor('gray-9')
   return (
     <Flex direction="row" align="center" gapX={4}>
-      <Text size={1} style={{ color: rc('gray-9'), width: labelWidth, flexShrink: 0 }}>
+      <Text size={1} style={{ color, width: labelWidth, flexShrink: 0 }}>
         {label}
       </Text>
       <Box flexGrow={1} flexShrink={1}>

@@ -1,6 +1,6 @@
 import React from 'react'
 import { ScrollView } from 'react-native'
-import { Text, Checkbox, Flex, Box, useResolveColor } from 'radix-native'
+import { Text, Checkbox, Flex, Box, useColor } from 'radix-native'
 import type { CheckboxSize, CheckboxVariant, AccentColor } from 'radix-native'
 import { ComponentSection } from '../ui'
 import { ALL_COLORS } from '../constants'
@@ -9,19 +9,19 @@ const VARIANTS: CheckboxVariant[] = ['classic', 'surface', 'soft']
 const SIZES: CheckboxSize[] = [1, 2, 3]
 
 function ColHeader({ label, center }: { label: string; center?: boolean }) {
-  const rc = useResolveColor()
+  const color = useColor('gray-9')
   return (
-    <Text size={1} weight="medium" style={{ color: rc('gray-9'), textAlign: center ? 'center' : undefined }}>
+    <Text size={1} weight="medium" style={{ color, textAlign: center ? 'center' : undefined }}>
       {label}
     </Text>
   )
 }
 
 function RowLbl({ label }: { label: string }) {
-  const rc = useResolveColor()
+  const color = useColor('gray-11')
   return (
     <Box width={72} flexShrink={0}>
-      <Text size={2} style={{ color: rc('gray-11') }}>
+      <Text size={2} style={{ color }}>
         {label}
       </Text>
     </Box>

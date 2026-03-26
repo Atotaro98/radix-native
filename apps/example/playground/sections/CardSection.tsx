@@ -1,5 +1,5 @@
 import React from 'react'
-import { Card, Flex, Box, Text, useResolveColor } from 'radix-native'
+import { Card, Flex, Box, Text, useColor } from 'radix-native'
 import type { CardSize, CardVariant } from 'radix-native'
 import { ComponentSection, LabeledRow } from '../ui'
 
@@ -7,10 +7,10 @@ const VARIANTS: CardVariant[] = ['surface', 'classic', 'ghost']
 const SIZES: CardSize[] = [1, 2, 3, 4, 5]
 
 function RowLbl({ label }: { label: string }) {
-  const rc = useResolveColor()
+  const color = useColor('gray-11')
   return (
     <Box width={72} flexShrink={0}>
-      <Text size={2} style={{ color: rc('gray-11') }}>{label}</Text>
+      <Text size={2} style={{ color }}>{label}</Text>
     </Box>
   )
 }

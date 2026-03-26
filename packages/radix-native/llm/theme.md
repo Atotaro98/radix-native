@@ -70,13 +70,16 @@ When `grayColor="auto"`, the gray scale is automatically matched to the accent c
 31 color scales, each with 12 solid steps + 12 alpha steps + contrast + surface:
 
 ```tsx
-const rc = useResolveColor()
+import { useColor } from 'radix-native'
 
-rc('accent', 9)        // accent color step 9 (main bg for solid variant)
-rc('accent', 'a3')     // accent alpha step 3 (bg for soft variant)
-rc('accent', 'contrast') // text on accent-9 background
-rc('gray', 'surface')  // translucent surface background
-rc('blue', 5)          // specific named color
+const accent9 = useColor('accent', 9)          // accent color step 9
+const softBg = useColor('accent', 'a3')        // accent alpha step 3
+const text = useColor('accent', 'contrast')     // text on accent-9 background
+const surface = useColor('gray', 'surface')     // translucent surface background
+const blue5 = useColor('blue', 5)              // specific named color
+
+// Single-param form:
+const gray1 = useColor('gray-1')
 ```
 
 ## Spacing tokens

@@ -1,7 +1,7 @@
 import React from 'react'
 import { ScrollView, Pressable } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
-import { Box, Flex, Text, useThemeContext, useResolveColor, ThemeControls } from 'radix-native'
+import { Box, Flex, Text, useThemeContext, useColor, ThemeControls } from 'radix-native'
 import { FONT_PRESETS } from './fonts'
 import { AvatarSection } from './playground/sections/AvatarSection'
 import { BadgeSection } from './playground/sections/BadgeSection'
@@ -38,18 +38,23 @@ interface PlaygroundProps {
 
 export function Playground({ fontIndex, onFontChange }: PlaygroundProps) {
   const { appearance } = useThemeContext()
-  const rc = useResolveColor()
+  const gray1 = useColor('gray-1')
+  const gray9 = useColor('gray-9')
+  const gray11 = useColor('gray-11')
+  const grayA3 = useColor('gray-a3')
+  const accent9 = useColor('accent-9')
+  const accentContrast = useColor('accent-contrast')
 
   return (
     <Box style={{ flex: 1 }}>
       <StatusBar style={appearance === 'dark' ? 'light' : 'dark'} />
-      <ScrollView style={{ backgroundColor: rc('gray-1') }} contentContainerStyle={{ padding: 20, paddingTop: 60, paddingBottom: 60 }}>
+      <ScrollView style={{ backgroundColor: gray1 }} contentContainerStyle={{ padding: 20, paddingTop: 60, paddingBottom: 60 }}>
         {/* Font selector */}
         <Flex mb={6} gap={2}>
           <Text
             size={1}
             weight="bold"
-            style={{ color: rc('gray-9'), textTransform: 'uppercase', letterSpacing: 0.6 }}
+            style={{ color: gray9, textTransform: 'uppercase', letterSpacing: 0.6 }}
           >
             Font
           </Text>
@@ -63,14 +68,14 @@ export function Playground({ fontIndex, onFontChange }: PlaygroundProps) {
                   style={{
                     paddingHorizontal: 12,
                     paddingVertical: 6,
-                    backgroundColor: active ? rc('accent-9') : rc('gray-a3'),
+                    backgroundColor: active ? accent9 : grayA3,
                     borderRadius: 6,
                   }}
                 >
                   <Text
                     size={1}
                     weight={active ? 'bold' : 'regular'}
-                    style={{ color: active ? rc('accent-contrast') : rc('gray-11') }}
+                    style={{ color: active ? accentContrast : gray11 }}
                   >
                     {preset.label}
                   </Text>

@@ -1,12 +1,12 @@
 import React from 'react'
-import { Box, Flex, Grid, Text, useResolveColor } from 'radix-native'
+import { Box, Flex, Grid, Text, useColor } from 'radix-native'
 import type { SpaceToken, GridAlign } from 'radix-native'
 import { ComponentSection } from '../ui'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function Cell({ label, height }: { label: string; height?: number }) {
-  const rc = useResolveColor()
+  const color = useColor('accent-11')
   return (
     <Flex
       align="center"
@@ -16,7 +16,7 @@ function Cell({ label, height }: { label: string; height?: number }) {
       bg="accent-a3"
       height={height}
     >
-      <Text size={2} weight="medium" style={{ color: rc('accent-11') }}>
+      <Text size={2} weight="medium" style={{ color }}>
         {label}
       </Text>
     </Flex>
@@ -24,9 +24,9 @@ function Cell({ label, height }: { label: string; height?: number }) {
 }
 
 function SectionLabel({ label }: { label: string }) {
-  const rc = useResolveColor()
+  const color = useColor('gray-9')
   return (
-    <Text size={1} weight="medium" style={{ color: rc('gray-9'), marginBottom: 4 }}>
+    <Text size={1} weight="medium" style={{ color, marginBottom: 4 }}>
       {label}
     </Text>
   )
@@ -94,7 +94,8 @@ function Alignment() {
 // ─── Real-world example tab ─────────────────────────────────────────────────
 
 function Examples() {
-  const rc = useResolveColor()
+  const gray9 = useColor('gray-9')
+  const gray12 = useColor('gray-12')
   return (
     <Flex gap={6}>
       <Flex gap={2}>
@@ -102,8 +103,8 @@ function Examples() {
         <Grid columns={2} gap={3}>
           {['Users', 'Revenue', 'Orders', 'Growth'].map((label) => (
             <Flex key={label} p={4} radius="medium" bg="gray-a2" gap={1}>
-              <Text size={1} style={{ color: rc('gray-9') }}>{label}</Text>
-              <Text size={5} weight="bold" style={{ color: rc('gray-12') }}>
+              <Text size={1} style={{ color: gray9 }}>{label}</Text>
+              <Text size={5} weight="bold" style={{ color: gray12 }}>
                 {Math.floor(Math.random() * 9000 + 1000)}
               </Text>
             </Flex>
@@ -126,7 +127,7 @@ function Examples() {
           {['Wi-Fi', 'Bluetooth', 'Cellular', 'VPN', 'Hotspot', 'Airplane'].map((s) => (
             <Flex key={s} direction="row" align="center" gap={2} p={3} radius="medium" bg="gray-a2">
               <Box width={8} height={8} radius="full" bg="accent-9" />
-              <Text size={2} style={{ color: rc('gray-12') }}>{s}</Text>
+              <Text size={2} style={{ color: gray12 }}>{s}</Text>
             </Flex>
           ))}
         </Grid>
