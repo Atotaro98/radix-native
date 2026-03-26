@@ -4674,7 +4674,7 @@ queue@6.0.2:
     inherits "~2.0.3"
 
 radix-native@*, "radix-native@file:/Users/alejototarobarbieri/Documents/Programming/radix-native/packages/radix-native":
-  version "0.4.0"
+  version "0.5.0"
   resolved "file:packages/radix-native"
 
 range-parser@~1.2.1:
