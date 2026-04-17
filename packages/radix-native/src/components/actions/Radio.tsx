@@ -1,6 +1,6 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { Pressable, View, Animated } from 'react-native'
-import type { ViewStyle, StyleProp } from 'react-native'
+import type { ViewStyle, StyleProp, GestureResponderEvent } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
@@ -25,12 +25,14 @@ export interface RadioProps extends NativePressableProps, MarginProps {
   color?: AccentColor
   /** Increases color contrast with the background. */
   highContrast?: boolean
-  /** Whether this radio is selected. */
+  /** Controlled checked state. */
   checked?: boolean
+  /** Uncontrolled default checked state. */
+  defaultChecked?: boolean
+  /** Called when the checked state changes. */
+  onCheckedChange?: (checked: boolean) => void
   /** Disables the radio. */
   disabled?: boolean
-  /** Called when pressed. */
-  onPress?: () => void
   style?: StyleProp<ViewStyle>
 }
 
@@ -46,17 +48,23 @@ export function Radio({
   variant = 'surface',
   color,
   highContrast,
-  checked = false,
+  checked: checkedProp,
+  defaultChecked = false,
+  onCheckedChange,
   disabled = false,
-  onPress,
   m, mx, my, mt, mr, mb, ml,
   style,
+  onPress,
   ...rest
 }: RadioProps) {
   const { appearance, scaling } = useThemeContext()
   const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
   const { scaleStyle, handlePressIn: scalePressIn, handlePressOut: scalePressOut } = usePressScale(!disabled)
+
+  // Controlled / uncontrolled
+  const [internalChecked, setInternalChecked] = useState(defaultChecked)
+  const checked = checkedProp ?? internalChecked
 
   const prefix = color ?? 'accent'
   const scalingFactor = scalingMap[scaling]
@@ -99,9 +107,13 @@ export function Radio({
     }
   }, [variant, prefix, highContrast, checked, disabled, rc])
 
-  const handlePress = useCallback(() => {
-    if (!disabled && onPress) onPress()
-  }, [disabled, onPress])
+  const handlePress = useCallback((e: GestureResponderEvent) => {
+    if (disabled) return
+    const next = !checked
+    if (checkedProp === undefined) setInternalChecked(next)
+    onCheckedChange?.(next)
+    onPress?.(e)
+  }, [disabled, checked, checkedProp, onCheckedChange, onPress])
 
   const isClassic = variant === 'classic'
   const classicStyle = isClassic && checked && !disabled
