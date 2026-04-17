@@ -55,7 +55,7 @@ export function TextField({
   ...rest
 }: TextFieldProps) {
   const { scaling, fonts, radius: themeRadius, maxFontSizeMultiplier: globalMax } = useThemeContext()
-  const effectiveMaxFont = maxFontSizeMultiplier ?? globalMax ?? 1.5
+  const effectiveMaxFont = maxFontSizeMultiplier ?? globalMax ?? 2
   const rc = useResolveColor()
   const [focused, setFocused] = useState(false)
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
