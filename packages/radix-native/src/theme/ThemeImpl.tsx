@@ -52,7 +52,9 @@ export function ThemeImpl({
       onRadiusChange: parent.onRadiusChange,
       onScalingChange: parent.onScalingChange,
     }),
-    [appearance, accentColor, grayColor, resolvedGrayColor, radius, scaling, fontsProp, resolvedColorOverrides, maxFontSizeMultiplierProp, parent],
+    [appearance, accentColor, grayColor, resolvedGrayColor, radius, scaling, fontsProp, resolvedColorOverrides, maxFontSizeMultiplierProp,
+     parent.fonts, parent.maxFontSizeMultiplier,
+     parent.onAppearanceChange, parent.onAccentColorChange, parent.onGrayColorChange, parent.onRadiusChange, parent.onScalingChange],
   )
 
   // Radix web: nested <Theme> gets hasBackground when it has an explicit

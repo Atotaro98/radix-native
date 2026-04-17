@@ -3,7 +3,10 @@ import { View, useColorScheme } from 'react-native'
 import { ThemeContext } from './ThemeContext'
 import { resolveGrayColor } from './resolveGrayColor'
 import { resolveColor } from '../utils/resolveColor'
-import type { ThemeProps, ThemeContextValue } from './theme.types'
+import type { ThemeProps, ThemeContextValue, ThemeFonts, ColorOverrides } from './theme.types'
+
+const EMPTY_FONTS: ThemeFonts = {}
+const EMPTY_OVERRIDES: ColorOverrides = {}
 
 export function ThemeRoot({
   appearance: appearanceProp = 'inherit',
@@ -12,8 +15,8 @@ export function ThemeRoot({
   radius: radiusProp = 'medium',
   scaling: scalingProp = '100%',
   hasBackground: hasBackgroundProp = true,
-  fonts: fontsProp = {},
-  colorOverrides: colorOverridesProp = {},
+  fonts: fontsProp = EMPTY_FONTS,
+  colorOverrides: colorOverridesProp = EMPTY_OVERRIDES,
   maxFontSizeMultiplier: maxFontSizeMultiplierProp,
   children,
 }: ThemeProps) {
