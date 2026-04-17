@@ -81,9 +81,8 @@ export function Heading({
 
   // ─── Font family ─────────────────────────────────────────────────────────────
   // Heading prefers fonts.heading, then the specific weight's font, then bold, then regular.
-  const effectiveWeight: TextWeight = weight ?? 'bold'
   const font = resolveFont(
-    fonts.heading ?? fonts[effectiveWeight] ?? fonts.bold ?? fonts.regular,
+    fonts.heading ?? fonts[weight] ?? fonts.bold ?? fonts.regular,
     FONT_WEIGHT[weight],
   )
 
