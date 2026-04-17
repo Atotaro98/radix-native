@@ -68,7 +68,7 @@ export function IconButton({
   const { appearance, scaling, radius: themeRadius } = useThemeContext()
   const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
-  const { scaleStyle, handlePressIn: scalePressIn, handlePressOut: scalePressOut } = usePressScale(!disabled)
+  const { scaleStyle, handlePressIn: scalePressIn, handlePressOut: scalePressOut } = usePressScale(!disabled && !loading)
 
   const effectiveRadius = radiusProp ?? themeRadius
   const isDisabled = disabled || loading
