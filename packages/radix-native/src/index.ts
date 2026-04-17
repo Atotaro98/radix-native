@@ -82,6 +82,7 @@ export {
 export {
   Spinner, type SpinnerProps, type SpinnerSize,
   Progress, type ProgressProps, type ProgressSize, type ProgressVariant,
+  Skeleton, type SkeletonProps,
 } from './components/feedback'
 
 // Components — Forms

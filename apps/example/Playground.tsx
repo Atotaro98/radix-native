@@ -25,6 +25,7 @@ import { SwitchSection } from './playground/sections/SwitchSection'
 import { TextSection } from './playground/sections/TextSection'
 import { TextAreaSection } from './playground/sections/TextAreaSection'
 import { TextFieldSection } from './playground/sections/TextFieldSection'
+import { SkeletonSection } from './playground/sections/SkeletonSection'
 import { SpinnerSection } from './playground/sections/SpinnerSection'
 import { ProgressSection } from './playground/sections/ProgressSection'
 import { RadioSection } from './playground/sections/RadioSection'
@@ -107,6 +108,7 @@ export function Playground({ fontIndex, onFontChange }: PlaygroundProps) {
         <RadioGroupSection />
         <RadioCardsSection />
         <SeparatorSection />
+        <SkeletonSection />
         <SpinnerSection />
         <StrongSection />
         <SwitchSection />
