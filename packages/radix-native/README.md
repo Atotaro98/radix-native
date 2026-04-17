@@ -37,6 +37,42 @@ export default function App() {
 - Custom themes via `createTheme()`
 - Zero production dependencies (only `react` and `react-native` as peers)
 
+## Using with NativeWind / Uniwind
+
+radix-native uses the standard React Native `style` prop. All components accept `style` as the last override, so they work seamlessly with className-based styling solutions — you just need to wrap them once.
+
+**NativeWind v5:**
+
+```tsx
+import { styled } from 'nativewind'
+import { Button, Text, Flex } from 'radix-native'
+
+const StyledButton = styled(Button, { className: 'style' })
+const StyledText = styled(Text, { className: 'style' })
+const StyledFlex = styled(Flex, { className: 'style' })
+```
+
+**Uniwind:**
+
+```tsx
+import { withUniwind } from 'uniwind'
+import { Button, Text, Flex } from 'radix-native'
+
+const StyledButton = withUniwind(Button)
+const StyledText = withUniwind(Text)
+const StyledFlex = withUniwind(Flex)
+```
+
+Then use them with `className` as usual:
+
+```tsx
+<StyledFlex className="mt-4 gap-2">
+  <StyledButton className="rounded-xl">Click me</StyledButton>
+</StyledFlex>
+```
+
+> radix-native does not depend on NativeWind or Uniwind — this is by design (zero production dependencies). The wrapping is done on the consumer side, following the same pattern used by any third-party React Native library.
+
 ## Peer Dependencies
 
 ```json
