@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useMemo } from 'react'
-import { View, Animated, Easing } from 'react-native'
+import React, { useEffect, useMemo } from 'react'
+import { View, Text as RNText } from 'react-native'
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence, interpolateColor, Easing } from 'react-native-reanimated'
 import type { ViewStyle, StyleProp } from 'react-native'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
@@ -49,36 +50,31 @@ export function Skeleton({
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
   // ─── Pulse animation (gray-a3 ↔ gray-a4, 1s infinite) ──────────────
-  const pulseAnim = useRef(new Animated.Value(0)).current
-
-  useEffect(() => {
-    if (!loading) return
-    const animation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: PULSE_DURATION,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: false,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 0,
-          duration: PULSE_DURATION,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: false,
-        }),
-      ]),
-    )
-    animation.start()
-    return () => animation.stop()
-  }, [loading, pulseAnim])
+  const pulseAnim = useSharedValue(0)
 
   const colorFrom = rc('gray', 'a3')
   const colorTo = rc('gray', 'a4')
 
-  const backgroundColor = pulseAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [colorFrom, colorTo],
+  const colorFromSV = useSharedValue(colorFrom)
+  const colorToSV = useSharedValue(colorTo)
+
+  useEffect(() => { colorFromSV.value = colorFrom }, [colorFrom])
+  useEffect(() => { colorToSV.value = colorTo }, [colorTo])
+
+  useEffect(() => {
+    if (!loading) return
+    pulseAnim.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: PULSE_DURATION, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0, { duration: PULSE_DURATION, easing: Easing.inOut(Easing.ease) }),
+      ),
+      -1,
+    )
+  }, [loading])
+
+  const pulseStyle = useAnimatedStyle(() => {
+    const bgColor = interpolateColor(pulseAnim.value, [0, 1], [colorFromSV.value, colorToSV.value])
+    return { backgroundColor: bgColor }
   })
 
   // ─── If not loading, render children ────────────────────────────────
@@ -110,16 +106,17 @@ export function Skeleton({
     >
       {/* Animated background overlay */}
       <Animated.View
-        style={{
-          ...({ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 } as ViewStyle),
-          backgroundColor,
-          borderRadius: 4,
-        }}
+        style={[
+          { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 4 } as ViewStyle,
+          pulseStyle,
+        ]}
       />
       {/* Hidden children to preserve layout dimensions */}
       {hasChildren && (
         <View style={{ opacity: 0 }} pointerEvents="none">
-          {children}
+          {typeof children === 'string' || typeof children === 'number'
+            ? <RNText>{children}</RNText>
+            : children}
         </View>
       )}
     </View>

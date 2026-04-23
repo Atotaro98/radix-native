@@ -1,10 +1,10 @@
-import React, { useCallback, useMemo } from 'react'
-import { Pressable, ActivityIndicator, View, Animated } from 'react-native'
+import React, { useCallback, useMemo, useState } from 'react'
+import { ActivityIndicator, View } from 'react-native'
 import type { StyleProp, ViewStyle, GestureResponderEvent } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
-import { usePressScale } from '../../hooks/usePressScale'
+import { usePressScale, AnimatedPressable } from '../../hooks/usePressScale'
 import { scalingMap } from '../../tokens/scaling'
 import { getRadius, getFullRadius } from '../../tokens/radius'
 import type { RadiusToken, RadiusLevel } from '../../tokens/radius'
@@ -69,6 +69,7 @@ export function IconButton({
   const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
   const { scaleStyle, handlePressIn: scalePressIn, handlePressOut: scalePressOut } = usePressScale(!disabled && !loading)
+  const [pressed, setPressed] = useState(false)
 
   const effectiveRadius = radiusProp ?? themeRadius
   const isDisabled = disabled || loading
@@ -142,48 +143,56 @@ export function IconButton({
     [isDisabled, onPress],
   )
 
+  const handlePressIn = useCallback(() => {
+    setPressed(true)
+    scalePressIn()
+  }, [scalePressIn])
+
+  const handlePressOut = useCallback(() => {
+    setPressed(false)
+    scalePressOut()
+  }, [scalePressOut])
+
   const isClassic = variant === 'classic'
 
+  // ─── Pressed state styles ──────────────────────────────────────────────────
+  const bg = pressed && !isDisabled ? colors.pressedBg : colors.bg
+  const opacity = (pressed && !isDisabled && colors.pressedOpacity != null)
+    ? colors.pressedOpacity
+    : (isDisabled && !loading ? 1 : undefined)
+
+  const containerStyle: ViewStyle = {
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'flex-start',
+    overflow: 'hidden',
+    width: isGhost ? undefined : resolvedSize,
+    height: isGhost ? undefined : resolvedSize,
+    padding: isGhost ? resolvedGhostPadding : undefined,
+    backgroundColor: bg,
+    borderRadius,
+    borderWidth: colors.border ? 1 : undefined,
+    borderColor: colors.border,
+    opacity,
+    // Margins
+    ...margins,
+  }
+
+  const classicEffect = isClassic
+    ? getClassicEffect(appearance, { pressed, disabled: isDisabled && !loading })
+    : undefined
+
   return (
-    <Animated.View style={scaleStyle}>
-      <Pressable
-        onPress={handlePress}
-        onPressIn={scalePressIn}
-        onPressOut={scalePressOut}
-        disabled={isDisabled}
-        accessibilityRole="button"
-        accessibilityState={{ disabled: isDisabled, busy: loading }}
-        style={({ pressed }) => {
-          const bg = pressed && !isDisabled ? colors.pressedBg : colors.bg
-          const opacity = (pressed && !isDisabled && colors.pressedOpacity != null)
-            ? colors.pressedOpacity
-            : (isDisabled && !loading ? 1 : undefined)
-
-          const containerStyle: ViewStyle = {
-            alignItems: 'center',
-            justifyContent: 'center',
-            alignSelf: 'flex-start',
-            overflow: 'hidden',
-            width: isGhost ? undefined : resolvedSize,
-            height: isGhost ? undefined : resolvedSize,
-            padding: isGhost ? resolvedGhostPadding : undefined,
-            backgroundColor: bg,
-            borderRadius,
-            borderWidth: colors.border ? 1 : undefined,
-            borderColor: colors.border,
-            opacity,
-            // Margins
-            ...margins,
-          }
-
-          const classicEffect = isClassic
-            ? getClassicEffect(appearance, { pressed, disabled: isDisabled && !loading })
-            : undefined
-
-          return [containerStyle, classicEffect, style] as StyleProp<ViewStyle>
-        }}
-        {...rest}
-      >
+    <AnimatedPressable
+      onPress={handlePress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      disabled={isDisabled}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: isDisabled, busy: loading }}
+      style={[scaleStyle, containerStyle, classicEffect, style]}
+      {...rest}
+    >
         {isClassic && !isDisabled && (
           <>
             <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '50%', backgroundColor: 'rgba(255,255,255,0.12)' }} />
@@ -199,8 +208,7 @@ export function IconButton({
               : child
           )
         )}
-      </Pressable>
-    </Animated.View>
+    </AnimatedPressable>
   )
 }
 IconButton.displayName = 'IconButton'

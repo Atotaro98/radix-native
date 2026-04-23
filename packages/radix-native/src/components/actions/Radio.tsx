@@ -1,10 +1,10 @@
 import React, { useCallback, useMemo, useState } from 'react'
-import { Pressable, View, Animated } from 'react-native'
+import { View } from 'react-native'
 import type { ViewStyle, StyleProp, GestureResponderEvent } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
-import { usePressScale } from '../../hooks/usePressScale'
+import { usePressScale, AnimatedPressable } from '../../hooks/usePressScale'
 import { scalingMap } from '../../tokens/scaling'
 import type { AccentColor } from '../../tokens/colors/types'
 import { getClassicEffect } from '../../utils/classicEffect'
@@ -134,29 +134,27 @@ export function Radio({
   }), [radioSize, colors, margins])
 
   return (
-    <Animated.View style={scaleStyle}>
-      <Pressable
-        onPress={handlePress}
-        onPressIn={scalePressIn}
-        onPressOut={scalePressOut}
-        disabled={disabled}
-        accessibilityRole="radio"
-        accessibilityState={{ checked, disabled }}
-        style={[radioStyle, classicStyle, style]}
-        {...rest}
-      >
-        {colors.dot && (
-          <View
-            style={{
-              width: dotSize,
-              height: dotSize,
-              borderRadius: dotSize / 2,
-              backgroundColor: colors.dot,
-            }}
-          />
-        )}
-      </Pressable>
-    </Animated.View>
+    <AnimatedPressable
+      onPress={handlePress}
+      onPressIn={scalePressIn}
+      onPressOut={scalePressOut}
+      disabled={disabled}
+      accessibilityRole="radio"
+      accessibilityState={{ checked, disabled }}
+      style={[scaleStyle, radioStyle, classicStyle, style]}
+      {...rest}
+    >
+      {colors.dot && (
+        <View
+          style={{
+            width: dotSize,
+            height: dotSize,
+            borderRadius: dotSize / 2,
+            backgroundColor: colors.dot,
+          }}
+        />
+      )}
+    </AnimatedPressable>
   )
 }
 Radio.displayName = 'Radio'

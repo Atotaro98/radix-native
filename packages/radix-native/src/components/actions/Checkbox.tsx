@@ -1,10 +1,10 @@
 import React, { useCallback, useMemo } from 'react'
-import { Pressable, View, Animated } from 'react-native'
+import { View } from 'react-native'
 import type { StyleProp, ViewStyle } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
-import { usePressScale } from '../../hooks/usePressScale'
+import { usePressScale, AnimatedPressable } from '../../hooks/usePressScale'
 import { scalingMap } from '../../tokens/scaling'
 import { getRadius } from '../../tokens/radius'
 import type { AccentColor } from '../../tokens/colors/types'
@@ -176,49 +176,47 @@ export function Checkbox({
   const indicatorColor = colors.indicator
 
   return (
-    <Animated.View style={scaleStyle}>
-      <Pressable
-        onPress={handlePress}
-        onPressIn={scalePressIn}
-        onPressOut={scalePressOut}
-        disabled={disabled}
-        accessibilityRole="checkbox"
-        accessibilityState={{
-          checked: isIndeterminate ? 'mixed' : isChecked,
-          disabled,
-        }}
-        style={[boxStyle, classicStyle, style]}
-        {...rest}
-      >
-        {/* Classic gradient simulation when checked — wrapped with overflow:hidden for borderRadius clipping */}
-        {isClassic && isActive && !disabled && (
-          <View pointerEvents="none" style={{ position: 'absolute', inset: 0, overflow: 'hidden', borderRadius }}>
-            <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '50%', backgroundColor: 'rgba(255,255,255,0.12)' }} />
-            <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '50%', backgroundColor: 'rgba(0,0,0,0.08)' }} />
-          </View>
-        )}
-        {isActive && (
-          isIndeterminate ? (
-            <View style={{
-              width: indicatorSize * 0.6,
-              height: strokeWidth,
-              backgroundColor: indicatorColor,
-              borderRadius: strokeWidth / 2,
-            }} />
-          ) : (
-            <View style={{
-              width: indicatorSize * 0.55,
-              height: indicatorSize * 0.35,
-              borderLeftWidth: strokeWidth,
-              borderBottomWidth: strokeWidth,
-              borderColor: indicatorColor,
-              transform: [{ rotate: '-45deg' }],
-              marginTop: -indicatorSize * 0.1,
-            }} />
-          )
-        )}
-      </Pressable>
-    </Animated.View>
+    <AnimatedPressable
+      onPress={handlePress}
+      onPressIn={scalePressIn}
+      onPressOut={scalePressOut}
+      disabled={disabled}
+      accessibilityRole="checkbox"
+      accessibilityState={{
+        checked: isIndeterminate ? 'mixed' : isChecked,
+        disabled,
+      }}
+      style={[scaleStyle, boxStyle, classicStyle, style]}
+      {...rest}
+    >
+      {/* Classic gradient simulation when checked — wrapped with overflow:hidden for borderRadius clipping */}
+      {isClassic && isActive && !disabled && (
+        <View pointerEvents="none" style={{ position: 'absolute', inset: 0, overflow: 'hidden', borderRadius }}>
+          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '50%', backgroundColor: 'rgba(255,255,255,0.12)' }} />
+          <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '50%', backgroundColor: 'rgba(0,0,0,0.08)' }} />
+        </View>
+      )}
+      {isActive && (
+        isIndeterminate ? (
+          <View style={{
+            width: indicatorSize * 0.6,
+            height: strokeWidth,
+            backgroundColor: indicatorColor,
+            borderRadius: strokeWidth / 2,
+          }} />
+        ) : (
+          <View style={{
+            width: indicatorSize * 0.55,
+            height: indicatorSize * 0.35,
+            borderLeftWidth: strokeWidth,
+            borderBottomWidth: strokeWidth,
+            borderColor: indicatorColor,
+            transform: [{ rotate: '-45deg' }],
+            marginTop: -indicatorSize * 0.1,
+          }} />
+        )
+      )}
+    </AnimatedPressable>
   )
 }
 Checkbox.displayName = 'Checkbox'

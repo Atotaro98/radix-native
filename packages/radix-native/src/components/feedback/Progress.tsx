@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useMemo } from 'react'
-import { View, Animated, Easing } from 'react-native'
+import React, { useEffect, useMemo } from 'react'
+import { View } from 'react-native'
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence, interpolate, Easing } from 'react-native-reanimated'
 import type { ViewStyle, StyleProp } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
@@ -102,33 +103,28 @@ export function Progress({
   }, [variant, prefix, highContrast, rc])
 
   // ─── Indeterminate animation ────────────────────────────────────────────
-  const indeterminateAnim = useRef<Animated.Value | null>(null)
-  if (indeterminateAnim.current === null) {
-    indeterminateAnim.current = new Animated.Value(0)
-  }
-  const animValue = indeterminateAnim.current
+  const animValue = useSharedValue(0)
 
   useEffect(() => {
     if (!isIndeterminate) return
 
-    const animation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(animValue, {
-          toValue: 1,
-          duration: 2000,
-          easing: Easing.bezier(0.4, 0, 0.2, 1),
-          useNativeDriver: false,
-        }),
-        Animated.timing(animValue, {
-          toValue: 0,
-          duration: 0,
-          useNativeDriver: false,
-        }),
-      ]),
+    animValue.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 2000, easing: Easing.bezier(0.4, 0, 0.2, 1) }),
+        withTiming(0, { duration: 0 }),
+      ),
+      -1,
     )
-    animation.start()
-    return () => animation.stop()
+
+    return () => {
+      animValue.value = 0
+    }
   }, [isIndeterminate, animValue])
+
+  const indicatorAnimStyle = useAnimatedStyle(() => {
+    const widthPercent = interpolate(animValue.value, [0, 0.3, 0.5, 1], [5, 60, 90, 100])
+    return { width: `${widthPercent}%` }
+  })
 
   // ─── Styles ─────────────────────────────────────────────────────────────
   const trackStyle = useMemo<ViewStyle>(() => ({
@@ -160,17 +156,7 @@ export function Progress({
       {...rest}
     >
       {isIndeterminate ? (
-        <Animated.View
-          style={[
-            indicatorBaseStyle,
-            {
-              width: animValue.interpolate({
-                inputRange: [0, 0.3, 0.5, 1],
-                outputRange: ['5%', '60%', '90%', '100%'],
-              }),
-            },
-          ]}
-        />
+        <Animated.View style={[indicatorBaseStyle, indicatorAnimStyle]} />
       ) : (
         <View style={[indicatorBaseStyle, { width: `${progress * 100}%` }]} />
       )}

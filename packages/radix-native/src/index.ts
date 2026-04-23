@@ -8,7 +8,7 @@ export { useColor } from './hooks/useColor'
 export type { ColorName, ColorStep, SolidStep, AlphaStep } from './hooks/useResolveColor'
 export { useResolveSpace } from './hooks/useResolveSpace'
 export { useMargins } from './hooks/useMargins'
-export { usePressScale } from './hooks/usePressScale'
+export { usePressScale, AnimatedPressable } from './hooks/usePressScale'
 export type {
   ThemeProps,
   ThemeContextValue,

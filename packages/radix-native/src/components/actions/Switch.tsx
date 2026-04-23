@@ -1,10 +1,15 @@
-import React, { useCallback, useMemo, useRef } from 'react'
-import { Pressable, Animated, Easing } from 'react-native'
+import React, { useCallback, useMemo } from 'react'
 import type { ViewStyle, StyleProp } from 'react-native'
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
-import { usePressScale } from '../../hooks/usePressScale'
+import { usePressScale, AnimatedPressable } from '../../hooks/usePressScale'
 import { scalingMap } from '../../tokens/scaling'
 import { getRadius, getRadiusThumb } from '../../tokens/radius'
 import type { RadiusToken, RadiusLevel } from '../../tokens/radius'
@@ -88,24 +93,20 @@ export function Switch({
   const trackRadius = Math.max(getRadius(effectiveRadius, level), getRadiusThumb(effectiveRadius))
   const thumbRadius = Math.max(trackRadius - thumbMargin, 0)
 
-  // ─── Animation ─────────────────────────────────────────────────────────────
+  // ─── Thumb animation ─────────────────────────────────────────────────────────
   const thumbTravel = trackWidth - thumbSize - thumbMargin * 2
-  const translateXRef = useRef<Animated.Value | null>(null)
-  if (translateXRef.current === null) {
-    translateXRef.current = new Animated.Value(isChecked ? thumbTravel : 0)
-  }
-  const translateX = translateXRef.current
+  const translateX = useSharedValue(isChecked ? thumbTravel : 0)
 
   React.useEffect(() => {
-    const animation = Animated.timing(translateX, {
-      toValue: isChecked ? thumbTravel : 0,
+    translateX.value = withTiming(isChecked ? thumbTravel : 0, {
       duration: 150,
       easing: Easing.bezier(0.4, 0, 0.2, 1),
-      useNativeDriver: true,
     })
-    animation.start()
-    return () => animation.stop()
   }, [isChecked, thumbTravel, translateX])
+
+  const thumbAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value }],
+  }))
 
   // ─── Colors ────────────────────────────────────────────────────────────────
   const colors = useMemo(() => {
@@ -187,20 +188,18 @@ export function Switch({
   }
 
   return (
-    <Animated.View style={scaleStyle}>
-      <Pressable
-        onPress={handlePress}
-        onPressIn={scalePressIn}
-        onPressOut={scalePressOut}
-        disabled={disabled}
-        accessibilityRole="switch"
-        accessibilityState={{ checked: isChecked, disabled }}
-        style={[trackStyle, classicStyle, style]}
-        {...rest}
-      >
-        <Animated.View style={[thumbStyle, { transform: [{ translateX }] }]} />
-      </Pressable>
-    </Animated.View>
+    <AnimatedPressable
+      onPress={handlePress}
+      onPressIn={scalePressIn}
+      onPressOut={scalePressOut}
+      disabled={disabled}
+      accessibilityRole="switch"
+      accessibilityState={{ checked: isChecked, disabled }}
+      style={[scaleStyle, trackStyle, classicStyle, style]}
+      {...rest}
+    >
+      <Animated.View style={[thumbStyle, thumbAnimatedStyle]} />
+    </AnimatedPressable>
   )
 }
 Switch.displayName = 'Switch'

@@ -1,10 +1,10 @@
-import React, { useMemo } from 'react'
-import { Pressable, View, Animated } from 'react-native'
+import React, { useCallback, useMemo, useState } from 'react'
+import { View } from 'react-native'
 import type { ViewStyle, StyleProp } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
-import { usePressScale } from '../../hooks/usePressScale'
+import { usePressScale, AnimatedPressable } from '../../hooks/usePressScale'
 import { scalingMap } from '../../tokens/scaling'
 import { getRadius } from '../../tokens/radius'
 import type { RadiusLevel } from '../../tokens/radius'
@@ -47,6 +47,17 @@ export function Card({
   const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
   const { scaleStyle, handlePressIn: scalePressIn, handlePressOut: scalePressOut } = usePressScale(!!onPress)
+  const [pressed, setPressed] = useState(false)
+
+  const handlePressIn = useCallback(() => {
+    setPressed(true)
+    scalePressIn()
+  }, [scalePressIn])
+
+  const handlePressOut = useCallback(() => {
+    setPressed(false)
+    scalePressOut()
+  }, [scalePressOut])
 
   const scalingFactor = scalingMap[scaling]
   const resolvedPadding = Math.round(SIZE_PADDING[size] * scalingFactor)
@@ -86,31 +97,24 @@ export function Card({
   }), [resolvedPadding, borderRadius, colors, margins])
 
   if (onPress) {
+    const classicEffect = isClassic
+      ? getClassicEffect(appearance, { pressed })
+      : undefined
+    const pressedStyle = pressed && (colors.pressedBg
+      ? { backgroundColor: colors.pressedBg }
+      : { opacity: 0.88 })
+
     return (
-      <Animated.View style={scaleStyle}>
-        <Pressable
-          onPress={onPress}
-          onPressIn={scalePressIn}
-          onPressOut={scalePressOut}
-          accessibilityRole="button"
-          style={({ pressed }) => {
-            const classicEffect = isClassic
-              ? getClassicEffect(appearance, { pressed })
-              : undefined
-            return [
-              cardStyle,
-              classicEffect,
-              pressed && (colors.pressedBg
-                ? { backgroundColor: colors.pressedBg }
-                : { opacity: 0.88 }),
-              style,
-            ]
-          }}
-          {...rest}
-        >
-          {children}
-        </Pressable>
-      </Animated.View>
+      <AnimatedPressable
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        accessibilityRole="button"
+        style={[scaleStyle, cardStyle, classicEffect, pressedStyle, style]}
+        {...rest}
+      >
+        {children}
+      </AnimatedPressable>
     )
   }
 

@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import { Animated, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native'
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated'
+import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native'
 import type { ViewStyle } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
@@ -39,8 +40,12 @@ export interface ThemeControlsProps {
 
 export function ThemeControls({ showCopyTheme, onCopyTheme, defaultOpen = false }: ThemeControlsProps = {}) {
   const [open, setOpen] = useState(defaultOpen)
-  const slideAnim = React.useRef(new Animated.Value(defaultOpen ? 0 : PANEL_WIDTH + 20)).current
+  const slideAnim = useSharedValue(defaultOpen ? 0 : PANEL_WIDTH + 20)
   const { height: windowHeight } = useWindowDimensions()
+
+  const slideStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: slideAnim.value }],
+  }))
 
   const {
     appearance,
@@ -60,12 +65,7 @@ export function ThemeControls({ showCopyTheme, onCopyTheme, defaultOpen = false 
 
   const toggle = () => {
     const toValue = open ? PANEL_WIDTH + 20 : 0
-    Animated.spring(slideAnim, {
-      toValue,
-      useNativeDriver: true,
-      damping: 20,
-      stiffness: 200,
-    }).start()
+    slideAnim.value = withTiming(toValue, { duration: 250, easing: Easing.out(Easing.ease) })
     setOpen(!open)
   }
 
@@ -96,7 +96,8 @@ export function ThemeControls({ showCopyTheme, onCopyTheme, defaultOpen = false 
       <Animated.View
         style={[
           styles.panelWrapper,
-          { maxHeight: windowHeight - 120, transform: [{ translateX: slideAnim }] },
+          { maxHeight: windowHeight - 120 },
+          slideStyle,
         ]}
       >
         <ScrollView

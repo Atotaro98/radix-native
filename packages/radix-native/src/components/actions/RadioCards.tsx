@@ -1,10 +1,10 @@
 import React, { createContext, useCallback, useContext, useMemo } from 'react'
-import { Pressable, View, Animated } from 'react-native'
+import { View } from 'react-native'
 import type { StyleProp, ViewStyle } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
-import { usePressScale } from '../../hooks/usePressScale'
+import { usePressScale, AnimatedPressable } from '../../hooks/usePressScale'
 import { resolveSpace } from '../../utils/resolveSpace'
 import { scalingMap } from '../../tokens/scaling'
 import { getRadius } from '../../tokens/radius'
@@ -167,19 +167,17 @@ function RadioCardsItem({
   }
 
   return (
-    <Animated.View style={scaleStyle}>
-      <Pressable
-        onPress={handlePress}
-        onPressIn={scalePressIn}
-        onPressOut={scalePressOut}
-        disabled={isDisabled}
-        accessibilityRole="radio"
-        accessibilityState={{ checked: isChecked, disabled: isDisabled }}
-        style={[cardStyle, style]}
-      >
-        {children}
-      </Pressable>
-    </Animated.View>
+    <AnimatedPressable
+      onPress={handlePress}
+      onPressIn={scalePressIn}
+      onPressOut={scalePressOut}
+      disabled={isDisabled}
+      accessibilityRole="radio"
+      accessibilityState={{ checked: isChecked, disabled: isDisabled }}
+      style={[scaleStyle, cardStyle, style]}
+    >
+      {children}
+    </AnimatedPressable>
   )
 }
 RadioCardsItem.displayName = 'RadioCards.Item'

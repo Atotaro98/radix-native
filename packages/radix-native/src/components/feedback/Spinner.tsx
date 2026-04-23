@@ -1,6 +1,15 @@
-import React, { useEffect, useRef, useMemo } from 'react'
-import { View, Animated, Easing } from 'react-native'
+import React, { useEffect, useMemo } from 'react'
+import { View } from 'react-native'
 import type { ViewStyle, StyleProp } from 'react-native'
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withRepeat,
+  withSequence,
+  withDelay,
+  Easing,
+} from 'react-native-reanimated'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
@@ -26,6 +35,71 @@ const SIZE_PX: Record<SpinnerSize, number> = { 1: 16, 2: 20, 3: 25 }
 const LEAF_COUNT = 8
 const ANIMATION_DURATION = 800
 
+// ─── SpinnerLeaf ──────────────────────────────────────────────────────────────
+
+interface SpinnerLeafProps {
+  delay: number
+  rotation: number
+  boxSize: number
+  leafWidth: number
+  leafHeight: number
+  leafRadius: number
+  leafColor: string
+}
+
+function SpinnerLeaf({
+  delay,
+  rotation,
+  boxSize,
+  leafWidth,
+  leafHeight,
+  leafRadius,
+  leafColor,
+}: SpinnerLeafProps) {
+  const opacity = useSharedValue(1)
+
+  useEffect(() => {
+    opacity.value = withDelay(
+      delay,
+      withRepeat(
+        withSequence(
+          withTiming(0.25, { duration: ANIMATION_DURATION, easing: Easing.linear }),
+          withTiming(1, { duration: 0 }),
+        ),
+        -1,
+      ),
+    )
+  }, [])
+
+  const animStyle = useAnimatedStyle(() => ({ opacity: opacity.value }))
+
+  return (
+    <Animated.View
+      style={[
+        {
+          position: 'absolute',
+          top: 0,
+          left: (boxSize - leafWidth) / 2,
+          width: leafWidth,
+          height: boxSize,
+          transform: [{ rotate: `${rotation}deg` }],
+          alignItems: 'center',
+        },
+        animStyle,
+      ]}
+    >
+      <View
+        style={{
+          width: leafWidth,
+          height: leafHeight,
+          borderRadius: leafRadius,
+          backgroundColor: leafColor,
+        }}
+      />
+    </Animated.View>
+  )
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function Spinner({
@@ -45,38 +119,6 @@ export function Spinner({
 
   // Spinner uses currentColor — we default to gray-12 (inherits text color intent)
   const leafColor = rc('gray', 'a11')
-
-  // ─── Animation (8 leaves, staggered opacity fade) ─────────────────────
-  const animValues = useRef<Animated.Value[]>([])
-  if (animValues.current.length === 0) {
-    animValues.current = Array.from({ length: LEAF_COUNT }, () => new Animated.Value(1))
-  }
-
-  useEffect(() => {
-    if (!loading) return
-
-    const animations = animValues.current.map((anim, i) =>
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(anim, {
-            toValue: 0.25,
-            duration: ANIMATION_DURATION,
-            easing: Easing.linear,
-            useNativeDriver: true,
-            delay: (i / LEAF_COUNT) * ANIMATION_DURATION,
-          }),
-          Animated.timing(anim, {
-            toValue: 1,
-            duration: 0,
-            useNativeDriver: true,
-          }),
-        ]),
-      ),
-    )
-
-    animations.forEach(a => a.start())
-    return () => animations.forEach(a => a.stop())
-  }, [loading])
 
   // ─── If not loading, render children ──────────────────────────────────
   if (!loading) {
@@ -102,33 +144,18 @@ export function Spinner({
       accessibilityState={{ busy: true }}
       {...rest}
     >
-      {animValues.current.map((opacity, i) => {
-        const rotation = (i * 360) / LEAF_COUNT
-        return (
-          <Animated.View
-            key={i}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: (boxSize - leafWidth) / 2,
-              width: leafWidth,
-              height: boxSize,
-              transform: [{ rotate: `${rotation}deg` }],
-              alignItems: 'center',
-              opacity,
-            }}
-          >
-            <View
-              style={{
-                width: leafWidth,
-                height: leafHeight,
-                borderRadius: leafRadius,
-                backgroundColor: leafColor,
-              }}
-            />
-          </Animated.View>
-        )
-      })}
+      {Array.from({ length: LEAF_COUNT }, (_, i) => (
+        <SpinnerLeaf
+          key={i}
+          delay={(i / LEAF_COUNT) * ANIMATION_DURATION}
+          rotation={(i * 360) / LEAF_COUNT}
+          boxSize={boxSize}
+          leafWidth={leafWidth}
+          leafHeight={leafHeight}
+          leafRadius={leafRadius}
+          leafColor={leafColor}
+        />
+      ))}
     </View>
   )
 }

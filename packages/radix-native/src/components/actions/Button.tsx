@@ -1,12 +1,12 @@
-import React, { useCallback, useMemo } from 'react'
-import { Pressable, ActivityIndicator, View, Animated } from 'react-native'
+import React, { useCallback, useMemo, useState } from 'react'
+import { ActivityIndicator, View } from 'react-native'
 import { Text as RNText } from 'react-native'
 import type { StyleProp, ViewStyle, TextStyle, GestureResponderEvent } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
 import { resolveFont } from '../../utils/resolveFont'
-import { usePressScale } from '../../hooks/usePressScale'
+import { usePressScale, AnimatedPressable } from '../../hooks/usePressScale'
 import { fontSize, lineHeight, letterSpacingEm } from '../../tokens/typography'
 import { scalingMap } from '../../tokens/scaling'
 import { getRadius, getFullRadius } from '../../tokens/radius'
@@ -86,6 +86,7 @@ export function Button({
   const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
   const { scaleStyle, handlePressIn: scalePressIn, handlePressOut: scalePressOut } = usePressScale(!disabled && !loading)
+  const [pressed, setPressed] = useState(false)
 
   const effectiveRadius = radiusProp ?? themeRadius
   const isDisabled = disabled || loading
@@ -215,51 +216,59 @@ export function Button({
     [isDisabled, onPress],
   )
 
+  const handlePressIn = useCallback(() => {
+    setPressed(true)
+    scalePressIn()
+  }, [scalePressIn])
+
+  const handlePressOut = useCallback(() => {
+    setPressed(false)
+    scalePressOut()
+  }, [scalePressOut])
+
   // ─── Variant flags ──────────────────────────────────────────────────────────
   const isClassic = variant === 'classic'
 
+  // ─── Pressed state styles ──────────────────────────────────────────────────
+  const bg = pressed && !isDisabled ? colors.pressedBg : colors.bg
+  const opacity = (pressed && !isDisabled && colors.pressedOpacity != null)
+    ? colors.pressedOpacity
+    : (isDisabled && !loading ? 1 : undefined)
+
+  const containerStyle: ViewStyle = {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'flex-start',
+    overflow: 'hidden',
+    minHeight: isGhost ? undefined : resolvedHeight,
+    paddingHorizontal: resolvedPaddingX,
+    paddingVertical: isGhost ? resolvedPaddingY : undefined,
+    gap: resolvedGap,
+    backgroundColor: bg,
+    borderRadius,
+    borderWidth: colors.border ? 1 : undefined,
+    borderColor: colors.border,
+    opacity,
+    // Margins
+    ...margins,
+  }
+
+  // Classic 3D effect (shadow + bevel)
+  const classicStyle = isClassic
+    ? getClassicEffect(appearance, { pressed, disabled: isDisabled && !loading })
+    : undefined
+
   // ─── Render ────────────────────────────────────────────────────────────────
   return (
-    <Animated.View style={scaleStyle}>
-    <Pressable
+    <AnimatedPressable
       onPress={handlePress}
-      onPressIn={scalePressIn}
-      onPressOut={scalePressOut}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       disabled={isDisabled}
       accessibilityRole="button"
       accessibilityState={{ disabled: isDisabled, busy: loading }}
-      style={({ pressed }) => {
-        const bg = pressed && !isDisabled ? colors.pressedBg : colors.bg
-        const opacity = (pressed && !isDisabled && colors.pressedOpacity != null)
-          ? colors.pressedOpacity
-          : (isDisabled && !loading ? 1 : undefined)
-
-        const containerStyle: ViewStyle = {
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          alignSelf: 'flex-start',
-          overflow: 'hidden',
-          minHeight: isGhost ? undefined : resolvedHeight,
-          paddingHorizontal: resolvedPaddingX,
-          paddingVertical: isGhost ? resolvedPaddingY : undefined,
-          gap: resolvedGap,
-          backgroundColor: bg,
-          borderRadius,
-          borderWidth: colors.border ? 1 : undefined,
-          borderColor: colors.border,
-          opacity,
-          // Margins
-          ...margins,
-        }
-
-        // Classic 3D effect (shadow + bevel)
-        const classicStyle = isClassic
-          ? getClassicEffect(appearance, { pressed, disabled: isDisabled && !loading })
-          : undefined
-
-        return [containerStyle, classicStyle, style] as StyleProp<ViewStyle>
-      }}
+      style={[scaleStyle, containerStyle, classicStyle, style]}
       {...rest}
     >
       {/* Classic gradient simulation: light overlay on top, dark on bottom */}
@@ -317,8 +326,7 @@ export function Button({
           fontFamily: font.fontFamily,
         }, colors.text, effectiveMaxFont)
       )}
-    </Pressable>
-    </Animated.View>
+    </AnimatedPressable>
   )
 }
 Button.displayName = 'Button'
@@ -329,9 +337,13 @@ function renderContent(children: React.ReactNode, textStyle: TextStyle, iconColo
   if (typeof children === 'string' || typeof children === 'number') {
     return <RNText style={textStyle} maxFontSizeMultiplier={maxFontSizeMultiplier}>{children}</RNText>
   }
-  return React.Children.map(children, child =>
-    React.isValidElement(child)
-      ? React.cloneElement(child as React.ReactElement<{ color?: string }>, { color: iconColor })
-      : child
-  )
+  return React.Children.map(children, child => {
+    if (typeof child === 'string' || typeof child === 'number') {
+      return <RNText style={textStyle} maxFontSizeMultiplier={maxFontSizeMultiplier}>{child}</RNText>
+    }
+    if (React.isValidElement(child)) {
+      return React.cloneElement(child as React.ReactElement<{ color?: string }>, { color: iconColor })
+    }
+    return child
+  })
 }
