@@ -1,6 +1,6 @@
 {
   "name": "radix-native",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Radix Themes API for React Native",
   "author": "Atotaro98",
   "license": "MIT",
@@ -42,10 +42,7 @@
     "dev": "unbuild --watch",
     "generate:colors": "tsx scripts/generate-colors.ts",
     "lint": "eslint src",
-    "typecheck": "tsc --noEmit",
-    "release": "npm version patch && unbuild && npm publish",
-    "release:minor": "npm version minor && unbuild && npm publish",
-    "release:major": "npm version major && unbuild && npm publish"
+    "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
     "react": ">=18.0.0",
