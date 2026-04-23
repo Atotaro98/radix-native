@@ -133,8 +133,6 @@ export function Code({
     borderColor,
     paddingVertical,
     paddingHorizontal,
-    // Shrink to content width when used standalone (no-op when nested inline in Text).
-    alignSelf:        variant !== 'ghost' ? 'flex-start' : undefined,
     // Margins
     ...margins,
   }

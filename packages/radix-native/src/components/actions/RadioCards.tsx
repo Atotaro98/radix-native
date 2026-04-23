@@ -107,7 +107,6 @@ function RadioCardsRoot({
           {
             flexDirection: 'row',
             flexWrap: 'wrap',
-            alignSelf: 'flex-start',
             gap: resolvedGap,
             ...margins,
           },

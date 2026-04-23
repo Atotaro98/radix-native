@@ -82,7 +82,6 @@ export function Kbd({
   const isClassic = variant === 'classic'
 
   const containerStyle: ViewStyle = {
-    alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

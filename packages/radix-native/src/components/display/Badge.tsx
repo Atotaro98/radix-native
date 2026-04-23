@@ -114,7 +114,6 @@ export function Badge({
   const containerStyle = useMemo<ViewStyle>(() => ({
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
     minHeight: resolvedHeight,
     paddingHorizontal: resolvedPaddingX,
     gap: resolvedGap,

@@ -42,8 +42,6 @@ export interface IconButtonProps extends NativePressableProps, MarginProps {
 
 /** Square dimension per size (same as Button height). */
 const SIZE_PX: Record<IconButtonSize, number> = { 1: 24, 2: 32, 3: 40, 4: 48 }
-/** Ghost padding per size. */
-const GHOST_PADDING: Record<IconButtonSize, number> = { 1: 4, 2: 6, 3: 8, 4: 12 }
 /** Radius level per size. */
 const SIZE_RADIUS_LEVEL: Record<IconButtonSize, RadiusLevel> = { 1: 1, 2: 2, 3: 3, 4: 4 }
 /** Spinner pixel size per button size. */
@@ -78,7 +76,6 @@ export function IconButton({
   const scalingFactor = scalingMap[scaling]
   const isGhost = variant === 'ghost'
   const resolvedSize = Math.round(SIZE_PX[size] * scalingFactor)
-  const resolvedGhostPadding = Math.round(GHOST_PADDING[size] * scalingFactor)
 
   // ─── Radius ────────────────────────────────────────────────────────────────
   const level = SIZE_RADIUS_LEVEL[size]
@@ -164,11 +161,9 @@ export function IconButton({
   const containerStyle: ViewStyle = {
     alignItems: 'center',
     justifyContent: 'center',
-    alignSelf: 'flex-start',
     overflow: 'hidden',
-    width: isGhost ? undefined : resolvedSize,
-    height: isGhost ? undefined : resolvedSize,
-    padding: isGhost ? resolvedGhostPadding : undefined,
+    width: resolvedSize,
+    height: resolvedSize,
     backgroundColor: bg,
     borderRadius,
     borderWidth: colors.border ? 1 : undefined,

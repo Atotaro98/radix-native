@@ -47,16 +47,10 @@ export interface ButtonProps extends NativePressableProps, MarginProps {
 
 /** height per size: space-5, space-6, space-7, space-8 */
 const SIZE_HEIGHT: Record<ButtonSize, number> = { 1: 24, 2: 32, 3: 40, 4: 48 }
-/** horizontal padding per size (non-ghost) */
+/** horizontal padding per size */
 const SIZE_PADDING_X: Record<ButtonSize, number> = { 1: 8, 2: 12, 3: 16, 4: 24 }
-/** horizontal padding per size (ghost) — smaller than non-ghost */
-const GHOST_PADDING_X: Record<ButtonSize, number> = { 1: 8, 2: 8, 3: 12, 4: 16 }
-/** vertical padding per size (ghost only) */
-const GHOST_PADDING_Y: Record<ButtonSize, number> = { 1: 4, 2: 4, 3: 6, 4: 8 }
-/** gap per size (non-ghost) */
+/** gap per size */
 const SIZE_GAP: Record<ButtonSize, number> = { 1: 4, 2: 8, 3: 12, 4: 12 }
-/** gap per size (ghost) — smaller than non-ghost */
-const GHOST_GAP: Record<ButtonSize, number> = { 1: 4, 2: 4, 3: 8, 4: 8 }
 /** font-size index per button size */
 const SIZE_FONT: Record<ButtonSize, 1 | 2 | 3 | 4> = { 1: 1, 2: 2, 3: 3, 4: 4 }
 /** radius level per size */
@@ -102,13 +96,8 @@ export function Button({
   // ─── Dimensions ────────────────────────────────────────────────────────────
   const isGhost = variant === 'ghost'
   const resolvedHeight = Math.round(SIZE_HEIGHT[size] * scalingFactor)
-  const resolvedPaddingX = Math.round(
-    (isGhost ? GHOST_PADDING_X[size] : SIZE_PADDING_X[size]) * scalingFactor,
-  )
-  const resolvedPaddingY = isGhost ? Math.round(GHOST_PADDING_Y[size] * scalingFactor) : 0
-  const resolvedGap = Math.round(
-    (isGhost ? GHOST_GAP[size] : SIZE_GAP[size]) * scalingFactor,
-  )
+  const resolvedPaddingX = Math.round(SIZE_PADDING_X[size] * scalingFactor)
+  const resolvedGap = Math.round(SIZE_GAP[size] * scalingFactor)
 
   // ─── Radius ────────────────────────────────────────────────────────────────
   const level = SIZE_RADIUS_LEVEL[size]
@@ -239,11 +228,9 @@ export function Button({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    alignSelf: 'flex-start',
     overflow: 'hidden',
-    minHeight: isGhost ? undefined : resolvedHeight,
+    minHeight: resolvedHeight,
     paddingHorizontal: resolvedPaddingX,
-    paddingVertical: isGhost ? resolvedPaddingY : undefined,
     gap: resolvedGap,
     backgroundColor: bg,
     borderRadius,
