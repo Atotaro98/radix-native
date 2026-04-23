@@ -7,7 +7,7 @@ A React Native UI component library that mirrors the [Radix Themes](https://www.
 ## Philosophy
 
 - **API parity with Radix web** — same `size`, `variant`, `color`, `highContrast`, `radius` props
-- **Zero production dependencies** — only `react` and `react-native` as peer deps
+- **Minimal peer dependencies** — `react`, `react-native`, and `react-native-reanimated`
 - **Pure RN StyleSheet** — no NativeWind, no Tamagui, no CSS-in-JS runtime
 - **Token-driven** — spacing, typography, radius, scaling, and 31 color scales from Radix Colors
 

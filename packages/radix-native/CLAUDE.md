@@ -22,11 +22,11 @@ packages/radix-native/src/
     playground/   ThemeControls
 ```
 
-## Zero dependencies
+## Dependencies
 
-The library has NO production dependencies. Only `react` and `react-native` as peer deps.
-All animations use `Animated` from RN. All icons/indicators drawn with `View` borders.
-Never add external deps — this is a hard rule.
+Peer deps: `react`, `react-native`, `react-native-reanimated` (>=3.0.0).
+All animations use `react-native-reanimated` (shared values, UI-thread animations).
+All icons/indicators drawn with `View` borders (no SVG deps).
 
 ## Key patterns
 
@@ -186,24 +186,30 @@ ThemeControls (dev tool) hardcodes `maxFontSizeMultiplier={1}` on all internal t
 
 ## Press scale animation
 
-All interactive components (Button, IconButton, Checkbox, Switch, Card) have a subtle scale-down animation on press via `usePressScale`:
+All interactive components (Button, IconButton, Checkbox, Switch, Card) have a subtle scale-down animation on press via `usePressScale` + `AnimatedPressable`:
 
 ```tsx
-import { usePressScale } from '../../hooks/usePressScale'
+import { usePressScale, AnimatedPressable } from '../../hooks/usePressScale'
 
 const { scaleStyle, handlePressIn, handlePressOut } = usePressScale(!disabled)
 
-<Animated.View style={scaleStyle}>
-  <Pressable onPressIn={handlePressIn} onPressOut={handlePressOut}>
-    ...
-  </Pressable>
-</Animated.View>
+<AnimatedPressable
+  style={[scaleStyle, containerStyle, style]}
+  onPressIn={handlePressIn}
+  onPressOut={handlePressOut}
+>
+  ...
+</AnimatedPressable>
 ```
 
+- `AnimatedPressable` = `Animated.createAnimatedComponent(Pressable)` from Reanimated
+- Single node (no wrapper) — user styles like `flex: 1` work correctly
 - Scales to 0.97 on press (80ms ease-out), back to 1 on release (150ms)
-- Uses `useNativeDriver: true` for 60fps
+- Runs on UI thread via Reanimated shared values
 - Additive: works alongside Radix's pressed background color changes (not a replacement)
 - Disabled when component is disabled
+
+Components with pressed bg color changes (Button, IconButton, Card) track `pressed` via `useState` + `onPressIn`/`onPressOut`, then compute bg/opacity outside JSX. The style is a static array, not a callback.
 
 ## Differences from Radix web
 

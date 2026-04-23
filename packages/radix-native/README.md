@@ -1,6 +1,6 @@
 # radix-native
 
-Radix Themes API for React Native. A faithful port of [Radix Themes](https://www.radix-ui.com/themes) to React Native with zero production dependencies beyond `react` and `react-native`.
+Radix Themes API for React Native. A faithful port of [Radix Themes](https://www.radix-ui.com/themes) to React Native with minimal peer dependencies.
 
 ## Installation
 
@@ -35,7 +35,7 @@ export default function App() {
 - Actions: `Button`, `Checkbox`, `CheckboxGroup`, `CheckboxCards`
 - Theme system with `accentColor`, `grayColor`, `radius`, `scaling`, and `appearance`
 - Custom themes via `createTheme()`
-- Zero production dependencies (only `react` and `react-native` as peers)
+- Minimal peer dependencies (`react`, `react-native`, `react-native-reanimated`)
 
 ## Using with NativeWind / Uniwind
 
@@ -71,14 +71,15 @@ Then use them with `className` as usual:
 </StyledFlex>
 ```
 
-> radix-native does not depend on NativeWind or Uniwind — this is by design (zero production dependencies). The wrapping is done on the consumer side, following the same pattern used by any third-party React Native library.
+> radix-native does not depend on NativeWind or Uniwind — the wrapping is done on the consumer side, following the same pattern used by any third-party React Native library.
 
 ## Peer Dependencies
 
 ```json
 {
   "react": ">=18.0.0",
-  "react-native": ">=0.72.0"
+  "react-native": ">=0.72.0",
+  "react-native-reanimated": ">=3.0.0"
 }
 ```
 

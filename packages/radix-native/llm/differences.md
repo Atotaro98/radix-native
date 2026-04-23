@@ -21,7 +21,7 @@ These are intentional changes to adapt the Radix API to React Native.
 | CSS `:hover` states | No hover (touch-only) | Mobile interaction model |
 | CSS `:active` states | `Pressable` `pressed` state | RN touch feedback |
 | `box-shadow` for borders | `borderWidth` + `borderColor` | RN shadow model differs |
-| No press animation on web | `scale(0.97)` on press via `usePressScale` | Native mobile UX enhancement — additive to color changes |
+| No press animation on web | `scale(0.97)` on press via `usePressScale` + `AnimatedPressable` (Reanimated, UI thread) | Native mobile UX enhancement — additive to color changes |
 | `<Flex>` defaults to `row` | `<Flex>` defaults to `column` | Mobile-first: vertical stacking is the natural default for mobile UIs |
 | No `maxFontSizeMultiplier` | All text components accept `maxFontSizeMultiplier` prop | RN accessibility font scaling can break fixed layouts |
 | No global font scaling config | `<Theme maxFontSizeMultiplier={N}>` | Global cap for all text, overridable per-component |

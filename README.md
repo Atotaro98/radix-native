@@ -1,6 +1,6 @@
 # Radix Native
 
-React Native components that match the [Radix Themes](https://www.radix-ui.com/themes) API exactly. Same props, same variants, same design tokens — built for React Native with zero production dependencies.
+React Native components that match the [Radix Themes](https://www.radix-ui.com/themes) API exactly. Same props, same variants, same design tokens — built for React Native with minimal peer dependencies.
 
 > If you know Radix Themes on web, you already know Radix Native.
 
@@ -10,7 +10,7 @@ React Native components that match the [Radix Themes](https://www.radix-ui.com/t
 - **30 components** — layout, typography, actions, forms, display, feedback
 - **Full theme system** — 26 accent colors, 6 gray scales, radius, scaling, dark mode, nested themes
 - **31 color scales** from `@radix-ui/colors` with light/dark modes and alpha variants
-- **Zero dependencies** — only `react` and `react-native` as peer deps
+- **Minimal dependencies** — only `react`, `react-native`, and `react-native-reanimated` as peer deps
 - **TypeScript strict** — fully typed props, tokens, and theme values
 - **Accessible** — semantic roles, accessibility states, screen reader support
 - **Press animation** — subtle scale-down on press for interactive components
@@ -26,7 +26,8 @@ npm install radix-native
 ```json
 {
   "react": ">=18.0.0",
-  "react-native": ">=0.72.0"
+  "react-native": ">=0.72.0",
+  "react-native-reanimated": ">=3.0.0"
 }
 ```
 

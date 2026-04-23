@@ -92,21 +92,23 @@ const borderRadius = getRadius(effectiveRadius, level)
 
 ## Press scale animation
 
-All interactive components have a subtle press-down animation via `usePressScale`:
+All interactive components have a subtle press-down animation via `usePressScale` + `AnimatedPressable`:
 
 ```tsx
-import { usePressScale } from 'radix-native'
+import { usePressScale, AnimatedPressable } from 'radix-native'
 
 const { scaleStyle, handlePressIn, handlePressOut } = usePressScale(!disabled)
 
-<Animated.View style={scaleStyle}>
-  <Pressable onPressIn={handlePressIn} onPressOut={handlePressOut}>
-    {children}
-  </Pressable>
-</Animated.View>
+<AnimatedPressable
+  style={[scaleStyle, containerStyle, style]}
+  onPressIn={handlePressIn}
+  onPressOut={handlePressOut}
+>
+  {children}
+</AnimatedPressable>
 ```
 
-Applied to: Button, IconButton, Checkbox, Switch, Card (pressable). Scales to 0.97 on press, back to 1 on release. Uses `useNativeDriver: true`.
+Applied to: Button, IconButton, Checkbox, Switch, Radio, RadioCards, Card (pressable). Single node (no wrapper), scales to 0.97 on press, back to 1 on release. Runs on UI thread via `react-native-reanimated`.
 
 ## Style memoization
 
