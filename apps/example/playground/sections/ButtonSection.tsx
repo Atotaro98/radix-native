@@ -2,6 +2,7 @@ import React from 'react'
 import { ScrollView } from 'react-native'
 import { Text, Button, Flex, Box, useColor } from 'radix-native'
 import type { ButtonSize, ButtonVariant, RadiusToken, AccentColor } from 'radix-native'
+import { BookmarkSimple, Heart, ArrowRight, DownloadSimple, Share, Plus, MagnifyingGlass, PaperPlaneTilt } from 'phosphor-react-native'
 import { ComponentSection } from '../ui'
 import { ALL_COLORS } from '../constants'
 
@@ -173,6 +174,61 @@ function AllSizes() {
   )
 }
 
+// ─── With icons tab ─────────────────────────────────────────────────────────
+
+function WithIcons() {
+  return (
+    <Flex gap={5}>
+      {/* Icon + text combinations */}
+      <Flex gap={3}>
+        <ColHeader label="Icon + text" />
+        <Flex direction="row" wrap="wrap" gap={2} align="center">
+          <Button size={2} variant="solid"><BookmarkSimple size={16} weight="bold" /> Bookmark</Button>
+          <Button size={2} variant="soft"><Heart size={16} weight="bold" /> Like</Button>
+          <Button size={2} variant="surface"><Share size={16} weight="bold" /> Share</Button>
+          <Button size={2} variant="outline"><DownloadSimple size={16} weight="bold" /> Download</Button>
+          <Button size={2} variant="ghost"><Plus size={16} weight="bold" /> Add</Button>
+        </Flex>
+      </Flex>
+
+      {/* Text + trailing icon */}
+      <Flex gap={3}>
+        <ColHeader label="Text + trailing icon" />
+        <Flex direction="row" wrap="wrap" gap={2} align="center">
+          <Button size={2} variant="solid">Next <ArrowRight size={16} weight="bold" /></Button>
+          <Button size={2} variant="soft">Send <PaperPlaneTilt size={16} weight="bold" /></Button>
+          <Button size={2} variant="classic">Continue <ArrowRight size={16} weight="bold" /></Button>
+        </Flex>
+      </Flex>
+
+      {/* All sizes with icon */}
+      <Flex gap={3}>
+        <ColHeader label="All sizes" />
+        <Flex direction="row" wrap="wrap" gap={2} align="center">
+          <Button size={1} variant="solid"><MagnifyingGlass size={14} weight="bold" /> Search</Button>
+          <Button size={2} variant="solid"><MagnifyingGlass size={16} weight="bold" /> Search</Button>
+          <Button size={3} variant="solid"><MagnifyingGlass size={18} weight="bold" /> Search</Button>
+          <Button size={4} variant="solid"><MagnifyingGlass size={20} weight="bold" /> Search</Button>
+        </Flex>
+      </Flex>
+
+      {/* All variants with icon */}
+      <Flex gap={3}>
+        <ColHeader label="All variants" />
+        {VARIANTS.map((variant) => (
+          <Flex key={variant} direction="row" gap={2} align="center">
+            <Box width={72} flexShrink={0}>
+              <Text size={2} style={{ color: '#999' }}>{capitalize(variant)}</Text>
+            </Box>
+            <Button size={2} variant={variant}><Heart size={16} weight="bold" /> Like</Button>
+            <Button size={2} variant={variant} highContrast><Heart size={16} weight="bold" /> Like</Button>
+          </Flex>
+        ))}
+      </Flex>
+    </Flex>
+  )
+}
+
 export function ButtonSection() {
   return (
     <ComponentSection
@@ -181,6 +237,7 @@ export function ButtonSection() {
         { id: 'theme-colors', label: 'Theme colors', render: () => <ThemeColors /> },
         { id: 'all-colors', label: 'All colors', render: () => <AllColors /> },
         { id: 'all-sizes', label: 'All sizes', render: () => <AllSizes /> },
+        { id: 'with-icons', label: 'With icons', render: () => <WithIcons /> },
       ]}
     />
   )
