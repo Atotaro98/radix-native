@@ -322,11 +322,11 @@ Button.displayName = 'Button'
 
 function renderContent(children: React.ReactNode, textStyle: TextStyle, iconColor: string, maxFontSizeMultiplier?: number): React.ReactNode {
   if (typeof children === 'string' || typeof children === 'number') {
-    return <RNText style={textStyle} maxFontSizeMultiplier={maxFontSizeMultiplier}>{children}</RNText>
+    return <RNText style={[textStyle, { flexShrink: 1 }]} maxFontSizeMultiplier={maxFontSizeMultiplier}>{children}</RNText>
   }
   return React.Children.map(children, child => {
     if (typeof child === 'string' || typeof child === 'number') {
-      return <RNText style={textStyle} maxFontSizeMultiplier={maxFontSizeMultiplier}>{child}</RNText>
+      return <RNText style={[textStyle, { flexShrink: 1 }]} maxFontSizeMultiplier={maxFontSizeMultiplier}>{child}</RNText>
     }
     if (React.isValidElement(child)) {
       return React.cloneElement(child as React.ReactElement<{ color?: string }>, { color: iconColor })
