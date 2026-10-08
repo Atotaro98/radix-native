@@ -5,6 +5,7 @@ import { useThemeContext } from '../../hooks/useThemeContext'
 import { useMargins } from '../../hooks/useMargins'
 import { resolveFont } from '../../utils/resolveFont'
 import type { TextWrap } from './Text'
+import { getTextWrapProps } from '../../utils/typography'
 import type { NativeTextProps } from '../../types/nativeProps'
 import type { MarginProps } from '../../types/marginProps'
 
@@ -36,8 +37,6 @@ export function Strong({
   const effectiveMaxFont = maxFontSizeMultiplier ?? globalMax
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
-  const numberOfLines = truncate ? 1 : wrap === 'nowrap' ? 1 : undefined
-  const ellipsizeMode = truncate ? 'tail' : wrap === 'nowrap' ? 'clip' : undefined
 
   const strongStyle: TextStyle = {
     ...resolveFont(fonts.bold ?? fonts.regular, '700'),
@@ -49,8 +48,7 @@ export function Strong({
 
   return (
     <RNText
-      numberOfLines={numberOfLines}
-      ellipsizeMode={ellipsizeMode}
+      {...getTextWrapProps(truncate, wrap)}
       maxFontSizeMultiplier={effectiveMaxFont}
       style={[strongStyle, style]}
       {...rest}

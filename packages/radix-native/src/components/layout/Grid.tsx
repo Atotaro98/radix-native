@@ -1,9 +1,9 @@
 /**
  * Grid — CSS-Grid-inspired layout component for React Native.
  *
- * Renders a plain View with `flexDirection: 'row'` and `flexWrap: 'wrap'`.
- * Each direct child is automatically wrapped in a cell whose width is
- * calculated from the number of `columns` so items flow into a uniform grid.
+ * Each direct child is placed in an equal-width cell; cells are grouped into
+ * rows of `columns` (`flex: 1` per cell), so the layout is exact from the
+ * first frame — no `onLayout` measurement, no width jump.
  *
  * ─── What it CAN do ────────────────────────────────────────────────────────────
  *  - Equal-width column grids: `<Grid columns={3} gap={3}>…</Grid>`
@@ -28,9 +28,9 @@
  *  These support virtualization out of the box and are the right choice for
  *  long or dynamic lists rendered in a grid.
  */
-import React, { useState, useCallback } from 'react'
+import React from 'react'
 import { View } from 'react-native'
-import type { ViewStyle, LayoutChangeEvent, StyleProp } from 'react-native'
+import type { ViewStyle, StyleProp, DimensionValue } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
@@ -40,6 +40,7 @@ import type { SpaceToken } from '../../tokens/spacing'
 import type { ThemeColor, RadiusToken } from '../../theme/theme.types'
 import type { MarginProps } from '../../types/marginProps'
 import type { NativeViewProps } from '../../types/nativeProps'
+import { ColumnRows } from '../internal/ColumnRows'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -57,7 +58,7 @@ export interface GridProps extends NativeViewProps, MarginProps {
   gapY?: SpaceToken
   /** Cross-axis alignment of items within their cells. */
   align?: GridAlign
-  /** Main-axis justification of items within their cells. */
+  /** Horizontal alignment of items within their cells ('between' stretches them). */
   justify?: GridJustify
   // ─── Padding ──────────────────────────────────────────────────────
   p?: SpaceToken
@@ -68,21 +69,21 @@ export interface GridProps extends NativeViewProps, MarginProps {
   pb?: SpaceToken
   pl?: SpaceToken
   // ─── Size ─────────────────────────────────────────────────────────
-  width?: number | string
-  minWidth?: number | string
-  maxWidth?: number | string
-  height?: number | string
-  minHeight?: number | string
-  maxHeight?: number | string
+  width?: DimensionValue
+  minWidth?: DimensionValue
+  maxWidth?: DimensionValue
+  height?: DimensionValue
+  minHeight?: DimensionValue
+  maxHeight?: DimensionValue
   // ─── Position ─────────────────────────────────────────────────────
   position?: 'relative' | 'absolute'
-  top?: number | string
-  right?: number | string
-  bottom?: number | string
-  left?: number | string
+  top?: DimensionValue
+  right?: DimensionValue
+  bottom?: DimensionValue
+  left?: DimensionValue
   // ─── Layout ───────────────────────────────────────────────────────
   overflow?: 'hidden' | 'visible' | 'scroll'
-  flexBasis?: number | string
+  flexBasis?: DimensionValue
   flexShrink?: number
   flexGrow?: number
   // ─── Theme ────────────────────────────────────────────────────────
@@ -100,11 +101,11 @@ const ALIGN_MAP: Record<GridAlign, ViewStyle['alignItems']> = {
   stretch: 'stretch',
 }
 
-const JUSTIFY_MAP: Record<GridJustify, ViewStyle['justifyContent']> = {
+const JUSTIFY_MAP: Record<GridJustify, ViewStyle['alignItems']> = {
   start: 'flex-start',
   center: 'center',
   end: 'flex-end',
-  between: 'space-between',
+  between: 'stretch',
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -128,7 +129,6 @@ export function Grid({
   radius,
   style,
   children,
-  onLayout: onLayoutProp,
   ...rest
 }: GridProps) {
   const { scaling } = useThemeContext()
@@ -141,34 +141,8 @@ export function Grid({
   const columnGap = sp(gapX ?? gap) ?? 0
   const rowGap = sp(gapY ?? gap) ?? 0
 
-  // ─── Container width measurement ──────────────────────────────────────────
-  const [containerWidth, setContainerWidth] = useState<number>(0)
-
-  const handleLayout = useCallback(
-    (e: LayoutChangeEvent) => {
-      setContainerWidth(e.nativeEvent.layout.width)
-      onLayoutProp?.(e)
-    },
-    [onLayoutProp],
-  )
-
-  // ─── Cell width calculation ───────────────────────────────────────────────
-  // totalGapWidth = (columns - 1) * columnGap
-  // cellWidth = (containerWidth - totalGapWidth) / columns
-  const cols = Math.max(1, Math.round(columns))
-  const cellWidth =
-    containerWidth > 0
-      ? (containerWidth - (cols - 1) * columnGap) / cols
-      : undefined
-
   // ─── Container style ─────────────────────────────────────────────────────
   const containerStyle: ViewStyle = {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: ALIGN_MAP[align ?? 'stretch'],
-    justifyContent: justify ? JUSTIFY_MAP[justify] : undefined,
-    rowGap,
-    columnGap,
     // Padding
     paddingTop:    sp(pt ?? py ?? p),
     paddingBottom: sp(pb ?? py ?? p),
@@ -177,21 +151,21 @@ export function Grid({
     // Margin
     ...margins,
     // Size
-    width:     width     as ViewStyle['width'],
-    minWidth:  minWidth  as ViewStyle['minWidth'],
-    maxWidth:  maxWidth  as ViewStyle['maxWidth'],
-    height:    height    as ViewStyle['height'],
-    minHeight: minHeight as ViewStyle['minHeight'],
-    maxHeight: maxHeight as ViewStyle['maxHeight'],
+    width:     width,
+    minWidth:  minWidth,
+    maxWidth:  maxWidth,
+    height:    height,
+    minHeight: minHeight,
+    maxHeight: maxHeight,
     // Position
     position,
-    top: top as ViewStyle['top'],
-    right: right as ViewStyle['right'],
-    bottom: bottom as ViewStyle['bottom'],
-    left: left as ViewStyle['left'],
+    top: top,
+    right: right,
+    bottom: bottom,
+    left: left,
     // Layout
     overflow: overflow as ViewStyle['overflow'],
-    flexBasis: flexBasis as ViewStyle['flexBasis'],
+    flexBasis: flexBasis,
     flexShrink,
     flexGrow,
     // Theme
@@ -202,15 +176,17 @@ export function Grid({
   }
 
   // ─── Render ──────────────────────────────────────────────────────────────
-  const items = React.Children.toArray(children)
-
   return (
-    <View style={[containerStyle, style]} onLayout={handleLayout} {...rest}>
-      {items.map((child, idx) => (
-        <View key={(child as React.ReactElement).key ?? `cell-${idx}`} style={{ width: cellWidth }}>
-          {child}
-        </View>
-      ))}
+    <View style={[containerStyle, style]} {...rest}>
+      <ColumnRows
+        columns={columns}
+        columnGap={columnGap}
+        rowGap={rowGap}
+        alignItems={ALIGN_MAP[align ?? 'stretch']}
+        cellAlignItems={justify ? JUSTIFY_MAP[justify] : undefined}
+      >
+        {children}
+      </ColumnRows>
     </View>
   )
 }

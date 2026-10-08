@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo } from 'react'
 import { View, Text as RNText } from 'react-native'
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence, interpolateColor, Easing } from 'react-native-reanimated'
-import type { ViewStyle, StyleProp } from 'react-native'
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence, interpolateColor, cancelAnimation, Easing } from 'react-native-reanimated'
+import type { ViewStyle, StyleProp, DimensionValue } from 'react-native'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
 import type { MarginProps } from '../../types/marginProps'
@@ -13,17 +13,17 @@ export interface SkeletonProps extends NativeViewProps, MarginProps {
   /** When true, shows skeleton placeholder. When false, renders children. Default: true. */
   loading?: boolean
   /** Width of the skeleton placeholder. */
-  width?: number | string
+  width?: DimensionValue
   /** Height of the skeleton placeholder. */
-  height?: number | string
+  height?: DimensionValue
   /** Min width of the skeleton placeholder. */
-  minWidth?: number | string
+  minWidth?: DimensionValue
   /** Max width of the skeleton placeholder. */
-  maxWidth?: number | string
+  maxWidth?: DimensionValue
   /** Min height of the skeleton placeholder. */
-  minHeight?: number | string
+  minHeight?: DimensionValue
   /** Max height of the skeleton placeholder. */
-  maxHeight?: number | string
+  maxHeight?: DimensionValue
   style?: StyleProp<ViewStyle>
 }
 
@@ -58,8 +58,8 @@ export function Skeleton({
   const colorFromSV = useSharedValue(colorFrom)
   const colorToSV = useSharedValue(colorTo)
 
-  useEffect(() => { colorFromSV.value = colorFrom }, [colorFrom])
-  useEffect(() => { colorToSV.value = colorTo }, [colorTo])
+  useEffect(() => { colorFromSV.value = colorFrom }, [colorFrom, colorFromSV])
+  useEffect(() => { colorToSV.value = colorTo }, [colorTo, colorToSV])
 
   useEffect(() => {
     if (!loading) return
@@ -70,17 +70,13 @@ export function Skeleton({
       ),
       -1,
     )
-  }, [loading])
+    return () => cancelAnimation(pulseAnim)
+  }, [loading, pulseAnim])
 
   const pulseStyle = useAnimatedStyle(() => {
     const bgColor = interpolateColor(pulseAnim.value, [0, 1], [colorFromSV.value, colorToSV.value])
     return { backgroundColor: bgColor }
   })
-
-  // ─── If not loading, render children ────────────────────────────────
-  if (!loading) {
-    return <>{children}</>
-  }
 
   // ─── Skeleton placeholder ───────────────────────────────────────────
   const hasChildren = children != null
@@ -96,6 +92,12 @@ export function Skeleton({
     maxHeight: maxHeightProp,
     ...margins,
   }), [widthProp, heightProp, minWidthProp, maxWidthProp, minHeightProp, maxHeightProp, hasChildren, margins])
+
+  // ─── If not loading, render children ────────────────────────────────
+  // (after all hooks — toggling `loading` must not change the hook order)
+  if (!loading) {
+    return <>{children}</>
+  }
 
   return (
     <View

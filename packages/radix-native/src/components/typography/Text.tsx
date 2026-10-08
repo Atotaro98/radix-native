@@ -5,9 +5,9 @@ import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
 import { resolveFont, FONT_WEIGHT } from '../../utils/resolveFont'
-import { fontSize, lineHeight, letterSpacingEm } from '../../tokens/typography'
-import { scalingMap } from '../../tokens/scaling'
+import { resolveTypography, getTextWrapProps } from '../../utils/typography'
 import type { FontSizeToken } from '../../tokens/typography'
+import { TextContext, useParentText } from './TextContext'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { MarginProps } from '../../types/marginProps'
 import type { NativeTextProps } from '../../types/nativeProps'
@@ -21,7 +21,10 @@ export type TextAlign = 'left' | 'center' | 'right'
 export type TextWrap = 'wrap' | 'nowrap' | 'pretty' | 'balance'
 
 export interface TextProps extends NativeTextProps, MarginProps {
-  /** Text size token (1–9). Default: 3 (16px). */
+  /**
+   * Text size token (1–9). Default: 3 (16px) — or, when nested inside another
+   * text component, inherits the parent size (like Radix on the web).
+   */
   size?: TextSize
   /** Font weight. Each weight maps to its own fontFamily when configured in ThemeFonts. */
   weight?: TextWeight
@@ -38,7 +41,8 @@ export interface TextProps extends NativeTextProps, MarginProps {
   /**
    * Text color from the theme palette.
    * When set: uses alpha step a11 (accessible foreground).
-   * When not set: uses gray-12 (standard body text color).
+   * When not set: uses gray-12 (standard body text color), or inherits the
+   * parent color when nested inside another text component.
    */
   color?: AccentColor
   /**
@@ -49,13 +53,10 @@ export interface TextProps extends NativeTextProps, MarginProps {
   style?: StyleProp<TextStyle>
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function Text({
-  size = 3,
+  size,
   weight,
   align,
   truncate,
@@ -65,59 +66,64 @@ export function Text({
   maxFontSizeMultiplier,
   m, mx, my, mt, mr, mb, ml,
   style,
+  children,
   ...rest
 }: TextProps) {
   const { scaling, fonts, maxFontSizeMultiplier: globalMax } = useThemeContext()
   const effectiveMaxFont = maxFontSizeMultiplier ?? globalMax
   const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
+  const parent = useParentText()
+  const isNested = parent !== null
 
   // ─── Typography ─────────────────────────────────────────────────────────────
-  const scalingFactor = scalingMap[scaling]
-  const resolvedSize        = Math.round(fontSize[size] * scalingFactor)
-  const resolvedLineHeight  = Math.round(lineHeight[size] * scalingFactor)
-  const resolvedLetterSpacing = letterSpacingEm[size] * resolvedSize
+  // Nested without an explicit size → let RN text inheritance do its job.
+  const typography = React.useMemo(
+    () => (size !== undefined || !isNested ? resolveTypography(size ?? 3, scaling) : undefined),
+    [size, isNested, scaling],
+  )
+  const contextFontSize = typography?.fontSize ?? parent?.fontSize ?? 0
 
   // ─── Color ──────────────────────────────────────────────────────────────────
-  //   no color prop        → gray-12        (standard body text)
-  //   color prop           → {color}-a11    (alpha step 11 — accessible foreground)
   //   color + highContrast → {color}-12     (solid step 12 — maximum contrast)
+  //   color prop           → {color}-a11    (alpha step 11 — accessible foreground)
+  //   no color, nested     → inherited from the parent text
+  //   no color             → gray-12        (standard body text)
   const textColor = color
     ? rc(color, highContrast ? 12 : 'a11')
-    : rc('gray', 12)
+    : isNested ? undefined : rc('gray', 12)
 
   // ─── Font family ─────────────────────────────────────────────────────────────
   // Each weight maps to its own fontFamily — in RN, fontWeight alone doesn't
   // load a different font file; the fontFamily must be registered per weight.
-  const effectiveWeight: TextWeight = weight ?? 'regular'
-  const font = resolveFont(fonts[effectiveWeight] ?? fonts.regular, weight ? FONT_WEIGHT[weight] : undefined)
-
-  // ─── Wrapping / truncation ──────────────────────────────────────────────────
-  // truncate takes precedence over wrap
-  const numberOfLines = truncate ? 1 : wrap === 'nowrap' ? 1 : undefined
-  const ellipsizeMode = truncate ? 'tail' : wrap === 'nowrap' ? 'clip' : undefined
+  const font = weight
+    ? resolveFont(fonts[weight] ?? fonts.regular, FONT_WEIGHT[weight])
+    : isNested ? undefined : resolveFont(fonts.regular, undefined)
 
   // ─── Style ──────────────────────────────────────────────────────────────────
   const textStyle = React.useMemo<TextStyle>(() => ({
-    fontSize:      resolvedSize,
-    lineHeight:    resolvedLineHeight,
-    letterSpacing: resolvedLetterSpacing,
-    color:         textColor,
-    textAlign:     align,
-    fontWeight:    font.fontWeight,
-    fontFamily:    font.fontFamily,
-    flexShrink:    1,
-    ...margins,
-  }), [resolvedSize, resolvedLineHeight, resolvedLetterSpacing, textColor, align, font.fontWeight, font.fontFamily, margins])
+    ...typography,
+    color:      textColor,
+    textAlign:  align,
+    fontWeight: font?.fontWeight,
+    fontFamily: font?.fontFamily,
+    // Layout props are meaningless on nested (inline) text
+    ...(isNested ? null : { flexShrink: 1, ...margins }),
+  }), [typography, textColor, align, font?.fontWeight, font?.fontFamily, isNested, margins])
+
+  const contextValue = React.useMemo(() => ({ fontSize: contextFontSize }), [contextFontSize])
 
   return (
-    <RNText
-      numberOfLines={numberOfLines}
-      ellipsizeMode={ellipsizeMode}
-      maxFontSizeMultiplier={effectiveMaxFont}
-      style={[textStyle, style]}
-      {...rest}
-    />
+    <TextContext.Provider value={contextValue}>
+      <RNText
+        {...getTextWrapProps(truncate, wrap)}
+        maxFontSizeMultiplier={effectiveMaxFont}
+        {...rest}
+        style={[textStyle, style]}
+      >
+        {children}
+      </RNText>
+    </TextContext.Provider>
   )
 }
 Text.displayName = 'Text'

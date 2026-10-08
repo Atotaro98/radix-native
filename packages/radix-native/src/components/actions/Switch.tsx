@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo } from 'react'
-import type { ViewStyle, StyleProp } from 'react-native'
+import { View } from 'react-native'
+import type { ViewStyle, StyleProp, GestureResponderEvent } from 'react-native'
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -9,7 +10,11 @@ import Animated, {
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
-import { usePressScale, AnimatedPressable } from '../../hooks/usePressScale'
+import { useControllableState } from '../../hooks/useControllableState'
+import { useInteraction } from '../../hooks/useInteraction'
+import { AnimatedPressable } from '../../hooks/usePressScale'
+import { getMinHitSlop } from '../../utils/hitSlop'
+import { FocusRing } from '../internal/FocusRing'
 import { scalingMap } from '../../tokens/scaling'
 import { getRadius, getRadiusThumb } from '../../tokens/radius'
 import type { RadiusToken, RadiusLevel } from '../../tokens/radius'
@@ -67,17 +72,32 @@ export function Switch({
   disabled = false,
   m, mx, my, mt, mr, mb, ml,
   style,
+  onPress,
+  onPressIn,
+  onPressOut,
+  onFocus,
+  onBlur,
+  accessibilityState,
+  hitSlop,
   ...rest
 }: SwitchProps) {
   const { appearance, scaling, radius: themeRadius } = useThemeContext()
   const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
-  const { scaleStyle, handlePressIn: scalePressIn, handlePressOut: scalePressOut } = usePressScale(!disabled)
+  const { focused, scaleStyle, handlers } = useInteraction({
+    enabled: !disabled,
+    onPressIn,
+    onPressOut,
+    onFocus,
+    onBlur,
+  })
 
   // ─── Controlled / uncontrolled ─────────────────────────────────────────────
-  const [internal, setInternal] = React.useState(defaultChecked)
-  const isControlled = checkedProp !== undefined
-  const isChecked = isControlled ? checkedProp : internal
+  const [isChecked, setChecked] = useControllableState({
+    prop: checkedProp,
+    defaultProp: defaultChecked,
+    onChange: onCheckedChange,
+  })
 
   const prefix = color ?? 'accent'
 
@@ -94,6 +114,8 @@ export function Switch({
   const thumbRadius = Math.max(trackRadius - thumbMargin, 0)
 
   // ─── Thumb animation ─────────────────────────────────────────────────────────
+  // The track border is drawn as an overlay (like Radix's inset box-shadow),
+  // so it never takes layout space and the thumb doesn't jump between states.
   const thumbTravel = trackWidth - thumbSize - thumbMargin * 2
   const translateX = useSharedValue(isChecked ? thumbTravel : 0)
 
@@ -154,12 +176,11 @@ export function Switch({
   }, [variant, prefix, highContrast, isChecked, disabled, rc])
 
   // ─── Toggle ────────────────────────────────────────────────────────────────
-  const handlePress = useCallback(() => {
+  const handlePress = useCallback((e: GestureResponderEvent) => {
     if (disabled) return
-    const next = !isChecked
-    if (!isControlled) setInternal(next)
-    onCheckedChange?.(next)
-  }, [disabled, isChecked, isControlled, onCheckedChange])
+    setChecked(prev => !prev)
+    onPress?.(e)
+  }, [disabled, setChecked, onPress])
 
   // ─── Classic effect ────────────────────────────────────────────────────────
   const isClassic = variant === 'classic'
@@ -173,8 +194,6 @@ export function Switch({
     height: trackHeight,
     borderRadius: trackRadius,
     backgroundColor: colors.track,
-    borderWidth: colors.trackBorder ? 1 : undefined,
-    borderColor: colors.trackBorder,
     justifyContent: 'center',
     paddingHorizontal: thumbMargin,
     ...margins,
@@ -189,16 +208,32 @@ export function Switch({
 
   return (
     <AnimatedPressable
-      onPress={handlePress}
-      onPressIn={scalePressIn}
-      onPressOut={scalePressOut}
-      disabled={disabled}
       accessibilityRole="switch"
-      accessibilityState={{ checked: isChecked, disabled }}
-      style={[scaleStyle, trackStyle, classicStyle, style]}
+      hitSlop={hitSlop ?? getMinHitSlop(trackWidth, trackHeight)}
       {...rest}
+      {...handlers}
+      onPress={handlePress}
+      disabled={disabled}
+      accessibilityState={{ ...accessibilityState, checked: isChecked, disabled }}
+      style={[scaleStyle, trackStyle, classicStyle, style]}
     >
+      {colors.trackBorder && (
+        <View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            borderRadius: trackRadius,
+            borderWidth: 1,
+            borderColor: colors.trackBorder,
+          }}
+        />
+      )}
       <Animated.View style={[thumbStyle, thumbAnimatedStyle]} />
+      <FocusRing visible={focused} color={rc(prefix, 8)} borderRadius={trackRadius} offset={3} />
     </AnimatedPressable>
   )
 }

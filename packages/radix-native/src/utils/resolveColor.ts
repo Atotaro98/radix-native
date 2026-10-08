@@ -6,6 +6,7 @@ import {
 } from '../tokens/colors'
 import type { AccentColor, GrayColor, ColorScaleWithModes } from '../tokens/colors/types'
 import type { ThemeColor, ColorOverrides } from '../theme/theme.types'
+import { isDev } from './env'
 
 const colorMap: Record<string, ColorScaleWithModes> = {
   tomato, red, ruby, crimson, pink, plum, purple, violet,
@@ -64,7 +65,7 @@ export function resolveColor(
   // Fall back to built-in scale
   const scale = colorMap[colorName]?.[appearance]
   if (!scale) {
-    if (__DEV__ && !color.startsWith('#') && !color.startsWith('rgb')) {
+    if (isDev && !color.startsWith('#') && !color.startsWith('rgb')) {
       console.warn(`[radix-native] Unknown color token: "${color}"`)
     }
     return color as string
