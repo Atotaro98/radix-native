@@ -5,6 +5,8 @@ import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
 import { resolveFont, FONT_WEIGHT } from '../../utils/resolveFont'
+import { getTextWrapProps } from '../../utils/typography'
+import { TextContext } from './TextContext'
 import { fontSize as fontSizeMap, lineHeight, letterSpacingEm } from '../../tokens/typography'
 import { scalingMap } from '../../tokens/scaling'
 import { space } from '../../tokens/spacing'
@@ -76,8 +78,6 @@ export function Blockquote({
   const font = resolveFont(fonts[weight] ?? fonts.regular, FONT_WEIGHT[weight])
 
   // ─── Wrapping / truncation ──────────────────────────────────────────────────
-  const numberOfLines = truncate ? 1 : wrap === 'nowrap' ? 1 : undefined
-  const ellipsizeMode = truncate ? 'tail' : wrap === 'nowrap' ? 'clip' : undefined
 
   // ─── Border & padding (match Radix CSS: dynamic based on font size) ────────
   // Space tokens are scaled in Radix: --space-N: calc(Npx * var(--scaling))
@@ -110,15 +110,16 @@ export function Blockquote({
   }
 
   return (
-    <View style={[containerStyle, style]} {...rest}>
-      <RNText
-        numberOfLines={numberOfLines}
-        ellipsizeMode={ellipsizeMode}
-        maxFontSizeMultiplier={effectiveMaxFont}
-        style={textStyle}
-      >
-        {children}
-      </RNText>
+    <View {...rest} style={[containerStyle, style]}>
+      <TextContext.Provider value={{ fontSize: resolvedSize }}>
+        <RNText
+          {...getTextWrapProps(truncate, wrap)}
+          maxFontSizeMultiplier={effectiveMaxFont}
+          style={textStyle}
+        >
+          {children}
+        </RNText>
+      </TextContext.Provider>
     </View>
   )
 }

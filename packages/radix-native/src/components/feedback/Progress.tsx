@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from 'react'
 import { View } from 'react-native'
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence, interpolate, Easing } from 'react-native-reanimated'
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence, interpolate, cancelAnimation, Easing } from 'react-native-reanimated'
 import type { ViewStyle, StyleProp } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
@@ -71,7 +71,7 @@ export function Progress({
   )
 
   const isIndeterminate = value === undefined
-  const progress = isIndeterminate ? 0 : Math.min(Math.max(value / max, 0), 1)
+  const progress = isIndeterminate || !(max > 0) ? 0 : Math.min(Math.max(value / max, 0), 1)
 
   // ─── Colors ─────────────────────────────────────────────────────────────
   const colors = useMemo(() => {
@@ -117,6 +117,7 @@ export function Progress({
     )
 
     return () => {
+      cancelAnimation(animValue)
       animValue.value = 0
     }
   }, [isIndeterminate, animValue])
@@ -146,14 +147,15 @@ export function Progress({
 
   return (
     <View
-      style={[trackStyle, style]}
       accessibilityRole="progressbar"
+      accessibilityState={isIndeterminate ? { busy: true } : undefined}
       accessibilityValue={{
         min: 0,
         max,
         now: isIndeterminate ? undefined : value,
       }}
       {...rest}
+      style={[trackStyle, style]}
     >
       {isIndeterminate ? (
         <Animated.View style={[indicatorBaseStyle, indicatorAnimStyle]} />

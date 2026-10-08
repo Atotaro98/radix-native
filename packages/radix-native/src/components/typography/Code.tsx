@@ -5,6 +5,9 @@ import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
 import { resolveFont, FONT_WEIGHT } from '../../utils/resolveFont'
+import { getTextWrapProps } from '../../utils/typography'
+import { SYSTEM_MONOSPACE } from '../../utils/fonts'
+import { TextContext, useParentText } from './TextContext'
 import { fontSize, letterSpacingEm } from '../../tokens/typography'
 import { scalingMap } from '../../tokens/scaling'
 import { getRadius } from '../../tokens/radius'
@@ -54,7 +57,7 @@ export interface CodeProps extends NativeTextProps, MarginProps {
  * full visual fidelity, wrap in a `<Box>` with explicit styling.
  */
 export function Code({
-  size = 3,
+  size,
   variant = 'soft',
   weight,
   color,
@@ -72,10 +75,14 @@ export function Code({
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
   // ─── Typography ─────────────────────────────────────────────────────────────
+  // Radix: inline code renders at 0.95em of the surrounding text. With an
+  // explicit size (or when standalone, default 3) the token is used instead.
+  const parent = useParentText()
   const scalingFactor = scalingMap[scaling]
-  // Radix: inline code renders at 0.95em relative to parent font.
-  const resolvedSize = Math.round(fontSize[size] * scalingFactor * 0.95)
-  const resolvedLetterSpacing = letterSpacingEm[size] * resolvedSize
+  const resolvedSize = size === undefined && parent
+    ? Math.round(parent.fontSize * 0.95)
+    : Math.round(fontSize[size ?? 3] * scalingFactor * 0.95)
+  const resolvedLetterSpacing = letterSpacingEm[size ?? 3] * resolvedSize
 
   // ─── Color helpers ───────────────────────────────────────────────────────────
   // When `color` prop is set, use that color's steps; otherwise use 'accent-*'
@@ -109,11 +116,10 @@ export function Code({
 
   // ─── Font family ─────────────────────────────────────────────────────────────
   const effectiveWeight: TextWeight = weight ?? 'regular'
-  const font = resolveFont(fonts.code ?? fonts[effectiveWeight] ?? fonts.regular, weight ? FONT_WEIGHT[weight] : undefined)
+  // Code always uses a monospace face: `fonts.code`, else the system monospace
+  const font = resolveFont(fonts.code ?? SYSTEM_MONOSPACE, FONT_WEIGHT[effectiveWeight])
 
   // ─── Wrapping / truncation ──────────────────────────────────────────────────
-  const numberOfLines = truncate ? 1 : wrap === 'nowrap' ? 1 : undefined
-  const ellipsizeMode = truncate ? 'tail' : wrap === 'nowrap' ? 'clip' : undefined
 
   // ─── Padding — Radix: 0.1em vertical, 0.25em horizontal. Ghost: no padding.
   const isGhost = variant === 'ghost'
@@ -138,13 +144,14 @@ export function Code({
   }
 
   return (
-    <RNText
-      numberOfLines={numberOfLines}
-      ellipsizeMode={ellipsizeMode}
-      maxFontSizeMultiplier={effectiveMaxFont}
-      style={[codeStyle, style]}
-      {...rest}
-    />
+    <TextContext.Provider value={{ fontSize: resolvedSize }}>
+      <RNText
+        {...getTextWrapProps(truncate, wrap)}
+        maxFontSizeMultiplier={effectiveMaxFont}
+        {...rest}
+        style={[codeStyle, style]}
+      />
+    </TextContext.Provider>
   )
 }
 Code.displayName = 'Code'

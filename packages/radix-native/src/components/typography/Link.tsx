@@ -5,9 +5,10 @@ import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
 import { resolveFont, FONT_WEIGHT } from '../../utils/resolveFont'
-import { fontSize, lineHeight, letterSpacingEm } from '../../tokens/typography'
-import { scalingMap } from '../../tokens/scaling'
+import { resolveTypography, getTextWrapProps } from '../../utils/typography'
+import { isDev } from '../../utils/env'
 import type { FontSizeToken } from '../../tokens/typography'
+import { TextContext, useParentText } from './TextContext'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { MarginProps } from '../../types/marginProps'
 import type { TextWeight, TextWrap } from './Text'
@@ -17,8 +18,8 @@ import type { NativeTextProps } from '../../types/nativeProps'
 
 /**
  * Controls underline visibility.
- * 'auto'   → no underline by default (Radix shows on hover; RN has no hover).
- *             highContrast forces underline visible (matches Radix .rt-high-contrast).
+ * 'auto'   → standalone: no underline (Radix shows it on hover; RN has no hover).
+ *             Inside running text or with highContrast: underline visible.
  * 'always' → underline always visible
  * 'hover'  → no underline (hover never fires in RN)
  * 'none'   → no underline
@@ -26,7 +27,7 @@ import type { NativeTextProps } from '../../types/nativeProps'
 export type LinkUnderline = 'auto' | 'always' | 'hover' | 'none'
 
 export interface LinkProps extends NativeTextProps, MarginProps {
-  /** Text size token (1–9). Default: inherits — set to 3 (16px) if no parent. */
+  /** Text size token (1–9). Default: inherits the parent text size, or 3 (16px) when standalone. */
   size?: FontSizeToken
   weight?: TextWeight
   /** Truncates text with an ellipsis when it overflows. */
@@ -35,7 +36,7 @@ export interface LinkProps extends NativeTextProps, MarginProps {
   wrap?: TextWrap
   /**
    * Underline visibility. Default: 'auto'.
-   * 'auto' → no underline, unless highContrast is set.
+   * 'auto' → no underline, unless highContrast is set or the link is nested in text.
    * 'hover' → no underline (hover does not exist on mobile).
    */
   underline?: LinkUnderline
@@ -51,13 +52,10 @@ export interface LinkProps extends NativeTextProps, MarginProps {
   style?: StyleProp<TextStyle>
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function Link({
-  size = 3,
+  size,
   weight,
   truncate,
   wrap,
@@ -69,18 +67,23 @@ export function Link({
   maxFontSizeMultiplier,
   m, mx, my, mt, mr, mb, ml,
   style,
+  children,
   ...rest
 }: LinkProps) {
   const { scaling, fonts, maxFontSizeMultiplier: globalMax } = useThemeContext()
   const effectiveMaxFont = maxFontSizeMultiplier ?? globalMax
   const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
+  const parent = useParentText()
+  const isNested = parent !== null
 
   // ─── Typography ─────────────────────────────────────────────────────────────
-  const scalingFactor = scalingMap[scaling]
-  const resolvedSize        = Math.round(fontSize[size] * scalingFactor)
-  const resolvedLineHeight  = Math.round(lineHeight[size] * scalingFactor)
-  const resolvedLetterSpacing = letterSpacingEm[size] * resolvedSize
+  // Nested without an explicit size → inherit the surrounding text size.
+  const typography = React.useMemo(
+    () => (size !== undefined || !isNested ? resolveTypography(size ?? 3, scaling) : undefined),
+    [size, isNested, scaling],
+  )
+  const contextFontSize = typography?.fontSize ?? parent?.fontSize ?? 0
 
   // ─── Color ──────────────────────────────────────────────────────────────────
   // Radix: colored links use a11, highContrast → step 12. Same as Text.
@@ -88,28 +91,26 @@ export function Link({
   const linkColor = rc(prefix, highContrast ? 12 : 'a11')
 
   // ─── Font family ─────────────────────────────────────────────────────────────
-  const effectiveWeight: TextWeight = weight ?? 'regular'
-  const font = resolveFont(fonts[effectiveWeight] ?? fonts.regular, weight ? FONT_WEIGHT[weight] : undefined)
+  const font = weight
+    ? resolveFont(fonts[weight] ?? fonts.regular, FONT_WEIGHT[weight])
+    : isNested ? undefined : resolveFont(fonts.regular, undefined)
 
   // ─── Underline ──────────────────────────────────────────────────────────────
   // Radix CSS rules for .rt-underline-auto:
   //   - hover (web only) → underline
   //   - .rt-high-contrast → underline always, color: accent-a6
   //   - inside colored parent (data-accent-color) → underline always
-  // In RN there is no hover, so 'auto' only shows underline for highContrast.
-  // 'always' → underline, 'hover'/'none' → no underline.
+  // In RN there is no hover, so 'auto' shows the underline for highContrast and
+  // for links inside running text (otherwise only color would distinguish them,
+  // which fails WCAG 1.4.1 "Use of Color").
   const showUnderline =
-    underline === 'always' || (underline === 'auto' && !!highContrast)
+    underline === 'always' || (underline === 'auto' && (!!highContrast || isNested))
   const textDecorationLine: TextStyle['textDecorationLine'] =
     showUnderline ? 'underline' : 'none'
   // Radix: accent-a5 for normal underline, accent-a6 for highContrast
   const textDecorationColor = showUnderline
     ? rc(prefix, highContrast ? 'a6' : 'a5')
     : undefined
-
-  // ─── Wrapping / truncation ──────────────────────────────────────────────────
-  const numberOfLines = truncate ? 1 : wrap === 'nowrap' ? 1 : undefined
-  const ellipsizeMode = truncate ? 'tail' : wrap === 'nowrap' ? 'clip' : undefined
 
   // ─── Press handler ──────────────────────────────────────────────────────────
   const handlePress = React.useCallback(
@@ -118,7 +119,7 @@ export function Link({
         onPress(e)
       } else if (href) {
         void Linking.openURL(href).catch(() => {
-          if (__DEV__) console.warn(`[Link] Failed to open URL: ${href}`)
+          if (isDev) console.warn(`[Link] Failed to open URL: ${href}`)
         })
       }
     },
@@ -127,28 +128,30 @@ export function Link({
 
   // ─── Style ──────────────────────────────────────────────────────────────────
   const linkStyle = React.useMemo<TextStyle>(() => ({
-    fontSize:      resolvedSize,
-    lineHeight:    resolvedLineHeight,
-    letterSpacing: resolvedLetterSpacing,
-    color:         linkColor,
-    fontWeight:    font.fontWeight,
-    fontFamily:    font.fontFamily,
+    ...typography,
+    color:      linkColor,
+    fontWeight: font?.fontWeight,
+    fontFamily: font?.fontFamily,
     textDecorationLine,
     textDecorationColor,
-    flexShrink:    1,
-    ...margins,
-  }), [resolvedSize, resolvedLineHeight, resolvedLetterSpacing, linkColor, font.fontWeight, font.fontFamily, textDecorationLine, textDecorationColor, margins])
+    ...(isNested ? null : { flexShrink: 1, ...margins }),
+  }), [typography, linkColor, font?.fontWeight, font?.fontFamily, textDecorationLine, textDecorationColor, isNested, margins])
+
+  const contextValue = React.useMemo(() => ({ fontSize: contextFontSize }), [contextFontSize])
 
   return (
-    <RNText
-      accessibilityRole="link"
-      numberOfLines={numberOfLines}
-      ellipsizeMode={ellipsizeMode}
-      maxFontSizeMultiplier={effectiveMaxFont}
-      onPress={handlePress}
-      style={[linkStyle, style]}
-      {...rest}
-    />
+    <TextContext.Provider value={contextValue}>
+      <RNText
+        accessibilityRole="link"
+        {...getTextWrapProps(truncate, wrap)}
+        maxFontSizeMultiplier={effectiveMaxFont}
+        {...rest}
+        onPress={handlePress}
+        style={[linkStyle, style]}
+      >
+        {children}
+      </RNText>
+    </TextContext.Provider>
   )
 }
 Link.displayName = 'Link'

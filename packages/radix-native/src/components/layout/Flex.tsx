@@ -1,6 +1,6 @@
 import React from 'react'
 import { View } from 'react-native'
-import type { ViewStyle } from 'react-native'
+import type { ViewStyle, DimensionValue } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
@@ -55,21 +55,21 @@ export interface FlexProps extends NativeViewProps, MarginProps {
   pb?: SpaceToken
   pl?: SpaceToken
   // ─── Size ─────────────────────────────────────────────────────────
-  width?: number | string
-  minWidth?: number | string
-  maxWidth?: number | string
-  height?: number | string
-  minHeight?: number | string
-  maxHeight?: number | string
+  width?: DimensionValue
+  minWidth?: DimensionValue
+  maxWidth?: DimensionValue
+  height?: DimensionValue
+  minHeight?: DimensionValue
+  maxHeight?: DimensionValue
   // ─── Position ─────────────────────────────────────────────────────
   position?: 'relative' | 'absolute'
-  top?: number | string
-  right?: number | string
-  bottom?: number | string
-  left?: number | string
+  top?: DimensionValue
+  right?: DimensionValue
+  bottom?: DimensionValue
+  left?: DimensionValue
   // ─── Layout ───────────────────────────────────────────────────────
   overflow?: 'hidden' | 'visible' | 'scroll'
-  flexBasis?: number | string
+  flexBasis?: DimensionValue
   flexShrink?: number
   flexGrow?: number
   // ─── RN-only theme props ──────────────────────────────────────────
@@ -117,18 +117,18 @@ export function Flex({
     // Margin
     ...margins,
     // Size
-    width:     width     as ViewStyle['width'],
-    minWidth:  minWidth  as ViewStyle['minWidth'],
-    maxWidth:  maxWidth  as ViewStyle['maxWidth'],
-    height:    height    as ViewStyle['height'],
-    minHeight: minHeight as ViewStyle['minHeight'],
-    maxHeight: maxHeight as ViewStyle['maxHeight'],
+    width:     width,
+    minWidth:  minWidth,
+    maxWidth:  maxWidth,
+    height:    height,
+    minHeight: minHeight,
+    maxHeight: maxHeight,
     // Position
-    position, top: top as ViewStyle['top'], right: right as ViewStyle['right'],
-    bottom: bottom as ViewStyle['bottom'], left: left as ViewStyle['left'],
+    position, top: top, right: right,
+    bottom: bottom, left: left,
     // Layout
     overflow: overflow as ViewStyle['overflow'],
-    flexBasis: flexBasis as ViewStyle['flexBasis'],
+    flexBasis: flexBasis,
     flexShrink, flexGrow,
     // Theme
     backgroundColor: bg ? rc(bg) : undefined,

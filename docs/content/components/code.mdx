@@ -16,10 +16,10 @@ Inherits from Text (RN). Supports [margin props](/theme/spacing).
 
 | Prop | Type | Default |
 |------|------|---------|
-| `size` | `1-9` | `3` |
+| `size` | `1-9` | `3` (0.95× parent when nested) |
 | `variant` | `'solid' \| 'soft' \| 'outline' \| 'ghost'` | `'soft'` |
 | `weight` | `'light' \| 'regular' \| 'medium' \| 'bold'` | — |
 | `color` | `AccentColor` | theme accent |
 | `highContrast` | `boolean` | — |
 
-Font-size is 0.95x of the size token. Ghost variant has zero padding; others have 0.1em/0.25em. Uses the `code` font from ThemeFonts.
+Font-size is 0.95x of the size token — or of the surrounding text when nested without `size`. Ghost variant has zero padding; others have 0.1em/0.25em. Uses the `code` font from ThemeFonts, falling back to the system monospace font.

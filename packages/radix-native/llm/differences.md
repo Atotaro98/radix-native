@@ -44,7 +44,7 @@ These are places where RN cannot replicate the exact Radix web visual, and we us
 | **Linear gradients** | `background-image: linear-gradient(...)` | Not available on Views | Classic variant bevel is approximated with overlay Views |
 | **Multi-layer shadows** | Complex `box-shadow` stacks | Platform-specific: iOS `shadow*`, Android `elevation` | Less depth in shadows |
 | **Color-mix** | `color-mix(in oklab, ...)` | Not available | Border colors are simpler approximations |
-| **Outline** | `outline: 2px solid color; outline-offset: -1px` | `borderColor` change | Focus ring is a border change, not an outline |
+| **Outline** | `outline: 2px solid color; outline-offset: -1px` | Absolutely positioned `FocusRing` view (`accent-8`) | Shown on keyboard / TV / web focus for every pressable; inputs use border color + 1px inner ring |
 | **Separator thickness** | `height: 1px` (CSS pixel) | `StyleSheet.hairlineWidth` (1 physical pixel) | Separator may appear thinner on retina |
 
 ### Per component
@@ -61,8 +61,8 @@ These are places where RN cannot replicate the exact Radix web visual, and we us
 | **Checkbox** classic border | Web: `gray-a3 + shadow-1` | RN: `gray-a3` border only |
 | **Card** surface/classic border | Web: `color-mix()` enhanced shadows | RN: simple `borderColor` |
 | **Card** ghost hover | Web: `gray-a3` background on hover | RN: no hover background |
-| **TextField/TextArea** focus | Web: 2px outline with offset | RN: border color change |
-| **Code** inline sizing | Web: `0.95em` relative to parent | RN: inherits parent font-size directly |
+| **TextField/TextArea** focus | Web: 2px outline with offset | RN: 1px border color change + 1px inner ring |
+| **Code** inline sizing | Web: `0.95em` relative to parent | RN: 0.95 × parent size when nested in a text component (via `TextContext`); token size when standalone |
 | **Em/Quote** font | Web: serif font (`Times New Roman`) at 118% | RN: italic style only, no serif font or size adjustment |
 | **Kbd** classic shadow | Web: elaborate multi-layer box-shadow | RN: simple border + platform shadow |
 
@@ -89,7 +89,7 @@ These are the EXACT token mappings that intentionally differ between Radix web a
 |---------|-----------|--------|
 | `ghost-offset` variant | Button/IconButton toolbar variant with negative margin | Not implemented |
 | Progress shine overlay | Indeterminate gradient sweep effect | Not implemented (requires LinearGradient) |
-| Spinner `currentColor` | Inherits CSS text color | Uses `gray-a11` (no CSS cascade in RN) |
+| Spinner `currentColor` | Inherits CSS text color | Uses `gray-a11`, or the RN-only `color` prop (no CSS cascade in RN) |
 | `asChild` / Slot composition | Supported | Planned |
 | Haptic feedback | N/A (web) | Planned |
 | Responsive props | `{ initial, sm, md, lg, xl }` | Not planned (use `useWindowDimensions`) |
@@ -101,3 +101,20 @@ These are the EXACT token mappings that intentionally differ between Radix web a
 | Slider | Range input | Not implemented |
 | Table, DataList | Data display | Not implemented |
 | ScrollArea | Custom scroll container | Not implemented |
+
+## Accessibility additions (RN-only)
+
+| Area | Behavior |
+|------|----------|
+| Touch targets | Checkbox, Radio, Switch, IconButton and small Buttons get a default `hitSlop` that grows the touch area to 44×44pt (override with `hitSlop`). |
+| Focus | Every pressable shows a 2px `accent-8` focus ring on keyboard / switch-control / TV / web focus. |
+| Groups | `RadioGroup` / `RadioCards` roots expose `accessibilityRole="radiogroup"`; all group roots accept `accessibilityLabel`. Group items with a label are announced as one control named by the label. |
+| Consumer props | `onPressIn` / `onPressOut` / `onFocus` / `onBlur` / `accessibilityState` are composed with the internal ones (never override them). |
+| IconButton | Logs a dev warning when rendered without `accessibilityLabel`. |
+| Link `underline="auto"` | Underlined when nested inside running text (WCAG 1.4.1 — color alone must not be the only cue); standalone links behave as before. |
+| Radio | Like a native radio input, pressing a checked `Radio` does not uncheck it. |
+| Contrast | Radix scales are tuned with APCA. Text on solid step 9 (`contrast` color, used by `solid` variants) is ~3:1 for some hues (orange, cyan, teal, grass…): fine for large text and UI parts, below WCAG AA for body text. Use `highContrast` where AA is required. Covered by `src/__tests__/contrast.test.ts`. |
+
+## Text nesting
+
+Typography components publish their resolved font size through `TextContext`. When `Text`, `Link`, `Code` or `Kbd` are nested inside another text component **without** an explicit `size` (and `Text` without `color` / `weight`), they inherit from the parent instead of resetting to their standalone defaults — matching how Radix behaves on the web.

@@ -12,7 +12,7 @@ React Native components that match the [Radix Themes](https://www.radix-ui.com/t
 - **31 color scales** from `@radix-ui/colors` with light/dark modes and alpha variants
 - **Minimal dependencies** — only `react`, `react-native`, and `react-native-reanimated` as peer deps
 - **TypeScript strict** — fully typed props, tokens, and theme values
-- **Accessible** — semantic roles, accessibility states, screen reader support
+- **Accessible** — semantic roles and states, 44pt minimum touch targets, visible focus ring, font-scaling caps, automated contrast tests
 - **Press animation** — subtle scale-down on press for interactive components
 
 ## Installation
@@ -111,6 +111,7 @@ export default function App() {
 | ---------- | --------------------------------------------------- |
 | `Spinner`  | 8-leaf staggered fade animation                     |
 | `Progress` | Determinate + indeterminate bar with variant colors |
+| `Skeleton` | Pulsing placeholder that preserves children's layout |
 
 ### Forms
 
@@ -214,8 +215,19 @@ const { appearance, accentColor, onAppearanceChange } = useThemeContext()
 | `Flex` default      | `row` (CSS)                    | `column` (mobile-first)         |
 | Separator thickness | `1px` CSS                      | `StyleSheet.hairlineWidth`      |
 | `fonts` prop        | N/A                            | Custom font families per weight |
+| Focus indicator     | CSS `outline`                  | `FocusRing` overlay (`accent-8`) |
+| Touch targets       | Pointer-sized controls         | Default `hitSlop` up to 44×44pt |
 
 See `packages/radix-native/llm/differences.md` for the complete comparison.
+
+## Accessibility
+
+- Every pressable exposes its role and state (`checked`, `mixed`, `disabled`, `busy`) and shows a 2px focus ring on keyboard / switch-control / TV / web focus.
+- Small controls (Checkbox, Radio, Switch, IconButton, Button size 1–2) get a default `hitSlop` reaching 44×44pt. Pass `hitSlop` to override.
+- Icon-only buttons need a label: `<IconButton accessibilityLabel="Close">…</IconButton>` (a dev warning reminds you).
+- Labeled group items (`CheckboxGroup.Item`, `RadioGroup.Item`) are announced as a single control named by their label; `RadioGroup` / `RadioCards` expose `radiogroup` and accept `accessibilityLabel`.
+- Nested text inherits size and color like on the web, and links inside running text are underlined.
+- **Contrast:** Radix scales are tuned with APCA. Text on solid step 9 (`solid` variants) is ~3:1 for some hues (orange, cyan, teal, grass…) — fine for large text and UI, below WCAG AA for body text. Use `highContrast` when AA is required. Colored text (`a11`) and `highContrast` text meet AA/AAA on the background in every scale (see `src/__tests__/contrast.test.ts`).
 
 ## Documentation
 
@@ -230,11 +242,16 @@ Monorepo powered by Turborepo + Yarn 4 Berry.
 ```bash
 yarn install           # Install dependencies
 yarn build             # Build the library
+yarn lint              # ESLint 9 (incl. react-hooks rules)
+yarn typecheck         # Type checking
+yarn test              # Jest + Testing Library
+yarn changeset         # Describe your change for the next release
 cd apps/example        # Start the playground
 yarn ios               # or yarn android
 yarn generate:colors   # Regenerate color tokens
-yarn typecheck         # Type checking
 ```
+
+CI (GitHub Actions) runs lint, typecheck, tests and build on every pull request. Releases go through [Changesets](https://github.com/changesets/changesets): add a changeset with your PR, then `yarn version-packages` + `yarn release`.
 
 ### Project structure
 
@@ -251,9 +268,10 @@ radix-native/
 │       └── src/
 │           ├── tokens/        # colors (31 scales), spacing, typography, radius
 │           ├── theme/         # Theme, ThemeRoot, ThemeImpl, createTheme
-│           ├── hooks/         # useThemeContext, useColor, useMargins, usePressScale
-│           ├── utils/         # resolveColor, resolveSpace, classicEffect
-│           └── components/    # layout, typography, display, actions, feedback, forms
+│           ├── hooks/         # useThemeContext, useColor, useMargins, useControllableState, useInteraction
+│           ├── utils/         # resolveColor, resolveSpace, typography, hitSlop, alpha, classicEffect
+│           ├── components/    # layout, typography, display, actions, feedback, forms (+ internal)
+│           └── __tests__/     # Jest + Testing Library
 ```
 
 ## License

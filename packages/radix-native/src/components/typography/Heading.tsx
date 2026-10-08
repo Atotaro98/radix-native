@@ -5,8 +5,9 @@ import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
 import { resolveFont, FONT_WEIGHT } from '../../utils/resolveFont'
-import { fontSize, headingLineHeight, letterSpacingEm } from '../../tokens/typography'
-import { scalingMap } from '../../tokens/scaling'
+import { resolveTypography, getTextWrapProps } from '../../utils/typography'
+import { headingLineHeight } from '../../tokens/typography'
+import { TextContext } from './TextContext'
 import type { FontSizeToken } from '../../tokens/typography'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { MarginProps } from '../../types/marginProps'
@@ -68,10 +69,7 @@ export function Heading({
   // ─── Typography ─────────────────────────────────────────────────────────────
   // Heading uses the same font size scale as Text but has its own tighter
   // line heights. Letter spacing values are identical to Text.
-  const scalingFactor = scalingMap[scaling]
-  const resolvedSize          = Math.round(fontSize[size] * scalingFactor)
-  const resolvedLineHeight    = Math.round(headingLineHeight[size] * scalingFactor)
-  const resolvedLetterSpacing = letterSpacingEm[size] * resolvedSize
+  const typography = React.useMemo(() => resolveTypography(size, scaling, headingLineHeight), [size, scaling])
 
   // ─── Color ──────────────────────────────────────────────────────────────────
   // Same logic as Text.
@@ -87,33 +85,30 @@ export function Heading({
   )
 
   // ─── Wrapping / truncation ──────────────────────────────────────────────────
-  const numberOfLines = truncate ? 1 : wrap === 'nowrap' ? 1 : undefined
-  const ellipsizeMode = truncate ? 'tail' : wrap === 'nowrap' ? 'clip' : undefined
 
   // ─── Style ──────────────────────────────────────────────────────────────────
   const headingStyle = React.useMemo<TextStyle>(() => ({
-    fontSize:               resolvedSize,
-    lineHeight:             resolvedLineHeight,
-    letterSpacing:          resolvedLetterSpacing,
+    ...typography,
     color:                  textColor,
     textAlign:              align,
     fontWeight:             font.fontWeight,
     fontFamily:             font.fontFamily,
     flexShrink:    1,
     ...margins,
-  }), [resolvedSize, resolvedLineHeight, resolvedLetterSpacing, textColor, align, font.fontWeight, font.fontFamily, margins])
+  }), [typography, textColor, align, font.fontWeight, font.fontFamily, margins])
 
   return (
-    <RNText
-      accessibilityRole="header"
-      numberOfLines={numberOfLines}
-      ellipsizeMode={ellipsizeMode}
-      maxFontSizeMultiplier={effectiveMaxFont}
-      style={[headingStyle, style]}
-      {...rest}
-    >
-      {children}
-    </RNText>
+    <TextContext.Provider value={{ fontSize: typography.fontSize }}>
+      <RNText
+        accessibilityRole="header"
+        {...getTextWrapProps(truncate, wrap)}
+        maxFontSizeMultiplier={effectiveMaxFont}
+        {...rest}
+        style={[headingStyle, style]}
+      >
+        {children}
+      </RNText>
+    </TextContext.Provider>
   )
 }
 Heading.displayName = 'Heading'

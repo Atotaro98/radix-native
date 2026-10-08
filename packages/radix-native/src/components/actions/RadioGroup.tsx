@@ -1,13 +1,14 @@
 import React, { createContext, useCallback, useContext, useMemo } from 'react'
-import { Pressable, View } from 'react-native'
-import { Text as RNText } from 'react-native'
+import { View } from 'react-native'
 import type { StyleProp, ViewStyle, TextStyle } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
+import { useControllableState } from '../../hooks/useControllableState'
 import { resolveSpace } from '../../utils/resolveSpace'
-import { fontSize, lineHeight, letterSpacingEm } from '../../tokens/typography'
+import { resolveTypography } from '../../utils/typography'
 import { scalingMap } from '../../tokens/scaling'
+import { LabeledControl } from '../internal/LabeledControl'
 import type { MarginProps } from '../../types/marginProps'
 import type { AccentColor } from '../../tokens/colors/types'
 import { Radio, type RadioSize, type RadioVariant } from './Radio'
@@ -47,6 +48,9 @@ export interface RadioGroupProps extends MarginProps {
   disabled?: boolean
   /** Group children (RadioGroup.Item). */
   children?: React.ReactNode
+  /** Accessible name for the whole group. */
+  accessibilityLabel?: string
+  testID?: string
   style?: StyleProp<ViewStyle>
 }
 
@@ -81,20 +85,19 @@ function RadioGroupRoot({
   onValueChange,
   disabled = false,
   children,
+  accessibilityLabel,
+  testID,
   m, mx, my, mt, mr, mb, ml,
   style,
 }: RadioGroupProps) {
   const { scaling } = useThemeContext()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
-  const [internal, setInternal] = React.useState(defaultValue)
-  const isControlled = valueProp !== undefined
-  const value = isControlled ? valueProp : internal
-
-  const onItemSelect = useCallback((itemValue: string) => {
-    if (!isControlled) setInternal(itemValue)
-    onValueChange?.(itemValue)
-  }, [isControlled, onValueChange])
+  const [value, onItemSelect] = useControllableState<string>({
+    prop: valueProp,
+    defaultProp: defaultValue,
+    onChange: onValueChange,
+  })
 
   const ctx = useMemo<RadioGroupContextValue>(() => ({
     size, variant, color, highContrast, disabled, value, onItemSelect,
@@ -103,6 +106,9 @@ function RadioGroupRoot({
   return (
     <RadioGroupContext.Provider value={ctx}>
       <View
+        accessibilityRole="radiogroup"
+        accessibilityLabel={accessibilityLabel}
+        testID={testID}
         style={[
           { flexDirection: 'column', gap: resolveSpace(1, scaling) },
           margins,
@@ -142,19 +148,9 @@ function RadioGroupItem({
     if (!isDisabled) onItemSelect(itemValue)
   }, [isDisabled, onItemSelect, itemValue])
 
-  const scalingFactor = scalingMap[scaling]
-  const fontIdx = LABEL_FONT_SIZE[size]
-  const resolvedFontSize = Math.round(fontSize[fontIdx] * scalingFactor)
-  const resolvedLineHeight = Math.round(lineHeight[fontIdx] * scalingFactor)
-  const resolvedLetterSpacing = letterSpacingEm[fontIdx] * resolvedFontSize
-  const gap = Math.round(LABEL_GAP[size] * scalingFactor)
+  const gap = Math.round(LABEL_GAP[size] * scalingMap[scaling])
 
-  const textColor = rc('gray', 12)
-  const fontFamily = fonts.regular
-
-  const hasLabel = children != null
-
-  if (!hasLabel) {
+  if (children == null) {
     return (
       <Radio
         size={size}
@@ -171,30 +167,19 @@ function RadioGroupItem({
   }
 
   const labelStyle: TextStyle = {
-    fontSize: resolvedFontSize,
-    lineHeight: resolvedLineHeight,
-    letterSpacing: resolvedLetterSpacing,
-    color: isDisabled ? rc('gray', 'a8') : textColor,
-    fontFamily,
+    ...resolveTypography(LABEL_FONT_SIZE[size], scaling),
+    color: isDisabled ? rc('gray', 'a8') : rc('gray', 12),
+    fontFamily: fonts.regular,
+    flexShrink: 1,
   }
 
   return (
-    <Pressable
-      onPress={handlePress}
+    <LabeledControl
+      role="radio"
+      checked={isChecked}
       disabled={isDisabled}
-      accessibilityRole="radio"
-      accessibilityState={{ checked: isChecked, disabled: isDisabled }}
-      style={[
-        {
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap,
-          ...margins,
-        },
-        style,
-      ]}
-    >
-      <View pointerEvents="none" importantForAccessibility="no-hide-descendants">
+      onPress={handlePress}
+      control={
         <Radio
           size={size}
           variant={variant}
@@ -203,13 +188,16 @@ function RadioGroupItem({
           checked={isChecked}
           disabled={isDisabled}
         />
-      </View>
-      {typeof children === 'string' || typeof children === 'number' ? (
-        <RNText style={labelStyle} maxFontSizeMultiplier={effectiveMaxFont}>{children}</RNText>
-      ) : (
-        children
-      )}
-    </Pressable>
+      }
+      gap={gap}
+      labelStyle={labelStyle}
+      focusColor={rc(color ?? 'accent', 8)}
+      maxFontSizeMultiplier={effectiveMaxFont}
+      margins={margins}
+      style={style}
+    >
+      {children}
+    </LabeledControl>
   )
 }
 RadioGroupItem.displayName = 'RadioGroup.Item'

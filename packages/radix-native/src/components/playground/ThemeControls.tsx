@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated'
 import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native'
-import type { ViewStyle } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { Text } from '../typography/Text'

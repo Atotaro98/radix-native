@@ -31,4 +31,4 @@ import { Grid } from 'radix-native'
 </Grid>
 ```
 
-Uses `onLayout` to measure container width and compute cell dimensions.
+Children are grouped into rows of `columns` equal-width cells (`flex: 1`), so the layout is exact from the first frame (no `onLayout` measurement). The last row is padded with empty cells to keep widths equal. `justify` aligns each item horizontally inside its cell (`between` stretches it).

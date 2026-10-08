@@ -34,8 +34,8 @@ import { Spinner } from 'radix-native'
 ```
 
 ## How it works
-8 leaves rotated 45deg apart, each with staggered opacity fade (800ms, linear, infinite). Overall opacity 0.65. Uses `gray-a11` color (inherits text color intent). Animation uses `useNativeDriver: true`.
+8 leaves rotated 45deg apart, each with staggered opacity fade (800ms, linear, infinite). Overall opacity 0.65. Uses `gray-a11` by default; pass the RN-only `color` prop (theme token like `'accent-11'` or any color string) to override — Button/IconButton use it to match their text color. Animations run on the UI thread via Reanimated and are cancelled on unmount. Default `accessibilityLabel` is `"Loading"` (override via props).
 
 ## Differences from Radix web
 - Radix uses CSS keyframes with `currentColor`. We use Animated API with explicit color.
-- No `currentColor` in RN — uses `gray-a11` as default.
+- No `currentColor` in RN — uses `gray-a11` as default (or the `color` prop).
