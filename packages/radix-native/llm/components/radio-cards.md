@@ -23,7 +23,7 @@ import { RadioCards } from 'radix-native'
 | variant | `'surface' \| 'classic'` | `'surface'` | Visual variant |
 | color | `AccentColor` | theme accent | Accent color |
 | highContrast | `boolean` | — | Increases contrast |
-| columns | `number` | `1` | Grid columns |
+| columns | `number` | auto-fit (≥ 160px per card) | Equal-width columns |
 | gap | `SpaceToken` | `4` | Gap between cards |
 | value | `string` | — | Controlled selected value |
 | defaultValue | `string` | `''` | Uncontrolled default |

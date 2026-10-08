@@ -33,3 +33,7 @@ import { Radio } from 'radix-native'
 
 ## Related
 - `RadioGroup` — group of labeled radios with shared state
+
+## Behavior
+
+Like a native radio input, pressing an already-checked `Radio` does **not** uncheck it; `onCheckedChange` only fires with `true`. Use `RadioGroup` for single-selection between options.

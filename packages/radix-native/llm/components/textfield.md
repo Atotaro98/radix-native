@@ -40,7 +40,7 @@ Extends `TextInputProps` (from React Native) minus `style`.
 
 ## Focus behavior
 
-Border color changes to `accent-8` on focus. The `soft` variant uses a transparent border when unfocused (always reserves 1px space to prevent layout shift).
+Border color changes to `accent-8` on focus, plus a 1px inner ring (1px border + 1px ring = Radix's 2px outline). The `soft` variant uses a transparent border when unfocused (always reserves 1px space to prevent layout shift). `disabled` is exposed on the `TextInput` itself (`editable={false}` + `accessibilityState.disabled`).
 
 ## Variant color behavior
 
@@ -49,7 +49,7 @@ Border color changes to `accent-8` on focus. The `soft` variant uses a transpare
 
 ## Known RN limitations
 
-- **Focus indicator**: Radix uses `outline: 2px solid accent-8` with `outline-offset: -1px`. RN has no outline — we change `borderColor` to `accent-8` on focus. Border is always 1px (reserved space prevents layout jump).
+- **Focus indicator**: Radix uses `outline: 2px solid accent-8` with `outline-offset: -1px`. RN has no outline — we change `borderColor` to `accent-8` on focus and draw a 1px inset ring. Border is always 1px (reserved space prevents layout jump).
 - **Classic shadow**: Radix uses `box-shadow: var(--shadow-1)` for the classic variant. RN shadow is less precise.
 - **Selection color**: Radix uses `accent-a5` for text selection. RN text selection color is controlled at the OS level.
 

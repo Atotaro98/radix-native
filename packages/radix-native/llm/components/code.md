@@ -10,7 +10,7 @@ import { Code } from 'radix-native'
 ## Props
 | Prop | Type | Default |
 |------|------|---------|
-| size | `1-9` | inherits from parent |
+| size | `1-9` | 0.95 × parent text size when nested; 3 when standalone |
 | variant | `'solid' \| 'soft' \| 'outline' \| 'ghost'` | `'soft'` |
 | weight | `'light' \| 'regular' \| 'medium' \| 'bold'` | `'regular'` |
 | color, highContrast | `AccentColor`, `boolean` | — |

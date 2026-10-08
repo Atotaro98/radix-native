@@ -52,8 +52,11 @@ import { Button } from 'radix-native'
 
 ## Differences from Radix web
 
-- `children` string is auto-wrapped in `<Text>` (no need for separate text element)
-- Loading spinner size scales with button size (1→16px, 2→20px, 3→20px, 4→24px)
+- `children` strings are auto-wrapped in `<Text>`; adjacent strings/numbers are merged into one label (`<Button>Hello {name}</Button>` renders a single text)
+- Icon elements receive the button text color via `color` **only if they don't set `color` themselves**
+- Loading uses the library `Spinner` (works on iOS and Android) with the button text color; size scales with button size (1→Spinner 1, 2/3→Spinner 2, 4→Spinner 3)
+- Consumer `onPressIn` / `onPressOut` / `onFocus` / `onBlur` / `accessibilityState` are composed with the internal ones
+- Default `hitSlop` extends small sizes to a 44pt touch target
 - Ghost variant uses `fontWeight: '400'` (regular), others use `'500'` (medium)
 - No `asChild` prop
 
