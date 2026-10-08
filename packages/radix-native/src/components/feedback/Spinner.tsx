@@ -8,6 +8,7 @@ import Animated, {
   withRepeat,
   withSequence,
   withDelay,
+  cancelAnimation,
   Easing,
 } from 'react-native-reanimated'
 import { useThemeContext } from '../../hooks/useThemeContext'
@@ -16,6 +17,7 @@ import { useMargins } from '../../hooks/useMargins'
 import { scalingMap } from '../../tokens/scaling'
 import type { MarginProps } from '../../types/marginProps'
 import type { NativeViewProps } from '../../types/nativeProps'
+import type { ThemeColor } from '../../theme/theme.types'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -26,6 +28,12 @@ export interface SpinnerProps extends NativeViewProps, MarginProps {
   size?: SpinnerSize
   /** When false, renders children instead of spinner. Default: true. */
   loading?: boolean
+  /**
+   * RN-only: leaf color — a theme token (`'accent-11'`) or any color string.
+   * Radix web inherits `currentColor`; RN has no color cascade, so the default
+   * is `gray-a11`.
+   */
+  color?: ThemeColor
   style?: StyleProp<ViewStyle>
 }
 
@@ -69,7 +77,8 @@ function SpinnerLeaf({
         -1,
       ),
     )
-  }, [])
+    return () => cancelAnimation(opacity)
+  }, [delay, opacity])
 
   const animStyle = useAnimatedStyle(() => ({ opacity: opacity.value }))
 
@@ -105,6 +114,7 @@ function SpinnerLeaf({
 export function Spinner({
   size = 2,
   loading = true,
+  color,
   m, mx, my, mt, mr, mb, ml,
   style,
   children,
@@ -117,13 +127,8 @@ export function Spinner({
   const scalingFactor = scalingMap[scaling]
   const boxSize = Math.round(SIZE_PX[size] * scalingFactor)
 
-  // Spinner uses currentColor — we default to gray-12 (inherits text color intent)
-  const leafColor = rc('gray', 'a11')
-
-  // ─── If not loading, render children ──────────────────────────────────
-  if (!loading) {
-    return <>{children}</>
-  }
+  // Spinner uses currentColor on web — RN default is gray-a11
+  const leafColor = color ? rc(color) : rc('gray', 'a11')
 
   // ─── Leaf dimensions ──────────────────────────────────────────────────
   const leafWidth = boxSize * 0.125
@@ -137,12 +142,19 @@ export function Spinner({
     ...margins,
   }), [boxSize, margins])
 
+  // ─── If not loading, render children ──────────────────────────────────
+  // (after all hooks — toggling `loading` must not change the hook order)
+  if (!loading) {
+    return <>{children}</>
+  }
+
   return (
     <View
-      style={[containerStyle, style]}
       accessibilityRole="progressbar"
-      accessibilityState={{ busy: true }}
+      accessibilityLabel="Loading"
       {...rest}
+      accessibilityState={{ busy: true }}
+      style={[containerStyle, style]}
     >
       {Array.from({ length: LEAF_COUNT }, (_, i) => (
         <SpinnerLeaf

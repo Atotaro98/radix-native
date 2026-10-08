@@ -1,13 +1,14 @@
 import React, { createContext, useCallback, useContext, useMemo } from 'react'
-import { Pressable, View } from 'react-native'
-import { Text as RNText } from 'react-native'
+import { View } from 'react-native'
 import type { StyleProp, ViewStyle, TextStyle } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
+import { useControllableState } from '../../hooks/useControllableState'
 import { resolveSpace } from '../../utils/resolveSpace'
-import { fontSize, lineHeight, letterSpacingEm } from '../../tokens/typography'
+import { resolveTypography } from '../../utils/typography'
 import { scalingMap } from '../../tokens/scaling'
+import { LabeledControl } from '../internal/LabeledControl'
 import type { MarginProps } from '../../types/marginProps'
 import type { AccentColor } from '../../tokens/colors/types'
 import { Checkbox, type CheckboxSize, type CheckboxVariant } from './Checkbox'
@@ -47,6 +48,9 @@ export interface CheckboxGroupProps extends MarginProps {
   disabled?: boolean
   /** Group children (CheckboxGroup.Item). */
   children?: React.ReactNode
+  /** Accessible name for the whole group. */
+  accessibilityLabel?: string
+  testID?: string
   style?: StyleProp<ViewStyle>
 }
 
@@ -81,23 +85,26 @@ function CheckboxGroupRoot({
   onValueChange,
   disabled = false,
   children,
+  accessibilityLabel,
+  testID,
   m, mx, my, mt, mr, mb, ml,
   style,
 }: CheckboxGroupProps) {
   const { scaling } = useThemeContext()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
-  const [internal, setInternal] = React.useState<string[]>(defaultValue)
-  const isControlled = valueProp !== undefined
-  const value = isControlled ? valueProp : internal
+  const [value, setValue] = useControllableState<string[]>({
+    prop: valueProp,
+    defaultProp: defaultValue,
+    onChange: onValueChange,
+  })
 
+  // Functional update: two quick toggles never work on a stale array
   const onItemToggle = useCallback((itemValue: string) => {
-    const next = value.includes(itemValue)
-      ? value.filter(v => v !== itemValue)
-      : [...value, itemValue]
-    if (!isControlled) setInternal(next)
-    onValueChange?.(next)
-  }, [value, isControlled, onValueChange])
+    setValue(prev => prev.includes(itemValue)
+      ? prev.filter(v => v !== itemValue)
+      : [...prev, itemValue])
+  }, [setValue])
 
   const ctx = useMemo<CheckboxGroupContextValue>(() => ({
     size, variant, color, highContrast, disabled, value, onItemToggle,
@@ -106,6 +113,8 @@ function CheckboxGroupRoot({
   return (
     <CheckboxGroupContext.Provider value={ctx}>
       <View
+        accessibilityLabel={accessibilityLabel}
+        testID={testID}
         style={[
           { flexDirection: 'column', gap: resolveSpace(2, scaling) },
           margins,
@@ -145,19 +154,20 @@ function CheckboxGroupItem({
     if (!isDisabled) onItemToggle(itemValue)
   }, [isDisabled, onItemToggle, itemValue])
 
-  const scalingFactor = scalingMap[scaling]
-  const fontIdx = LABEL_FONT_SIZE[size]
-  const resolvedFontSize = Math.round(fontSize[fontIdx] * scalingFactor)
-  const resolvedLineHeight = Math.round(lineHeight[fontIdx] * scalingFactor)
-  const resolvedLetterSpacing = letterSpacingEm[fontIdx] * resolvedFontSize
-  const gap = Math.round(LABEL_GAP[size] * scalingFactor)
+  const gap = Math.round(LABEL_GAP[size] * scalingMap[scaling])
 
-  const textColor = rc('gray', 12)
-  const fontFamily = fonts.regular
+  const control = (
+    <Checkbox
+      size={size}
+      variant={variant}
+      color={color}
+      highContrast={highContrast}
+      checked={isChecked}
+      disabled={isDisabled}
+    />
+  )
 
-  const hasLabel = children != null
-
-  if (!hasLabel) {
+  if (children == null) {
     return (
       <Checkbox
         size={size}
@@ -165,7 +175,7 @@ function CheckboxGroupItem({
         color={color}
         highContrast={highContrast}
         checked={isChecked}
-        onCheckedChange={() => onItemToggle(itemValue)}
+        onCheckedChange={handlePress}
         disabled={isDisabled}
         m={m} mx={mx} my={my} mt={mt} mr={mr} mb={mb} ml={ml}
         style={style}
@@ -174,45 +184,28 @@ function CheckboxGroupItem({
   }
 
   const labelStyle: TextStyle = {
-    fontSize: resolvedFontSize,
-    lineHeight: resolvedLineHeight,
-    letterSpacing: resolvedLetterSpacing,
-    color: isDisabled ? rc('gray', 'a8') : textColor,
-    fontFamily,
+    ...resolveTypography(LABEL_FONT_SIZE[size], scaling),
+    color: isDisabled ? rc('gray', 'a8') : rc('gray', 12),
+    fontFamily: fonts.regular,
+    flexShrink: 1,
   }
 
   return (
-    <Pressable
-      onPress={handlePress}
+    <LabeledControl
+      role="checkbox"
+      checked={isChecked}
       disabled={isDisabled}
-      accessibilityRole="checkbox"
-      accessibilityState={{ checked: isChecked, disabled: isDisabled }}
-      style={[
-        {
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap,
-          ...margins,
-        },
-        style,
-      ]}
+      onPress={handlePress}
+      control={control}
+      gap={gap}
+      labelStyle={labelStyle}
+      focusColor={rc(color ?? 'accent', 8)}
+      maxFontSizeMultiplier={effectiveMaxFont}
+      margins={margins}
+      style={style}
     >
-      <View pointerEvents="none" importantForAccessibility="no-hide-descendants">
-        <Checkbox
-          size={size}
-          variant={variant}
-          color={color}
-          highContrast={highContrast}
-          checked={isChecked}
-          disabled={isDisabled}
-        />
-      </View>
-      {typeof children === 'string' || typeof children === 'number' ? (
-        <RNText style={labelStyle} maxFontSizeMultiplier={effectiveMaxFont}>{children}</RNText>
-      ) : (
-        children
-      )}
-    </Pressable>
+      {children}
+    </LabeledControl>
   )
 }
 CheckboxGroupItem.displayName = 'CheckboxGroup.Item'

@@ -1,13 +1,14 @@
-import React, { useCallback, useMemo, useState } from 'react'
-import { ActivityIndicator, View } from 'react-native'
-import { Text as RNText } from 'react-native'
+import React, { useCallback, useMemo } from 'react'
+import { View, Text as RNText } from 'react-native'
 import type { StyleProp, ViewStyle, TextStyle, GestureResponderEvent } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
+import { useInteraction } from '../../hooks/useInteraction'
+import { AnimatedPressable } from '../../hooks/usePressScale'
 import { resolveFont } from '../../utils/resolveFont'
-import { usePressScale, AnimatedPressable } from '../../hooks/usePressScale'
-import { fontSize, lineHeight, letterSpacingEm } from '../../tokens/typography'
+import { resolveTypography } from '../../utils/typography'
+import { getMinHitSlop, MIN_TOUCH_TARGET } from '../../utils/hitSlop'
 import { scalingMap } from '../../tokens/scaling'
 import { getRadius, getFullRadius } from '../../tokens/radius'
 import type { RadiusToken, RadiusLevel } from '../../tokens/radius'
@@ -15,6 +16,10 @@ import type { AccentColor } from '../../tokens/colors/types'
 import { getClassicEffect } from '../../utils/classicEffect'
 import type { NativePressableProps } from '../../types/nativeProps'
 import type { MarginProps } from '../../types/marginProps'
+import { ClassicOverlay } from '../internal/ClassicOverlay'
+import { FocusRing } from '../internal/FocusRing'
+import { Spinner, type SpinnerSize } from '../feedback/Spinner'
+import { getButtonColors } from './buttonColors'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -55,8 +60,8 @@ const SIZE_GAP: Record<ButtonSize, number> = { 1: 4, 2: 8, 3: 12, 4: 12 }
 const SIZE_FONT: Record<ButtonSize, 1 | 2 | 3 | 4> = { 1: 1, 2: 2, 3: 3, 4: 4 }
 /** radius level per size */
 const SIZE_RADIUS_LEVEL: Record<ButtonSize, RadiusLevel> = { 1: 1, 2: 2, 3: 3, 4: 4 }
-/** Spinner pixel size per button size (Radix: 1→1, 2→2, 3→2, 4→3) */
-const SIZE_SPINNER: Record<ButtonSize, number> = { 1: 16, 2: 20, 3: 20, 4: 24 }
+/** Spinner size per button size (Radix: 1→1, 2→2, 3→2, 4→3) */
+const SIZE_SPINNER: Record<ButtonSize, SpinnerSize> = { 1: 1, 2: 2, 3: 2, 4: 3 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -73,122 +78,54 @@ export function Button({
   m, mx, my, mt, mr, mb, ml,
   style,
   onPress,
+  onPressIn,
+  onPressOut,
+  onFocus,
+  onBlur,
+  accessibilityState,
+  hitSlop,
   ...rest
 }: ButtonProps) {
   const { appearance, scaling, fonts, radius: themeRadius, maxFontSizeMultiplier: globalMax } = useThemeContext()
   const effectiveMaxFont = maxFontSizeMultiplier ?? globalMax ?? 2
   const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
-  const { scaleStyle, handlePressIn: scalePressIn, handlePressOut: scalePressOut } = usePressScale(!disabled && !loading)
-  const [pressed, setPressed] = useState(false)
 
   const effectiveRadius = radiusProp ?? themeRadius
   const isDisabled = disabled || loading
   const prefix = color ?? 'accent'
 
+  const { pressed, focused, scaleStyle, handlers } = useInteraction({
+    enabled: !isDisabled,
+    onPressIn,
+    onPressOut,
+    onFocus,
+    onBlur,
+  })
+
   // ─── Typography ────────────────────────────────────────────────────────────
   const scalingFactor = scalingMap[scaling]
-  const fontIdx = SIZE_FONT[size]
-  const resolvedFontSize = Math.round(fontSize[fontIdx] * scalingFactor)
-  const resolvedLineHeight = Math.round(lineHeight[fontIdx] * scalingFactor)
-  const resolvedLetterSpacing = letterSpacingEm[fontIdx] * resolvedFontSize
+  const typography = useMemo(() => resolveTypography(SIZE_FONT[size], scaling), [size, scaling])
 
   // ─── Dimensions ────────────────────────────────────────────────────────────
   const isGhost = variant === 'ghost'
+  const isClassic = variant === 'classic'
   const resolvedHeight = Math.round(SIZE_HEIGHT[size] * scalingFactor)
   const resolvedPaddingX = Math.round(SIZE_PADDING_X[size] * scalingFactor)
   const resolvedGap = Math.round(SIZE_GAP[size] * scalingFactor)
 
   // ─── Radius ────────────────────────────────────────────────────────────────
-  const level = SIZE_RADIUS_LEVEL[size]
-  const borderRadius = Math.max(getRadius(effectiveRadius, level), getFullRadius(effectiveRadius))
+  const borderRadius = Math.max(
+    getRadius(effectiveRadius, SIZE_RADIUS_LEVEL[size]),
+    getFullRadius(effectiveRadius),
+  )
 
-  // ─── Color helpers ─────────────────────────────────────────────────────────
-
-  const colors = useMemo(() => {
-    // Radix: loading sets [data-disabled], so both disabled AND loading use disabled styling
-    if (isDisabled) {
-      const disabledText = rc('gray', 'a8')
-      switch (variant) {
-        case 'classic':
-          return {
-            bg: rc('gray', 2),
-            text: disabledText,
-            border: undefined,
-            pressedBg: rc('gray', 2),
-          }
-        case 'solid':
-        case 'soft':
-          return {
-            bg: rc('gray', 'a3'),
-            text: disabledText,
-            border: undefined,
-            pressedBg: rc('gray', 'a3'),
-          }
-        case 'surface':
-          return {
-            bg: rc('gray', 'a2'),
-            text: disabledText,
-            border: rc('gray', 'a6'),
-            pressedBg: rc('gray', 'a2'),
-          }
-        case 'outline':
-          return {
-            bg: 'transparent',
-            text: disabledText,
-            border: rc('gray', 'a7'),
-            pressedBg: 'transparent',
-          }
-        case 'ghost':
-          return {
-            bg: 'transparent',
-            text: disabledText,
-            border: undefined,
-            pressedBg: 'transparent',
-          }
-      }
-    }
-
-    // Active variant colors
-    const hc = highContrast
-
-    switch (variant) {
-      case 'classic':
-      case 'solid': {
-        const bg = hc ? rc(prefix, 12) : rc(prefix, 9)
-        const text = hc ? rc('gray', 1) : rc(prefix, 'contrast')
-        const pressedBg = hc ? rc(prefix, 12) : rc(prefix, 10)
-        // highContrast: accent-12 bg and pressedBg are identical, use opacity for press feedback
-        const pressedOpacity = hc ? 0.88 : undefined
-        return { bg, text, border: undefined, pressedBg, pressedOpacity }
-      }
-      case 'soft': {
-        const bg = rc(prefix, 'a3')
-        const text = hc ? rc(prefix, 12) : rc(prefix, 'a11')
-        const pressedBg = rc(prefix, 'a5')
-        return { bg, text, border: undefined, pressedBg }
-      }
-      case 'surface': {
-        const bg = rc(prefix, 'surface')
-        const text = hc ? rc(prefix, 12) : rc(prefix, 'a11')
-        const border = rc(prefix, 'a7')
-        const pressedBg = rc(prefix, 'a3')
-        return { bg, text, border, pressedBg }
-      }
-      case 'outline': {
-        const text = hc ? rc(prefix, 12) : rc(prefix, 'a11')
-        // Radix highContrast: double inset shadow with accent-a7 + gray-a11
-        const border = hc ? rc('gray', 'a11') : rc(prefix, 'a8')
-        const pressedBg = rc(prefix, 'a3')
-        return { bg: 'transparent', text, border, pressedBg }
-      }
-      case 'ghost': {
-        const text = hc ? rc(prefix, 12) : rc(prefix, 'a11')
-        const pressedBg = rc(prefix, 'a4')
-        return { bg: 'transparent', text, border: undefined, pressedBg }
-      }
-    }
-  }, [variant, prefix, highContrast, isDisabled, loading, rc])
+  // ─── Colors ────────────────────────────────────────────────────────────────
+  const colors = useMemo(
+    () => getButtonColors(rc, variant, prefix, highContrast, isDisabled),
+    [rc, variant, prefix, highContrast, isDisabled],
+  )
+  const focusColor = rc(prefix, 8)
 
   // ─── Font family ───────────────────────────────────────────────────────────
   // Radix: only non-ghost uses font-weight: medium; ghost uses regular
@@ -197,34 +134,24 @@ export function Button({
     isGhost ? '400' : '500',
   )
 
+  const textStyle = useMemo<TextStyle>(() => ({
+    ...typography,
+    color: colors.text,
+    fontWeight: font.fontWeight,
+    fontFamily: font.fontFamily,
+    flexShrink: 1,
+  }), [typography, colors.text, font.fontWeight, font.fontFamily])
+
   // ─── Press handler ─────────────────────────────────────────────────────────
   const handlePress = useCallback(
     (e: GestureResponderEvent) => {
-      if (!isDisabled && onPress) onPress(e)
+      if (!isDisabled) onPress?.(e)
     },
     [isDisabled, onPress],
   )
 
-  const handlePressIn = useCallback(() => {
-    setPressed(true)
-    scalePressIn()
-  }, [scalePressIn])
-
-  const handlePressOut = useCallback(() => {
-    setPressed(false)
-    scalePressOut()
-  }, [scalePressOut])
-
-  // ─── Variant flags ──────────────────────────────────────────────────────────
-  const isClassic = variant === 'classic'
-
-  // ─── Pressed state styles ──────────────────────────────────────────────────
-  const bg = pressed && !isDisabled ? colors.pressedBg : colors.bg
-  const opacity = (pressed && !isDisabled && colors.pressedOpacity != null)
-    ? colors.pressedOpacity
-    : (isDisabled && !loading ? 1 : undefined)
-
-  const containerStyle: ViewStyle = {
+  // ─── Styles ────────────────────────────────────────────────────────────────
+  const containerStyle = useMemo<ViewStyle>(() => ({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -232,13 +159,15 @@ export function Button({
     minHeight: resolvedHeight,
     paddingHorizontal: resolvedPaddingX,
     gap: resolvedGap,
-    backgroundColor: bg,
     borderRadius,
     borderWidth: colors.border ? 1 : undefined,
     borderColor: colors.border,
-    opacity,
-    // Margins
     ...margins,
+  }), [resolvedHeight, resolvedPaddingX, resolvedGap, borderRadius, colors.border, margins])
+
+  const stateStyle: ViewStyle = {
+    backgroundColor: pressed ? colors.pressedBg : colors.bg,
+    opacity: pressed ? colors.pressedOpacity : undefined,
   }
 
   // Classic 3D effect (shadow + bevel)
@@ -246,73 +175,39 @@ export function Button({
     ? getClassicEffect(appearance, { pressed, disabled: isDisabled && !loading })
     : undefined
 
+  const content = renderContent(children, textStyle, colors.text, effectiveMaxFont)
+
   // ─── Render ────────────────────────────────────────────────────────────────
   return (
     <AnimatedPressable
-      onPress={handlePress}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      disabled={isDisabled}
       accessibilityRole="button"
-      accessibilityState={{ disabled: isDisabled, busy: loading }}
-      style={[scaleStyle, containerStyle, classicStyle, style]}
+      hitSlop={hitSlop ?? getMinHitSlop(MIN_TOUCH_TARGET, resolvedHeight)}
       {...rest}
+      {...handlers}
+      onPress={handlePress}
+      disabled={isDisabled}
+      accessibilityState={{ ...accessibilityState, disabled: isDisabled, busy: loading }}
+      style={[scaleStyle, containerStyle, stateStyle, classicStyle, style]}
     >
-      {/* Classic gradient simulation: light overlay on top, dark on bottom */}
-      {isClassic && !isDisabled && (
-        <>
-          <View
-            pointerEvents="none"
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: '50%',
-              backgroundColor: 'rgba(255,255,255,0.12)',
-            }}
-          />
-          <View
-            pointerEvents="none"
-            style={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              height: '50%',
-              backgroundColor: 'rgba(0,0,0,0.08)',
-            }}
-          />
-        </>
-      )}
+      {isClassic && !isDisabled && <ClassicOverlay />}
       {loading ? (
-        <View style={{ position: 'relative', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-          {/* Invisible children to maintain dimensions */}
-          <View style={{ opacity: 0, flexDirection: 'row', alignItems: 'center', gap: resolvedGap }}>
-            {renderContent(children, {
-              fontSize: resolvedFontSize,
-              lineHeight: resolvedLineHeight,
-              letterSpacing: resolvedLetterSpacing,
-              color: colors.text,
-              fontWeight: font.fontWeight,
-              fontFamily: font.fontFamily,
-            }, colors.text, effectiveMaxFont)}
+        <>
+          {/* Invisible children keep the button's dimensions while loading */}
+          <View
+            style={{ opacity: 0, flexDirection: 'row', alignItems: 'center', gap: resolvedGap }}
+            importantForAccessibility="no-hide-descendants"
+            accessibilityElementsHidden
+          >
+            {content}
           </View>
-          {/* Spinner overlay */}
-          <View style={{ position: 'absolute', alignItems: 'center', justifyContent: 'center' }}>
-            <ActivityIndicator size={Math.round(SIZE_SPINNER[size] * scalingFactor)} color={colors.text} />
+          <View style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, alignItems: 'center', justifyContent: 'center' }}>
+            <Spinner size={SIZE_SPINNER[size]} color={colors.text} />
           </View>
-        </View>
+        </>
       ) : (
-        renderContent(children, {
-          fontSize: resolvedFontSize,
-          lineHeight: resolvedLineHeight,
-          letterSpacing: resolvedLetterSpacing,
-          color: colors.text,
-          fontWeight: font.fontWeight,
-          fontFamily: font.fontFamily,
-        }, colors.text, effectiveMaxFont)
+        content
       )}
+      <FocusRing visible={focused} color={focusColor} borderRadius={borderRadius} />
     </AnimatedPressable>
   )
 }
@@ -320,17 +215,57 @@ Button.displayName = 'Button'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function renderContent(children: React.ReactNode, textStyle: TextStyle, iconColor: string, maxFontSizeMultiplier?: number): React.ReactNode {
-  if (typeof children === 'string' || typeof children === 'number') {
-    return <RNText style={[textStyle, { flexShrink: 1 }]} numberOfLines={1} maxFontSizeMultiplier={maxFontSizeMultiplier}>{children}</RNText>
+/**
+ * Renders button children:
+ * - Adjacent strings / numbers are merged into a single `<Text>` so
+ *   `<Button>Hello {name}</Button>` reads as one label (no gap in between).
+ * - Elements (icons) receive the button text color via `color` — but only
+ *   when they don't set `color` themselves.
+ */
+export function renderContent(
+  children: React.ReactNode,
+  textStyle: TextStyle,
+  iconColor: string,
+  maxFontSizeMultiplier?: number,
+): React.ReactNode {
+  const nodes: React.ReactNode[] = []
+  let textRun = ''
+
+  const flushText = () => {
+    if (textRun === '') return
+    nodes.push(
+      <RNText
+        key={`text-${nodes.length}`}
+        style={textStyle}
+        numberOfLines={1}
+        maxFontSizeMultiplier={maxFontSizeMultiplier}
+      >
+        {textRun}
+      </RNText>,
+    )
+    textRun = ''
   }
-  return React.Children.map(children, child => {
+
+  React.Children.forEach(children, (child) => {
     if (typeof child === 'string' || typeof child === 'number') {
-      return <RNText style={[textStyle, { flexShrink: 1 }]} numberOfLines={1} maxFontSizeMultiplier={maxFontSizeMultiplier}>{child}</RNText>
+      textRun += String(child)
+      return
     }
-    if (React.isValidElement(child)) {
-      return React.cloneElement(child as React.ReactElement<{ color?: string }>, { color: iconColor })
+    flushText()
+    if (React.isValidElement<{ color?: unknown }>(child)) {
+      nodes.push(
+        child.props.color === undefined
+          ? React.cloneElement(child as React.ReactElement<{ color?: string }>, {
+              key: child.key ?? `el-${nodes.length}`,
+              color: iconColor,
+            })
+          : React.cloneElement(child, { key: child.key ?? `el-${nodes.length}` }),
+      )
+    } else if (child != null && typeof child !== 'boolean') {
+      nodes.push(child)
     }
-    return child
   })
+  flushText()
+
+  return nodes
 }

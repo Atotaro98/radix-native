@@ -1,10 +1,12 @@
-import React, { useCallback, useMemo, useState } from 'react'
-import { ActivityIndicator, View } from 'react-native'
+import React, { useCallback, useMemo } from 'react'
 import type { StyleProp, ViewStyle, GestureResponderEvent } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
-import { usePressScale, AnimatedPressable } from '../../hooks/usePressScale'
+import { useInteraction } from '../../hooks/useInteraction'
+import { AnimatedPressable } from '../../hooks/usePressScale'
+import { getMinHitSlop } from '../../utils/hitSlop'
+import { isDev } from '../../utils/env'
 import { scalingMap } from '../../tokens/scaling'
 import { getRadius, getFullRadius } from '../../tokens/radius'
 import type { RadiusToken, RadiusLevel } from '../../tokens/radius'
@@ -12,6 +14,10 @@ import type { AccentColor } from '../../tokens/colors/types'
 import { getClassicEffect } from '../../utils/classicEffect'
 import type { NativePressableProps } from '../../types/nativeProps'
 import type { MarginProps } from '../../types/marginProps'
+import { ClassicOverlay } from '../internal/ClassicOverlay'
+import { FocusRing } from '../internal/FocusRing'
+import { Spinner, type SpinnerSize } from '../feedback/Spinner'
+import { getButtonColors } from './buttonColors'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -33,7 +39,10 @@ export interface IconButtonProps extends NativePressableProps, MarginProps {
   loading?: boolean
   /** Disables the button. */
   disabled?: boolean
-  /** Icon element. */
+  /**
+   * Icon element. Icon-only buttons have no text for screen readers:
+   * always pass an `accessibilityLabel` (a dev warning is logged otherwise).
+   */
   children?: React.ReactNode
   style?: StyleProp<ViewStyle>
 }
@@ -44,8 +53,8 @@ export interface IconButtonProps extends NativePressableProps, MarginProps {
 const SIZE_PX: Record<IconButtonSize, number> = { 1: 24, 2: 32, 3: 40, 4: 48 }
 /** Radius level per size. */
 const SIZE_RADIUS_LEVEL: Record<IconButtonSize, RadiusLevel> = { 1: 1, 2: 2, 3: 3, 4: 4 }
-/** Spinner pixel size per button size. */
-const SIZE_SPINNER: Record<IconButtonSize, number> = { 1: 16, 2: 20, 3: 20, 4: 24 }
+/** Spinner size per button size. */
+const SIZE_SPINNER: Record<IconButtonSize, SpinnerSize> = { 1: 1, 2: 2, 3: 2, 4: 3 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -61,116 +70,76 @@ export function IconButton({
   m, mx, my, mt, mr, mb, ml,
   style,
   onPress,
+  onPressIn,
+  onPressOut,
+  onFocus,
+  onBlur,
+  accessibilityState,
+  hitSlop,
   ...rest
 }: IconButtonProps) {
   const { appearance, scaling, radius: themeRadius } = useThemeContext()
   const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
-  const { scaleStyle, handlePressIn: scalePressIn, handlePressOut: scalePressOut } = usePressScale(!disabled && !loading)
-  const [pressed, setPressed] = useState(false)
 
   const effectiveRadius = radiusProp ?? themeRadius
   const isDisabled = disabled || loading
   const prefix = color ?? 'accent'
+  const isClassic = variant === 'classic'
 
-  const scalingFactor = scalingMap[scaling]
-  const isGhost = variant === 'ghost'
-  const resolvedSize = Math.round(SIZE_PX[size] * scalingFactor)
+  const { pressed, focused, scaleStyle, handlers } = useInteraction({
+    enabled: !isDisabled,
+    onPressIn,
+    onPressOut,
+    onFocus,
+    onBlur,
+  })
+
+  const resolvedSize = Math.round(SIZE_PX[size] * scalingMap[scaling])
+
+  const hasLabel = !!rest.accessibilityLabel
+  React.useEffect(() => {
+    if (isDev && !hasLabel) {
+      console.warn('[radix-native] IconButton has no `accessibilityLabel`; screen readers will announce it as an unlabeled button.')
+    }
+  }, [hasLabel])
 
   // ─── Radius ────────────────────────────────────────────────────────────────
-  const level = SIZE_RADIUS_LEVEL[size]
-  const borderRadius = Math.max(getRadius(effectiveRadius, level), getFullRadius(effectiveRadius))
+  const borderRadius = Math.max(
+    getRadius(effectiveRadius, SIZE_RADIUS_LEVEL[size]),
+    getFullRadius(effectiveRadius),
+  )
 
-  // ─── Colors (same logic as Button) ─────────────────────────────────────────
-
-  const colors = useMemo(() => {
-    if (isDisabled) {
-      const disabledText = rc('gray', 'a8')
-      switch (variant) {
-        case 'classic':
-          return { bg: rc('gray', 2), text: disabledText, border: undefined, pressedBg: rc('gray', 2) }
-        case 'solid':
-        case 'soft':
-          return { bg: rc('gray', 'a3'), text: disabledText, border: undefined, pressedBg: rc('gray', 'a3') }
-        case 'surface':
-          return { bg: rc('gray', 'a2'), text: disabledText, border: rc('gray', 'a6'), pressedBg: rc('gray', 'a2') }
-        case 'outline':
-          return { bg: 'transparent', text: disabledText, border: rc('gray', 'a7'), pressedBg: 'transparent' }
-        case 'ghost':
-          return { bg: 'transparent', text: disabledText, border: undefined, pressedBg: 'transparent' }
-      }
-    }
-
-    const hc = highContrast
-    switch (variant) {
-      case 'classic':
-      case 'solid': {
-        const bg = hc ? rc(prefix, 12) : rc(prefix, 9)
-        const text = hc ? rc('gray', 1) : rc(prefix, 'contrast')
-        const pressedBg = hc ? rc(prefix, 12) : rc(prefix, 10)
-        const pressedOpacity = hc ? 0.88 : undefined
-        return { bg, text, border: undefined, pressedBg, pressedOpacity }
-      }
-      case 'soft': {
-        const bg = rc(prefix, 'a3')
-        const text = hc ? rc(prefix, 12) : rc(prefix, 'a11')
-        return { bg, text, border: undefined, pressedBg: rc(prefix, 'a5') }
-      }
-      case 'surface': {
-        const bg = rc(prefix, 'surface')
-        const text = hc ? rc(prefix, 12) : rc(prefix, 'a11')
-        return { bg, text, border: rc(prefix, 'a7'), pressedBg: rc(prefix, 'a3') }
-      }
-      case 'outline': {
-        const text = hc ? rc(prefix, 12) : rc(prefix, 'a11')
-        const border = hc ? rc('gray', 'a11') : rc(prefix, 'a8')
-        return { bg: 'transparent', text, border, pressedBg: rc(prefix, 'a3') }
-      }
-      case 'ghost': {
-        const text = hc ? rc(prefix, 12) : rc(prefix, 'a11')
-        return { bg: 'transparent', text, border: undefined, pressedBg: rc(prefix, 'a4') }
-      }
-    }
-  }, [variant, prefix, highContrast, isDisabled, loading, rc])
+  // ─── Colors (shared with Button) ───────────────────────────────────────────
+  const colors = useMemo(
+    () => getButtonColors(rc, variant, prefix, highContrast, isDisabled),
+    [rc, variant, prefix, highContrast, isDisabled],
+  )
+  const focusColor = rc(prefix, 8)
 
   const handlePress = useCallback(
     (e: GestureResponderEvent) => {
-      if (!isDisabled && onPress) onPress(e)
+      if (!isDisabled) onPress?.(e)
     },
     [isDisabled, onPress],
   )
 
-  const handlePressIn = useCallback(() => {
-    setPressed(true)
-    scalePressIn()
-  }, [scalePressIn])
-
-  const handlePressOut = useCallback(() => {
-    setPressed(false)
-    scalePressOut()
-  }, [scalePressOut])
-
-  const isClassic = variant === 'classic'
-
-  // ─── Pressed state styles ──────────────────────────────────────────────────
-  const bg = pressed && !isDisabled ? colors.pressedBg : colors.bg
-  const opacity = (pressed && !isDisabled && colors.pressedOpacity != null)
-    ? colors.pressedOpacity
-    : (isDisabled && !loading ? 1 : undefined)
-
-  const containerStyle: ViewStyle = {
+  // ─── Styles ────────────────────────────────────────────────────────────────
+  const containerStyle = useMemo<ViewStyle>(() => ({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
     width: resolvedSize,
     height: resolvedSize,
-    backgroundColor: bg,
     borderRadius,
     borderWidth: colors.border ? 1 : undefined,
     borderColor: colors.border,
-    opacity,
-    // Margins
     ...margins,
+  }), [resolvedSize, borderRadius, colors.border, margins])
+
+  const stateStyle: ViewStyle = {
+    backgroundColor: pressed ? colors.pressedBg : colors.bg,
+    opacity: pressed ? colors.pressedOpacity : undefined,
   }
 
   const classicEffect = isClassic
@@ -179,30 +148,26 @@ export function IconButton({
 
   return (
     <AnimatedPressable
-      onPress={handlePress}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      disabled={isDisabled}
       accessibilityRole="button"
-      accessibilityState={{ disabled: isDisabled, busy: loading }}
-      style={[scaleStyle, containerStyle, classicEffect, style]}
+      hitSlop={hitSlop ?? getMinHitSlop(resolvedSize, resolvedSize)}
       {...rest}
+      {...handlers}
+      onPress={handlePress}
+      disabled={isDisabled}
+      accessibilityState={{ ...accessibilityState, disabled: isDisabled, busy: loading }}
+      style={[scaleStyle, containerStyle, stateStyle, classicEffect, style]}
     >
-        {isClassic && !isDisabled && (
-          <>
-            <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '50%', backgroundColor: 'rgba(255,255,255,0.12)' }} />
-            <View pointerEvents="none" style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '50%', backgroundColor: 'rgba(0,0,0,0.08)' }} />
-          </>
-        )}
-        {loading ? (
-          <ActivityIndicator size={Math.round(SIZE_SPINNER[size] * scalingFactor)} color={colors.text} />
-        ) : (
-          React.Children.map(children, child =>
-            React.isValidElement(child)
-              ? React.cloneElement(child as React.ReactElement<{ color?: string }>, { color: colors.text })
-              : child
-          )
-        )}
+      {isClassic && !isDisabled && <ClassicOverlay />}
+      {loading ? (
+        <Spinner size={SIZE_SPINNER[size]} color={colors.text} />
+      ) : (
+        React.Children.map(children, child =>
+          React.isValidElement<{ color?: unknown }>(child) && child.props.color === undefined
+            ? React.cloneElement(child as React.ReactElement<{ color?: string }>, { color: colors.text })
+            : child,
+        )
+      )}
+      <FocusRing visible={focused} color={focusColor} borderRadius={borderRadius} />
     </AnimatedPressable>
   )
 }

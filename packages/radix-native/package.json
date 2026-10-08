@@ -33,6 +33,7 @@
   "types": "dist/index.d.ts",
   "files": [
     "src",
+    "!src/**/__tests__",
     "dist",
     "README.md",
     "LICENSE"
@@ -42,7 +43,8 @@
     "dev": "unbuild --watch",
     "generate:colors": "tsx scripts/generate-colors.ts",
     "lint": "eslint src",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "jest"
   },
   "peerDependencies": {
     "react": ">=18.0.0",
@@ -50,11 +52,21 @@
     "react-native-reanimated": ">=3.0.0"
   },
   "devDependencies": {
-    "@radix-ui/colors": "latest",
-    "@types/node": "latest",
-    "react-native-reanimated": "latest",
-    "tsx": "latest",
-    "typescript": "latest",
-    "unbuild": "latest"
+    "@babel/core": "^7.28.0",
+    "@radix-ui/colors": "^3.0.0",
+    "@react-native/babel-preset": "~0.83.0",
+    "@testing-library/react-native": "^13.3.0",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.0.0",
+    "@types/react": "~19.2.2",
+    "jest": "^29.7.0",
+    "react": "19.2.0",
+    "react-native": "0.83.2",
+    "react-native-reanimated": "~4.3.0",
+    "react-native-worklets": "~0.8.1",
+    "react-test-renderer": "19.2.0",
+    "tsx": "^4.21.0",
+    "typescript": "~5.9.3",
+    "unbuild": "^3.6.1"
   }
 }

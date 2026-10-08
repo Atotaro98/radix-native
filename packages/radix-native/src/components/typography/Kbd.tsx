@@ -5,6 +5,7 @@ import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
 import { resolveFont } from '../../utils/resolveFont'
+import { useParentText } from './TextContext'
 import { fontSize, letterSpacingEm } from '../../tokens/typography'
 import { scalingMap } from '../../tokens/scaling'
 import { getRadius } from '../../tokens/radius'
@@ -21,7 +22,8 @@ export interface KbdProps extends MarginProps {
    *
    * In Radix web, Kbd uses `0.75em` to inherit from the parent.
    * In RN there are no relative units, so `size` sets the *parent* text size
-   * and the Kbd font is derived as `fontSize[size] * 0.8` (matching Radix).
+   * and the Kbd font is derived as `fontSize[size] * 0.75` (matching Radix).
+   * When omitted inside a Text, the surrounding text size is used.
    */
   size?: FontSizeToken
   /** Visual variant. Default: `'classic'`. */
@@ -47,7 +49,7 @@ export interface KbdProps extends MarginProps {
  * (marginBottom is ignored for inline Views in Text).
  */
 export function Kbd({
-  size = 2,
+  size,
   variant = 'classic',
   maxFontSizeMultiplier,
   m, mx, my, mt, mr, mb, ml,
@@ -61,8 +63,11 @@ export function Kbd({
 
   const sf = scalingMap[scaling]
 
-  // Radix: font-size = 0.75em relative to parent (we use token * 0.75)
-  const kbdFontSize = Math.round(fontSize[size] * sf * 0.75)
+  // Radix: 0.75em of the surrounding text. Explicit size (or standalone,
+  // default 2) uses the token instead.
+  const parent = useParentText()
+  const basePx = size === undefined && parent ? parent.fontSize : fontSize[size ?? 2] * sf
+  const kbdFontSize = Math.round(basePx * 0.75)
   // Radix: border-radius = radiusFactor * 0.35em (relative to kbdFontSize)
   const borderR = Math.max(2, Math.round(getRadius(radius, 2) * 0.35 * (kbdFontSize / 14)))
   // Radix: min-width 1.75em, line-height 1.7em (em = kbdFontSize)
@@ -75,7 +80,7 @@ export function Kbd({
   // Inline alignment: shift down so Kbd centers with surrounding text.
   // In RN, inline View bottom = text baseline. Kbd sticks above by
   // (kbdHeight - ascender). We shift it down by that amount.
-  const parentFontSize = Math.round(fontSize[size] * sf)
+  const parentFontSize = Math.round(basePx)
   const ascender = Math.round(parentFontSize * 0.82)
   const translateY = Math.round((kbdHeight - ascender) * 0.5)
 
@@ -123,7 +128,7 @@ export function Kbd({
     // Radix uses the default (body) font, NOT monospace
     ...resolveFont(fonts.regular, '400'),
     color: rc('gray', 12),
-    letterSpacing: letterSpacingEm[size] * kbdFontSize,
+    letterSpacing: letterSpacingEm[size ?? 2] * kbdFontSize,
   }
 
   // Classic variant: thin highlight line at the top to simulate

@@ -10,6 +10,8 @@ import { getRadius } from '../../tokens/radius'
 import type { RadiusToken, RadiusLevel } from '../../tokens/radius'
 import type { MarginProps } from '../../types/marginProps'
 import type { AccentColor } from '../../tokens/colors/types'
+import { getTextInputColors } from './inputColors'
+import { FocusRing } from '../internal/FocusRing'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -52,6 +54,8 @@ export function TextArea({
   style,
   onFocus: onFocusProp,
   onBlur: onBlurProp,
+  editable,
+  accessibilityState,
   ...rest
 }: TextAreaProps) {
   const { scaling, fonts, radius: themeRadius, maxFontSizeMultiplier: globalMax } = useThemeContext()
@@ -79,49 +83,10 @@ export function TextArea({
   const borderRadius = getRadius(effectiveRadius, level)
 
   // ─── Colors ────────────────────────────────────────────────────────────────
-  const colors = useMemo(() => {
-    if (disabled) {
-      return {
-        bg: variant === 'soft' ? rc('gray', 'a3') : rc('gray', 'a2'),
-        border: variant === 'soft' ? 'transparent' : rc('gray', 'a6'),
-        text: rc('gray', 'a11'),
-        placeholder: rc('gray', 'a10'),
-        placeholderOpacity: 0.5,
-      }
-    }
-    const focusBorder = rc(prefix, 8)
-    switch (variant) {
-      case 'classic':
-        return {
-          bg: rc('gray', 'surface'),
-          border: focused ? focusBorder : rc('gray', 'a7'),
-          text: rc('gray', 12),
-          placeholder: rc('gray', 'a10'),
-          placeholderOpacity: 1,
-        }
-      case 'surface':
-        return {
-          bg: rc('gray', 'surface'),
-          border: focused ? focusBorder : rc('gray', 'a7'),
-          text: rc('gray', 12),
-          placeholder: rc('gray', 'a10'),
-          placeholderOpacity: 1,
-        }
-      case 'soft': {
-        const placeholderBase = rc(prefix, 12)
-        const placeholderColor = placeholderBase.startsWith('#')
-          ? placeholderBase + '99'
-          : placeholderBase
-        return {
-          bg: rc(prefix, 'a3'),
-          border: focused ? focusBorder : 'transparent',
-          text: rc(prefix, 12),
-          placeholder: placeholderColor,
-          placeholderOpacity: 1,
-        }
-      }
-    }
-  }, [variant, prefix, focused, disabled, rc])
+  const colors = useMemo(
+    () => getTextInputColors(rc, variant, prefix, focused, disabled),
+    [rc, variant, prefix, focused, disabled],
+  )
 
   // ─── Focus handlers ───────────────────────────────────────────────────────
   const onFocus = useCallback<NonNullable<TextInputProps['onFocus']>>((e) => {
@@ -158,17 +123,20 @@ export function TextArea({
   }
 
   return (
-    <View style={[containerStyle, style]} accessibilityState={disabled ? { disabled: true } : undefined}>
+    <View style={[containerStyle, style]}>
       <TextInput
+        maxFontSizeMultiplier={effectiveMaxFont}
+        {...rest}
         style={inputStyle}
         placeholderTextColor={colors.placeholder}
-        maxFontSizeMultiplier={effectiveMaxFont}
         multiline
         onFocus={onFocus}
         onBlur={onBlur}
-        editable={!disabled}
-        {...rest}
+        editable={!disabled && editable !== false}
+        accessibilityState={{ ...accessibilityState, disabled }}
       />
+      {/* 1px border + 1px inner ring = Radix 2px focus outline */}
+      <FocusRing visible={focused} color={colors.border} borderRadius={Math.max(0, borderRadius - 1)} width={1} />
     </View>
   )
 }
