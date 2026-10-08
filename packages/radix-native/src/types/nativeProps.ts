@@ -11,6 +11,8 @@ import type {
   StyleProp,
   LayoutChangeEvent,
   GestureResponderEvent,
+  NativeSyntheticEvent,
+  TargetedEvent,
   AccessibilityRole,
   AccessibilityState,
   Insets,
@@ -42,6 +44,10 @@ export interface NativePressableProps extends NativeViewProps {
   onPressOut?: (event: GestureResponderEvent) => void
   onLongPress?: (event: GestureResponderEvent) => void
   delayLongPress?: number
+  /** Called when the control receives keyboard / TV / web focus. */
+  onFocus?: (event: NativeSyntheticEvent<TargetedEvent>) => void
+  /** Called when the control loses focus. */
+  onBlur?: (event: NativeSyntheticEvent<TargetedEvent>) => void
   disabled?: boolean
 }
 

@@ -12,7 +12,8 @@ export type ThemeColor =
   | `gray-${1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12}`
   | `gray-a${1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12}`
   | `${AccentColor}-${1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12}`
-  | (string & {})
+  // Escape hatch for raw colors ('#ff0000', 'rgb(...)') that keeps autocomplete
+  | (string & Record<never, never>)
 
 export interface ThemeFonts {
   /** fontWeight 300 — falls back to regular */

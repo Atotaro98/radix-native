@@ -4,6 +4,7 @@ import type { StyleProp, TextStyle } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useMargins } from '../../hooks/useMargins'
 import type { TextWrap } from './Text'
+import { getTextWrapProps } from '../../utils/typography'
 import type { NativeTextProps } from '../../types/nativeProps'
 import type { MarginProps } from '../../types/marginProps'
 
@@ -36,8 +37,6 @@ export function Quote({
   const effectiveMaxFont = maxFontSizeMultiplier ?? globalMax
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
-  const numberOfLines = truncate ? 1 : wrap === 'nowrap' ? 1 : undefined
-  const ellipsizeMode = truncate ? 'tail' : wrap === 'nowrap' ? 'clip' : undefined
 
   const quoteStyle: TextStyle = {
     fontStyle:    'italic',
@@ -49,8 +48,7 @@ export function Quote({
 
   return (
     <RNText
-      numberOfLines={numberOfLines}
-      ellipsizeMode={ellipsizeMode}
+      {...getTextWrapProps(truncate, wrap)}
       maxFontSizeMultiplier={effectiveMaxFont}
       style={[quoteStyle, style]}
       {...rest}

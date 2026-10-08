@@ -1,10 +1,12 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useMemo } from 'react'
 import { View } from 'react-native'
-import type { ViewStyle, StyleProp } from 'react-native'
+import type { ViewStyle, StyleProp, GestureResponderEvent, NativeSyntheticEvent, TargetedEvent } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
-import { usePressScale, AnimatedPressable } from '../../hooks/usePressScale'
+import { useInteraction } from '../../hooks/useInteraction'
+import { AnimatedPressable } from '../../hooks/usePressScale'
+import { FocusRing } from '../internal/FocusRing'
 import { scalingMap } from '../../tokens/scaling'
 import { getRadius } from '../../tokens/radius'
 import type { RadiusLevel } from '../../tokens/radius'
@@ -23,7 +25,12 @@ export interface CardProps extends NativeViewProps, MarginProps {
   /** Visual variant. Default: 'surface'. */
   variant?: CardVariant
   /** Makes the card pressable. */
-  onPress?: () => void
+  onPress?: (event: GestureResponderEvent) => void
+  onPressIn?: (event: GestureResponderEvent) => void
+  onPressOut?: (event: GestureResponderEvent) => void
+  onLongPress?: (event: GestureResponderEvent) => void
+  onFocus?: (event: NativeSyntheticEvent<TargetedEvent>) => void
+  onBlur?: (event: NativeSyntheticEvent<TargetedEvent>) => void
   style?: StyleProp<ViewStyle>
 }
 
@@ -38,6 +45,11 @@ export function Card({
   size = 1,
   variant = 'surface',
   onPress,
+  onPressIn,
+  onPressOut,
+  onLongPress,
+  onFocus,
+  onBlur,
   m, mx, my, mt, mr, mb, ml,
   style,
   children,
@@ -46,18 +58,13 @@ export function Card({
   const { appearance, scaling, radius } = useThemeContext()
   const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
-  const { scaleStyle, handlePressIn: scalePressIn, handlePressOut: scalePressOut } = usePressScale(!!onPress)
-  const [pressed, setPressed] = useState(false)
-
-  const handlePressIn = useCallback(() => {
-    setPressed(true)
-    scalePressIn()
-  }, [scalePressIn])
-
-  const handlePressOut = useCallback(() => {
-    setPressed(false)
-    scalePressOut()
-  }, [scalePressOut])
+  const { pressed, focused, scaleStyle, handlers } = useInteraction({
+    enabled: !!onPress,
+    onPressIn,
+    onPressOut,
+    onFocus,
+    onBlur,
+  })
 
   const scalingFactor = scalingMap[scaling]
   const resolvedPadding = Math.round(SIZE_PADDING[size] * scalingFactor)
@@ -106,14 +113,15 @@ export function Card({
 
     return (
       <AnimatedPressable
-        onPress={onPress}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
         accessibilityRole="button"
-        style={[scaleStyle, cardStyle, classicEffect, pressedStyle, style]}
         {...rest}
+        {...handlers}
+        onPress={onPress}
+        onLongPress={onLongPress}
+        style={[scaleStyle, cardStyle, classicEffect, pressedStyle, style]}
       >
         {children}
+        <FocusRing visible={focused} color={rc('accent', 8)} borderRadius={borderRadius} />
       </AnimatedPressable>
     )
   }

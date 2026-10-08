@@ -1,10 +1,14 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 import type { ViewStyle, StyleProp, GestureResponderEvent } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
-import { usePressScale, AnimatedPressable } from '../../hooks/usePressScale'
+import { useControllableState } from '../../hooks/useControllableState'
+import { useInteraction } from '../../hooks/useInteraction'
+import { AnimatedPressable } from '../../hooks/usePressScale'
+import { getMinHitSlop } from '../../utils/hitSlop'
+import { FocusRing } from '../internal/FocusRing'
 import { scalingMap } from '../../tokens/scaling'
 import type { AccentColor } from '../../tokens/colors/types'
 import { getClassicEffect } from '../../utils/classicEffect'
@@ -29,7 +33,10 @@ export interface RadioProps extends NativePressableProps, MarginProps {
   checked?: boolean
   /** Uncontrolled default checked state. */
   defaultChecked?: boolean
-  /** Called when the checked state changes. */
+  /**
+   * Called when the radio becomes checked. Like a native radio input, pressing
+   * an already-checked radio does not uncheck it.
+   */
   onCheckedChange?: (checked: boolean) => void
   /** Disables the radio. */
   disabled?: boolean
@@ -55,16 +62,31 @@ export function Radio({
   m, mx, my, mt, mr, mb, ml,
   style,
   onPress,
+  onPressIn,
+  onPressOut,
+  onFocus,
+  onBlur,
+  accessibilityState,
+  hitSlop,
   ...rest
 }: RadioProps) {
   const { appearance, scaling } = useThemeContext()
   const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
-  const { scaleStyle, handlePressIn: scalePressIn, handlePressOut: scalePressOut } = usePressScale(!disabled)
+  const { focused, scaleStyle, handlers } = useInteraction({
+    enabled: !disabled,
+    onPressIn,
+    onPressOut,
+    onFocus,
+    onBlur,
+  })
 
   // Controlled / uncontrolled
-  const [internalChecked, setInternalChecked] = useState(defaultChecked)
-  const checked = checkedProp ?? internalChecked
+  const [checked, setChecked] = useControllableState({
+    prop: checkedProp,
+    defaultProp: defaultChecked,
+    onChange: onCheckedChange,
+  })
 
   const prefix = color ?? 'accent'
   const scalingFactor = scalingMap[scaling]
@@ -109,11 +131,9 @@ export function Radio({
 
   const handlePress = useCallback((e: GestureResponderEvent) => {
     if (disabled) return
-    const next = !checked
-    if (checkedProp === undefined) setInternalChecked(next)
-    onCheckedChange?.(next)
+    setChecked(true)
     onPress?.(e)
-  }, [disabled, checked, checkedProp, onCheckedChange, onPress])
+  }, [disabled, setChecked, onPress])
 
   const isClassic = variant === 'classic'
   const classicStyle = isClassic && checked && !disabled
@@ -135,14 +155,14 @@ export function Radio({
 
   return (
     <AnimatedPressable
-      onPress={handlePress}
-      onPressIn={scalePressIn}
-      onPressOut={scalePressOut}
-      disabled={disabled}
       accessibilityRole="radio"
-      accessibilityState={{ checked, disabled }}
-      style={[scaleStyle, radioStyle, classicStyle, style]}
+      hitSlop={hitSlop ?? getMinHitSlop(radioSize, radioSize)}
       {...rest}
+      {...handlers}
+      onPress={handlePress}
+      disabled={disabled}
+      accessibilityState={{ ...accessibilityState, checked, disabled }}
+      style={[scaleStyle, radioStyle, classicStyle, style]}
     >
       {colors.dot && (
         <View
@@ -154,6 +174,7 @@ export function Radio({
           }}
         />
       )}
+      <FocusRing visible={focused} color={rc(color ?? 'accent', 8)} borderRadius={radioSize / 2} offset={2} />
     </AnimatedPressable>
   )
 }

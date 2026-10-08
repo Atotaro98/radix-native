@@ -1,10 +1,15 @@
 import React, { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
-import type { StyleProp, ViewStyle } from 'react-native'
+import type { StyleProp, ViewStyle, GestureResponderEvent } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
-import { usePressScale, AnimatedPressable } from '../../hooks/usePressScale'
+import { useControllableState } from '../../hooks/useControllableState'
+import { useInteraction } from '../../hooks/useInteraction'
+import { AnimatedPressable } from '../../hooks/usePressScale'
+import { getMinHitSlop } from '../../utils/hitSlop'
+import { ClassicOverlay } from '../internal/ClassicOverlay'
+import { FocusRing } from '../internal/FocusRing'
 import { scalingMap } from '../../tokens/scaling'
 import { getRadius } from '../../tokens/radius'
 import type { AccentColor } from '../../tokens/colors/types'
@@ -60,17 +65,32 @@ export function Checkbox({
   disabled = false,
   m, mx, my, mt, mr, mb, ml,
   style,
+  onPress,
+  onPressIn,
+  onPressOut,
+  onFocus,
+  onBlur,
+  accessibilityState,
+  hitSlop,
   ...rest
 }: CheckboxProps) {
   const { appearance, scaling, radius } = useThemeContext()
   const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
-  const { scaleStyle, handlePressIn: scalePressIn, handlePressOut: scalePressOut } = usePressScale(!disabled)
+  const { focused, scaleStyle, handlers } = useInteraction({
+    enabled: !disabled,
+    onPressIn,
+    onPressOut,
+    onFocus,
+    onBlur,
+  })
 
   // ─── Controlled / uncontrolled ─────────────────────────────────────────────
-  const [internal, setInternal] = React.useState<CheckedState>(defaultChecked)
-  const isControlled = checkedProp !== undefined
-  const checkedState = isControlled ? checkedProp : internal
+  const [checkedState, setChecked] = useControllableState<CheckedState>({
+    prop: checkedProp,
+    defaultProp: defaultChecked,
+    onChange: onCheckedChange,
+  })
   const isChecked = checkedState === true
   const isIndeterminate = checkedState === 'indeterminate'
   const isActive = isChecked || isIndeterminate
@@ -146,12 +166,12 @@ export function Checkbox({
   }, [variant, prefix, highContrast, isActive, disabled, rc])
 
   // ─── Toggle ────────────────────────────────────────────────────────────────
-  const handlePress = useCallback(() => {
+  // Radix: indeterminate → checked, checked → unchecked
+  const handlePress = useCallback((e: GestureResponderEvent) => {
     if (disabled) return
-    const next: CheckedState = isChecked ? false : true
-    if (!isControlled) setInternal(next)
-    onCheckedChange?.(next)
-  }, [disabled, isChecked, isControlled, onCheckedChange])
+    setChecked(prev => prev !== true)
+    onPress?.(e)
+  }, [disabled, setChecked, onPress])
 
   // ─── Classic effect ────────────────────────────────────────────────────────
   const isClassic = variant === 'classic'
@@ -160,7 +180,7 @@ export function Checkbox({
     : undefined
 
   // ─── Styles ────────────────────────────────────────────────────────────────
-  const boxStyle: ViewStyle = {
+  const boxStyle = useMemo<ViewStyle>(() => ({
     width: boxSize,
     height: boxSize,
     borderRadius,
@@ -170,32 +190,28 @@ export function Checkbox({
     alignItems: 'center',
     justifyContent: 'center',
     ...margins,
-  }
+  }), [boxSize, borderRadius, colors, margins])
 
   const strokeWidth = Math.max(2, Math.round(indicatorSize * 0.18))
   const indicatorColor = colors.indicator
 
   return (
     <AnimatedPressable
-      onPress={handlePress}
-      onPressIn={scalePressIn}
-      onPressOut={scalePressOut}
-      disabled={disabled}
       accessibilityRole="checkbox"
+      hitSlop={hitSlop ?? getMinHitSlop(boxSize, boxSize)}
+      {...rest}
+      {...handlers}
+      onPress={handlePress}
+      disabled={disabled}
       accessibilityState={{
+        ...accessibilityState,
         checked: isIndeterminate ? 'mixed' : isChecked,
         disabled,
       }}
       style={[scaleStyle, boxStyle, classicStyle, style]}
-      {...rest}
     >
-      {/* Classic gradient simulation when checked — wrapped with overflow:hidden for borderRadius clipping */}
-      {isClassic && isActive && !disabled && (
-        <View pointerEvents="none" style={{ position: 'absolute', inset: 0, overflow: 'hidden', borderRadius }}>
-          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '50%', backgroundColor: 'rgba(255,255,255,0.12)' }} />
-          <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '50%', backgroundColor: 'rgba(0,0,0,0.08)' }} />
-        </View>
-      )}
+      {/* Classic gradient simulation when checked */}
+      {isClassic && isActive && !disabled && <ClassicOverlay borderRadius={borderRadius} />}
       {isActive && (
         isIndeterminate ? (
           <View style={{
@@ -216,6 +232,7 @@ export function Checkbox({
           }} />
         )
       )}
+      <FocusRing visible={focused} color={rc(prefix, 8)} borderRadius={borderRadius} offset={2} />
     </AnimatedPressable>
   )
 }
