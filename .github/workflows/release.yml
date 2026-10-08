@@ -1,0 +1,66 @@
+name: Release
+
+# On every push to main, changesets either:
+#   - opens / updates a "Version Packages" PR (when there are pending changesets), or
+#   - publishes the new versions to npm (after that PR is merged).
+#
+# Publishing uses npm trusted publishing (OIDC): no NPM_TOKEN secret exists,
+# npm verifies this exact workflow file and attaches a provenance attestation
+# ("Built and signed on GitHub Actions" on npmjs.com).
+# The trusted publisher on npmjs.com is configured for: Atotaro98/radix-native,
+# workflow `release.yml`, no environment. Renaming this file breaks publishing.
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Version or publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write       # push the version commit and git tags, create GitHub releases
+      pull-requests: write  # open / update the "Version Packages" PR
+      id-token: write       # OIDC token for npm trusted publishing + provenance
+    steps:
+      - uses: actions/checkout@v4
+
+      # No `registry-url` on purpose: it writes an .npmrc with a token
+      # placeholder that would take precedence over OIDC.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Trusted publishing needs npm >= 11.5.1 (Node 22 ships npm 10)
+      - name: Update npm
+        run: npm install -g npm@^11.5.1
+
+      - name: Enable Corepack (Yarn 4)
+        run: corepack enable
+
+      - name: Install
+        run: yarn install --immutable
+
+      - name: Verify
+        run: |
+          yarn lint
+          yarn typecheck
+          yarn test
+
+      # v1.x of the action is the line compatible with @changesets/cli v2
+      # (v2.x of the action requires @changesets/cli v3). Pinned to v1.9.0.
+      - name: Create release PR or publish to npm
+        uses: changesets/action@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1.9.0
+        with:
+          version: yarn version-packages
+          publish: yarn release
+          commit: 'chore: version packages'
+          title: 'chore: version packages'
+        env:
+          # `changeset publish` runs `npm publish`; make sure provenance is
+          # attached even if the npm default changes.
+          NPM_CONFIG_PROVENANCE: 'true'
