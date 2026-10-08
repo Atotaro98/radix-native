@@ -251,7 +251,17 @@ yarn ios               # or yarn android
 yarn generate:colors   # Regenerate color tokens
 ```
 
-CI (GitHub Actions) runs lint, typecheck, tests and build on every pull request. Releases go through [Changesets](https://github.com/changesets/changesets): add a changeset with your PR, then `yarn version-packages` + `yarn release`.
+CI (GitHub Actions) runs lint, typecheck, tests and build on every pull request.
+
+### Releasing
+
+Releases are automated with [Changesets](https://github.com/changesets/changesets) and `.github/workflows/release.yml`:
+
+1. Add a changeset to your PR (`yarn changeset`).
+2. When it lands on `main`, the release workflow opens a **Version Packages** PR that bumps versions and updates the changelog.
+3. Merging that PR publishes to npm from GitHub Actions via [trusted publishing](https://docs.npmjs.com/trusted-publishers) (OIDC, no npm token) with a signed **provenance** attestation.
+
+Never publish by hand: the trusted publisher on npmjs.com is bound to `release.yml`, so renaming that workflow breaks releases.
 
 ### Project structure
 
