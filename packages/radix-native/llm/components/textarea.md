@@ -33,7 +33,7 @@ Same as TextField: soft variant uses accent colors (bg `accent-a3`, text `accent
 Uses bare `getRadius(level)` — never becomes pill-shaped (unlike TextField which uses `max(radius, radiusFull)`).
 
 ## Known RN limitations
-Same as TextField: no CSS outline for focus (uses border color change), no classic box-shadow, no text selection color control.
+Same as TextField: no CSS outline for focus (border color change + 1px inner ring), no classic box-shadow, no text selection color control.
 
 ## Examples
 ```tsx

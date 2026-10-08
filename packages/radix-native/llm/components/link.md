@@ -28,3 +28,13 @@ import { Link } from 'radix-native'
 ```
 
 When `href` is provided and no `onPress`, opens the URL via `Linking.openURL`.
+
+## Nesting
+
+Inside running text, `Link` without `size` inherits the parent size, and `underline="auto"` shows the underline (color alone must not be the only cue — WCAG 1.4.1):
+
+```tsx
+<Text size={2}>
+  By continuing you accept the <Link href="https://example.com/terms">terms</Link>.
+</Text>
+```

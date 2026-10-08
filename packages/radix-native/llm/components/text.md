@@ -54,3 +54,13 @@ All dimensions multiply by the theme scaling factor.
 - `Heading` — for section headings (uses heading font family, bolder sizes)
 - `Link` — pressable text with underline
 - `Code` — inline code
+
+## Nesting
+
+When nested inside another text component, `Text` without `size`, `color` or `weight` inherits them from the parent (RN text inheritance), like Radix on the web:
+
+```tsx
+<Text size={1} color="gray">
+  Terms apply. <Text weight="bold">Read carefully</Text> {/* size 1, gray, bold */}
+</Text>
+```
