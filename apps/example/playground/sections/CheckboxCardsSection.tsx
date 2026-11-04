@@ -1,5 +1,5 @@
 import React from 'react'
-import { Text, CheckboxCards, Flex, Grid, Box, useColor } from 'radix-native'
+import { Text, CheckboxCards, Flex, Box, useColor } from 'radix-native'
 import type { CheckboxSize, CheckboxCardsVariant } from 'radix-native'
 import { ComponentSection } from '../ui'
 import { ALL_COLORS } from '../constants'
@@ -32,7 +32,10 @@ function SectionLabel({ label }: { label: string }) {
 }
 
 // ─── Theme colors ─────────────────────────────────────────────────────────────
-// Variant groups, each with Accent + Gray, normal + highContrast
+// Variant groups, each with Accent + Gray, normal + highContrast.
+// Radix's sink lays these groups side by side at 400px each; a phone is
+// ~400pt wide in total, so they stack here instead (side by side, each card
+// would be ~80pt and the label would wrap per character).
 
 function ThemeColors() {
   return (
@@ -40,14 +43,10 @@ function ThemeColors() {
       {VARIANTS.map(variant => (
         <Flex key={variant} gap={4}>
           <SectionLabel label={variant.charAt(0).toUpperCase() + variant.slice(1)} />
-          <Grid columns={2} gap={3}>
-            <ExampleCheckboxCards variant={variant} />
-            <ExampleCheckboxCards variant={variant} highContrast />
-          </Grid>
-          <Grid columns={2} gap={3}>
-            <ExampleCheckboxCards variant={variant} color="gray" />
-            <ExampleCheckboxCards variant={variant} color="gray" highContrast />
-          </Grid>
+          <ExampleCheckboxCards variant={variant} />
+          <ExampleCheckboxCards variant={variant} highContrast />
+          <ExampleCheckboxCards variant={variant} color="gray" />
+          <ExampleCheckboxCards variant={variant} color="gray" highContrast />
         </Flex>
       ))}
     </Flex>
@@ -64,10 +63,10 @@ function AllColors() {
         <Flex key={color} gap={4}>
           <SectionLabel label={color.charAt(0).toUpperCase() + color.slice(1)} />
           {VARIANTS.map(variant => (
-            <Grid key={variant} columns={2} gap={3}>
+            <React.Fragment key={variant}>
               <ExampleCheckboxCards color={color} variant={variant} />
               <ExampleCheckboxCards color={color} variant={variant} highContrast />
-            </Grid>
+            </React.Fragment>
           ))}
         </Flex>
       ))}
