@@ -374,12 +374,14 @@ export interface TextInputPaints {
  * opacity and turn their text gray-a11.
  */
 function textInput(s: WithVariant<TextInputVariant>, softPlaceholderOpacity: number): TextInputPaints {
-  const focusBorder = c(8)
+  // Disabled and read-only look the same (Radix `:disabled, :read-only`). Only a
+  // read-only input can still take focus; its ring is then gray-8.
   const disabled = !!s.disabled
+  const focusBorder = disabled ? g(8) : c(8)
 
   if (s.variant === 'soft') {
     const placeholder = fade(c(12), softPlaceholderOpacity * (disabled ? 0.5 : 1))
-    if (disabled) return { bg: g('a3'), border: TRANSPARENT, text: g('a11'), placeholder }
+    if (disabled) return { bg: g('a3'), border: s.focused ? focusBorder : TRANSPARENT, text: g('a11'), placeholder }
     return { bg: c('a3'), border: s.focused ? focusBorder : TRANSPARENT, text: c(12), placeholder }
   }
 
@@ -388,7 +390,7 @@ function textInput(s: WithVariant<TextInputVariant>, softPlaceholderOpacity: num
   if (disabled) {
     return {
       bg: layers(g('a2'), g('surface')),
-      border: s.variant === 'classic' ? SHADOW_1_RING : g('a6'),
+      border: s.focused ? focusBorder : s.variant === 'classic' ? SHADOW_1_RING : g('a6'),
       text: g('a11'),
       placeholder: fade(g('a10'), 0.5),
     }

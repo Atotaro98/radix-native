@@ -1,7 +1,7 @@
 import React from 'react'
 import { StyleSheet, Text as RNText } from 'react-native'
 import { act, renderHook, screen } from '@testing-library/react-native'
-import { Theme, Spinner, Skeleton, Grid, Box, TextField, Progress, Text } from '../index'
+import { Theme, Spinner, Skeleton, Grid, Box, Progress, Text } from '../index'
 import { useControllableState } from '../hooks/useControllableState'
 import { renderWithTheme } from './helpers/render'
 
@@ -51,20 +51,6 @@ describe('margins', () => {
       marginLeft: 'auto',
       marginTop: 8,
     })
-  })
-})
-
-describe('TextField', () => {
-  it('exposes disabled state on the input itself', () => {
-    renderWithTheme(<TextField disabled placeholder="Email" />)
-    const input = screen.getByPlaceholderText('Email')
-    expect(input.props.editable).toBe(false)
-    expect(input.props.accessibilityState).toMatchObject({ disabled: true })
-  })
-
-  it('soft variant placeholder uses accent-12 at 60% alpha', () => {
-    renderWithTheme(<TextField variant="soft" placeholder="Search" />)
-    expect(screen.getByPlaceholderText('Search').props.placeholderTextColor).toMatch(/^#[0-9a-f]{6}99$/i)
   })
 })
 

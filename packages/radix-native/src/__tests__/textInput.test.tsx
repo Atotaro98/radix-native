@@ -1,0 +1,94 @@
+import React from 'react'
+import { StyleSheet } from 'react-native'
+import type { StyleProp, ViewStyle } from 'react-native'
+import { screen, fireEvent } from '@testing-library/react-native'
+import { Theme, TextField, TextArea } from '../index'
+import { renderWithTheme } from './helpers/render'
+import { indigo, slate } from '../tokens/colors'
+
+const borderOf = (input: { parent: unknown }) =>
+  // The input's parent is the View that draws the border.
+  ((input.parent as { parent: { props: { style: unknown[] } } }).parent.props.style[0] as { borderColor: string }).borderColor
+
+/** Whether a FocusRing overlay (absolutely positioned ring) is drawn. */
+const focusRingVisible = () =>
+  screen.UNSAFE_root.findAll(
+    (node: { type: unknown; props: { style?: unknown } }) => typeof node.type === 'string'
+      && StyleSheet.flatten(node.props.style as StyleProp<ViewStyle>)?.position === 'absolute'
+      && StyleSheet.flatten(node.props.style as StyleProp<ViewStyle>)?.borderWidth === 1,
+  ).length > 0
+
+describe.each([
+  ['TextField', TextField],
+  ['TextArea', TextArea],
+] as const)('%s', (_name, Input) => {
+  it('forwards consumer props and focus handlers', () => {
+    const onFocus = jest.fn()
+    const onBlur = jest.fn()
+    const onChangeText = jest.fn()
+    renderWithTheme(<Input placeholder="Email" onFocus={onFocus} onBlur={onBlur} onChangeText={onChangeText} />)
+    const input = screen.getByPlaceholderText('Email')
+    fireEvent(input, 'focus')
+    fireEvent.changeText(input, 'a@b.c')
+    fireEvent(input, 'blur')
+    expect(onFocus).toHaveBeenCalledTimes(1)
+    expect(onChangeText).toHaveBeenCalledWith('a@b.c')
+    expect(onBlur).toHaveBeenCalledTimes(1)
+  })
+
+  it('exposes disabled state on the input itself', () => {
+    renderWithTheme(<Input disabled placeholder="Email" accessibilityState={{ selected: true }} />)
+    const input = screen.getByPlaceholderText('Email')
+    expect(input.props.editable).toBe(false)
+    expect(input.props.accessibilityState).toEqual({ selected: true, disabled: true })
+  })
+
+  it('shows the focus ring while focused, and drops it once disabled', () => {
+    const { rerender } = renderWithTheme(<Input placeholder="Email" />)
+    fireEvent(screen.getByPlaceholderText('Email'), 'focus')
+    expect(borderOf(screen.getByPlaceholderText('Email'))).toBe(indigo.light[8])
+    expect(focusRingVisible()).toBe(true)
+    rerender(<Theme appearance="light"><Input placeholder="Email" disabled /></Theme>)
+    expect(focusRingVisible()).toBe(false)
+  })
+
+  it.each([
+    ['readOnly', { readOnly: true }],
+    ['editable={false}', { editable: false }],
+  ] as const)('%s looks disabled but is not reported as disabled', (_label, props) => {
+    renderWithTheme(<Input placeholder="Email" {...props} />)
+    const input = screen.getByPlaceholderText('Email')
+    expect(input.props.style).toMatchObject({ color: slate.light.a11 })
+    expect(input.props.accessibilityState).toEqual({ disabled: false })
+  })
+
+  it('read-only focus ring is gray-8', () => {
+    renderWithTheme(<Input placeholder="Email" readOnly />)
+    const input = screen.getByPlaceholderText('Email')
+    fireEvent(input, 'focus')
+    expect(borderOf(input)).toBe(slate.light[8])
+  })
+})
+
+describe('placeholder (Radix soft: accent-12 at 0.6 / 0.65)', () => {
+  it('TextField soft placeholder is 60% alpha', () => {
+    renderWithTheme(<TextField variant="soft" placeholder="Search" />)
+    expect(screen.getByPlaceholderText('Search').props.placeholderTextColor).toMatch(/^#[0-9a-f]{6}99$/i)
+  })
+
+  it('TextArea soft placeholder is 65% alpha', () => {
+    renderWithTheme(<TextArea variant="soft" placeholder="Notes" />)
+    expect(screen.getByPlaceholderText('Notes').props.placeholderTextColor).toMatch(/^#[0-9a-f]{6}a6$/i)
+  })
+})
+
+it('TextArea is always multiline; TextField never is', () => {
+  renderWithTheme(
+    <>
+      <TextField placeholder="One" />
+      <TextArea placeholder="Many" />
+    </>,
+  )
+  expect(screen.getByPlaceholderText('One').props.multiline).toBe(false)
+  expect(screen.getByPlaceholderText('Many').props.multiline).toBe(true)
+})

@@ -53,3 +53,7 @@ _Avoid_: generic palette, color scheme, theme colors
 **Control label**:
 The single row of content inside a Button, IconButton or Badge: runs of text and icons. Adjacent text reads as one piece of Compact text in the control's Text style, kept to one line; icons take the control's text color unless they set their own. While a button is loading, its Control label stays readable by screen readers even though it is hidden on screen.
 _Avoid_: content, children, button text
+
+**Text input**:
+A field the user types into: TextField (one line) or TextArea (several lines). Both behave the same and differ only in line count, height and radius. A read-only Text input looks like a disabled one, but stays readable and copyable.
+_Avoid_: input, field (on their own)

@@ -97,6 +97,8 @@ These are the EXACT token mappings that intentionally differ between Radix web a
 | Progress shine overlay | Indeterminate gradient sweep effect | Not implemented (requires LinearGradient) |
 | Spinner `currentColor` | Inherits CSS text color | Uses `gray-a11`, or the RN-only `color` prop (no CSS cascade in RN) |
 | `asChild` / Slot composition | Supported | Planned |
+| Focus ring when `color="gray"` | `--focus-8` stays the inherited accent for gray components (except soft TextField / TextArea) | Pending: every focus ring uses `<color>-8`, so gray components show a gray-8 ring |
+| `TextField.Slot` | Icons / buttons inside the field | Not implemented |
 | Haptic feedback | N/A (web) | Planned |
 | Responsive props | `{ initial, sm, md, lg, xl }` | Not planned (use `useWindowDimensions`) |
 | `Container` component | Centering container | Not implemented |
