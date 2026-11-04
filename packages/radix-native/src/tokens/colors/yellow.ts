@@ -13,7 +13,7 @@ export const yellow: ColorScaleWithModes = {
     a5: '#ffd5008f', a6: '#ebbc0097', a7: '#d2a10098', a8: '#c99700c6',
     a9: '#ffe100d6', a10: '#ffdc00', a11: '#9e6c00', a12: '#2e2000e0',
     contrast: '#21201c', surface: '#fefbe4cc',
-    indicator: '#ffe629', track: '#ffe629',
+    indicator: '#ffdc00', track: '#ffdc00',
   },
   dark: {
     1: '#14120b', 2: '#1b180f', 3: '#2d2305', 4: '#362b00',
@@ -23,6 +23,6 @@ export const yellow: ColorScaleWithModes = {
     a5: '#febb0036', a6: '#fec40046', a7: '#fdcb225c', a8: '#fdca327b',
     a9: '#ffe629', a10: '#ffff57', a11: '#fee949f5', a12: '#fef6baf6',
     contrast: '#21201c', surface: '#231f1380',
-    indicator: '#ffe629', track: '#ffe629',
+    indicator: '#ffe629', track: '#d2b929',
   },
 }

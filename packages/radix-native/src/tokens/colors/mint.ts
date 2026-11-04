@@ -23,6 +23,6 @@ export const mint: ColorScaleWithModes = {
     a5: '#00fff23a', a6: '#0effeb4a', a7: '#34fde55e', a8: '#41ffdf76',
     a9: '#92ffe7e9', a10: '#aefeedf5', a11: '#67ffded2', a12: '#cbfee9f5',
     contrast: '#21201c', surface: '#15272780',
-    indicator: '#86ead4', track: '#86ead4',
+    indicator: '#86ead4', track: '#65c3b0',
   },
 }

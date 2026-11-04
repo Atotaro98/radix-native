@@ -23,6 +23,6 @@ export const sky: ColorScaleWithModes = {
     a5: '#1c9dfd5d', a6: '#28a5ff72', a7: '#2badfe8b', a8: '#1db2fea9',
     a9: '#7ce3fffe', a10: '#a8eeff', a11: '#7cd3ffef', a12: '#c2f3ff',
     contrast: '#21201c', surface: '#13233b80',
-    indicator: '#7ce2fe', track: '#7ce2fe',
+    indicator: '#7ce2fe', track: '#5bbde2',
   },
 }

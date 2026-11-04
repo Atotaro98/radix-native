@@ -23,6 +23,6 @@ export const lime: ColorScaleWithModes = {
     a5: '#affe6537', a6: '#b2fe6d46', a7: '#b6ff6f57', a8: '#b6fd6d6c',
     a9: '#caff69ed', a10: '#d4ff70', a11: '#d1fe77e4', a12: '#e9febff7',
     contrast: '#21201c', surface: '#1b211580',
-    indicator: '#bdee63', track: '#bdee63',
+    indicator: '#bdee63', track: '#98c254',
   },
 }

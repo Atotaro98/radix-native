@@ -87,7 +87,7 @@ These are the EXACT token mappings that intentionally differ between Radix web a
 | Badge surface border | `accent-a6` | `accent-a6` | Matches (was `a7` bug, now fixed) |
 | `color-surface` (Checkbox, Radio, Switch… unchecked; TextField / TextArea; card items) | `rgba(255,255,255,0.85)` / `rgba(0,0,0,0.25)` | `gray-surface` | Close approximation — RN has no page-level surface token. In dark mode Radix darkens below the page (`rgba(0,0,0,0.25)`) while `gray-surface` (`#21212180`) lightens slightly above it |
 | `color-panel` (Card) | `--color-panel-solid` / translucent panel | `gray-panel` (white / dark `gray-2`) | The translucent panel over the page background resolves to the same color |
-| `accent-indicator` / `accent-track` | semantic | `accent-indicator` / `accent-track` | Both resolve through step 9, so overrides of 9 carry over. Differs for amber / lime / mint / sky / yellow: Radix dark `--{color}-track` mixes steps 8 and 9 (`color-mix(in oklab, 8, 9 65%)`, amber 75%) and yellow light uses step 10 for both; here they stay step 9 (pending) |
+| `accent-indicator` / `accent-track` | `--{color}-indicator` / `--{color}-track`: step 9; light yellow step 10; dark amber / lime / mint / sky / yellow track `color-mix(in oklab, 8, 9 65%)` (amber 75%) | `accent-indicator` / `accent-track` | Matches — same derivations (`tokens/derivedSteps`, mixed in OKLab), so overrides of steps 8 / 9 / 10 carry over |
 | Stacked backgrounds (Switch, Progress soft, disabled inputs and card items) | several layered colors / gradients | one composited color | RN has one background per view |
 
 ---

@@ -23,6 +23,6 @@ export const amber: ColorScaleWithModes = {
     a5: '#fd8b0041', a6: '#fd9b0051', a7: '#ffab2567', a8: '#ffae3587',
     a9: '#ffc53d', a10: '#ffd60a', a11: '#ffca16', a12: '#ffe7b3',
     contrast: '#21201c', surface: '#271f1380',
-    indicator: '#ffc53d', track: '#ffc53d',
+    indicator: '#ffc53d', track: '#e2ac37',
   },
 }

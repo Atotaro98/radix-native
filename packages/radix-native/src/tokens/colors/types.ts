@@ -27,9 +27,9 @@ export interface ColorScale {
   contrast: string
   /** Translucent tinted surface background */
   surface: string
-  /** Alias for step 9 — used by Slider and Progress components */
+  /** Checked selection controls — step 9 (light yellow: step 10). See `tokens/derivedSteps` */
   indicator: string
-  /** Alias for step 9 — used by Slider and Progress components */
+  /** Switch track / Progress indicator — step 9; light yellow step 10; dark amber/lime/mint/sky/yellow mix 8 and 9 */
   track: string
 }
 
