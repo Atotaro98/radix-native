@@ -80,6 +80,13 @@ describe.each([
     expect(input.props.style).toMatchObject({ color: slate.dark[12] })
   })
 
+  it('the keyboard follows the Theme appearance unless overridden', () => {
+    const { rerender } = renderWithTheme(<Input placeholder="Email" />, { appearance: 'dark' })
+    expect(screen.getByPlaceholderText('Email').props.keyboardAppearance).toBe('dark')
+    rerender(<Theme appearance="dark"><Input placeholder="Email" keyboardAppearance="light" /></Theme>)
+    expect(screen.getByPlaceholderText('Email').props.keyboardAppearance).toBe('light')
+  })
+
   it('a controlled value wins over typing', () => {
     const onChangeText = jest.fn()
     renderWithTheme(<Input placeholder="Email" value="fixed" onChangeText={onChangeText} />)

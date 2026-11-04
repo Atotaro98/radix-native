@@ -81,7 +81,7 @@ export function BaseTextInput({
   onChangeText,
   ...rest
 }: InternalProps) {
-  const { scaling, radius: themeRadius } = useThemeContext()
+  const { scaling, radius: themeRadius, appearance } = useThemeContext()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
   const { focused, handlers } = useInteraction({ enabled: !disabled, onFocus, onBlur })
 
@@ -139,6 +139,8 @@ export function BaseTextInput({
     <View style={[containerStyle, style]}>
       <TextInput
         {...text.textProps}
+        // Radix sets color-scheme per appearance: native widgets (the iOS keyboard) follow the Theme
+        keyboardAppearance={appearance}
         {...rest}
         onFocus={handlers.onFocus}
         onBlur={handlers.onBlur}
