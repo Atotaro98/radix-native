@@ -36,9 +36,11 @@ export interface SpinnerProps extends NativeViewProps, MarginProps {
   style?: StyleProp<ViewStyle>
 }
 
-// ─── Size mappings (Radix: space-3, space-4, space-4*1.25) ───────────────────
+// ─── Size mappings ────────────────────────────────────────────────────────────
 
-const SIZE_PX: Record<SpinnerSize, number> = { 1: 16, 2: 20, 3: 25 }
+// Radix .rt-Spinner:where(.rt-r-size-1/2/3) width/height:
+// var(--space-3), var(--space-4), calc(1.25 * var(--space-4)) → 12 / 16 / 20px
+const SIZE_PX: Record<SpinnerSize, number> = { 1: 12, 2: 16, 3: 20 }
 const LEAF_COUNT = 8
 const ANIMATION_DURATION = 800
 

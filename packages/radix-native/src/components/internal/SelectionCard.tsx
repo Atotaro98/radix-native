@@ -123,9 +123,14 @@ interface SelectionCardGridProps {
   children?: React.ReactNode
 }
 
+// Radix radioCardsRootPropDefs / checkboxCardsRootPropDefs default
+// `columns: 'repeat(auto-fit, minmax(160px, 1fr))'`: a plain 160px, not scaled by --scaling.
+const AUTO_FIT_MIN_ITEM_WIDTH = 160
+
 /** Internal: the grid of CheckboxCards / RadioCards (Radix `repeat(auto-fit, minmax(160px, 1fr))`). */
+
 export function SelectionCardGrid({ columns, gap, role, accessibilityLabel, testID, style, children }: SelectionCardGridProps) {
-  const { px, space } = useMetrics()
+  const { space } = useMetrics()
   const resolvedGap = space(gap)
   return (
     <View accessibilityRole={role} accessibilityLabel={accessibilityLabel} testID={testID} style={style}>
@@ -134,7 +139,7 @@ export function SelectionCardGrid({ columns, gap, role, accessibilityLabel, test
           {children}
         </ColumnRows>
       ) : (
-        <AutoFitRows minItemWidth={px(160)} gap={resolvedGap}>
+        <AutoFitRows minItemWidth={AUTO_FIT_MIN_ITEM_WIDTH} gap={resolvedGap}>
           {children}
         </AutoFitRows>
       )}

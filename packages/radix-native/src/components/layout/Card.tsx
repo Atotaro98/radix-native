@@ -35,7 +35,8 @@ export interface CardProps extends NativeViewProps, MarginProps {
 
 // ─── Size mappings ────────────────────────────────────────────────────────────
 
-const SIZE_PADDING: Record<CardSize, number> = { 1: 12, 2: 16, 3: 24, 4: 32, 5: 40 }
+// Radix .rt-Card:where(.rt-r-size-1…5) --card-padding: var(--space-3/4/5/6/8)
+const SIZE_PADDING: Record<CardSize, number> = { 1: 12, 2: 16, 3: 24, 4: 32, 5: 48 }
 const SIZE_RADIUS_LEVEL: Record<CardSize, RadiusLevel> = { 1: 4, 2: 4, 3: 5, 4: 5, 5: 6 }
 
 // ─── Component ────────────────────────────────────────────────────────────────

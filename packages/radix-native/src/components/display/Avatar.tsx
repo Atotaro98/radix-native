@@ -38,8 +38,13 @@ export interface AvatarProps extends NativeViewProps, MarginProps {
 
 // ─── Size mappings ────────────────────────────────────────────────────────────
 
+// Radix .rt-AvatarRoot:where(.rt-r-size-N) --avatar-size: sizes 1–5 are
+// var(--space-5…9) (scaled); sizes 6–9 are plain 80px / 96px / 128px / 160px (not scaled).
 const SIZE_PX: Record<AvatarSize, number> = {
   1: 24, 2: 32, 3: 40, 4: 48, 5: 64, 6: 80, 7: 96, 8: 128, 9: 160,
+}
+const SIZE_SCALES: Record<AvatarSize, boolean> = {
+  1: true, 2: true, 3: true, 4: true, 5: true, 6: false, 7: false, 8: false, 9: false,
 }
 /** Font-size token for 1-letter fallbacks. */
 const SIZE_FONT_ONE: Record<AvatarSize, FontSizeToken> = {
@@ -83,7 +88,7 @@ export function Avatar({
 
 
   // ─── Dimensions ─────────────────────────────────────────────────────────
-  const boxSize = metrics.px(SIZE_PX[size])
+  const boxSize = SIZE_SCALES[size] ? metrics.px(SIZE_PX[size]) : SIZE_PX[size]
 
   // ─── Radius ─────────────────────────────────────────────────────────────
   const borderRadius = metrics.radius(SIZE_RADIUS_LEVEL[size], 'pill')

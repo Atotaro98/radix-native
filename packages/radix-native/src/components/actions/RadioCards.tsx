@@ -20,10 +20,14 @@ interface Shared {
 
 const Selection = createSelectionGroup<'single', Shared>({ name: 'RadioCards', type: 'single' })
 
-const SIZE_CONFIG: Record<RadioSize, { padding: number; radiusLevel: 3 | 4 }> = {
-  1: { padding: 12, radiusLevel: 3 },
-  2: { padding: 16, radiusLevel: 3 },
-  3: { padding: 24, radiusLevel: 4 },
+// Radix .rt-RadioCardsRoot:where(.rt-r-size-1/2/3):
+// --radio-cards-item-padding-x: var(--space-3/4/5) → 12 / 16 / 24px
+// --radio-cards-item-padding-y: calc(var(--space-3) / 1.2), calc(var(--space-4) * 0.875),
+//   calc(var(--space-5) / 1.2) → 10 / 14 / 20px
+const SIZE_CONFIG: Record<RadioSize, { paddingX: number; paddingY: number; radiusLevel: 3 | 4 }> = {
+  1: { paddingX: 12, paddingY: 10, radiusLevel: 3 },
+  2: { paddingX: 16, paddingY: 14, radiusLevel: 3 },
+  3: { paddingX: 24, paddingY: 20, radiusLevel: 4 },
 }
 
 // ─── Root Types ─────────────────────────────────────────────────────────────────
@@ -115,7 +119,8 @@ function RadioCardsItem({ value, disabled, children, style }: RadioCardsItemProp
   const { px } = useMetrics()
   const { size, variant, color, highContrast } = item.shared
   const cfg = SIZE_CONFIG[size]
-  const padding = px(cfg.padding)
+  const paddingX = px(cfg.paddingX)
+  const paddingY = px(cfg.paddingY)
 
   return (
     <SelectionCard
@@ -129,7 +134,7 @@ function RadioCardsItem({ value, disabled, children, style }: RadioCardsItemProp
       highContrast={highContrast}
       fontSize={SELECTION_CARD_FONT_SIZE[size]}
       radiusLevel={cfg.radiusLevel}
-      padding={{ top: padding, right: padding, bottom: padding, left: padding }}
+      padding={{ top: paddingY, right: paddingX, bottom: paddingY, left: paddingX }}
       style={style}
     >
       {children}
