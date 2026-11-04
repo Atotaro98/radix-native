@@ -1,12 +1,10 @@
 import React, { useMemo, useState, useCallback } from 'react'
 import { View, Image, Text as RNText } from 'react-native'
 import type { ViewStyle, TextStyle, ImageStyle, StyleProp, ImageProps } from 'react-native'
-import { useThemeContext } from '../../hooks/useThemeContext'
+import { useMetrics } from '../../hooks/useMetrics'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { useTextStyle } from '../../hooks/useTextStyle'
-import { scalingMap } from '../../tokens/scaling'
-import { getRadius, getFullRadius } from '../../tokens/radius'
 import type { RadiusToken, RadiusLevel } from '../../tokens/radius'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { FontSizeToken } from '../../tokens/typography'
@@ -69,7 +67,7 @@ export function Avatar({
   style,
   ...rest
 }: AvatarProps) {
-  const { scaling, radius: themeRadius } = useThemeContext()
+  const metrics = useMetrics({ radius: radiusProp })
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
   // ─── Image loading state (mirrors Radix idle → loaded | error) ──────────
@@ -85,15 +83,10 @@ export function Avatar({
 
 
   // ─── Dimensions ─────────────────────────────────────────────────────────
-  const scalingFactor = scalingMap[scaling]
-  const boxSize = Math.round(SIZE_PX[size] * scalingFactor)
+  const boxSize = metrics.px(SIZE_PX[size])
 
   // ─── Radius ─────────────────────────────────────────────────────────────
-  const effectiveRadius = radiusProp ?? themeRadius
-  const borderRadius = Math.max(
-    getRadius(effectiveRadius, SIZE_RADIUS_LEVEL[size]),
-    getFullRadius(effectiveRadius),
-  )
+  const borderRadius = metrics.radius(SIZE_RADIUS_LEVEL[size], 'pill')
 
   // ─── Colors ─────────────────────────────────────────────────────────────
   const colors = useVariantColors('avatar', { variant, color, highContrast })

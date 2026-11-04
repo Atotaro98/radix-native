@@ -4,10 +4,10 @@ export type RadiusToken = 'none' | 'small' | 'medium' | 'large' | 'full'
 export type RadiusLevel = 1 | 2 | 3 | 4 | 5 | 6
 
 /**
- * Base radius values in pixels at token='medium', scaling=1.
- * Final radius = BASE_RADIUS[level] * RADIUS_FACTOR[token]
+ * Base radius per level in pixels (Radix `--radius-N: calc(Npx * var(--scaling) * var(--radius-factor))`).
+ * Resolve through Metrics (`useMetrics().radius(level)`), which applies the factor and scaling.
  */
-const BASE_RADIUS: Record<RadiusLevel, number> = {
+export const RADIUS_BASE: Record<RadiusLevel, number> = {
   1: 3,
   2: 4,
   3: 6,
@@ -16,11 +16,8 @@ const BASE_RADIUS: Record<RadiusLevel, number> = {
   6: 16,
 }
 
-/**
- * Multiplier per radius token.
- * none=0, small=0.75, medium=1, large=1.5, full=1.5
- */
-const RADIUS_FACTOR: Record<RadiusToken, number> = {
+/** Radix `--radius-factor` per token. */
+export const RADIUS_FACTOR: Record<RadiusToken, number> = {
   none: 0,
   small: 0.75,
   medium: 1,
@@ -28,10 +25,8 @@ const RADIUS_FACTOR: Record<RadiusToken, number> = {
   full: 1.5,
 }
 
-/**
- * Pill radius per token. Only 'full' produces a pill shape (9999); all others are 0.
- */
-const RADIUS_FULL: Record<RadiusToken, number> = {
+/** Radix `--radius-full`: a pill only for `full`. Not scaled. */
+export const RADIUS_FULL: Record<RadiusToken, number> = {
   none: 0,
   small: 0,
   medium: 0,
@@ -39,27 +34,8 @@ const RADIUS_FULL: Record<RadiusToken, number> = {
   full: 9999,
 }
 
-/**
- * Returns the border radius in pixels for a given token and level.
- * Each component picks the level that matches its visual size.
- */
-export function getRadius(token: RadiusToken, level: RadiusLevel): number {
-  return Math.round(BASE_RADIUS[level] * RADIUS_FACTOR[token])
-}
-
-/**
- * Returns the full (pill) radius for a given token.
- * Use this for components that should be fully rounded when token='full'.
- */
-export function getFullRadius(token: RadiusToken): number {
-  return RADIUS_FULL[token]
-}
-
-/**
- * Thumb/switch radius per token.
- * Pill-shaped for medium/large/full; nearly square for none/small.
- */
-const RADIUS_THUMB: Record<RadiusToken, number> = {
+/** Radix `--radius-thumb`: a pill for medium/large/full, nearly square otherwise. Not scaled. */
+export const RADIUS_THUMB: Record<RadiusToken, number> = {
   none: 0.5,
   small: 0.5,
   medium: 9999,
@@ -67,15 +43,26 @@ const RADIUS_THUMB: Record<RadiusToken, number> = {
   full: 9999,
 }
 
-export function getRadiusThumb(token: RadiusToken): number {
-  return RADIUS_THUMB[token]
+/**
+ * Border radius for a token and level, at 100% scaling.
+ * @deprecated Ignores the Theme's scaling. Use `useMetrics().radius(level)`.
+ */
+export function getRadius(token: RadiusToken, level: RadiusLevel): number {
+  return Math.round(RADIUS_BASE[level] * RADIUS_FACTOR[token])
 }
 
 /**
- * Returns the raw radius factor for a token.
- * none=0, small=0.75, medium=1, large=1.5, full=1.5.
- * Used by Progress to compute height-relative radius.
+ * Pill radius for a token (9999 for `full`, otherwise 0).
+ * @deprecated Use `useMetrics().radius(level, 'pill')`.
  */
-export function getRadiusFactor(token: RadiusToken): number {
-  return RADIUS_FACTOR[token]
+export function getFullRadius(token: RadiusToken): number {
+  return RADIUS_FULL[token]
+}
+
+/**
+ * Thumb radius for a token (9999 for medium/large/full, otherwise 0.5).
+ * @deprecated Use `useMetrics().radius(level, 'thumb')`, or `useMetrics().radiusThumb`.
+ */
+export function getRadiusThumb(token: RadiusToken): number {
+  return RADIUS_THUMB[token]
 }

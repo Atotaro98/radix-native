@@ -1,11 +1,9 @@
 import React, { useMemo } from 'react'
 import type { StyleProp, ViewStyle } from 'react-native'
-import { useThemeContext } from '../../hooks/useThemeContext'
+import { useMetrics } from '../../hooks/useMetrics'
 import { useMargins } from '../../hooks/useMargins'
 import { createSelectionGroup } from '../internal/selectionGroup'
-import { SelectionCard, SelectionCardGrid, type SelectionCardVariant } from '../internal/SelectionCard'
-import type { TextSize } from '../typography/Text'
-import { scalingMap } from '../../tokens/scaling'
+import { SelectionCard, SelectionCardGrid, SELECTION_CARD_FONT_SIZE, type SelectionCardVariant } from '../internal/SelectionCard'
 import type { SpaceToken } from '../../tokens/spacing'
 import type { MarginProps } from '../../types/marginProps'
 import type { AccentColor } from '../../tokens/colors/types'
@@ -21,9 +19,6 @@ interface Shared {
 }
 
 const Selection = createSelectionGroup<'single', Shared>({ name: 'RadioCards', type: 'single' })
-
-/** Radix: item font-size per size (font-size-2 / 3 / 4). */
-const SIZE_FONT: Record<1 | 2 | 3, TextSize> = { 1: 2, 2: 3, 3: 4 }
 
 const SIZE_CONFIG: Record<RadioSize, { padding: number; radiusLevel: 2 | 3 }> = {
   1: { padding: 12, radiusLevel: 2 },
@@ -117,10 +112,10 @@ RadioCardsRoot.displayName = 'RadioCards.Root'
 
 function RadioCardsItem({ value, disabled, children, style }: RadioCardsItemProps) {
   const item = Selection.useItem(value, disabled)
-  const { scaling } = useThemeContext()
+  const { px } = useMetrics()
   const { size, variant, color, highContrast } = item.shared
   const cfg = SIZE_CONFIG[size]
-  const padding = Math.round(cfg.padding * scalingMap[scaling])
+  const padding = px(cfg.padding)
 
   return (
     <SelectionCard
@@ -132,7 +127,7 @@ function RadioCardsItem({ value, disabled, children, style }: RadioCardsItemProp
       variant={variant}
       color={color}
       highContrast={highContrast}
-      fontSize={SIZE_FONT[size]}
+      fontSize={SELECTION_CARD_FONT_SIZE[size]}
       radiusLevel={cfg.radiusLevel}
       padding={{ top: padding, right: padding, bottom: padding, left: padding }}
       style={style}

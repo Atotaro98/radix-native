@@ -11,10 +11,9 @@ import Animated, {
   cancelAnimation,
   Easing,
 } from 'react-native-reanimated'
-import { useThemeContext } from '../../hooks/useThemeContext'
+import { useMetrics } from '../../hooks/useMetrics'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
-import { scalingMap } from '../../tokens/scaling'
 import type { MarginProps } from '../../types/marginProps'
 import type { NativeViewProps } from '../../types/nativeProps'
 import type { ThemeColor } from '../../theme/theme.types'
@@ -120,12 +119,11 @@ export function Spinner({
   children,
   ...rest
 }: SpinnerProps) {
-  const { scaling } = useThemeContext()
   const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
-  const scalingFactor = scalingMap[scaling]
-  const boxSize = Math.round(SIZE_PX[size] * scalingFactor)
+  const { px } = useMetrics()
+  const boxSize = px(SIZE_PX[size])
 
   // Spinner uses currentColor on web — RN default is gray-a11
   const leafColor = color ? rc(color) : rc('gray', 'a11')

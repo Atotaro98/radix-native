@@ -1,11 +1,9 @@
 import React, { useMemo } from 'react'
 import { View } from 'react-native'
 import type { ViewStyle, StyleProp } from 'react-native'
-import { useThemeContext } from '../../hooks/useThemeContext'
+import { useMetrics } from '../../hooks/useMetrics'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
-import { scalingMap } from '../../tokens/scaling'
-import { getRadius, getFullRadius } from '../../tokens/radius'
 import type { RadiusToken, RadiusLevel } from '../../tokens/radius'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { MarginProps } from '../../types/marginProps'
@@ -57,22 +55,17 @@ export function Badge({
   style,
   ...rest
 }: BadgeProps) {
-  const { scaling, radius: themeRadius } = useThemeContext()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
-  const effectiveRadius = radiusProp ?? themeRadius
+  const metrics = useMetrics({ radius: radiusProp })
 
   // ─── Dimensions ─────────────────────────────────────────────────────────
-  const scalingFactor = scalingMap[scaling]
-  const resolvedHeight = Math.round(SIZE_HEIGHT[size] * scalingFactor)
-  const resolvedPaddingX = Math.round(SIZE_PADDING_X[size] * scalingFactor)
-  const resolvedGap = Math.round(SIZE_GAP[size] * scalingFactor)
+  const resolvedHeight = metrics.px(SIZE_HEIGHT[size])
+  const resolvedPaddingX = metrics.px(SIZE_PADDING_X[size])
+  const resolvedGap = metrics.px(SIZE_GAP[size])
 
   // ─── Radius ─────────────────────────────────────────────────────────────
-  const borderRadius = Math.max(
-    getRadius(effectiveRadius, SIZE_RADIUS_LEVEL[size]),
-    getFullRadius(effectiveRadius),
-  )
+  const borderRadius = metrics.radius(SIZE_RADIUS_LEVEL[size], 'pill')
 
   // ─── Colors ─────────────────────────────────────────────────────────────
   const colors = useVariantColors('badge', { variant, color, highContrast })

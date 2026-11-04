@@ -1,12 +1,11 @@
 import React from 'react'
 import { Text as RNText } from 'react-native'
 import type { StyleProp, TextStyle } from 'react-native'
-import { useThemeContext } from '../../hooks/useThemeContext'
+import { useMetrics } from '../../hooks/useMetrics'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { useTextStyle } from '../../hooks/useTextStyle'
 import { TextContext, useParentText } from './TextContext'
-import { getRadius } from '../../tokens/radius'
 import type { FontSizeToken } from '../../tokens/typography'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { TextWeight, TextWrap } from './Text'
@@ -62,7 +61,7 @@ export function Code({
   style,
   ...rest
 }: CodeProps) {
-  const { radius } = useThemeContext()
+  const metrics = useMetrics()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
   // ─── Colors ─────────────────────────────────────────────────────────────────
@@ -100,7 +99,7 @@ export function Code({
   const codeStyle: TextStyle = {
     ...text.style,
     backgroundColor,
-    borderRadius:     getRadius(radius, 1),
+    borderRadius:     metrics.radius(1),
     borderWidth:      borderColor ? 1 : undefined,
     borderColor,
     paddingVertical,

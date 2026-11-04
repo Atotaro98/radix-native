@@ -8,6 +8,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated'
 import { useThemeContext } from '../../hooks/useThemeContext'
+import { useMetrics } from '../../hooks/useMetrics'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { useControllableState } from '../../hooks/useControllableState'
@@ -15,8 +16,6 @@ import { useInteraction } from '../../hooks/useInteraction'
 import { AnimatedPressable } from '../../hooks/usePressScale'
 import { getMinHitSlop } from '../../utils/hitSlop'
 import { FocusRing } from '../internal/FocusRing'
-import { scalingMap } from '../../tokens/scaling'
-import { getRadius, getRadiusThumb } from '../../tokens/radius'
 import type { RadiusToken, RadiusLevel } from '../../tokens/radius'
 import type { AccentColor } from '../../tokens/colors/types'
 import { getClassicEffect } from '../../utils/classicEffect'
@@ -81,7 +80,7 @@ export function Switch({
   hitSlop,
   ...rest
 }: SwitchProps) {
-  const { appearance, scaling, radius: themeRadius } = useThemeContext()
+  const { appearance } = useThemeContext()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
   const { focused, scaleStyle, handlers } = useInteraction({
     enabled: !disabled,
@@ -99,16 +98,14 @@ export function Switch({
   })
 
 
-  const scalingFactor = scalingMap[scaling]
-  const trackWidth = Math.round(TRACK_WIDTH[size] * scalingFactor)
-  const trackHeight = Math.round(TRACK_HEIGHT[size] * scalingFactor)
-  const thumbSize = Math.round(THUMB_SIZE[size] * scalingFactor)
-  const thumbMargin = Math.round(THUMB_MARGIN * scalingFactor)
+  const metrics = useMetrics({ radius: radiusProp })
+  const trackWidth = metrics.px(TRACK_WIDTH[size])
+  const trackHeight = metrics.px(TRACK_HEIGHT[size])
+  const thumbSize = metrics.px(THUMB_SIZE[size])
+  const thumbMargin = metrics.px(THUMB_MARGIN)
 
   // ─── Radius ────────────────────────────────────────────────────────────────
-  const effectiveRadius = radiusProp ?? themeRadius
-  const level = SIZE_RADIUS_LEVEL[size]
-  const trackRadius = Math.max(getRadius(effectiveRadius, level), getRadiusThumb(effectiveRadius))
+  const trackRadius = metrics.radius(SIZE_RADIUS_LEVEL[size], 'thumb')
   const thumbRadius = Math.max(trackRadius - thumbMargin, 0)
 
   // ─── Thumb animation ─────────────────────────────────────────────────────────

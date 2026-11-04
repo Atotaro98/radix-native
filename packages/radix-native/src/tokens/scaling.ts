@@ -1,6 +1,9 @@
 export type ScalingMode = '90%' | '95%' | '100%' | '105%' | '110%'
 
-/** Multiplier applied to space, fontSize and lineHeight */
+/**
+ * Multiplier applied to space, fontSize and lineHeight (Radix `--scaling`).
+ * @deprecated as a public export: use `useMetrics()` (`px`, `space`, `scaling`).
+ */
 export const scalingMap: Record<ScalingMode, number> = {
   '90%': 0.9,
   '95%': 0.95,

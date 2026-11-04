@@ -1,9 +1,8 @@
 import React, { useMemo } from 'react'
 import { View } from 'react-native'
 import type { StyleProp, ViewStyle } from 'react-native'
-import { useThemeContext } from '../../hooks/useThemeContext'
+import { useMetrics } from '../../hooks/useMetrics'
 import { useMargins } from '../../hooks/useMargins'
-import { resolveSpace } from '../../utils/resolveSpace'
 import { LabeledControl } from '../internal/LabeledControl'
 import { createSelectionGroup } from '../internal/selectionGroup'
 import type { MarginProps } from '../../types/marginProps'
@@ -77,7 +76,7 @@ function RadioGroupRoot({
   m, mx, my, mt, mr, mb, ml,
   style,
 }: RadioGroupProps) {
-  const { scaling } = useThemeContext()
+  const { space } = useMetrics()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
   const shared = useMemo<Shared>(() => ({ size, variant, color, highContrast }), [size, variant, color, highContrast])
 
@@ -88,7 +87,7 @@ function RadioGroupRoot({
         accessibilityLabel={accessibilityLabel}
         testID={testID}
         // Radix: column, gap space-1
-        style={[{ flexDirection: 'column', gap: resolveSpace(1, scaling) }, margins, style]}
+        style={[{ flexDirection: 'column', gap: space(1) }, margins, style]}
       >
         {children}
       </View>

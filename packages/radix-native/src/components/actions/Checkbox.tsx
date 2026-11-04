@@ -2,6 +2,7 @@ import React, { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 import type { StyleProp, ViewStyle, GestureResponderEvent } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
+import { useMetrics } from '../../hooks/useMetrics'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { useControllableState } from '../../hooks/useControllableState'
@@ -10,8 +11,6 @@ import { AnimatedPressable } from '../../hooks/usePressScale'
 import { getMinHitSlop } from '../../utils/hitSlop'
 import { ClassicOverlay } from '../internal/ClassicOverlay'
 import { FocusRing } from '../internal/FocusRing'
-import { scalingMap } from '../../tokens/scaling'
-import { getRadius } from '../../tokens/radius'
 import type { AccentColor } from '../../tokens/colors/types'
 import { getClassicEffect } from '../../utils/classicEffect'
 import type { NativePressableProps } from '../../types/nativeProps'
@@ -46,7 +45,7 @@ export interface CheckboxProps extends NativePressableProps, MarginProps {
 // ─── Size mappings ────────────────────────────────────────────────────────────
 
 /** Checkbox size in px (space-4 = 16, scaled by 0.875 / 1 / 1.25) */
-const SIZE_PX: Record<CheckboxSize, number> = { 1: 14, 2: 16, 3: 20 }
+export const CHECKBOX_SIZE: Record<CheckboxSize, number> = { 1: 14, 2: 16, 3: 20 }
 /** Indicator (check/dash) size in px */
 const INDICATOR_SIZE: Record<CheckboxSize, number> = { 1: 9, 2: 10, 3: 12 }
 /** Radius multiplier per size (relative to radius-level-1) */
@@ -74,7 +73,7 @@ export function Checkbox({
   hitSlop,
   ...rest
 }: CheckboxProps) {
-  const { appearance, scaling, radius } = useThemeContext()
+  const { appearance } = useThemeContext()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
   const { focused, scaleStyle, handlers } = useInteraction({
     enabled: !disabled,
@@ -95,10 +94,10 @@ export function Checkbox({
   const isActive = isChecked || isIndeterminate
 
   // ─── Dimensions ────────────────────────────────────────────────────────────
-  const scalingFactor = scalingMap[scaling]
-  const boxSize = Math.round(SIZE_PX[size] * scalingFactor)
-  const indicatorSize = Math.round(INDICATOR_SIZE[size] * scalingFactor)
-  const borderRadius = Math.round(getRadius(radius, 1) * RADIUS_MULT[size])
+  const metrics = useMetrics()
+  const boxSize = metrics.px(CHECKBOX_SIZE[size])
+  const indicatorSize = metrics.px(INDICATOR_SIZE[size])
+  const borderRadius = Math.round(metrics.radius(1) * RADIUS_MULT[size])
 
 
   // ─── Colors ────────────────────────────────────────────────────────────────

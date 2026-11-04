@@ -2,13 +2,11 @@ import React from 'react'
 import { View } from 'react-native'
 import type { StyleProp, ViewStyle, AccessibilityRole } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
+import { useMetrics } from '../../hooks/useMetrics'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useInteraction } from '../../hooks/useInteraction'
 import { AnimatedPressable } from '../../hooks/usePressScale'
 import { getClassicEffect } from '../../utils/classicEffect'
-import { getRadius } from '../../tokens/radius'
-import { scalingMap } from '../../tokens/scaling'
-import { resolveSpace } from '../../utils/resolveSpace'
 import type { SpaceToken } from '../../tokens/spacing'
 import type { RadiusLevel } from '../../tokens/radius'
 import type { AccentColor } from '../../tokens/colors/types'
@@ -16,6 +14,9 @@ import { Text } from '../typography/Text'
 import type { TextSize } from '../typography/Text'
 import { FocusRing } from './FocusRing'
 import { ColumnRows, AutoFitRows } from './ColumnRows'
+
+/** Radix CheckboxCards / RadioCards: item font-size per size (font-size-2 / 3 / 4). */
+export const SELECTION_CARD_FONT_SIZE: Record<1 | 2 | 3, TextSize> = { 1: 2, 2: 3, 3: 4 }
 
 export type SelectionCardVariant = 'surface' | 'classic'
 
@@ -62,15 +63,16 @@ export function SelectionCard({
   children,
   style,
 }: SelectionCardProps) {
-  const { appearance, radius } = useThemeContext()
+  const { appearance } = useThemeContext()
   const { focused, scaleStyle, handlers } = useInteraction({ enabled: !disabled })
+  const metrics = useMetrics()
   const colors = useVariantColors(recipe, { variant, color, highContrast, checked, disabled })
   const focus = useVariantColors('focusRing', { color })
 
   const checkedBorder = checked && 'checkedBorder' in colors ? colors.checkedBorder : undefined
   const borderWidth = checkedBorder ? 2 : 1
   const inset = borderWidth - 1
-  const borderRadius = getRadius(radius, radiusLevel)
+  const borderRadius = metrics.radius(radiusLevel)
 
   const cardStyle: ViewStyle = {
     flexGrow: 1,
@@ -123,8 +125,8 @@ interface SelectionCardGridProps {
 
 /** Internal: the grid of CheckboxCards / RadioCards (Radix `repeat(auto-fit, minmax(160px, 1fr))`). */
 export function SelectionCardGrid({ columns, gap, role, accessibilityLabel, testID, style, children }: SelectionCardGridProps) {
-  const { scaling } = useThemeContext()
-  const resolvedGap = resolveSpace(gap, scaling)
+  const { px, space } = useMetrics()
+  const resolvedGap = space(gap)
   return (
     <View accessibilityRole={role} accessibilityLabel={accessibilityLabel} testID={testID} style={style}>
       {columns !== undefined ? (
@@ -132,7 +134,7 @@ export function SelectionCardGrid({ columns, gap, role, accessibilityLabel, test
           {children}
         </ColumnRows>
       ) : (
-        <AutoFitRows minItemWidth={Math.round(160 * scalingMap[scaling])} gap={resolvedGap}>
+        <AutoFitRows minItemWidth={px(160)} gap={resolvedGap}>
           {children}
         </AutoFitRows>
       )}

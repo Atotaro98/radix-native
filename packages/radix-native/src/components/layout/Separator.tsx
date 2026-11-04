@@ -1,10 +1,9 @@
 import React, { useMemo } from 'react'
 import { View, StyleSheet } from 'react-native'
 import type { ViewStyle, StyleProp } from 'react-native'
-import { useThemeContext } from '../../hooks/useThemeContext'
+import { useMetrics } from '../../hooks/useMetrics'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
-import { scalingMap } from '../../tokens/scaling'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { MarginProps } from '../../types/marginProps'
 import type { NativeViewProps } from '../../types/nativeProps'
@@ -45,16 +44,15 @@ export function Separator({
   style,
   ...rest
 }: SeparatorProps) {
-  const { scaling } = useThemeContext()
   const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
   const prefix = color ?? 'gray'
   const bgColor = rc(prefix, 'a6')
 
-  const scalingFactor = scalingMap[scaling]
+  const { px } = useMetrics()
   const length = SIZE_LENGTH[size]
-  const resolvedLength = length !== undefined ? Math.round(length * scalingFactor) : undefined
+  const resolvedLength = length !== undefined ? px(length) : undefined
   const isHorizontal = orientation === 'horizontal'
 
   const separatorStyle = useMemo<ViewStyle>(() => ({
