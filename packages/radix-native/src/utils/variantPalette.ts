@@ -41,6 +41,12 @@ type OverlayStep = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12
 export const blackA = (step: OverlayStep): Paint => raw(`rgba(0, 0, 0, ${OVERLAY_ALPHA[step]})`)
 export const whiteA = (step: OverlayStep): Paint => raw(`rgba(255, 255, 255, ${OVERLAY_ALPHA[step]})`)
 
+/**
+ * The ring of Radix `--shadow-1` (classic variants, sunken parts):
+ * `inset 0 0 0 1px gray-a5` in light mode, gray-a3 over gray-a4 in dark mode.
+ */
+export const SHADOW_1_RING = byMode(g('a5'), layers(g('a3'), g('a4')))
+
 // ─── State ────────────────────────────────────────────────────────────────────
 
 export interface PaletteState {
@@ -93,7 +99,8 @@ function button(s: WithVariant<ButtonVariant>): ButtonPaints {
         bg: hc ? c(12) : c(9),
         // base-button is the only family whose high-contrast solid text is gray-1
         text: hc ? g(1) : c('contrast'),
-        pressedBg: hc ? c(12) : c(10),
+        // solid :active ≈ hover step 10; classic :active stays accent-9 (pressed in)
+        pressedBg: hc ? c(12) : s.variant === 'classic' ? c(9) : c(10),
         // accent-12 has no darker step: fall back to opacity for press feedback
         pressedOpacity: hc ? 0.88 : undefined,
       }
