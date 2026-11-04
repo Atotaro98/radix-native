@@ -2,7 +2,9 @@
  * Variant recipes vs Radix Themes CSS. Each case names the Radix selector it
  * mirrors; expectations are paints (tokens), so no theme is needed.
  */
-import { getVariantPaints, c, g, layers, TRANSPARENT, SHADOW_1_RING } from '../utils/variantPalette'
+import {
+  getVariantPaints, c, g, layers, fade, byMode, blackA, whiteA, TRANSPARENT, WHITE, SHADOW_1_RING,
+} from '../utils/variantPalette'
 import type { RecipeName, RecipeState } from '../utils/variantPalette'
 
 const light = { appearance: 'light' as const }
@@ -64,5 +66,27 @@ describe('selection controls (base-checkbox.css, base-radio.css)', () => {
   it('soft disabled has no ring', () => {
     expect(paints('checkbox', { variant: 'soft', disabled: true }).border).toBeUndefined()
     expect(paints('radio', { variant: 'soft', disabled: true }).border).toBeUndefined()
+  })
+})
+
+describe('tracks (switch.css, progress.css)', () => {
+  it.each([
+    ['switch surface unchecked', 'switch', { variant: 'surface' }, { track: g('a3'), border: g('a5'), thumb: WHITE }],
+    ['switch surface checked → accent-track', 'switch', { variant: 'surface', checked: true }, { track: c('track'), border: g('a5') }],
+    ['switch high contrast → black-a8 overlay (light only)', 'switch', { variant: 'surface', checked: true, highContrast: true },
+      { track: layers(byMode(blackA(8), TRANSPARENT), c('track')) }],
+    ['switch surface [data-disabled]', 'switch', { variant: 'surface', disabled: true }, { track: g('a3'), border: g('a3'), thumb: g(2) }],
+    ['switch classic unchecked → gray-a4 + shadow-1', 'switch', { variant: 'classic' }, { track: g('a4'), border: SHADOW_1_RING }],
+    ['switch classic [data-disabled] at 0.5', 'switch', { variant: 'classic', disabled: true },
+      { track: fade(g('a5'), 0.5), border: fade(SHADOW_1_RING, 0.5) }],
+    ['switch soft thumb stays white', 'switch', { variant: 'soft', checked: true },
+      { track: layers(c('a4'), c('a4'), c('a4'), g('a2')), thumb: WHITE }],
+    ['switch soft unchecked', 'switch', { variant: 'soft' }, { track: layers(whiteA(1), g('a3'), g('a3')) }],
+    ['progress surface', 'progress', { variant: 'surface' }, { track: g('a3'), border: g('a4'), indicator: c('track') }],
+    ['progress classic → shadow-1', 'progress', { variant: 'classic' }, { border: SHADOW_1_RING }],
+    ['progress soft', 'progress', { variant: 'soft' }, { track: layers(whiteA(1), g('a4')), indicator: layers(c('a5'), c(8)) }],
+    ['progress high contrast', 'progress', { variant: 'surface', highContrast: true }, { indicator: c(12) }],
+  ] as const)('%s', (_selector, name, state, expected) => {
+    expect(paints(name, state)).toMatchObject(expected)
   })
 })

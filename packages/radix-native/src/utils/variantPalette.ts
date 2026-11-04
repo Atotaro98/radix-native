@@ -226,39 +226,73 @@ function radio(s: WithVariant<SelectionVariant>): SelectionPaints {
 
 export interface SwitchPaints {
   track: Paint
+  /** Ring drawn over the track (Radix inset box-shadow). */
   border?: Paint
   thumb: Paint
 }
 
+/** `--switch-high-contrast-checked-color-overlay`: black-a8 in light mode, none in dark. */
+const SWITCH_HC_OVERLAY = byMode(blackA(8), TRANSPARENT)
+
+/**
+ * switch.css paints the track as stacked gradients (checked half / unchecked
+ * half) over a background color; each state flattens its half of the stack.
+ */
 function switchRecipe(s: WithVariant<SelectionVariant>): SwitchPaints {
   const hc = !!s.highContrast
-  if (s.disabled) {
-    return { track: g('a3'), border: s.variant !== 'soft' ? g('a6') : undefined, thumb: g('a5') }
+  // .rt-SwitchThumb → white in every variant (soft only desaturates it); disabled gray-2
+  const thumb = s.disabled ? g(2) : WHITE
+  const solidChecked = hc ? layers(SWITCH_HC_OVERLAY, c('track')) : c('track')
+
+  switch (s.variant) {
+    case 'surface':
+      if (s.disabled) return { track: g('a3'), border: g('a3'), thumb }
+      return { track: s.checked ? solidChecked : g('a3'), border: g('a5'), thumb }
+
+    case 'classic':
+      if (s.disabled) {
+        // [data-disabled]::before → gray-a5 + shadow-1 at opacity 0.5
+        return { track: fade(g('a5'), 0.5), border: fade(SHADOW_1_RING, 0.5), thumb }
+      }
+      if (!s.checked) return { track: g('a4'), border: SHADOW_1_RING, thumb }
+      return {
+        track: solidChecked,
+        border: hc ? layers(g('a3'), blackA(2)) : layers(g('a3'), c('a4'), blackA(1)),
+        thumb,
+      }
+
+    case 'soft':
+      if (s.disabled) return { track: g('a4'), thumb }
+      if (!s.checked) return { track: layers(whiteA(1), g('a3'), g('a3')), thumb }
+      return {
+        track: hc
+          ? layers(SWITCH_HC_OVERLAY, c('a6'), c('a6'), c('a6'), c('a3'))
+          : layers(c('a4'), c('a4'), c('a4'), g('a2')),
+        thumb,
+      }
   }
-  if (s.checked) {
-    return s.variant === 'soft'
-      ? { track: c('a5'), thumb: hc ? c(12) : c('a11') }
-      : { track: hc ? c(12) : c(9), thumb: WHITE }
-  }
-  return s.variant === 'soft'
-    ? { track: g('a5'), thumb: g('a11') }
-    : { track: g('a3'), border: g('a7'), thumb: WHITE }
 }
 
 export interface ProgressPaints {
   track: Paint
+  /** Ring drawn over the track (Radix inset box-shadow). */
   border?: Paint
-  /** Top edge of the classic ring (approximates the inset shadow). */
-  borderTop?: Paint
   indicator: Paint
 }
 
 function progress(s: WithVariant<SelectionVariant>): ProgressPaints {
-  const indicator = s.highContrast ? c(12) : c(9)
+  const hc = !!s.highContrast
   switch (s.variant) {
-    case 'classic': return { track: g('a3'), border: g('a4'), borderTop: g('a5'), indicator }
-    case 'surface': return { track: g('a3'), border: g('a4'), indicator }
-    case 'soft': return { track: g('a4'), indicator }
+    case 'surface':
+      return { track: g('a3'), border: g('a4'), indicator: hc ? c(12) : c('track') }
+    case 'classic':
+      return { track: g('a3'), border: SHADOW_1_RING, indicator: hc ? c(12) : c('track') }
+    case 'soft':
+      // track gray-a4 + white-a1; indicator accent-8 (hc accent-12) under accent-a5
+      return {
+        track: layers(whiteA(1), g('a4')),
+        indicator: layers(c('a5'), hc ? c(12) : c(8)),
+      }
   }
 }
 

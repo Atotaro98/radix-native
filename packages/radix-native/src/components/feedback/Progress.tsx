@@ -106,7 +106,6 @@ export function Progress({
     backgroundColor: colors.track,
     borderWidth: colors.border ? 1 : undefined,
     borderColor: colors.border,
-    borderTopColor: colors.borderTop ?? colors.border,
     overflow: 'hidden',
     ...margins,
   }), [resolvedHeight, borderRadius, colors, margins])
