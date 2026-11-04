@@ -33,3 +33,17 @@ _Avoid_: max font, font multiplier
 **Nested text**:
 Text rendered inside another radix-native text module. It flows inline, inherits size and color from its parent, and takes no layout of its own.
 _Avoid_: inline child, sub-text
+
+## Color
+
+**Variant**:
+The look a consumer asks a component for: `solid`, `soft`, `surface`, `outline`, `ghost` or `classic`. A variant names an appearance, not a set of colors; what it means in colors depends on the component's Variant family.
+_Avoid_: style, appearance (reserved for light/dark)
+
+**Variant family**:
+A group of components that Radix colors with the same rules: buttons (Button, IconButton), chips (Badge, Code, Avatar), selection controls (Checkbox, Radio), tracks (Switch, Progress), cards (Card, CheckboxCards, RadioCards), text inputs (TextField, TextArea) and text (Text, Heading, Link, Blockquote). Components in one family may still differ where Radix itself differs.
+_Avoid_: color family, component group
+
+**Variant recipe**:
+How a Variant family turns each Variant and state (high contrast, checked, disabled, pressed, focused) into the colors of its parts (background, text, border, indicator, track, thumb, placeholder), taken from Radix. Where Radix is inconsistent between families, each recipe keeps Radix's value rather than unifying.
+_Avoid_: generic palette, color scheme, theme colors

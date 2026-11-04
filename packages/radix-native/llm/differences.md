@@ -52,14 +52,18 @@ These are places where RN cannot replicate the exact Radix web visual, and we us
 | Component | Difference | Detail |
 |-----------|-----------|--------|
 | **Button** solid pressed | Web: `accent-10` + `brightness(0.92)` filter | RN: just `accent-10` bg change |
-| **Button** outline hc border | Web: double shadow `accent-a7 + gray-a11` | RN: single `gray-a11` border |
+| **Button / Badge / Code** outline hc border | Web: double shadow `accent-a7 + gray-a11` | RN: single `gray-a11` border |
 | **Button** surface pressed border | Web: border changes from `a7` to `a8` | RN: border stays `a7` |
-| **Switch** track | Web: gradient transition between checked/unchecked | RN: solid color swap |
-| **Switch** thumb | Web: elaborate multi-layer shadow | RN: flat clean thumb |
+| **Switch** track | Web: gradient transition between checked/unchecked halves | RN: solid color swap; each state flattens its half of Radix's gradient stack into one color |
+| **Switch** thumb | Web: white with multi-layer shadow; soft adds `saturate(0.45)` | RN: flat white thumb (gray-2 when disabled) |
 | **Switch** checked pressed | Web: `brightness()` filter | RN: no filter |
 | **Checkbox** indicator | Web: SVG paths (ThickCheckIcon) | RN: View borders rotated -45deg |
-| **Checkbox** classic border | Web: `gray-a3 + shadow-1` | RN: `gray-a3` border only |
-| **Card** surface/classic border | Web: `color-mix()` enhanced shadows | RN: simple `borderColor` |
+| **shadow-1** (classic Checkbox, Radio, Switch, Progress, TextField / TextArea; disabled classic controls) | Web: inset ring + inner top shadow | RN: the ring only, as the border color (`gray-a5`; dark mode `gray-a3` over `gray-a4`), composited with any ring drawn on top |
+| **Classic raised effect** | Web: bevel gradient + highlight on checked / solid parts | RN: drop shadow + `ClassicOverlay`, only where Radix has the bevel (checked Checkbox / Radio / Switch, Button, Card) |
+| **Card** surface/classic border | Web: `color-mix()` enhanced shadows | RN: simple `borderColor` with the un-mixed token (`gray-a5`, classic `gray-a3` / dark `gray-a6`) |
+| **Card** pressed | Web: `:active` ring color change | RN: same ring change plus the press scale |
+| **CheckboxGroup / RadioGroup** disabled label | Web: unchanged text, `cursor: not-allowed` | RN: label turns `gray-a8` — there is no cursor to signal it |
+| **CheckboxCards / RadioCards** disabled custom children | Web: `color: gray-a9` inherited by all content | RN: applied to plain-string children only; custom children set their own color |
 | **Card** ghost hover | Web: `gray-a3` background on hover | RN: no hover background |
 | **TextField/TextArea** focus | Web: 2px outline with offset | RN: 1px border color change + 1px inner ring |
 | **Code** inline sizing | Web: `0.95em` relative to parent | RN: 0.95 × parent size when nested in a text component (via `TextContext`); token size when standalone |
@@ -78,9 +82,10 @@ These are the EXACT token mappings that intentionally differ between Radix web a
 | Badge/Avatar solid hc text | `accent-1` | `accent-1` | Matches (was `gray-1` bug, now fixed) |
 | Button/IconButton solid hc text | `gray-1` | `gray-1` | Matches (Button differs from Badge/Avatar in Radix) |
 | Badge surface border | `accent-a6` | `accent-a6` | Matches (was `a7` bug, now fixed) |
-| Checkbox unchecked bg | `color-surface` (semantic) | `gray-surface` | Close approximation — RN has no `color-surface` semantic token |
-| Checkbox checked bg | `accent-indicator` (semantic) | `accent-9` | `accent-indicator` typically equals `accent-9` |
-| TextField/TextArea classic bg | `color-surface` (semantic) | `gray-1` | Close approximation |
+| `color-surface` (Checkbox, Radio, Switch… unchecked; TextField / TextArea; card items) | `rgba(255,255,255,0.85)` / `rgba(0,0,0,0.25)` | `gray-surface` | Close approximation — RN has no page-level surface token |
+| `color-panel` (Card) | `--color-panel-solid` / translucent panel | `gray-panel` (white / dark `gray-2`) | The translucent panel over the page background resolves to the same color |
+| `accent-indicator` / `accent-track` | semantic | `accent-indicator` / `accent-track` | Matches — both resolve through step 9, so overrides of 9 carry over |
+| Stacked backgrounds (Switch, Progress soft, disabled inputs and card items) | several layered colors / gradients | one composited color | RN has one background per view |
 
 ---
 
