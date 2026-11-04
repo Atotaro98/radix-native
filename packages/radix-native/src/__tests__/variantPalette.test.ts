@@ -124,3 +124,20 @@ describe('text inputs (text-field.css, text-area.css)', () => {
     expect(paints(name, state)).toMatchObject(expected)
   })
 })
+
+describe('text (text.css, heading.css, link.css, blockquote.css)', () => {
+  it('no color → gray-12; [data-accent-color] → accent-a11; high contrast → accent-12', () => {
+    expect(paints('text', {}).text).toEqual(g(12))
+    expect(paints('text', { hasColor: true }).text).toEqual(c('a11'))
+    expect(paints('text', { hasColor: true, highContrast: true }).text).toEqual(c(12))
+  })
+
+  it('links are always colored; underline accent-a5, high contrast accent-a6', () => {
+    expect(paints('link', {})).toEqual({ text: c('a11'), decoration: c('a5') })
+    expect(paints('link', { highContrast: true })).toEqual({ text: c(12), decoration: c('a6') })
+  })
+
+  it('blockquote border is accent-a6', () => {
+    expect(paints('blockquote', {}).decoration).toEqual(c('a6'))
+  })
+})
