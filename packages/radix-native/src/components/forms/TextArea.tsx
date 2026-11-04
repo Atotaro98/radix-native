@@ -4,7 +4,7 @@ import type { TextInputProps, ViewStyle, TextStyle, StyleProp } from 'react-nati
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
-import { fontSize, lineHeight, letterSpacingEm } from '../../tokens/typography'
+import { useTextStyle } from '../../hooks/useTextStyle'
 import { scalingMap } from '../../tokens/scaling'
 import { getRadius } from '../../tokens/radius'
 import type { RadiusToken, RadiusLevel } from '../../tokens/radius'
@@ -58,8 +58,7 @@ export function TextArea({
   accessibilityState,
   ...rest
 }: TextAreaProps) {
-  const { scaling, fonts, radius: themeRadius, maxFontSizeMultiplier: globalMax } = useThemeContext()
-  const effectiveMaxFont = maxFontSizeMultiplier ?? globalMax ?? 2
+  const { scaling, radius: themeRadius } = useThemeContext()
   const rc = useResolveColor()
   const [focused, setFocused] = useState(false)
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
@@ -67,12 +66,7 @@ export function TextArea({
   const effectiveRadius = radiusProp ?? themeRadius
   const prefix = color ?? 'accent'
 
-  // ─── Typography ────────────────────────────────────────────────────────────
   const scalingFactor = scalingMap[scaling]
-  const fontIdx = SIZE_FONT[size]
-  const resolvedFontSize = Math.round(fontSize[fontIdx] * scalingFactor)
-  const resolvedLineHeight = Math.round(lineHeight[fontIdx] * scalingFactor)
-  const resolvedLetterSpacing = letterSpacingEm[fontIdx] * resolvedFontSize
 
   // ─── Dimensions ────────────────────────────────────────────────────────────
   const resolvedPaddingX = Math.round(SIZE_PADDING_X[size] * scalingFactor)
@@ -111,21 +105,26 @@ export function TextArea({
     ...margins,
   }
 
-  const inputStyle: TextStyle = {
-    fontSize: resolvedFontSize,
-    lineHeight: resolvedLineHeight,
-    letterSpacing: resolvedLetterSpacing,
+  // Compact text; multiline: body line heights.
+  const text = useTextStyle({
+    size: SIZE_FONT[size],
+    lineHeight: 'body',
     color: colors.text,
-    fontFamily: fonts.regular,
-    padding: 0,
+    compact: true,
+    maxFontSizeMultiplier,
+  })
+
+  const inputStyle: TextStyle = {
+    ...text.style,
     textAlignVertical: 'top',
-    minHeight: resolvedLineHeight * 3,
+    minHeight: (text.style.lineHeight ?? 0) * 3,
+    padding: 0,
   }
 
   return (
     <View style={[containerStyle, style]}>
       <TextInput
-        maxFontSizeMultiplier={effectiveMaxFont}
+        {...text.textProps}
         {...rest}
         style={inputStyle}
         placeholderTextColor={colors.placeholder}

@@ -121,6 +121,7 @@ describe('resolveTextStyle — nesting and layout', () => {
   it('maps truncate / wrap to text props', () => {
     expect(resolve({ truncate: true }).textProps).toMatchObject({ numberOfLines: 1, ellipsizeMode: 'tail' })
     expect(resolve({ wrap: 'nowrap' }).textProps).toMatchObject({ numberOfLines: 1, ellipsizeMode: 'clip' })
+    expect(resolve({ truncate: true, wrap: 'nowrap' }).textProps).toMatchObject({ ellipsizeMode: 'tail' })
     expect(resolve({}).textProps.numberOfLines).toBeUndefined()
   })
 })

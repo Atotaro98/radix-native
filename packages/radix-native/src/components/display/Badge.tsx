@@ -4,8 +4,7 @@ import type { ViewStyle, TextStyle, StyleProp } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
-import { resolveFont } from '../../utils/resolveFont'
-import { fontSize, lineHeight, letterSpacingEm } from '../../tokens/typography'
+import { useTextStyle } from '../../hooks/useTextStyle'
 import { scalingMap } from '../../tokens/scaling'
 import { getRadius, getFullRadius } from '../../tokens/radius'
 import type { RadiusToken, RadiusLevel } from '../../tokens/radius'
@@ -58,8 +57,7 @@ export function Badge({
   style,
   ...rest
 }: BadgeProps) {
-  const { scaling, fonts, radius: themeRadius, maxFontSizeMultiplier: globalMax } = useThemeContext()
-  const effectiveMaxFont = maxFontSizeMultiplier ?? globalMax ?? 2
+  const { scaling, radius: themeRadius } = useThemeContext()
   const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
@@ -68,10 +66,6 @@ export function Badge({
 
   // ─── Dimensions ─────────────────────────────────────────────────────────
   const scalingFactor = scalingMap[scaling]
-  const fontIdx = SIZE_FONT[size]
-  const resolvedFontSize = Math.round(fontSize[fontIdx] * scalingFactor)
-  const resolvedLineHeight = Math.round(lineHeight[fontIdx] * scalingFactor)
-  const resolvedLetterSpacing = letterSpacingEm[fontIdx] * resolvedFontSize
   const resolvedHeight = Math.round(SIZE_HEIGHT[size] * scalingFactor)
   const resolvedPaddingX = Math.round(SIZE_PADDING_X[size] * scalingFactor)
   const resolvedGap = Math.round(SIZE_GAP[size] * scalingFactor)
@@ -124,17 +118,18 @@ export function Badge({
     ...margins,
   }), [resolvedHeight, resolvedPaddingX, resolvedGap, colors, borderRadius, margins])
 
-  const textStyle = useMemo<TextStyle>(() => ({
-    fontSize: resolvedFontSize,
-    lineHeight: resolvedLineHeight,
-    letterSpacing: resolvedLetterSpacing,
-    ...resolveFont(fonts.medium ?? fonts.regular, '500'),
+  // Compact text, medium weight (Radix).
+  const text = useTextStyle({
+    size: SIZE_FONT[size],
+    weight: 'medium',
     color: colors.text,
-  }), [resolvedFontSize, resolvedLineHeight, resolvedLetterSpacing, fonts, colors.text])
+    compact: true,
+    maxFontSizeMultiplier,
+  })
 
   return (
     <View style={[containerStyle, style]} {...rest}>
-      {renderContent(children, textStyle, effectiveMaxFont)}
+      {renderContent(children, text.style, text.textProps.maxFontSizeMultiplier)}
     </View>
   )
 }
