@@ -1,61 +1,60 @@
-import React, { createContext, useCallback, useContext, useMemo } from 'react'
-import { View } from 'react-native'
+import React, { useMemo } from 'react'
 import type { StyleProp, ViewStyle } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
-import { useResolveColor } from '../../hooks/useResolveColor'
-import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
-import { useControllableState } from '../../hooks/useControllableState'
-import { useInteraction } from '../../hooks/useInteraction'
-import { AnimatedPressable } from '../../hooks/usePressScale'
-import { resolveSpace } from '../../utils/resolveSpace'
-import { getClassicEffect } from '../../utils/classicEffect'
-import { ColumnRows, AutoFitRows } from '../internal/ColumnRows'
-import { FocusRing } from '../internal/FocusRing'
-import { Text } from '../typography/Text'
+import { createSelectionGroup } from '../internal/selectionGroup'
+import { SelectionCard, SelectionCardGrid, type SelectionCardVariant } from '../internal/SelectionCard'
 import type { TextSize } from '../typography/Text'
 import { scalingMap } from '../../tokens/scaling'
-import { getRadius } from '../../tokens/radius'
 import type { SpaceToken } from '../../tokens/spacing'
 import type { MarginProps } from '../../types/marginProps'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { RadioSize } from './Radio'
 
-// ─── Types ──────────────────────────────────────────────────────────────────────
+export type RadioCardsVariant = SelectionCardVariant
 
-export type RadioCardsVariant = 'surface' | 'classic'
-
-// ─── Context ──────────────────────────────────────────────────────────────────
-
-interface RadioCardsContextValue {
+interface Shared {
   size: RadioSize
   variant: RadioCardsVariant
   color?: AccentColor
   highContrast?: boolean
-  disabled: boolean
-  value: string
-  onItemSelect: (itemValue: string) => void
 }
 
-const RadioCardsContext = createContext<RadioCardsContextValue | null>(null)
+const Selection = createSelectionGroup<'single', Shared>({ name: 'RadioCards', type: 'single' })
 
 /** Radix: item font-size per size (font-size-2 / 3 / 4). */
 const SIZE_FONT: Record<1 | 2 | 3, TextSize> = { 1: 2, 2: 3, 3: 4 }
 
-// ─── Root Types ───────────────────────────────────────────────────────────────
+const SIZE_CONFIG: Record<RadioSize, { padding: number; radiusLevel: 2 | 3 }> = {
+  1: { padding: 12, radiusLevel: 2 },
+  2: { padding: 16, radiusLevel: 3 },
+  3: { padding: 24, radiusLevel: 3 },
+}
+
+// ─── Root Types ─────────────────────────────────────────────────────────────────
 
 export interface RadioCardsProps extends MarginProps {
+  /** Card size (1–3). Default: 2. */
   size?: RadioSize
+  /** Visual variant. Default: 'surface'. */
   variant?: RadioCardsVariant
+  /** Accent color. Default: theme accent. */
   color?: AccentColor
+  /** Increases color contrast with the background. */
   highContrast?: boolean
   /** Number of equal-width columns. Default: auto-fit (cards ≥ 160px, like Radix). */
   columns?: number
+  /** Gap between cards as space token. Default: 4. */
   gap?: SpaceToken
+  /** Controlled selected value. */
   value?: string
+  /** Uncontrolled default selected value. */
   defaultValue?: string
+  /** Called when the selected value changes. */
   onValueChange?: (value: string) => void
+  /** Disables every card. */
   disabled?: boolean
+  /** Card items. */
   children?: React.ReactNode
   /** Accessible name for the whole group. */
   accessibilityLabel?: string
@@ -63,24 +62,19 @@ export interface RadioCardsProps extends MarginProps {
   style?: StyleProp<ViewStyle>
 }
 
-// ─── Item Types ───────────────────────────────────────────────────────────────
+// ─── Item Types ─────────────────────────────────────────────────────────────────
 
 export interface RadioCardsItemProps {
+  /** Unique value identifying this card. */
   value: string
+  /** Disables this card (a disabled group always wins). */
   disabled?: boolean
+  /** Card content. */
   children?: React.ReactNode
   style?: StyleProp<ViewStyle>
 }
 
-// ─── Size config ──────────────────────────────────────────────────────────────
-
-const SIZE_CONFIG: Record<RadioSize, { padding: number; radiusLevel: 1 | 2 | 3 }> = {
-  1: { padding: 12, radiusLevel: 2 },
-  2: { padding: 16, radiusLevel: 3 },
-  3: { padding: 24, radiusLevel: 3 },
-}
-
-// ─── Root ─────────────────────────────────────────────────────────────────────
+// ─── Root ───────────────────────────────────────────────────────────────────────
 
 function RadioCardsRoot({
   size = 2,
@@ -88,127 +82,68 @@ function RadioCardsRoot({
   color,
   highContrast,
   columns,
-  gap: gapProp = 4,
-  value: valueProp,
-  defaultValue = '',
+  gap = 4,
+  value,
+  defaultValue,
   onValueChange,
-  disabled = false,
+  disabled,
   children,
   accessibilityLabel,
   testID,
   m, mx, my, mt, mr, mb, ml,
   style,
 }: RadioCardsProps) {
-  const { scaling } = useThemeContext()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
-
-  const [value, onItemSelect] = useControllableState<string>({
-    prop: valueProp,
-    defaultProp: defaultValue,
-    onChange: onValueChange,
-  })
-
-  const ctx = useMemo<RadioCardsContextValue>(() => ({
-    size, variant, color, highContrast, disabled, value, onItemSelect,
-  }), [size, variant, color, highContrast, disabled, value, onItemSelect])
-
-  const resolvedGap = resolveSpace(gapProp, scaling)
+  const shared = useMemo<Shared>(() => ({ size, variant, color, highContrast }), [size, variant, color, highContrast])
 
   return (
-    <RadioCardsContext.Provider value={ctx}>
-      <View
-        accessibilityRole="radiogroup"
+    <Selection.Root value={value} defaultValue={defaultValue} onValueChange={onValueChange} disabled={disabled} shared={shared}>
+      <SelectionCardGrid
+      role="radiogroup"
+        columns={columns}
+        gap={gap}
         accessibilityLabel={accessibilityLabel}
         testID={testID}
         style={[margins, style]}
       >
-        {columns !== undefined ? (
-          <ColumnRows columns={columns} columnGap={resolvedGap} rowGap={resolvedGap} alignItems="stretch">
-            {children}
-          </ColumnRows>
-        ) : (
-          // Radix default: repeat(auto-fit, minmax(160px, 1fr))
-          <AutoFitRows minItemWidth={Math.round(160 * scalingMap[scaling])} gap={resolvedGap}>
-            {children}
-          </AutoFitRows>
-        )}
-      </View>
-    </RadioCardsContext.Provider>
+        {children}
+      </SelectionCardGrid>
+    </Selection.Root>
   )
 }
 RadioCardsRoot.displayName = 'RadioCards.Root'
 
-// ─── Item ─────────────────────────────────────────────────────────────────────
+// ─── Item ───────────────────────────────────────────────────────────────────────
 
-function RadioCardsItem({
-  value: itemValue,
-  disabled: disabledProp,
-  children,
-  style,
-}: RadioCardsItemProps) {
-  const ctx = useContext(RadioCardsContext)
-  if (!ctx) throw new Error('RadioCards.Item must be used within RadioCards.Root')
-
-  const { size, variant, color, highContrast, disabled: groupDisabled, value, onItemSelect } = ctx
-  const { appearance, scaling, radius } = useThemeContext()
-  const rc = useResolveColor()
-
-  const isDisabled = disabledProp ?? groupDisabled
-  const isChecked = value === itemValue
-  const isClassic = variant === 'classic'
-  const { focused, scaleStyle, handlers } = useInteraction({ enabled: !isDisabled })
-
-  const handlePress = useCallback(() => {
-    if (!isDisabled) onItemSelect(itemValue)
-  }, [isDisabled, onItemSelect, itemValue])
-
-  const scalingFactor = scalingMap[scaling]
+function RadioCardsItem({ value, disabled, children, style }: RadioCardsItemProps) {
+  const item = Selection.useItem(value, disabled)
+  const { scaling } = useThemeContext()
+  const { size, variant, color, highContrast } = item.shared
   const cfg = SIZE_CONFIG[size]
-  const padding = Math.round(cfg.padding * scalingFactor)
-  const borderRadius = getRadius(radius, cfg.radiusLevel)
-
-  const prefix = color ?? 'accent'
-
-  const colors = useVariantColors('radioCard', { variant: isClassic ? 'classic' : 'surface', color, highContrast, checked: isChecked, disabled: isDisabled })
-  const bgColor = colors.bg
-  const borderWidth = isChecked ? 2 : 1
-  const borderColor = isChecked && colors.checkedBorder ? colors.checkedBorder : colors.border
-
-  const cardStyle: ViewStyle = {
-    flexGrow: 1,
-    // Compensate the thicker checked border so content doesn't shift
-    padding: padding - (borderWidth - 1),
-    borderRadius,
-    borderWidth,
-    borderColor,
-    backgroundColor: bgColor,
-  }
+  const padding = Math.round(cfg.padding * scalingMap[scaling])
 
   return (
-    <AnimatedPressable
-      {...handlers}
-      onPress={handlePress}
-      disabled={isDisabled}
-      accessibilityRole="radio"
-      accessibilityState={{ checked: isChecked, disabled: isDisabled }}
-      style={[
-        scaleStyle,
-        cardStyle,
-        isClassic && !isDisabled ? getClassicEffect(appearance) : undefined,
-        style,
-      ]}
+    <SelectionCard
+      recipe="radioCard"
+      role="radio"
+      checked={item.checked}
+      disabled={item.disabled}
+      onPress={item.select}
+      variant={variant}
+      color={color}
+      highContrast={highContrast}
+      fontSize={SIZE_FONT[size]}
+      radiusLevel={cfg.radiusLevel}
+      padding={{ top: padding, right: padding, bottom: padding, left: padding }}
+      style={style}
     >
-      {/* Plain strings must live inside <Text> in RN */}
-      {typeof children === 'string' || typeof children === 'number'
-        ? <Text size={SIZE_FONT[size]} style={colors.text ? { color: colors.text } : undefined}>{children}</Text>
-        : children}
-      <FocusRing visible={focused} color={rc(prefix, 8)} borderRadius={borderRadius} />
-    </AnimatedPressable>
+      {children}
+    </SelectionCard>
   )
 }
 RadioCardsItem.displayName = 'RadioCards.Item'
 
-// ─── Compound export ──────────────────────────────────────────────────────────
+// ─── Compound export ────────────────────────────────────────────────────────────
 
 export const RadioCards = Object.assign(RadioCardsRoot, {
   Root: RadioCardsRoot,

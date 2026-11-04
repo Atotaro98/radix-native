@@ -1,31 +1,23 @@
-import React, { createContext, useCallback, useContext, useMemo } from 'react'
+import React, { useMemo } from 'react'
 import { View } from 'react-native'
 import type { StyleProp, ViewStyle } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
-import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
-import { useControllableState } from '../../hooks/useControllableState'
 import { resolveSpace } from '../../utils/resolveSpace'
-import { useTextStyle } from '../../hooks/useTextStyle'
-import { scalingMap } from '../../tokens/scaling'
 import { LabeledControl } from '../internal/LabeledControl'
+import { createSelectionGroup } from '../internal/selectionGroup'
 import type { MarginProps } from '../../types/marginProps'
 import type { AccentColor } from '../../tokens/colors/types'
 import { Checkbox, type CheckboxSize, type CheckboxVariant } from './Checkbox'
 
-// ─── Context ──────────────────────────────────────────────────────────────────
-
-interface CheckboxGroupContextValue {
+interface Shared {
   size: CheckboxSize
   variant: CheckboxVariant
   color?: AccentColor
   highContrast?: boolean
-  disabled: boolean
-  value: string[]
-  onItemToggle: (itemValue: string) => void
 }
 
-const CheckboxGroupContext = createContext<CheckboxGroupContextValue | null>(null)
+const Selection = createSelectionGroup<'multiple', Shared>({ name: 'CheckboxGroup', type: 'multiple' })
 
 // ─── Root Types ─────────────────────────────────────────────────────────────────
 
@@ -42,9 +34,9 @@ export interface CheckboxGroupProps extends MarginProps {
   value?: string[]
   /** Uncontrolled default selected values. */
   defaultValue?: string[]
-  /** Called when selected values change. */
+  /** Called when the selected values change. */
   onValueChange?: (value: string[]) => void
-  /** Disables all checkboxes in the group. */
+  /** Disables every item in the group. */
   disabled?: boolean
   /** Group children (CheckboxGroup.Item). */
   children?: React.ReactNode
@@ -59,7 +51,7 @@ export interface CheckboxGroupProps extends MarginProps {
 export interface CheckboxGroupItemProps extends MarginProps {
   /** Unique value identifying this item. */
   value: string
-  /** Disables this individual item. */
+  /** Disables this item (a disabled group always wins). */
   disabled?: boolean
   /** Specifies the largest possible scale a font can reach. */
   maxFontSizeMultiplier?: number
@@ -68,22 +60,17 @@ export interface CheckboxGroupItemProps extends MarginProps {
   style?: StyleProp<ViewStyle>
 }
 
-// ─── Font size mapping per checkbox size ────────────────────────────────────────
-
-const LABEL_FONT_SIZE: Record<CheckboxSize, 1 | 2 | 3> = { 1: 1, 2: 2, 3: 3 }
-const LABEL_GAP: Record<CheckboxSize, number> = { 1: 4, 2: 6, 3: 8 }
-
-// ─── Root Component ─────────────────────────────────────────────────────────────
+// ─── Root ───────────────────────────────────────────────────────────────────────
 
 function CheckboxGroupRoot({
   size = 2,
   variant = 'surface',
   color,
   highContrast,
-  value: valueProp,
-  defaultValue = [],
+  value,
+  defaultValue,
   onValueChange,
-  disabled = false,
+  disabled,
   children,
   accessibilityLabel,
   testID,
@@ -92,87 +79,38 @@ function CheckboxGroupRoot({
 }: CheckboxGroupProps) {
   const { scaling } = useThemeContext()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
-
-  const [value, setValue] = useControllableState<string[]>({
-    prop: valueProp,
-    defaultProp: defaultValue,
-    onChange: onValueChange,
-  })
-
-  // Functional update: two quick toggles never work on a stale array
-  const onItemToggle = useCallback((itemValue: string) => {
-    setValue(prev => prev.includes(itemValue)
-      ? prev.filter(v => v !== itemValue)
-      : [...prev, itemValue])
-  }, [setValue])
-
-  const ctx = useMemo<CheckboxGroupContextValue>(() => ({
-    size, variant, color, highContrast, disabled, value, onItemToggle,
-  }), [size, variant, color, highContrast, disabled, value, onItemToggle])
+  const shared = useMemo<Shared>(() => ({ size, variant, color, highContrast }), [size, variant, color, highContrast])
 
   return (
-    <CheckboxGroupContext.Provider value={ctx}>
+    <Selection.Root value={value} defaultValue={defaultValue} onValueChange={onValueChange} disabled={disabled} shared={shared}>
       <View
         accessibilityLabel={accessibilityLabel}
         testID={testID}
-        style={[
-          { flexDirection: 'column', gap: resolveSpace(2, scaling) },
-          margins,
-          style,
-        ]}
+        // Radix: column, gap space-1
+        style={[{ flexDirection: 'column', gap: resolveSpace(1, scaling) }, margins, style]}
       >
         {children}
       </View>
-    </CheckboxGroupContext.Provider>
+    </Selection.Root>
   )
 }
 CheckboxGroupRoot.displayName = 'CheckboxGroup.Root'
 
-// ─── Item Component ─────────────────────────────────────────────────────────────
+// ─── Item ───────────────────────────────────────────────────────────────────────
 
 function CheckboxGroupItem({
-  value: itemValue,
-  disabled: disabledProp,
+  value,
+  disabled,
   maxFontSizeMultiplier,
   children,
   m, mx, my, mt, mr, mb, ml,
   style,
 }: CheckboxGroupItemProps) {
-  const ctx = useContext(CheckboxGroupContext)
-  if (!ctx) throw new Error('CheckboxGroup.Item must be used within CheckboxGroup.Root')
-
-  const { size, variant, color, highContrast, disabled: groupDisabled, value, onItemToggle } = ctx
-  const { scaling } = useThemeContext()
-  const rc = useResolveColor()
+  const item = Selection.useItem(value, disabled)
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
+  const { size, variant, color, highContrast } = item.shared
 
-  const isDisabled = disabledProp ?? groupDisabled
-  const isChecked = value.includes(itemValue)
-
-  const handlePress = useCallback(() => {
-    if (!isDisabled) onItemToggle(itemValue)
-  }, [isDisabled, onItemToggle, itemValue])
-
-  const gap = Math.round(LABEL_GAP[size] * scalingMap[scaling])
-
-  // Called before the bare-item early return (rules of hooks).
-  const label = useTextStyle({
-    size: LABEL_FONT_SIZE[size],
-    color: isDisabled ? rc('gray', 'a8') : rc('gray', 12),
-    maxFontSizeMultiplier,
-  })
-
-  const control = (
-    <Checkbox
-      size={size}
-      variant={variant}
-      color={color}
-      highContrast={highContrast}
-      checked={isChecked}
-      disabled={isDisabled}
-    />
-  )
-
+  // No label: the control itself is the item.
   if (children == null) {
     return (
       <Checkbox
@@ -180,9 +118,9 @@ function CheckboxGroupItem({
         variant={variant}
         color={color}
         highContrast={highContrast}
-        checked={isChecked}
-        onCheckedChange={handlePress}
-        disabled={isDisabled}
+        checked={item.checked}
+        disabled={item.disabled}
+        onCheckedChange={item.select}
         m={m} mx={mx} my={my} mt={mt} mr={mr} mb={mb} ml={ml}
         style={style}
       />
@@ -192,14 +130,15 @@ function CheckboxGroupItem({
   return (
     <LabeledControl
       role="checkbox"
-      checked={isChecked}
-      disabled={isDisabled}
-      onPress={handlePress}
-      control={control}
-      gap={gap}
-      labelStyle={label.style}
-      focusColor={rc(color ?? 'accent', 8)}
-      maxFontSizeMultiplier={label.textProps.maxFontSizeMultiplier}
+      checked={item.checked}
+      disabled={item.disabled}
+      onPress={item.select}
+      control={
+        <Checkbox size={size} variant={variant} color={color} highContrast={highContrast} checked={item.checked} disabled={item.disabled} />
+      }
+      size={size}
+      color={color}
+      maxFontSizeMultiplier={maxFontSizeMultiplier}
       margins={margins}
       style={style}
     >

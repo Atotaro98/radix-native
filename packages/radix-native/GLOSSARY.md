@@ -57,3 +57,7 @@ _Avoid_: content, children, button text
 **Text input**:
 A field the user types into: TextField (one line) or TextArea (several lines). Both behave the same and differ only in line count, height and radius. A read-only Text input looks like a disabled one, but stays readable and copyable.
 _Avoid_: input, field (on their own)
+
+**Selection group**:
+A set of options where the user picks one (RadioGroup, RadioCards) or several (CheckboxGroup, CheckboxCards). The group owns the value and passes its size, variant, color and disabled state down to its items; a disabled group disables every item.
+_Avoid_: group (on its own), option list
