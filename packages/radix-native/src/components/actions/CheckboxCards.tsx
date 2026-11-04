@@ -1,46 +1,39 @@
-import React, { createContext, useCallback, useContext, useMemo } from 'react'
+import React, { useMemo } from 'react'
 import { View } from 'react-native'
 import type { StyleProp, ViewStyle } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
-import { useResolveColor } from '../../hooks/useResolveColor'
-import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
-import { useControllableState } from '../../hooks/useControllableState'
-import { useInteraction } from '../../hooks/useInteraction'
-import { AnimatedPressable } from '../../hooks/usePressScale'
-import { resolveSpace } from '../../utils/resolveSpace'
-import { getClassicEffect } from '../../utils/classicEffect'
-import { ColumnRows, AutoFitRows } from '../internal/ColumnRows'
-import { FocusRing } from '../internal/FocusRing'
-import { Text } from '../typography/Text'
+import { createSelectionGroup } from '../internal/selectionGroup'
+import { SelectionCard, SelectionCardGrid, type SelectionCardVariant } from '../internal/SelectionCard'
 import type { TextSize } from '../typography/Text'
 import { scalingMap } from '../../tokens/scaling'
-import { getRadius } from '../../tokens/radius'
 import type { SpaceToken } from '../../tokens/spacing'
 import type { MarginProps } from '../../types/marginProps'
 import type { AccentColor } from '../../tokens/colors/types'
 import { Checkbox, type CheckboxSize } from './Checkbox'
 
-// ─── Types ──────────────────────────────────────────────────────────────────────
+export type CheckboxCardsVariant = SelectionCardVariant
 
-export type CheckboxCardsVariant = 'surface' | 'classic'
-
-// ─── Context ──────────────────────────────────────────────────────────────────
-
-interface CheckboxCardsContextValue {
+interface Shared {
   size: CheckboxSize
   variant: CheckboxCardsVariant
   color?: AccentColor
   highContrast?: boolean
-  disabled: boolean
-  value: string[]
-  onItemToggle: (itemValue: string) => void
 }
 
-const CheckboxCardsContext = createContext<CheckboxCardsContextValue | null>(null)
+const Selection = createSelectionGroup<'multiple', Shared>({ name: 'CheckboxCards', type: 'multiple' })
 
 /** Radix: item font-size per size (font-size-2 / 3 / 4). */
 const SIZE_FONT: Record<1 | 2 | 3, TextSize> = { 1: 2, 2: 3, 3: 4 }
+
+// Radix: padding-left = space-3/4/5, padding-y = space-3/1.2, space-4*0.875, space-5/1.2,
+// checkbox-size = space-4*0.875, space-4, space-4*1.25,
+// padding-right = padding-left * 2 + checkbox-size
+const SIZE_CONFIG: Record<CheckboxSize, { paddingLeft: number; paddingY: number; checkboxSize: number; radiusLevel: 3 | 4 }> = {
+  1: { paddingLeft: 12, paddingY: 10, checkboxSize: 14, radiusLevel: 3 },
+  2: { paddingLeft: 16, paddingY: 14, checkboxSize: 16, radiusLevel: 3 },
+  3: { paddingLeft: 24, paddingY: 20, checkboxSize: 20, radiusLevel: 4 },
+}
 
 // ─── Root Types ─────────────────────────────────────────────────────────────────
 
@@ -61,9 +54,9 @@ export interface CheckboxCardsProps extends MarginProps {
   value?: string[]
   /** Uncontrolled default selected values. */
   defaultValue?: string[]
-  /** Called when selected values change. */
+  /** Called when the selected values change. */
   onValueChange?: (value: string[]) => void
-  /** Disables all cards. */
+  /** Disables every card. */
   disabled?: boolean
   /** Card items. */
   children?: React.ReactNode
@@ -78,30 +71,14 @@ export interface CheckboxCardsProps extends MarginProps {
 export interface CheckboxCardsItemProps {
   /** Unique value identifying this card. */
   value: string
-  /** Disables this individual card. */
+  /** Disables this card (a disabled group always wins). */
   disabled?: boolean
   /** Card content. */
   children?: React.ReactNode
   style?: StyleProp<ViewStyle>
 }
 
-// ─── Size tokens (matching Radix CSS vars) ──────────────────────────────────────
-// Radix uses: padding-left = space-3/4/5, padding-top/bottom = space-3/1.2, space-4*0.875, space-5/1.2
-// checkbox-size = space-4*0.875, space-4, space-4*1.25
-// padding-right = padding-left * 2 + checkbox-size
-
-const SIZE_CONFIG: Record<CheckboxSize, {
-  paddingLeft: number
-  paddingY: number
-  checkboxSize: number
-  radiusLevel: 3 | 4
-}> = {
-  1: { paddingLeft: 12, paddingY: 10, checkboxSize: 14, radiusLevel: 3 },
-  2: { paddingLeft: 16, paddingY: 14, checkboxSize: 16, radiusLevel: 3 },
-  3: { paddingLeft: 24, paddingY: 20, checkboxSize: 20, radiusLevel: 4 },
-}
-
-// ─── Root Component ─────────────────────────────────────────────────────────────
+// ─── Root ───────────────────────────────────────────────────────────────────────
 
 function CheckboxCardsRoot({
   size = 2,
@@ -109,152 +86,82 @@ function CheckboxCardsRoot({
   color,
   highContrast,
   columns,
-  gap: gapProp = 4,
-  value: valueProp,
-  defaultValue = [],
+  gap = 4,
+  value,
+  defaultValue,
   onValueChange,
-  disabled = false,
+  disabled,
   children,
   accessibilityLabel,
   testID,
   m, mx, my, mt, mr, mb, ml,
   style,
 }: CheckboxCardsProps) {
-  const { scaling } = useThemeContext()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
-
-  const [value, setValue] = useControllableState<string[]>({
-    prop: valueProp,
-    defaultProp: defaultValue,
-    onChange: onValueChange,
-  })
-
-  const onItemToggle = useCallback((itemValue: string) => {
-    setValue(prev => prev.includes(itemValue)
-      ? prev.filter(v => v !== itemValue)
-      : [...prev, itemValue])
-  }, [setValue])
-
-  const ctx = useMemo<CheckboxCardsContextValue>(() => ({
-    size, variant, color, highContrast, disabled, value, onItemToggle,
-  }), [size, variant, color, highContrast, disabled, value, onItemToggle])
-
-  const resolvedGap = resolveSpace(gapProp, scaling)
+  const shared = useMemo<Shared>(() => ({ size, variant, color, highContrast }), [size, variant, color, highContrast])
 
   return (
-    <CheckboxCardsContext.Provider value={ctx}>
-      <View accessibilityLabel={accessibilityLabel} testID={testID} style={[margins, style]}>
-        {columns !== undefined ? (
-          <ColumnRows columns={columns} columnGap={resolvedGap} rowGap={resolvedGap} alignItems="stretch">
-            {children}
-          </ColumnRows>
-        ) : (
-          // Radix default: repeat(auto-fit, minmax(160px, 1fr))
-          <AutoFitRows minItemWidth={Math.round(160 * scalingMap[scaling])} gap={resolvedGap}>
-            {children}
-          </AutoFitRows>
-        )}
-      </View>
-    </CheckboxCardsContext.Provider>
+    <Selection.Root value={value} defaultValue={defaultValue} onValueChange={onValueChange} disabled={disabled} shared={shared}>
+      <SelectionCardGrid
+        columns={columns}
+        gap={gap}
+        accessibilityLabel={accessibilityLabel}
+        testID={testID}
+        style={[margins, style]}
+      >
+        {children}
+      </SelectionCardGrid>
+    </Selection.Root>
   )
 }
 CheckboxCardsRoot.displayName = 'CheckboxCards.Root'
 
-// ─── Item Component ─────────────────────────────────────────────────────────────
+// ─── Item ───────────────────────────────────────────────────────────────────────
 
-function CheckboxCardsItem({
-  value: itemValue,
-  disabled: disabledProp,
-  children,
-  style,
-}: CheckboxCardsItemProps) {
-  const ctx = useContext(CheckboxCardsContext)
-  if (!ctx) throw new Error('CheckboxCards.Item must be used within CheckboxCards.Root')
-
-  const { size, variant, color, highContrast, disabled: groupDisabled, value, onItemToggle } = ctx
-  const { appearance, scaling, radius } = useThemeContext()
-  const rc = useResolveColor()
-
-  const isDisabled = disabledProp ?? groupDisabled
-  const isChecked = value.includes(itemValue)
-  const isClassic = variant === 'classic'
-  const { focused, scaleStyle, handlers } = useInteraction({ enabled: !isDisabled })
-
-  const handlePress = useCallback(() => {
-    if (!isDisabled) onItemToggle(itemValue)
-  }, [isDisabled, onItemToggle, itemValue])
-
-  const scalingFactor = scalingMap[scaling]
+function CheckboxCardsItem({ value, disabled, children, style }: CheckboxCardsItemProps) {
+  const item = Selection.useItem(value, disabled)
+  const { scaling } = useThemeContext()
+  const { size, variant, color, highContrast } = item.shared
   const cfg = SIZE_CONFIG[size]
-  const paddingLeft = Math.round(cfg.paddingLeft * scalingFactor)
-  const paddingY = Math.round(cfg.paddingY * scalingFactor)
-  const checkboxSize = Math.round(cfg.checkboxSize * scalingFactor)
-  // Radix CSS: padding-right = padding-left * 2 + checkbox-size
-  const paddingRight = paddingLeft * 2 + checkboxSize
-  const borderRadius = getRadius(radius, cfg.radiusLevel)
-
-  // Card border & background — does NOT change on checked state (matches Radix)
-  // Surface: box-shadow: 0 0 0 1px gray-a5 (simulated with borderWidth)
-  // Classic: similar border + outer shadow
-  const colors = useVariantColors('checkboxCard', { variant: isClassic ? 'classic' : 'surface', color, highContrast, checked: isChecked, disabled: isDisabled })
-  const borderColor = colors.border
-  const bgColor = colors.bg
-
-  const cardStyle: ViewStyle = {
-    flexGrow: 1,
-    position: 'relative',
-    overflow: 'hidden',
-    paddingLeft,
-    paddingRight,
-    paddingTop: paddingY,
-    paddingBottom: paddingY,
-    borderRadius,
-    borderWidth: 1,
-    borderColor,
-    backgroundColor: bgColor,
-  }
+  const factor = scalingMap[scaling]
+  const paddingLeft = Math.round(cfg.paddingLeft * factor)
+  const paddingY = Math.round(cfg.paddingY * factor)
+  const paddingRight = paddingLeft * 2 + Math.round(cfg.checkboxSize * factor)
 
   return (
-    <AnimatedPressable
-      {...handlers}
-      onPress={handlePress}
-      disabled={isDisabled}
-      accessibilityRole="checkbox"
-      accessibilityState={{ checked: isChecked, disabled: isDisabled }}
-      style={[
-        scaleStyle,
-        cardStyle,
-        isClassic && !isDisabled ? getClassicEffect(appearance) : undefined,
-        style,
-      ]}
+    <SelectionCard
+      recipe="checkboxCard"
+      role="checkbox"
+      checked={item.checked}
+      disabled={item.disabled}
+      onPress={item.select}
+      variant={variant}
+      color={color}
+      highContrast={highContrast}
+      fontSize={SIZE_FONT[size]}
+      radiusLevel={cfg.radiusLevel}
+      padding={{ top: paddingY, right: paddingRight, bottom: paddingY, left: paddingLeft }}
+      indicator={
+        // Checkbox on the right, vertically centered (Radix CSS)
+        <View
+          pointerEvents="none"
+          importantForAccessibility="no-hide-descendants"
+          style={{ position: 'absolute', right: paddingLeft, top: 0, bottom: 0, justifyContent: 'center' }}
+        >
+          <Checkbox
+            size={size}
+            variant="surface" // Radix checkbox-cards.tsx always renders a surface Checkbox
+            color={color}
+            highContrast={highContrast}
+            checked={item.checked}
+            disabled={item.disabled}
+          />
+        </View>
+      }
+      style={style}
     >
-      {/* Plain strings must live inside <Text> in RN */}
-      {typeof children === 'string' || typeof children === 'number'
-        ? <Text size={SIZE_FONT[size]} style={colors.text ? { color: colors.text } : undefined}>{children}</Text>
-        : children}
-      {/* Checkbox absolutely positioned on the right, matching Radix CSS */}
-      <View
-        pointerEvents="none"
-        importantForAccessibility="no-hide-descendants"
-        style={{
-          position: 'absolute',
-          right: paddingLeft,
-          top: 0,
-          bottom: 0,
-          justifyContent: 'center',
-        }}
-      >
-        <Checkbox
-          size={size}
-          variant="surface" // Radix checkbox-cards.tsx always renders a surface Checkbox
-          color={color}
-          highContrast={highContrast}
-          checked={isChecked}
-          disabled={isDisabled}
-        />
-      </View>
-      <FocusRing visible={focused} color={rc(color ?? 'accent', 8)} borderRadius={borderRadius} />
-    </AnimatedPressable>
+      {children}
+    </SelectionCard>
   )
 }
 CheckboxCardsItem.displayName = 'CheckboxCards.Item'

@@ -1,33 +1,25 @@
-import React, { createContext, useCallback, useContext, useMemo } from 'react'
+import React, { useMemo } from 'react'
 import { View } from 'react-native'
 import type { StyleProp, ViewStyle } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
-import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
-import { useControllableState } from '../../hooks/useControllableState'
 import { resolveSpace } from '../../utils/resolveSpace'
-import { useTextStyle } from '../../hooks/useTextStyle'
-import { scalingMap } from '../../tokens/scaling'
 import { LabeledControl } from '../internal/LabeledControl'
+import { createSelectionGroup } from '../internal/selectionGroup'
 import type { MarginProps } from '../../types/marginProps'
 import type { AccentColor } from '../../tokens/colors/types'
 import { Radio, type RadioSize, type RadioVariant } from './Radio'
 
-// ─── Context ──────────────────────────────────────────────────────────────────
-
-interface RadioGroupContextValue {
+interface Shared {
   size: RadioSize
   variant: RadioVariant
   color?: AccentColor
   highContrast?: boolean
-  disabled: boolean
-  value: string
-  onItemSelect: (value: string) => void
 }
 
-const RadioGroupContext = createContext<RadioGroupContextValue | null>(null)
+const Selection = createSelectionGroup<'single', Shared>({ name: 'RadioGroup', type: 'single' })
 
-// ─── Root Types ───────────────────────────────────────────────────────────────
+// ─── Root Types ─────────────────────────────────────────────────────────────────
 
 export interface RadioGroupProps extends MarginProps {
   /** Radio size (1–3). Default: 2. */
@@ -36,15 +28,15 @@ export interface RadioGroupProps extends MarginProps {
   variant?: RadioVariant
   /** Accent color. Default: theme accent. */
   color?: AccentColor
-  /** Increases color contrast. */
+  /** Increases color contrast with the background. */
   highContrast?: boolean
   /** Controlled selected value. */
   value?: string
   /** Uncontrolled default selected value. */
   defaultValue?: string
-  /** Called when selected value changes. */
+  /** Called when the selected value changes. */
   onValueChange?: (value: string) => void
-  /** Disables all radios. */
+  /** Disables every item in the group. */
   disabled?: boolean
   /** Group children (RadioGroup.Item). */
   children?: React.ReactNode
@@ -54,12 +46,12 @@ export interface RadioGroupProps extends MarginProps {
   style?: StyleProp<ViewStyle>
 }
 
-// ─── Item Types ───────────────────────────────────────────────────────────────
+// ─── Item Types ─────────────────────────────────────────────────────────────────
 
 export interface RadioGroupItemProps extends MarginProps {
-  /** Unique value for this option. */
+  /** Unique value identifying this item. */
   value: string
-  /** Disables this item. */
+  /** Disables this item (a disabled group always wins). */
   disabled?: boolean
   /** Specifies the largest possible scale a font can reach. */
   maxFontSizeMultiplier?: number
@@ -68,22 +60,17 @@ export interface RadioGroupItemProps extends MarginProps {
   style?: StyleProp<ViewStyle>
 }
 
-// ─── Font size mapping per radio size ─────────────────────────────────────────
-
-const LABEL_FONT_SIZE: Record<RadioSize, 1 | 2 | 3> = { 1: 1, 2: 2, 3: 3 }
-const LABEL_GAP: Record<RadioSize, number> = { 1: 4, 2: 6, 3: 8 }
-
-// ─── Root ─────────────────────────────────────────────────────────────────────
+// ─── Root ───────────────────────────────────────────────────────────────────────
 
 function RadioGroupRoot({
   size = 2,
   variant = 'surface',
   color,
   highContrast,
-  value: valueProp,
-  defaultValue = '',
+  value,
+  defaultValue,
   onValueChange,
-  disabled = false,
+  disabled,
   children,
   accessibilityLabel,
   testID,
@@ -92,70 +79,39 @@ function RadioGroupRoot({
 }: RadioGroupProps) {
   const { scaling } = useThemeContext()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
-
-  const [value, onItemSelect] = useControllableState<string>({
-    prop: valueProp,
-    defaultProp: defaultValue,
-    onChange: onValueChange,
-  })
-
-  const ctx = useMemo<RadioGroupContextValue>(() => ({
-    size, variant, color, highContrast, disabled, value, onItemSelect,
-  }), [size, variant, color, highContrast, disabled, value, onItemSelect])
+  const shared = useMemo<Shared>(() => ({ size, variant, color, highContrast }), [size, variant, color, highContrast])
 
   return (
-    <RadioGroupContext.Provider value={ctx}>
+    <Selection.Root value={value} defaultValue={defaultValue} onValueChange={onValueChange} disabled={disabled} shared={shared}>
       <View
         accessibilityRole="radiogroup"
         accessibilityLabel={accessibilityLabel}
         testID={testID}
-        style={[
-          { flexDirection: 'column', gap: resolveSpace(1, scaling) },
-          margins,
-          style,
-        ]}
+        // Radix: column, gap space-1
+        style={[{ flexDirection: 'column', gap: resolveSpace(1, scaling) }, margins, style]}
       >
         {children}
       </View>
-    </RadioGroupContext.Provider>
+    </Selection.Root>
   )
 }
 RadioGroupRoot.displayName = 'RadioGroup.Root'
 
-// ─── Item ─────────────────────────────────────────────────────────────────────
+// ─── Item ───────────────────────────────────────────────────────────────────────
 
 function RadioGroupItem({
-  value: itemValue,
-  disabled: disabledProp,
+  value,
+  disabled,
   maxFontSizeMultiplier,
   children,
   m, mx, my, mt, mr, mb, ml,
   style,
 }: RadioGroupItemProps) {
-  const ctx = useContext(RadioGroupContext)
-  if (!ctx) throw new Error('RadioGroup.Item must be used within RadioGroup.Root')
-
-  const { size, variant, color, highContrast, disabled: groupDisabled, value, onItemSelect } = ctx
-  const { scaling } = useThemeContext()
-  const rc = useResolveColor()
+  const item = Selection.useItem(value, disabled)
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
+  const { size, variant, color, highContrast } = item.shared
 
-  const isDisabled = disabledProp ?? groupDisabled
-  const isChecked = value === itemValue
-
-  const handlePress = useCallback(() => {
-    if (!isDisabled) onItemSelect(itemValue)
-  }, [isDisabled, onItemSelect, itemValue])
-
-  const gap = Math.round(LABEL_GAP[size] * scalingMap[scaling])
-
-  // Called before the bare-item early return (rules of hooks).
-  const label = useTextStyle({
-    size: LABEL_FONT_SIZE[size],
-    color: isDisabled ? rc('gray', 'a8') : rc('gray', 12),
-    maxFontSizeMultiplier,
-  })
-
+  // No label: the control itself is the item.
   if (children == null) {
     return (
       <Radio
@@ -163,9 +119,9 @@ function RadioGroupItem({
         variant={variant}
         color={color}
         highContrast={highContrast}
-        checked={isChecked}
-        onPress={handlePress}
-        disabled={isDisabled}
+        checked={item.checked}
+        disabled={item.disabled}
+        onPress={item.select}
         m={m} mx={mx} my={my} mt={mt} mr={mr} mb={mb} ml={ml}
         style={style}
       />
@@ -175,23 +131,15 @@ function RadioGroupItem({
   return (
     <LabeledControl
       role="radio"
-      checked={isChecked}
-      disabled={isDisabled}
-      onPress={handlePress}
+      checked={item.checked}
+      disabled={item.disabled}
+      onPress={item.select}
       control={
-        <Radio
-          size={size}
-          variant={variant}
-          color={color}
-          highContrast={highContrast}
-          checked={isChecked}
-          disabled={isDisabled}
-        />
+        <Radio size={size} variant={variant} color={color} highContrast={highContrast} checked={item.checked} disabled={item.disabled} />
       }
-      gap={gap}
-      labelStyle={label.style}
-      focusColor={rc(color ?? 'accent', 8)}
-      maxFontSizeMultiplier={label.textProps.maxFontSizeMultiplier}
+      size={size}
+      color={color}
+      maxFontSizeMultiplier={maxFontSizeMultiplier}
       margins={margins}
       style={style}
     >
@@ -201,7 +149,7 @@ function RadioGroupItem({
 }
 RadioGroupItem.displayName = 'RadioGroup.Item'
 
-// ─── Compound export ──────────────────────────────────────────────────────────
+// ─── Compound export ────────────────────────────────────────────────────────────
 
 export const RadioGroup = Object.assign(RadioGroupRoot, {
   Root: RadioGroupRoot,

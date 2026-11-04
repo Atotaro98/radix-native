@@ -12,4 +12,4 @@ import { CheckboxGroup } from 'radix-native'
 ```
 
 Root props: `size` (1-3), `variant`, `color`, `highContrast`, `value`/`defaultValue` (string[]), `onValueChange`, `disabled`.
-Item props: `value` (string, required), `disabled`, `children` (label text/node).
+Item props: `value` (string, required), `disabled` (a disabled group always wins), `children` (label text/node). Items are `space-1` apart; the label sits `0.5em` from the checkbox (Radix).

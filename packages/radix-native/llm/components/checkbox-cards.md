@@ -11,4 +11,4 @@ import { CheckboxCards } from 'radix-native'
 ```
 
 Root props: `size` (1-3), `variant` (`'surface' | 'classic'`), `color`, `highContrast`, `columns`, `gap`, `value`/`defaultValue`, `onValueChange`, `disabled`.
-Item props: `value` (string, required), `disabled`, `children`.
+Item props: `value` (string, required), `disabled` (a disabled group always wins), `children`.

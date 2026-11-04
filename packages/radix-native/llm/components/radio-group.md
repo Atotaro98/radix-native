@@ -32,7 +32,7 @@ import { RadioGroup } from 'radix-native'
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | value | `string` | **required** | Unique value |
-| disabled | `boolean` | — | Disables this item |
+| disabled | `boolean` | — | Disables this item (a disabled group always wins) |
 | children | `ReactNode` | — | Label text |
 | maxFontSizeMultiplier | `number` | — | Caps font scaling for label text |
 

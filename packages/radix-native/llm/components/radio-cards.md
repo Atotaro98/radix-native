@@ -34,7 +34,7 @@ import { RadioCards } from 'radix-native'
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | value | `string` | **required** | Unique value |
-| disabled | `boolean` | — | Disables this card |
+| disabled | `boolean` | — | Disables this card (a disabled group always wins) |
 | children | `ReactNode` | — | Card content |
 
 ## Examples
