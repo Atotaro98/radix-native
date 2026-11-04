@@ -2,7 +2,6 @@ import React, { useMemo } from 'react'
 import { View } from 'react-native'
 import type { ViewStyle, StyleProp, GestureResponderEvent, NativeSyntheticEvent, TargetedEvent } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
-import { useResolveColor } from '../../hooks/useResolveColor'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { useInteraction } from '../../hooks/useInteraction'
@@ -57,7 +56,6 @@ export function Card({
   ...rest
 }: CardProps) {
   const { appearance, scaling, radius } = useThemeContext()
-  const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
   const { pressed, focused, scaleStyle, handlers } = useInteraction({
     enabled: !!onPress,
@@ -73,6 +71,7 @@ export function Card({
 
   // ─── Colors ─────────────────────────────────────────────────────────────
   const colors = useVariantColors('card', { variant })
+  const focus = useVariantColors('focusRing', {})
 
   const isClassic = variant === 'classic'
 
@@ -106,7 +105,7 @@ export function Card({
         style={[scaleStyle, cardStyle, classicEffect, pressedStyle, style]}
       >
         {children}
-        <FocusRing visible={focused} color={rc('accent', 8)} borderRadius={borderRadius} />
+        <FocusRing visible={focused} color={focus.ring} borderRadius={borderRadius} />
       </AnimatedPressable>
     )
   }

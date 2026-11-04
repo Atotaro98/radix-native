@@ -44,7 +44,7 @@ These are places where RN cannot replicate the exact Radix web visual, and we us
 | **Linear gradients** | `background-image: linear-gradient(...)` | Not available on Views | Classic variant bevel is approximated with overlay Views |
 | **Multi-layer shadows** | Complex `box-shadow` stacks | Platform-specific: iOS `shadow*`, Android `elevation` | Less depth in shadows |
 | **Color-mix** | `color-mix(in oklab, ...)` | Not available | Border colors are simpler approximations |
-| **Outline** | `outline: 2px solid color; outline-offset: -1px` | Absolutely positioned `FocusRing` view (`accent-8`) | Shown on keyboard / TV / web focus for every pressable; inputs use border color + 1px inner ring |
+| **Outline** | `outline: 2px solid color; outline-offset: -1px` | Absolutely positioned `FocusRing` view (`focus-8`) | Shown on keyboard / TV / web focus for every pressable; inputs use border color + 1px inner ring |
 | **Separator thickness** | `height: 1px` (CSS pixel) | `StyleSheet.hairlineWidth` (1 physical pixel) | Separator may appear thinner on retina |
 
 ### Per component
@@ -100,7 +100,6 @@ These are the EXACT token mappings that intentionally differ between Radix web a
 | Progress shine overlay | Indeterminate gradient sweep effect | Not implemented (requires LinearGradient) |
 | Spinner `currentColor` | Inherits CSS text color | Uses `gray-a11`, or the RN-only `color` prop (no CSS cascade in RN) |
 | `asChild` / Slot composition | Supported | Planned |
-| Focus ring when `color="gray"` | `--focus-8` stays the inherited accent for gray components (except soft TextField / TextArea) | Pending: every focus ring uses `<color>-8`, so gray components show a gray-8 ring |
 | `TextField.Slot` | Icons / buttons inside the field | Not implemented |
 | Haptic feedback | N/A (web) | Planned |
 | Responsive props | `{ initial, sm, md, lg, xl }` | Not planned (use `useWindowDimensions`) |
@@ -118,7 +117,7 @@ These are the EXACT token mappings that intentionally differ between Radix web a
 | Area | Behavior |
 |------|----------|
 | Touch targets | Checkbox, Radio, Switch, IconButton and small Buttons get a default `hitSlop` that grows the touch area to 44×44pt (override with `hitSlop`). |
-| Focus | Every pressable shows a 2px `accent-8` focus ring on keyboard / switch-control / TV / web focus. |
+| Focus | Every pressable shows a 2px `focus-8` focus ring (the component's color; a gray component keeps the theme accent, as in Radix) on keyboard / switch-control / TV / web focus. |
 | Groups | `RadioGroup` / `RadioCards` roots expose `accessibilityRole="radiogroup"`; all group roots accept `accessibilityLabel`. Group items with a label are announced as one control named by the label. |
 | Consumer props | `onPressIn` / `onPressOut` / `onFocus` / `onBlur` / `accessibilityState` are composed with the internal ones (never override them). |
 | IconButton | Logs a dev warning when rendered without `accessibilityLabel`. |

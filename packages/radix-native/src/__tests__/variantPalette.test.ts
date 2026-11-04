@@ -3,7 +3,7 @@
  * mirrors; expectations are paints (tokens), so no theme is needed.
  */
 import {
-  getVariantPaints, c, g, layers, fade, byMode, blackA, whiteA, TRANSPARENT, WHITE, SHADOW_1_RING,
+  getVariantPaints, resolvePaint, c, g, f, layers, fade, byMode, blackA, whiteA, TRANSPARENT, WHITE, SHADOW_1_RING,
 } from '../utils/variantPalette'
 import type { RecipeName, RecipeState } from '../utils/variantPalette'
 
@@ -116,7 +116,9 @@ describe('text inputs (text-field.css, text-area.css)', () => {
   it.each([
     ['text field surface', 'textField', { variant: 'surface' }, { bg: g('surface'), border: g('a7'), text: g(12), placeholder: g('a10') }],
     ['text field classic → shadow-1', 'textField', { variant: 'classic' }, { border: SHADOW_1_RING }],
-    ['focused → accent-8 ring', 'textField', { variant: 'classic', focused: true }, { border: c(8) }],
+    ['classic :focus-within → focus-8 ring', 'textField', { variant: 'classic', focused: true }, { border: f(8) }],
+    ['surface :focus-within → focus-8 ring', 'textArea', { variant: 'surface', focused: true }, { border: f(8) }],
+    ['.rt-variant-soft :focus-within → accent-8 ring (gray stays gray)', 'textField', { variant: 'soft', focused: true }, { border: c(8) }],
     ['text field soft placeholder 0.6', 'textField', { variant: 'soft' }, { bg: c('a3'), text: c(12), placeholder: fade(c(12), 0.6) }],
     ['text area soft placeholder 0.65', 'textArea', { variant: 'soft' }, { placeholder: fade(c(12), 0.65) }],
     ['surface :disabled', 'textField', { variant: 'surface', disabled: true },
@@ -145,5 +147,27 @@ describe('text (text.css, heading.css, link.css, blockquote.css)', () => {
 
   it('blockquote border is accent-a6', () => {
     expect(paints('blockquote', {}).decoration).toEqual(c('a6'))
+  })
+})
+
+describe('focus ring (color.css --focus-*)', () => {
+  it(':focus-visible → outline focus-8', () => {
+    expect(paints('focusRing', {})).toEqual({ ring: f(8) })
+  })
+
+  const rc = (color: string, step: unknown) => `${color}-${String(step)}`
+  const resolve = (paint: Parameters<typeof resolvePaint>[0], color: Parameters<typeof resolvePaint>[1]['color']) =>
+    resolvePaint(paint, { rc: rc as Parameters<typeof resolvePaint>[1]['rc'], color, appearance: 'light' })
+
+  it.each([
+    ['.radix-themes → accent', 'accent', 'accent-8'],
+    ["[data-accent-color]:not([data-accent-color='gray']) → own color", 'crimson', 'crimson-8'],
+    ["[data-accent-color='gray'] → inherited accent", 'gray', 'accent-8'],
+  ] as const)('%s', (_selector, color, expected) => {
+    expect(resolve(f(8), color)).toBe(expected)
+  })
+
+  it('accent-* paints still follow a gray color', () => {
+    expect(resolve(c(8), 'gray')).toBe('gray-8')
   })
 })

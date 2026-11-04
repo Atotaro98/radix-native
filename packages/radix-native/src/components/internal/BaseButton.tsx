@@ -2,7 +2,6 @@ import React, { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 import type { StyleProp, ViewStyle, GestureResponderEvent } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
-import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
 import { useInteraction } from '../../hooks/useInteraction'
 import { AnimatedPressable } from '../../hooks/usePressScale'
@@ -91,7 +90,6 @@ export function BaseButton({
   ...rest
 }: InternalProps) {
   const { appearance, scaling, radius: themeRadius } = useThemeContext()
-  const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
   const isDisabled = disabled || loading
@@ -116,7 +114,7 @@ export function BaseButton({
   )
 
   const colors = useVariantColors('button', { variant, color, highContrast, disabled: isDisabled })
-  const focusColor = rc(color ?? 'accent', 8)
+  const focusColor = useVariantColors('focusRing', { color }).ring
 
   const handlePress = useCallback(
     (e: GestureResponderEvent) => {

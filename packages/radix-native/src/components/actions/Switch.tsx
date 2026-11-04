@@ -8,7 +8,6 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated'
 import { useThemeContext } from '../../hooks/useThemeContext'
-import { useResolveColor } from '../../hooks/useResolveColor'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { useControllableState } from '../../hooks/useControllableState'
@@ -83,7 +82,6 @@ export function Switch({
   ...rest
 }: SwitchProps) {
   const { appearance, scaling, radius: themeRadius } = useThemeContext()
-  const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
   const { focused, scaleStyle, handlers } = useInteraction({
     enabled: !disabled,
@@ -100,7 +98,6 @@ export function Switch({
     onChange: onCheckedChange,
   })
 
-  const prefix = color ?? 'accent'
 
   const scalingFactor = scalingMap[scaling]
   const trackWidth = Math.round(TRACK_WIDTH[size] * scalingFactor)
@@ -133,6 +130,7 @@ export function Switch({
 
   // ─── Colors ────────────────────────────────────────────────────────────────
   const colors = useVariantColors('switch', { variant, color, highContrast, checked: isChecked, disabled })
+  const focus = useVariantColors('focusRing', { color })
 
   // ─── Toggle ────────────────────────────────────────────────────────────────
   const handlePress = useCallback((e: GestureResponderEvent) => {
@@ -192,7 +190,7 @@ export function Switch({
         />
       )}
       <Animated.View style={[thumbStyle, thumbAnimatedStyle]} />
-      <FocusRing visible={focused} color={rc(prefix, 8)} borderRadius={trackRadius} offset={3} />
+      <FocusRing visible={focused} color={focus.ring} borderRadius={trackRadius} offset={3} />
     </AnimatedPressable>
   )
 }

@@ -1,9 +1,10 @@
 import React, { useState } from 'react'
-import { Text as RNText } from 'react-native'
+import { StyleSheet, Text as RNText } from 'react-native'
+import type { StyleProp, ViewStyle } from 'react-native'
 import { fireEvent, screen } from '@testing-library/react-native'
 import { Button, IconButton } from '../index'
 import { renderWithTheme } from './helpers/render'
-import { indigo } from '../tokens/colors'
+import { crimson, indigo } from '../tokens/colors'
 
 function Icon(props: { color?: string }) {
   return <RNText testID="icon">{props.color ?? 'none'}</RNText>
@@ -111,6 +112,21 @@ describe('Button', () => {
     )
     const link = screen.getByRole('link')
     expect(link.props.hitSlop).toBe(4)
+  })
+
+  it.each([
+    ['gray keeps the theme accent', 'gray', indigo.light[8]],
+    ['any other color uses its own', 'crimson', crimson.light[8]],
+  ] as const)('focus ring (Radix --focus-8): %s', (_label, color, expected) => {
+    renderWithTheme(<Button color={color}>Save</Button>)
+    fireEvent(screen.getByRole('button'), 'focus')
+    const styleOf = (node: { props: { style?: unknown } }) =>
+      StyleSheet.flatten(node.props.style as StyleProp<ViewStyle>)
+    const rings = screen.UNSAFE_root.findAll(
+      (node: { type: unknown; props: { style?: unknown } }) => typeof node.type === 'string'
+        && styleOf(node)?.position === 'absolute' && styleOf(node)?.borderWidth === 2,
+    )
+    expect(rings.map((node: { props: { style?: unknown } }) => styleOf(node)?.borderColor)).toEqual([expected])
   })
 })
 

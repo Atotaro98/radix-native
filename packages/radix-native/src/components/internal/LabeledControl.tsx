@@ -3,6 +3,7 @@ import { Pressable, View, Text as RNText } from 'react-native'
 import type { StyleProp, ViewStyle, AccessibilityRole } from 'react-native'
 import { useInteraction } from '../../hooks/useInteraction'
 import { useResolveColor } from '../../hooks/useResolveColor'
+import { useVariantColors } from '../../hooks/useVariantColors'
 import { useTextStyle } from '../../hooks/useTextStyle'
 import type { AccentColor } from '../../tokens/colors/types'
 import { FocusRing } from './FocusRing'
@@ -44,6 +45,7 @@ export function LabeledControl({
 }: LabeledControlProps) {
   const rc = useResolveColor()
   const { focused, handlers } = useInteraction({ enabled: !disabled })
+  const focus = useVariantColors('focusRing', { color })
   const label = useTextStyle({
     size,
     color: disabled ? rc('gray', 'a8') : rc('gray', 12),
@@ -71,7 +73,7 @@ export function LabeledControl({
       ) : (
         children
       )}
-      <FocusRing visible={focused} color={rc(color ?? 'accent', 8)} borderRadius={4} offset={2} />
+      <FocusRing visible={focused} color={focus.ring} borderRadius={4} offset={2} />
     </Pressable>
   )
 }
