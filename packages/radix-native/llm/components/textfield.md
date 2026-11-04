@@ -10,7 +10,7 @@ import { TextField } from 'radix-native'
 
 ## Props
 
-Extends `TextInputProps` (from React Native) minus `style`.
+Extends `TextInputProps` (from React Native) minus `style` and `multiline` (use TextArea).
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
@@ -40,7 +40,7 @@ Extends `TextInputProps` (from React Native) minus `style`.
 
 ## Focus behavior
 
-Border color changes to `accent-8` on focus, plus a 1px inner ring (1px border + 1px ring = Radix's 2px outline). The `soft` variant uses a transparent border when unfocused (always reserves 1px space to prevent layout shift). `disabled` is exposed on the `TextInput` itself (`editable={false}` + `accessibilityState.disabled`).
+Border color changes to `accent-8` on focus, plus a 1px inner ring (1px border + 1px ring = Radix's 2px outline). The `soft` variant uses a transparent border when unfocused (always reserves 1px space to prevent layout shift). `disabled` is exposed on the `TextInput` itself (`editable={false}` + `accessibilityState.disabled`); disabling a focused field drops the focus ring. `readOnly` / `editable={false}` look disabled, as Radix's `:read-only` (gray text, gray-a2 tint, gray-8 focus ring), but are not reported as disabled.
 
 ## Variant color behavior
 
