@@ -4,6 +4,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat, wit
 import type { ViewStyle, StyleProp, DimensionValue } from 'react-native'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
+import { useMetrics } from '../../hooks/useMetrics'
 import type { MarginProps } from '../../types/marginProps'
 import type { NativeViewProps } from '../../types/nativeProps'
 
@@ -48,6 +49,8 @@ export function Skeleton({
 }: SkeletonProps) {
   const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
+  // Radix .rt-Skeleton: border-radius: var(--radius-1)
+  const borderRadius = useMetrics().radius(1)
 
   // ─── Pulse animation (gray-a3 ↔ gray-a4, 1s infinite) ──────────────
   const pulseAnim = useSharedValue(0)
@@ -83,7 +86,7 @@ export function Skeleton({
 
   const skeletonStyle = useMemo<ViewStyle>(() => ({
     overflow: 'hidden',
-    borderRadius: 4,
+    borderRadius,
     width: widthProp,
     height: heightProp ?? (hasChildren ? undefined : 16),
     minWidth: minWidthProp,
@@ -91,7 +94,7 @@ export function Skeleton({
     minHeight: minHeightProp,
     maxHeight: maxHeightProp,
     ...margins,
-  }), [widthProp, heightProp, minWidthProp, maxWidthProp, minHeightProp, maxHeightProp, hasChildren, margins])
+  }), [widthProp, heightProp, minWidthProp, maxWidthProp, minHeightProp, maxHeightProp, hasChildren, margins, borderRadius])
 
   // ─── If not loading, render children ────────────────────────────────
   // (after all hooks — toggling `loading` must not change the hook order)
@@ -109,7 +112,7 @@ export function Skeleton({
       {/* Animated background overlay */}
       <Animated.View
         style={[
-          { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 4 } as ViewStyle,
+          { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius } as ViewStyle,
           pulseStyle,
         ]}
       />

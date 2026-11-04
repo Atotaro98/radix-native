@@ -57,7 +57,8 @@ export function resolveMetrics({ scaling: scalingMode, radius: token }: MetricsI
       return sign * px(SPACE[Math.abs(tokenValue) as SpaceToken])
     },
     radius(level, shape = 'box') {
-      const base = Math.round(RADIUS_BASE[level] * radiusFactor)
+      // Not rounded: Radix keeps the fractional calc() value (e.g. 2.25px for radius-1 at small).
+      const base = RADIUS_BASE[level] * scaling * radiusFactor
       if (shape === 'pill') return Math.max(base, RADIUS_FULL[token])
       if (shape === 'thumb') return Math.max(base, radiusThumb)
       return base

@@ -122,7 +122,7 @@ export function Spinner({
   const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
-  const { px } = useMetrics()
+  const { px, radius } = useMetrics()
   const boxSize = px(SIZE_PX[size])
 
   // Spinner uses currentColor on web — RN default is gray-a11
@@ -131,7 +131,8 @@ export function Spinner({
   // ─── Leaf dimensions ──────────────────────────────────────────────────
   const leafWidth = boxSize * 0.125
   const leafHeight = boxSize * 0.3
-  const leafRadius = Math.max(1, leafWidth / 2)
+  // Radix .rt-SpinnerLeaf::before: border-radius: var(--radius-1)
+  const leafRadius = radius(1)
 
   const containerStyle = useMemo<ViewStyle>(() => ({
     width: boxSize,

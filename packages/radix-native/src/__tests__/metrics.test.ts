@@ -35,30 +35,36 @@ describe('space', () => {
 })
 
 describe('radius', () => {
-  // Radix: --radius-N: calc(Npx * var(--scaling) * var(--radius-factor)).
-  it.each<[RadiusToken, 1 | 2 | 3 | 4 | 5 | 6, number]>([
-    ['none', 3, 0],
-    ['small', 1, 2],
-    ['small', 4, 6],
-    ['medium', 1, 3],
-    ['medium', 3, 6],
-    ['medium', 6, 16],
-    ['large', 2, 6],
-    ['full', 5, 18],
-  ])('%s at level %i → %i (100%%)', (token, level, expected) => {
-    expect(at('100%', token).radius(level)).toBe(expected)
+  // Radix: --radius-N: calc(Npx * var(--scaling) * var(--radius-factor)), not rounded.
+  it.each<[ScalingMode, RadiusToken, 1 | 2 | 3 | 4 | 5 | 6, number]>([
+    ['100%', 'none', 3, 0],
+    ['100%', 'small', 1, 2.25],
+    ['100%', 'small', 4, 6],
+    ['100%', 'medium', 1, 3],
+    ['100%', 'medium', 3, 6],
+    ['100%', 'medium', 6, 16],
+    ['100%', 'large', 2, 6],
+    ['100%', 'full', 5, 18],
+    ['90%', 'small', 1, 2.025],
+    ['90%', 'medium', 4, 7.2],
+    ['95%', 'large', 6, 22.8],
+    ['105%', 'medium', 2, 4.2],
+    ['110%', 'medium', 1, 3.3],
+    ['110%', 'none', 6, 0],
+  ])('at %s, %s level %i → %f', (scaling, token, level, expected) => {
+    expect(at(scaling, token).radius(level)).toBeCloseTo(expected, 6)
   })
 
   it('pill: max(radius-N, radius-full) is a pill only for "full"', () => {
     expect(at('100%', 'full').radius(2, 'pill')).toBe(9999)
-    expect(at('100%', 'large').radius(2, 'pill')).toBe(6)
+    expect(at('110%', 'large').radius(2, 'pill')).toBeCloseTo(6.6, 6)
     expect(at('100%', 'none').radius(2, 'pill')).toBe(0)
   })
 
   it('thumb: max(radius-N, radius-thumb) is a pill from "medium" up', () => {
     expect(at('100%', 'medium').radius(1, 'thumb')).toBe(9999)
-    expect(at('100%', 'full').radius(1, 'thumb')).toBe(9999)
-    expect(at('100%', 'small').radius(1, 'thumb')).toBe(2)
+    expect(at('90%', 'full').radius(1, 'thumb')).toBe(9999)
+    expect(at('100%', 'small').radius(1, 'thumb')).toBeCloseTo(2.25, 6)
     expect(at('100%', 'none').radius(1, 'thumb')).toBe(0.5)
   })
 })

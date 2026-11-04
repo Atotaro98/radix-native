@@ -20,10 +20,10 @@ interface Shared {
 
 const Selection = createSelectionGroup<'single', Shared>({ name: 'RadioCards', type: 'single' })
 
-const SIZE_CONFIG: Record<RadioSize, { padding: number; radiusLevel: 2 | 3 }> = {
-  1: { padding: 12, radiusLevel: 2 },
+const SIZE_CONFIG: Record<RadioSize, { padding: number; radiusLevel: 3 | 4 }> = {
+  1: { padding: 12, radiusLevel: 3 },
   2: { padding: 16, radiusLevel: 3 },
-  3: { padding: 24, radiusLevel: 3 },
+  3: { padding: 24, radiusLevel: 4 },
 }
 
 // ─── Root Types ─────────────────────────────────────────────────────────────────

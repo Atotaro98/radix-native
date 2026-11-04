@@ -59,8 +59,8 @@ export function Progress({
   // Radix: border-radius: max(factor * height/3, factor * radius-thumb)
   // When radius="none", factor=0 → borderRadius=0 (square)
   const borderRadius = Math.max(
-    Math.round(radiusFactor * resolvedHeight / 3),
-    Math.round(radiusFactor * radiusThumb),
+    radiusFactor * resolvedHeight / 3,
+    radiusFactor * radiusThumb,
   )
 
   const isIndeterminate = value === undefined
@@ -105,9 +105,9 @@ export function Progress({
     ...margins,
   }), [resolvedHeight, borderRadius, colors, margins])
 
+  // Radix .rt-ProgressIndicator has no radius: the root clips it (overflow: hidden).
   const indicatorBaseStyle: ViewStyle = {
     height: '100%',
-    borderRadius,
     backgroundColor: colors.indicator,
   }
 

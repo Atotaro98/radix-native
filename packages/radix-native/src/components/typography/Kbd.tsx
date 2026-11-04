@@ -74,8 +74,8 @@ export function Kbd({
     maxFontSizeMultiplier,
   })
   const kbdFontSize = text.contextFontSize
-  // Radix: border-radius = radiusFactor * 0.35em (relative to kbdFontSize)
-  const borderR = Math.max(2, Math.round(metrics.radius(2) * 0.35 * (kbdFontSize / 14)))
+  // Radix .rt-Kbd: border-radius: calc(var(--radius-factor) * 0.35em)
+  const borderR = metrics.radiusFactor * 0.35 * kbdFontSize
   // Radix: min-width 1.75em, line-height 1.7em (em = kbdFontSize)
   const minW = Math.round(kbdFontSize * 1.75)
   const kbdHeight = Math.round(kbdFontSize * 1.7)

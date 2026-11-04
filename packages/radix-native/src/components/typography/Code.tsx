@@ -99,7 +99,8 @@ export function Code({
   const codeStyle: TextStyle = {
     ...text.style,
     backgroundColor,
-    borderRadius:     metrics.radius(1),
+    // Radix .rt-Code: border-radius: calc((0.5px + 0.2em) * var(--radius-factor))
+    borderRadius:     (0.5 + 0.2 * resolvedSize) * metrics.radiusFactor,
     borderWidth:      borderColor ? 1 : undefined,
     borderColor,
     paddingVertical,

@@ -97,7 +97,8 @@ export function Checkbox({
   const metrics = useMetrics()
   const boxSize = metrics.px(CHECKBOX_SIZE[size])
   const indicatorSize = metrics.px(INDICATOR_SIZE[size])
-  const borderRadius = Math.round(metrics.radius(1) * RADIUS_MULT[size])
+  // Radix: --checkbox-border-radius: calc(var(--radius-1) * 0.875 | 1 | 1.25)
+  const borderRadius = metrics.radius(1) * RADIUS_MULT[size]
 
 
   // ─── Colors ────────────────────────────────────────────────────────────────
