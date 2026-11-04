@@ -2,7 +2,6 @@ import React from 'react'
 import { View } from 'react-native'
 import type { StyleProp, ViewStyle, AccessibilityRole } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
-import { useResolveColor } from '../../hooks/useResolveColor'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useInteraction } from '../../hooks/useInteraction'
 import { AnimatedPressable } from '../../hooks/usePressScale'
@@ -64,9 +63,9 @@ export function SelectionCard({
   style,
 }: SelectionCardProps) {
   const { appearance, radius } = useThemeContext()
-  const rc = useResolveColor()
   const { focused, scaleStyle, handlers } = useInteraction({ enabled: !disabled })
   const colors = useVariantColors(recipe, { variant, color, highContrast, checked, disabled })
+  const focus = useVariantColors('focusRing', { color })
 
   const checkedBorder = checked && 'checkedBorder' in colors ? colors.checkedBorder : undefined
   const borderWidth = checkedBorder ? 2 : 1
@@ -106,7 +105,7 @@ export function SelectionCard({
         ? <Text size={fontSize} style={colors.text ? { color: colors.text } : undefined}>{children}</Text>
         : children}
       {indicator}
-      <FocusRing visible={focused} color={rc(color ?? 'accent', 8)} borderRadius={borderRadius} />
+      <FocusRing visible={focused} color={focus.ring} borderRadius={borderRadius} />
     </AnimatedPressable>
   )
 }

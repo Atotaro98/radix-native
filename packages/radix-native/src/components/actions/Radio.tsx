@@ -2,7 +2,6 @@ import React, { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 import type { ViewStyle, StyleProp, GestureResponderEvent } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
-import { useResolveColor } from '../../hooks/useResolveColor'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { useControllableState } from '../../hooks/useControllableState'
@@ -73,7 +72,6 @@ export function Radio({
   ...rest
 }: RadioProps) {
   const { appearance, scaling } = useThemeContext()
-  const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
   const { focused, scaleStyle, handlers } = useInteraction({
     enabled: !disabled,
@@ -90,13 +88,13 @@ export function Radio({
     onChange: onCheckedChange,
   })
 
-  const prefix = color ?? 'accent'
   const scalingFactor = scalingMap[scaling]
   const radioSize = Math.round(SIZE_PX[size] * scalingFactor)
   const dotSize = Math.round(radioSize * DOT_SCALE)
 
   // ─── Colors ─────────────────────────────────────────────────────────────
   const colors = useVariantColors('radio', { variant, color, highContrast, checked, disabled })
+  const focus = useVariantColors('focusRing', { color })
 
   const handlePress = useCallback((e: GestureResponderEvent) => {
     if (disabled) return
@@ -145,7 +143,7 @@ export function Radio({
           }}
         />
       )}
-      <FocusRing visible={focused} color={rc(prefix, 8)} borderRadius={radioSize / 2} offset={2} />
+      <FocusRing visible={focused} color={focus.ring} borderRadius={radioSize / 2} offset={2} />
     </AnimatedPressable>
   )
 }

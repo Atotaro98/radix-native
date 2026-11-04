@@ -2,7 +2,6 @@ import React, { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 import type { StyleProp, ViewStyle, GestureResponderEvent } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
-import { useResolveColor } from '../../hooks/useResolveColor'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { useControllableState } from '../../hooks/useControllableState'
@@ -76,7 +75,6 @@ export function Checkbox({
   ...rest
 }: CheckboxProps) {
   const { appearance, scaling, radius } = useThemeContext()
-  const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
   const { focused, scaleStyle, handlers } = useInteraction({
     enabled: !disabled,
@@ -102,10 +100,10 @@ export function Checkbox({
   const indicatorSize = Math.round(INDICATOR_SIZE[size] * scalingFactor)
   const borderRadius = Math.round(getRadius(radius, 1) * RADIUS_MULT[size])
 
-  const prefix = color ?? 'accent'
 
   // ─── Colors ────────────────────────────────────────────────────────────────
   const colors = useVariantColors('checkbox', { variant, color, highContrast, checked: isActive, disabled })
+  const focus = useVariantColors('focusRing', { color })
 
   // ─── Toggle ────────────────────────────────────────────────────────────────
   // Radix: indeterminate → checked, checked → unchecked
@@ -176,7 +174,7 @@ export function Checkbox({
           }} />
         )
       )}
-      <FocusRing visible={focused} color={rc(prefix, 8)} borderRadius={borderRadius} offset={2} />
+      <FocusRing visible={focused} color={focus.ring} borderRadius={borderRadius} offset={2} />
     </AnimatedPressable>
   )
 }

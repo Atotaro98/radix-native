@@ -105,6 +105,7 @@ const colors = useVariantColors('checkbox', { variant, color, highContrast, chec
 ```
 
 - Recipes return **paints** — `c(step)` (the `color` prop, accent by default), `g(step)` (gray),
+  `f(step)` (Radix `--focus-*`: like `c`, but a gray component keeps the theme accent),
   `layers(top, …, bottom)` (flattened into one color), `fade(paint, opacity)`, `byMode(light, dark)`,
   `blackA(n)` / `whiteA(n)` — so they test against Radix CSS without a theme.
 - Recipes are grouped by **Variant family** (buttons, chips, selection controls, tracks, cards,
@@ -114,7 +115,9 @@ const colors = useVariantColors('checkbox', { variant, color, highContrast, chec
 - `SHADOW_1_RING` is Radix `--shadow-1` as a border color (classic variants, sunken parts).
 - Add a row to `__tests__/variantPalette.test.ts` for every rule; `contrast.test.ts` walks the
   real recipes.
-- Shadows (`getClassicEffect`, `ClassicOverlay`) and focus rings (`rc(prefix, 8)`) stay in components.
+- Focus rings come from the `focusRing` recipe (`useVariantColors('focusRing', { color }).ring`);
+  text inputs draw theirs as `border` from their own recipe.
+- Shadows (`getClassicEffect`, `ClassicOverlay`) stay in components.
 
 ### Shared building blocks — use these instead of re-implementing
 
@@ -122,7 +125,7 @@ const colors = useVariantColors('checkbox', { variant, color, highContrast, chec
 |------|-----|
 | Controlled / uncontrolled value | `useControllableState({ prop, defaultProp, onChange })` — setter accepts updater functions (no stale closures) |
 | Pressed / focused state, press scale, composing consumer handlers | `useInteraction({ enabled, onPressIn, onPressOut, onFocus, onBlur })` → `{ pressed, focused, scaleStyle, handlers }` |
-| Focus indicator | `<FocusRing visible={focused} color={rc(prefix, 8)} borderRadius={r} offset={…} />` (offset only on hosts without `overflow: 'hidden'`) |
+| Focus indicator | `<FocusRing visible={focused} color={useVariantColors('focusRing', { color }).ring} borderRadius={r} offset={…} />` (offset only on hosts without `overflow: 'hidden'`) |
 | Classic gradient | `<ClassicOverlay borderRadius={r} />` |
 | A button (interaction, recipe colors, classic, loading, focus ring, touch target, prop order) | `<BaseButton {...props} iconOnly? />` — Button and IconButton are thin wrappers over it, like Radix `BaseButton` |
 | A row of text runs + icons inside a control (Control label) | `<ControlLabel size weight color maxFontSizeMultiplier>{children}</ControlLabel>` — merges adjacent text, one line, tints icons without `color` |

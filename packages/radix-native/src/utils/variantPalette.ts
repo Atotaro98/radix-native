@@ -14,8 +14,13 @@ import { compositeLayers, fadeColor } from './colorMath'
 
 // ─── Paints ───────────────────────────────────────────────────────────────────
 
-/** `color` = the component's `color` prop (the theme accent when unset). */
-type PaintScale = 'color' | 'gray'
+/**
+ * `color` = the component's `color` prop (the theme accent when unset).
+ * `focus` = Radix `--focus-*`: the `color` scale, except a gray component
+ * keeps the theme accent (color.css sets `--focus-*` on
+ * `[data-accent-color]:not([data-accent-color='gray'])` only).
+ */
+type PaintScale = 'color' | 'gray' | 'focus'
 
 export type Paint =
   | { readonly scale: PaintScale; readonly step: ColorStep }
@@ -27,6 +32,7 @@ export type Paint =
 
 export const c = (step: ColorStep): Paint => ({ scale: 'color', step })
 export const g = (step: ColorStep): Paint => ({ scale: 'gray', step })
+export const f = (step: ColorStep): Paint => ({ scale: 'focus', step })
 export const raw = (value: string): Paint => ({ raw: value })
 export const layers = (...stack: Paint[]): Paint => ({ layers: stack })
 export const fade = (paint: Paint, opacity: number): Paint => ({ fade: paint, opacity })
@@ -379,9 +385,10 @@ export interface TextInputPaints {
  */
 function textInput(s: WithVariant<TextInputVariant>, softPlaceholderOpacity: number): TextInputPaints {
   // Disabled and read-only look the same (Radix `:disabled, :read-only`). Only a
-  // read-only input can still take focus; its ring is then gray-8.
+  // read-only input can still take focus; its ring is then gray-8. Soft uses
+  // accent-8 instead of focus-8 ("use gray outline when component color is gray").
   const disabled = !!s.disabled
-  const focusBorder = disabled ? g(8) : c(8)
+  const focusBorder = disabled ? g(8) : s.variant === 'soft' ? c(8) : f(8)
 
   if (s.variant === 'soft') {
     const placeholder = fade(c(12), softPlaceholderOpacity * (disabled ? 0.5 : 1))
@@ -437,6 +444,17 @@ function blockquote(s: PaletteState): TextPaints {
   return { ...text(s), decoration: c('a6') }
 }
 
+// ─── Focus ring (every focusable control but text inputs) ─────────────────────
+
+export interface FocusRingPaints {
+  ring: Paint
+}
+
+/** `:focus-visible { outline: 2px solid var(--focus-8) }` (base-button, base-checkbox, base-card…). */
+function focusRing(_s: PaletteState): FocusRingPaints {
+  return { ring: f(8) }
+}
+
 // ─── Registry ─────────────────────────────────────────────────────────────────
 
 export const VARIANT_RECIPES = {
@@ -456,6 +474,7 @@ export const VARIANT_RECIPES = {
   text,
   link,
   blockquote,
+  focusRing,
 } as const
 
 export type RecipeName = keyof typeof VARIANT_RECIPES
@@ -478,9 +497,15 @@ export interface PaintContext {
   appearance: 'light' | 'dark'
 }
 
+function scaleColor(scale: PaintScale, color: ColorName): ColorName {
+  if (scale === 'gray') return 'gray'
+  if (scale === 'focus' && color === 'gray') return 'accent'
+  return color
+}
+
 export function resolvePaint(paint: Paint, ctx: PaintContext): string {
   if ('raw' in paint) return paint.raw
-  if ('scale' in paint) return ctx.rc(paint.scale === 'color' ? ctx.color : 'gray', paint.step)
+  if ('scale' in paint) return ctx.rc(scaleColor(paint.scale, ctx.color), paint.step)
   if ('layers' in paint) return compositeLayers(paint.layers.map(p => resolvePaint(p, ctx)))
   if ('fade' in paint) return fadeColor(resolvePaint(paint.fade, ctx), paint.opacity)
   return resolvePaint(paint[ctx.appearance], ctx)
