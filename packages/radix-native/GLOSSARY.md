@@ -23,7 +23,7 @@ The weight a piece of text asks for (`light`, `regular`, `medium`, `bold`), as d
 _Avoid_: font weight (when the configured face is meant)
 
 **Compact text**:
-Text inside a control that grows with its label (Button, Badge, Kbd, TextField, TextArea) but whose layout would break under unbounded accessibility font scaling, so it gets a default Font scaling cap of 2. Text in a truly fixed-size box (Avatar initials) is capped at 1 instead.
+Text inside a control that grows with its label (a Control label, Kbd, TextField, TextArea) but whose layout would break under unbounded accessibility font scaling, so it gets a default Font scaling cap of 2. Text in a truly fixed-size box (Avatar initials) is capped at 1 instead.
 _Avoid_: small text, control text
 
 **Font scaling cap**:
@@ -47,3 +47,9 @@ _Avoid_: color family, component group
 **Variant recipe**:
 How a Variant family turns each Variant and state (high contrast, checked, disabled, pressed, focused) into the colors of its parts (background, text, border, indicator, track, thumb, placeholder), taken from Radix. Where Radix is inconsistent between families, each recipe keeps Radix's value rather than unifying.
 _Avoid_: generic palette, color scheme, theme colors
+
+## Controls
+
+**Control label**:
+The single row of content inside a Button, IconButton or Badge: runs of text and icons. Adjacent text reads as one piece of Compact text in the control's Text style, kept to one line; icons take the control's text color unless they set their own. While a button is loading, its Control label stays readable by screen readers even though it is hidden on screen.
+_Avoid_: content, children, button text

@@ -1,16 +1,16 @@
 import React, { useMemo } from 'react'
-import { View, Text as RNText } from 'react-native'
-import type { ViewStyle, TextStyle, StyleProp } from 'react-native'
+import { View } from 'react-native'
+import type { ViewStyle, StyleProp } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
-import { useTextStyle } from '../../hooks/useTextStyle'
 import { scalingMap } from '../../tokens/scaling'
 import { getRadius, getFullRadius } from '../../tokens/radius'
 import type { RadiusToken, RadiusLevel } from '../../tokens/radius'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { MarginProps } from '../../types/marginProps'
 import type { NativeViewProps } from '../../types/nativeProps'
+import { ControlLabel } from '../internal/ControlLabel'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -30,7 +30,7 @@ export interface BadgeProps extends NativeViewProps, MarginProps {
   radius?: RadiusToken
   /** Specifies the largest possible scale a font can reach. */
   maxFontSizeMultiplier?: number
-  /** Badge content (usually a string). */
+  /** Badge content: text, icons, or both (its Control label). */
   children?: React.ReactNode
   style?: StyleProp<ViewStyle>
 }
@@ -91,28 +91,13 @@ export function Badge({
     ...margins,
   }), [resolvedHeight, resolvedPaddingX, resolvedGap, colors, borderRadius, margins])
 
-  // Compact text, medium weight (Radix).
-  const text = useTextStyle({
-    size: SIZE_FONT[size],
-    weight: 'medium',
-    color: colors.text,
-    compact: true,
-    maxFontSizeMultiplier,
-  })
-
   return (
     <View style={[containerStyle, style]} {...rest}>
-      {renderContent(children, text.style, text.textProps.maxFontSizeMultiplier)}
+      {/* Radix: badge text is medium weight. */}
+      <ControlLabel size={SIZE_FONT[size]} weight="medium" color={colors.text} maxFontSizeMultiplier={maxFontSizeMultiplier}>
+        {children}
+      </ControlLabel>
     </View>
   )
 }
 Badge.displayName = 'Badge'
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function renderContent(children: React.ReactNode, textStyle: TextStyle, maxFontSizeMultiplier?: number): React.ReactNode {
-  if (typeof children === 'string' || typeof children === 'number') {
-    return <RNText style={textStyle} maxFontSizeMultiplier={maxFontSizeMultiplier}>{children}</RNText>
-  }
-  return children
-}
