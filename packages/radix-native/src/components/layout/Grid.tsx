@@ -165,7 +165,7 @@ export function Grid({
     left: left,
     // Layout
     overflow: overflow as ViewStyle['overflow'],
-    flexBasis: flexBasis,
+    flexBasis: flexBasis ?? undefined,
     flexShrink,
     flexGrow,
     // Theme

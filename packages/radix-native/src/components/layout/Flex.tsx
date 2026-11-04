@@ -128,7 +128,7 @@ export function Flex({
     bottom: bottom, left: left,
     // Layout
     overflow: overflow as ViewStyle['overflow'],
-    flexBasis: flexBasis,
+    flexBasis: flexBasis ?? undefined,
     flexShrink, flexGrow,
     // Theme
     backgroundColor: bg ? rc(bg) : undefined,

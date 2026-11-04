@@ -1,6 +1,6 @@
 import React from 'react'
 import { View } from 'react-native'
-import type { StyleProp, ViewStyle, AccessibilityRole } from 'react-native'
+import type { StyleProp, ViewStyle } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useInteraction } from '../../hooks/useInteraction'
@@ -22,7 +22,7 @@ export type SelectionCardVariant = 'surface' | 'classic'
 interface SelectionCardProps {
   /** Variant recipe: `checkboxCard` or `radioCard`. */
   recipe: 'checkboxCard' | 'radioCard'
-  role: Extract<AccessibilityRole, 'checkbox' | 'radio'>
+  role: 'checkbox' | 'radio'
   checked: boolean
   disabled: boolean
   onPress: () => void
@@ -114,7 +114,7 @@ interface SelectionCardGridProps {
   /** Number of equal-width columns; omitted = auto-fit (cards ≥ 160px, like Radix). */
   columns?: number
   gap: SpaceToken
-  role?: Extract<AccessibilityRole, 'radiogroup'>
+  role?: 'radiogroup'
   accessibilityLabel?: string
   testID?: string
   style?: StyleProp<ViewStyle>

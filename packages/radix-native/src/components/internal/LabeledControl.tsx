@@ -1,6 +1,6 @@
 import React from 'react'
 import { Pressable, View, Text as RNText } from 'react-native'
-import type { StyleProp, ViewStyle, AccessibilityRole } from 'react-native'
+import type { StyleProp, ViewStyle } from 'react-native'
 import { useInteraction } from '../../hooks/useInteraction'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useVariantColors } from '../../hooks/useVariantColors'
@@ -9,7 +9,7 @@ import type { AccentColor } from '../../tokens/colors/types'
 import { FocusRing } from './FocusRing'
 
 interface LabeledControlProps {
-  role: Extract<AccessibilityRole, 'checkbox' | 'radio'>
+  role: 'checkbox' | 'radio'
   checked: boolean
   disabled: boolean
   onPress: () => void

@@ -1,7 +1,6 @@
 /** Theme: root state, nesting (inherit + override), merges, handlers and background. */
 import React from 'react'
 import { StyleSheet, Text as RNText } from 'react-native'
-import type { ColorSchemeName } from 'react-native'
 import { act, render, screen } from '@testing-library/react-native'
 import { Theme, ThemeControls, useThemeContext, useColor } from '../index'
 import type { ThemeContextValue, ThemeProps } from '../index'
@@ -11,7 +10,7 @@ jest.mock('react-native/Libraries/Utilities/useColorScheme', () => ({
   __esModule: true,
   default: jest.fn(() => 'light'),
 }))
-const mockColorScheme = jest.requireMock<{ default: jest.Mock<ColorSchemeName, []> }>(
+const mockColorScheme = jest.requireMock<{ default: jest.Mock<'light' | 'dark' | null, []> }>(
   'react-native/Libraries/Utilities/useColorScheme',
 ).default
 
@@ -55,7 +54,7 @@ describe('root Theme', () => {
   it.each([
     ['light', 'light'],
     ['dark', 'dark'],
-    ['unspecified', 'light'],
+    [null, 'light'],
   ] as const)('appearance="inherit" follows the system scheme (%s → %s)', (system, expected) => {
     mockColorScheme.mockReturnValue(system)
     render(<Theme><Capture id="root" /></Theme>)
