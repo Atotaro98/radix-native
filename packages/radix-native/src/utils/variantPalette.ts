@@ -332,14 +332,21 @@ export interface CardItemPaints {
   text?: Paint
 }
 
+/**
+ * `--color-surface` flattened onto the page background (`--color-background`:
+ * white / dark gray-1). Card items carry a drop shadow in the classic variant,
+ * and iOS draws a shadow through a translucent fill, graying it out.
+ */
+const OPAQUE_SURFACE = layers(g('surface'), byMode(WHITE, g(1)))
+
 /** checkbox-cards.css / radio-cards.css: items fill with --color-surface. */
 function cardItem(s: WithVariant<CardItemVariant>): CardItemPaints {
   const border = s.variant === 'classic' ? CARD_CLASSIC_BORDER : g('a5')
   if (s.disabled) {
     // :has(:disabled) → text gray-a9, gray-a2 over the background
-    return { bg: layers(g('a2'), g('surface')), border, text: g('a9') }
+    return { bg: layers(g('a2'), OPAQUE_SURFACE), border, text: g('a9') }
   }
-  return { bg: g('surface'), border }
+  return { bg: OPAQUE_SURFACE, border }
 }
 
 const checkboxCard = (s: WithVariant<CardItemVariant>): CardItemPaints => cardItem(s)

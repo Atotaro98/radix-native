@@ -93,13 +93,14 @@ describe('tracks (switch.css, progress.css)', () => {
 
 describe('cards (base-card.css, card.css, checkbox-cards.css, radio-cards.css)', () => {
   const classicBorder = byMode(g('a3'), g('a6'))
+  const surface = layers(g('surface'), byMode(WHITE, g(1)))
   it.each([
     ['card surface → color-panel + gray-a5', 'card', { variant: 'surface' }, { bg: g('panel'), border: g('a5'), pressedBorder: g('a6') }],
     ['card classic → color-panel + classic border', 'card', { variant: 'classic' }, { bg: g('panel'), border: classicBorder }],
     ['card ghost :active', 'card', { variant: 'ghost' }, { pressedBg: g('a4') }],
-    ['checkbox card surface → color-surface', 'checkboxCard', { variant: 'surface' }, { bg: g('surface'), border: g('a5') }],
-    ['checkbox card classic', 'checkboxCard', { variant: 'classic' }, { bg: g('surface'), border: classicBorder }],
-    ['card item :disabled', 'checkboxCard', { variant: 'surface', disabled: true }, { bg: layers(g('a2'), g('surface')), text: g('a9') }],
+    ['checkbox card surface → color-surface', 'checkboxCard', { variant: 'surface' }, { bg: surface, border: g('a5') }],
+    ['checkbox card classic', 'checkboxCard', { variant: 'classic' }, { bg: surface, border: classicBorder }],
+    ['card item :disabled', 'checkboxCard', { variant: 'surface', disabled: true }, { bg: layers(g('a2'), surface), text: g('a9') }],
     ['radio card checked → accent-indicator outline', 'radioCard', { variant: 'surface', checked: true }, { checkedBorder: c('indicator') }],
     ['radio card checked high contrast', 'radioCard', { variant: 'surface', checked: true, highContrast: true }, { checkedBorder: c(12) }],
     ['radio card checked :disabled → gray-8', 'radioCard', { variant: 'classic', checked: true, disabled: true }, { checkedBorder: g(8) }],
