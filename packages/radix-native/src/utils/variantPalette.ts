@@ -361,34 +361,41 @@ export interface TextInputPaints {
   placeholder: Paint
 }
 
-function textInput(s: WithVariant<TextInputVariant>): TextInputPaints {
-  if (s.disabled) {
+/**
+ * text-field.css / text-area.css. `softPlaceholderOpacity`: TextField 0.6,
+ * TextArea 0.65. Disabled inputs keep their variant's placeholder at half
+ * opacity and turn their text gray-a11.
+ */
+function textInput(s: WithVariant<TextInputVariant>, softPlaceholderOpacity: number): TextInputPaints {
+  const focusBorder = c(8)
+  const disabled = !!s.disabled
+
+  if (s.variant === 'soft') {
+    const placeholder = fade(c(12), softPlaceholderOpacity * (disabled ? 0.5 : 1))
+    if (disabled) return { bg: g('a3'), border: TRANSPARENT, text: g('a11'), placeholder }
+    return { bg: c('a3'), border: s.focused ? focusBorder : TRANSPARENT, text: c(12), placeholder }
+  }
+
+  // surface ring gray-a7 (disabled gray-a6); classic ring shadow-1 (kept when disabled)
+  const ring = s.variant === 'classic' ? SHADOW_1_RING : g('a7')
+  if (disabled) {
     return {
-      bg: s.variant === 'soft' ? g('a3') : g('a2'),
-      border: s.variant === 'soft' ? TRANSPARENT : g('a6'),
+      bg: layers(g('a2'), g('surface')),
+      border: s.variant === 'classic' ? SHADOW_1_RING : g('a6'),
       text: g('a11'),
       placeholder: fade(g('a10'), 0.5),
     }
   }
-  const focusBorder = c(8)
-  if (s.variant === 'soft') {
-    return {
-      bg: c('a3'),
-      border: s.focused ? focusBorder : TRANSPARENT,
-      text: c(12),
-      placeholder: fade(c(12), 0.6),
-    }
-  }
   return {
     bg: g('surface'),
-    border: s.focused ? focusBorder : g('a7'),
+    border: s.focused ? focusBorder : ring,
     text: g(12),
     placeholder: g('a10'),
   }
 }
 
-const textField = (s: WithVariant<TextInputVariant>) => textInput(s)
-const textArea = (s: WithVariant<TextInputVariant>) => textInput(s)
+const textField = (s: WithVariant<TextInputVariant>) => textInput(s, 0.6)
+const textArea = (s: WithVariant<TextInputVariant>) => textInput(s, 0.65)
 
 // ─── Family: text (Text, Heading, Link, Blockquote) — text.css, link.css… ─────
 

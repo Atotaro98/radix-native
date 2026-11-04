@@ -107,3 +107,20 @@ describe('cards (base-card.css, card.css, checkbox-cards.css, radio-cards.css)',
     expect(paints(name, state)).toMatchObject(expected)
   })
 })
+
+describe('text inputs (text-field.css, text-area.css)', () => {
+  it.each([
+    ['text field surface', 'textField', { variant: 'surface' }, { bg: g('surface'), border: g('a7'), text: g(12), placeholder: g('a10') }],
+    ['text field classic → shadow-1', 'textField', { variant: 'classic' }, { border: SHADOW_1_RING }],
+    ['focused → accent-8 ring', 'textField', { variant: 'classic', focused: true }, { border: c(8) }],
+    ['text field soft placeholder 0.6', 'textField', { variant: 'soft' }, { bg: c('a3'), text: c(12), placeholder: fade(c(12), 0.6) }],
+    ['text area soft placeholder 0.65', 'textArea', { variant: 'soft' }, { placeholder: fade(c(12), 0.65) }],
+    ['surface :disabled', 'textField', { variant: 'surface', disabled: true },
+      { bg: layers(g('a2'), g('surface')), border: g('a6'), text: g('a11'), placeholder: fade(g('a10'), 0.5) }],
+    ['classic :disabled keeps shadow-1', 'textField', { variant: 'classic', disabled: true }, { border: SHADOW_1_RING }],
+    ['soft :disabled keeps the accent placeholder', 'textField', { variant: 'soft', disabled: true },
+      { bg: g('a3'), text: g('a11'), placeholder: fade(c(12), 0.3) }],
+  ] as const)('%s', (_selector, name, state, expected) => {
+    expect(paints(name, state)).toMatchObject(expected)
+  })
+})
