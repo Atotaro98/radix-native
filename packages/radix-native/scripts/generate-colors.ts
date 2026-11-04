@@ -10,6 +10,8 @@ import * as path from 'path'
 import { createRequire } from 'module'
 import { fileURLToPath } from 'url'
 
+import { applyDerivation, getDerivation } from '../src/tokens/derivedSteps'
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const require = createRequire(import.meta.url)
 
@@ -187,10 +189,13 @@ for (const colorName of ALL_COLORS) {
   const formatScale = (
     steps: Record<number, string>,
     alpha: Record<string, string>,
-    surf: string
+    surf: string,
+    appearance: 'light' | 'dark'
   ) => {
     const s = steps
     const a = alpha
+    const derived = (step: string) =>
+      applyDerivation(getDerivation(colorName, step, appearance) ?? '9', (base) => s[Number(base)])
     return [
       `    1: '${s[1]}', 2: '${s[2]}', 3: '${s[3]}', 4: '${s[4]}',`,
       `    5: '${s[5]}', 6: '${s[6]}', 7: '${s[7]}', 8: '${s[8]}',`,
@@ -199,7 +204,7 @@ for (const colorName of ALL_COLORS) {
       `    a5: '${a.a5}', a6: '${a.a6}', a7: '${a.a7}', a8: '${a.a8}',`,
       `    a9: '${a.a9}', a10: '${a.a10}', a11: '${a.a11}', a12: '${a.a12}',`,
       `    contrast: '${contrast}', surface: '${surf}',`,
-      `    indicator: '${s[9]}', track: '${s[9]}',`,
+      `    indicator: '${derived('indicator')}', track: '${derived('track')}',`,
     ].join('\n')
   }
 
@@ -212,10 +217,10 @@ for (const colorName of ALL_COLORS) {
     ``,
     `export const ${colorName}: ColorScaleWithModes = {`,
     `  light: {`,
-    formatScale(lightSteps, lightAlpha, lightSurf),
+    formatScale(lightSteps, lightAlpha, lightSurf, 'light'),
     `  },`,
     `  dark: {`,
-    formatScale(darkSteps, darkAlpha, darkSurf),
+    formatScale(darkSteps, darkAlpha, darkSurf, 'dark'),
     `  },`,
     `}`,
     ``,

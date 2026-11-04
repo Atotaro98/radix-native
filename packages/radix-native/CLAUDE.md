@@ -58,7 +58,8 @@ const gray1 = useColor('gray-1')
 **Internal** (`useResolveColor`): returns a resolver function for components that resolve many colors in one `useMemo`. Not exported publicly.
 
 Steps: solid `1-12` (numbers), alpha `'a1'-'a12'` (strings), special `'contrast' | 'surface' | 'indicator' | 'track' | 'panel'`
-(`indicator` / `track` resolve through step 9 so overrides of 9 carry over; `panel` = white / dark step 2).
+(`indicator` / `track` resolve through their base steps in `tokens/derivedSteps` — step 9, light yellow step 10,
+dark amber/lime/mint/sky/yellow track = OKLab mix of 8 and 9 — so overrides of the base steps carry over; `panel` = white / dark step 2).
 
 ### Margins — `useMargins`
 

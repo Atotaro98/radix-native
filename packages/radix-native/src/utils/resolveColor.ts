@@ -7,6 +7,7 @@ import {
 import type { AccentColor, GrayColor, ColorScaleWithModes } from '../tokens/colors/types'
 import type { ThemeColor, ColorOverrides } from '../theme/theme.types'
 import { isDev } from './env'
+import { applyDerivation, getDerivation } from '../tokens/derivedSteps'
 
 const colorMap: Record<string, ColorScaleWithModes> = {
   tomato, red, ruby, crimson, pink, plum, purple, violet,
@@ -22,7 +23,9 @@ const colorMap: Record<string, ColorScaleWithModes> = {
  * - `'accent-a9'`       → alpha step a9 of the active accent color
  * - `'accent-contrast'` → contrast color (text over step 9 background)
  * - `'accent-surface'`  → translucent tinted surface
- * - `'accent-indicator'`, `'accent-track'` → step 9 (follow overrides of 9)
+ * - `'accent-indicator'`, `'accent-track'` → step 9, or the per-scale Radix
+ *   derivation (dark amber/lime/mint/sky/yellow track mixes 8 and 9; light
+ *   yellow uses 10) — see `tokens/derivedSteps`; overrides of the base steps carry over
  * - `'gray-panel'`      → solid panel: white (light) / step 2 (dark)
  * - `'gray-9'`          → step 9 of the resolved gray color
  * - `'blue-9'`          → step 9 of the blue scale (exact, not aliased)
@@ -55,17 +58,6 @@ export function resolveColor(
   return resolveStep(colorName, step, appearance, colorOverrides, color as string)
 }
 
-/**
- * Steps Radix derives from other steps. Resolving them through their base step
- * means an override of the base (e.g. `9`) carries over, like CSS custom properties.
- */
-const DERIVED_STEPS: Record<string, { light: string; dark: string }> = {
-  indicator: { light: '9', dark: '9' },
-  track: { light: '9', dark: '9' },
-  // Radix `--color-panel-solid`: white in light mode, gray-2 in dark mode
-  panel: { light: '#ffffff', dark: '2' },
-}
-
 function resolveStep(
   colorName: string,
   step: string,
@@ -86,11 +78,11 @@ function resolveStep(
     return original
   }
 
-  const derived = DERIVED_STEPS[step]?.[appearance]
-  if (derived !== undefined) {
-    return derived.startsWith('#')
-      ? derived
-      : resolveStep(colorName, derived, appearance, colorOverrides, original)
+  const derivation = getDerivation(colorName, step, appearance)
+  if (derivation !== undefined) {
+    return applyDerivation(derivation, base =>
+      resolveStep(colorName, base, appearance, colorOverrides, original),
+    )
   }
 
   return (scale as unknown as Record<string, string>)[step] ?? original
