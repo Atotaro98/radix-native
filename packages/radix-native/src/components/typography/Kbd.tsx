@@ -2,10 +2,10 @@ import React from 'react'
 import { Platform, View, Text as RNText } from 'react-native'
 import type { StyleProp, ViewStyle } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
+import { useMetrics } from '../../hooks/useMetrics'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
 import { useTextStyle } from '../../hooks/useTextStyle'
-import { getRadius } from '../../tokens/radius'
 import type { FontSizeToken } from '../../tokens/typography'
 import type { MarginProps } from '../../types/marginProps'
 import type { NativeViewProps } from '../../types/nativeProps'
@@ -55,7 +55,8 @@ export function Kbd({
   children,
   ...rest
 }: KbdProps) {
-  const { radius, appearance } = useThemeContext()
+  const { appearance } = useThemeContext()
+  const metrics = useMetrics()
   const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
@@ -73,8 +74,8 @@ export function Kbd({
     maxFontSizeMultiplier,
   })
   const kbdFontSize = text.contextFontSize
-  // Radix: border-radius = radiusFactor * 0.35em (relative to kbdFontSize)
-  const borderR = Math.max(2, Math.round(getRadius(radius, 2) * 0.35 * (kbdFontSize / 14)))
+  // Radix .rt-Kbd: border-radius: calc(var(--radius-factor) * 0.35em)
+  const borderR = metrics.radiusFactor * 0.35 * kbdFontSize
   // Radix: min-width 1.75em, line-height 1.7em (em = kbdFontSize)
   const minW = Math.round(kbdFontSize * 1.75)
   const kbdHeight = Math.round(kbdFontSize * 1.7)

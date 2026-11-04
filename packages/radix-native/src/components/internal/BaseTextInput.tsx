@@ -2,13 +2,12 @@ import React from 'react'
 import { TextInput, View } from 'react-native'
 import type { TextInputProps, ViewStyle, TextStyle, StyleProp } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
+import { useMetrics } from '../../hooks/useMetrics'
 import { useMargins } from '../../hooks/useMargins'
 import { useTextStyle } from '../../hooks/useTextStyle'
 import { useInteraction } from '../../hooks/useInteraction'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useControllableState } from '../../hooks/useControllableState'
-import { scalingMap } from '../../tokens/scaling'
-import { getRadius, getFullRadius } from '../../tokens/radius'
 import type { RadiusToken, RadiusLevel } from '../../tokens/radius'
 import type { MarginProps } from '../../types/marginProps'
 import type { AccentColor } from '../../tokens/colors/types'
@@ -81,7 +80,7 @@ export function BaseTextInput({
   onChangeText,
   ...rest
 }: InternalProps) {
-  const { scaling, radius: themeRadius, appearance } = useThemeContext()
+  const { appearance } = useThemeContext()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
   const { focused, handlers } = useInteraction({ enabled: !disabled, onFocus, onBlur })
 
@@ -92,11 +91,9 @@ export function BaseTextInput({
   })
 
   const isReadOnly = readOnly === true || editable === false
-  const scalingFactor = scalingMap[scaling]
-  const effectiveRadius = radiusProp ?? themeRadius
-  const radius = getRadius(effectiveRadius, SIZE_RADIUS_LEVEL[size])
+  const metrics = useMetrics({ radius: radiusProp })
   // Radix: TextField is max(radius, full); TextArea uses the plain radius.
-  const borderRadius = multiline ? radius : Math.max(radius, getFullRadius(effectiveRadius))
+  const borderRadius = metrics.radius(SIZE_RADIUS_LEVEL[size], multiline ? 'box' : 'pill')
 
   const colors = useVariantColors(multiline ? 'textArea' : 'textField', {
     variant,
@@ -120,10 +117,10 @@ export function BaseTextInput({
     backgroundColor: colors.bg,
     borderWidth: 1,
     borderColor: colors.border,
-    paddingHorizontal: Math.round(SIZE_PADDING_X[size] * scalingFactor),
+    paddingHorizontal: metrics.px(SIZE_PADDING_X[size]),
     ...(multiline
-      ? { paddingVertical: Math.round(SIZE_PADDING_Y[size] * scalingFactor) }
-      : { minHeight: Math.round(SIZE_HEIGHT[size] * scalingFactor), justifyContent: 'center' }),
+      ? { paddingVertical: metrics.px(SIZE_PADDING_Y[size]) }
+      : { minHeight: metrics.px(SIZE_HEIGHT[size]), justifyContent: 'center' }),
     ...margins,
   }
 

@@ -2,13 +2,12 @@ import React, { useMemo } from 'react'
 import { View } from 'react-native'
 import type { ViewStyle, StyleProp, GestureResponderEvent, NativeSyntheticEvent, TargetedEvent } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
+import { useMetrics } from '../../hooks/useMetrics'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { useInteraction } from '../../hooks/useInteraction'
 import { AnimatedPressable } from '../../hooks/usePressScale'
 import { FocusRing } from '../internal/FocusRing'
-import { scalingMap } from '../../tokens/scaling'
-import { getRadius } from '../../tokens/radius'
 import type { RadiusLevel } from '../../tokens/radius'
 import type { MarginProps } from '../../types/marginProps'
 import { getClassicEffect } from '../../utils/classicEffect'
@@ -55,7 +54,7 @@ export function Card({
   children,
   ...rest
 }: CardProps) {
-  const { appearance, scaling, radius } = useThemeContext()
+  const { appearance } = useThemeContext()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
   const { pressed, focused, scaleStyle, handlers } = useInteraction({
     enabled: !!onPress,
@@ -65,9 +64,9 @@ export function Card({
     onBlur,
   })
 
-  const scalingFactor = scalingMap[scaling]
-  const resolvedPadding = Math.round(SIZE_PADDING[size] * scalingFactor)
-  const borderRadius = getRadius(radius, SIZE_RADIUS_LEVEL[size])
+  const metrics = useMetrics()
+  const resolvedPadding = metrics.px(SIZE_PADDING[size])
+  const borderRadius = metrics.radius(SIZE_RADIUS_LEVEL[size])
 
   // ─── Colors ─────────────────────────────────────────────────────────────
   const colors = useVariantColors('card', { variant })

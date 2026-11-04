@@ -2,14 +2,13 @@ import React, { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 import type { StyleProp, ViewStyle, GestureResponderEvent } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
+import { useMetrics } from '../../hooks/useMetrics'
 import { useMargins } from '../../hooks/useMargins'
 import { useInteraction } from '../../hooks/useInteraction'
 import { AnimatedPressable } from '../../hooks/usePressScale'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { getMinHitSlop, MIN_TOUCH_TARGET } from '../../utils/hitSlop'
 import { getClassicEffect } from '../../utils/classicEffect'
-import { scalingMap } from '../../tokens/scaling'
-import { getRadius, getFullRadius } from '../../tokens/radius'
 import type { RadiusToken, RadiusLevel } from '../../tokens/radius'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { NativePressableProps } from '../../types/nativeProps'
@@ -89,7 +88,7 @@ export function BaseButton({
   hitSlop,
   ...rest
 }: InternalProps) {
-  const { appearance, scaling, radius: themeRadius } = useThemeContext()
+  const { appearance } = useThemeContext()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
   const isDisabled = disabled || loading
@@ -103,15 +102,10 @@ export function BaseButton({
     onBlur,
   })
 
-  const scalingFactor = scalingMap[scaling]
-  const height = Math.round(SIZE_HEIGHT[size] * scalingFactor)
-  const gap = Math.round(SIZE_GAP[size] * scalingFactor)
-
-  const effectiveRadius = radiusProp ?? themeRadius
-  const borderRadius = Math.max(
-    getRadius(effectiveRadius, SIZE_RADIUS_LEVEL[size]),
-    getFullRadius(effectiveRadius),
-  )
+  const metrics = useMetrics({ radius: radiusProp })
+  const height = metrics.px(SIZE_HEIGHT[size])
+  const gap = metrics.px(SIZE_GAP[size])
+  const borderRadius = metrics.radius(SIZE_RADIUS_LEVEL[size], 'pill')
 
   const colors = useVariantColors('button', { variant, color, highContrast, disabled: isDisabled })
   const focusColor = useVariantColors('focusRing', { color }).ring
@@ -130,12 +124,12 @@ export function BaseButton({
     overflow: 'hidden',
     ...(iconOnly
       ? { width: height, height }
-      : { minHeight: height, paddingHorizontal: Math.round(SIZE_PADDING_X[size] * scalingFactor), gap }),
+      : { minHeight: height, paddingHorizontal: metrics.px(SIZE_PADDING_X[size]), gap }),
     borderRadius,
     borderWidth: colors.border ? 1 : undefined,
     borderColor: colors.border,
     ...margins,
-  }), [iconOnly, height, size, scalingFactor, gap, borderRadius, colors.border, margins])
+  }), [iconOnly, height, size, metrics, gap, borderRadius, colors.border, margins])
 
   const stateStyle: ViewStyle = {
     backgroundColor: pressed ? colors.pressedBg : colors.bg,

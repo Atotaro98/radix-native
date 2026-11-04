@@ -4,9 +4,9 @@ import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 're
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { isDev } from '../../utils/env'
+import { resolveMetrics } from '../../utils/metrics'
 import { Text } from '../typography/Text'
 import { Heading } from '../typography/Heading'
-import { getRadius } from '../../tokens/radius'
 import type { AccentColor, GrayColor } from '../../tokens/colors/types'
 import type { RadiusToken } from '../../tokens/radius'
 import type { ScalingMode } from '../../tokens/scaling'
@@ -282,7 +282,7 @@ function RadiusPreview({
 }: { token: RadiusToken; selected: boolean; onPress: () => void; rc: RC }) {
   const previewRadius = token === 'full'
     ? 26
-    : getRadius(token, 5)
+    : resolveMetrics({ scaling: '100%', radius: token }).radius(5)
 
   const label = token.charAt(0).toUpperCase() + token.slice(1)
   const borderAccent = rc('accent-a8')

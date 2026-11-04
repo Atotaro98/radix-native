@@ -1,11 +1,9 @@
 import React from 'react'
 import { View } from 'react-native'
 import type { ViewStyle, DimensionValue } from 'react-native'
-import { useThemeContext } from '../../hooks/useThemeContext'
+import { useMetrics } from '../../hooks/useMetrics'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
-import { resolveSpace } from '../../utils/resolveSpace'
-import { getRadius, getFullRadius } from '../../tokens/radius'
 import type { SpaceToken } from '../../tokens/spacing'
 import type { ThemeColor, RadiusToken } from '../../theme/theme.types'
 import type { MarginProps } from '../../types/marginProps'
@@ -94,12 +92,12 @@ export function Flex({
   style,
   ...rest
 }: FlexProps) {
-  const { scaling } = useThemeContext()
+  const metrics = useMetrics({ radius })
   const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
   const sp = (token: SpaceToken | undefined): number | undefined =>
-    token !== undefined ? resolveSpace(token, scaling) : undefined
+    token !== undefined ? metrics.space(token) : undefined
 
   const flexStyle: ViewStyle = {
     // Flex-specific
@@ -133,7 +131,7 @@ export function Flex({
     // Theme
     backgroundColor: bg ? rc(bg) : undefined,
     borderRadius: radius
-      ? (radius === 'full' ? getFullRadius(radius) : getRadius(radius, 4))
+      ? metrics.radius(4, 'pill')
       : undefined,
   }
 

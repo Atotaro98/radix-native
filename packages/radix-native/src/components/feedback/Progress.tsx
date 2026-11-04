@@ -2,11 +2,9 @@ import React, { useEffect, useMemo } from 'react'
 import { View } from 'react-native'
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence, interpolate, cancelAnimation, Easing } from 'react-native-reanimated'
 import type { ViewStyle, StyleProp } from 'react-native'
-import { useThemeContext } from '../../hooks/useThemeContext'
+import { useMetrics } from '../../hooks/useMetrics'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
-import { scalingMap } from '../../tokens/scaling'
-import { getRadiusFactor, getRadiusThumb } from '../../tokens/radius'
 import type { RadiusToken } from '../../tokens/radius'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { MarginProps } from '../../types/marginProps'
@@ -53,19 +51,16 @@ export function Progress({
   style,
   ...rest
 }: ProgressProps) {
-  const { scaling, radius: themeRadius } = useThemeContext()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
-  const effectiveRadius = radiusProp ?? themeRadius
-  const scalingFactor = scalingMap[scaling]
-  const resolvedHeight = Math.round(SIZE_HEIGHT[size] * scalingFactor)
+  const { px, radiusFactor, radiusThumb } = useMetrics({ radius: radiusProp })
+  const resolvedHeight = px(SIZE_HEIGHT[size])
 
   // Radix: border-radius: max(factor * height/3, factor * radius-thumb)
   // When radius="none", factor=0 → borderRadius=0 (square)
-  const factor = getRadiusFactor(effectiveRadius)
   const borderRadius = Math.max(
-    Math.round(factor * resolvedHeight / 3),
-    Math.round(factor * getRadiusThumb(effectiveRadius)),
+    radiusFactor * resolvedHeight / 3,
+    radiusFactor * radiusThumb,
   )
 
   const isIndeterminate = value === undefined
@@ -110,9 +105,9 @@ export function Progress({
     ...margins,
   }), [resolvedHeight, borderRadius, colors, margins])
 
+  // Radix .rt-ProgressIndicator has no radius: the root clips it (overflow: hidden).
   const indicatorBaseStyle: ViewStyle = {
     height: '100%',
-    borderRadius,
     backgroundColor: colors.indicator,
   }
 

@@ -1,16 +1,14 @@
 import React, { useMemo } from 'react'
 import { View } from 'react-native'
 import type { StyleProp, ViewStyle } from 'react-native'
-import { useThemeContext } from '../../hooks/useThemeContext'
+import { useMetrics } from '../../hooks/useMetrics'
 import { useMargins } from '../../hooks/useMargins'
 import { createSelectionGroup } from '../internal/selectionGroup'
-import { SelectionCard, SelectionCardGrid, type SelectionCardVariant } from '../internal/SelectionCard'
-import type { TextSize } from '../typography/Text'
-import { scalingMap } from '../../tokens/scaling'
+import { SelectionCard, SelectionCardGrid, SELECTION_CARD_FONT_SIZE, type SelectionCardVariant } from '../internal/SelectionCard'
 import type { SpaceToken } from '../../tokens/spacing'
 import type { MarginProps } from '../../types/marginProps'
 import type { AccentColor } from '../../tokens/colors/types'
-import { Checkbox, type CheckboxSize } from './Checkbox'
+import { Checkbox, CHECKBOX_SIZE, type CheckboxSize } from './Checkbox'
 
 export type CheckboxCardsVariant = SelectionCardVariant
 
@@ -23,16 +21,12 @@ interface Shared {
 
 const Selection = createSelectionGroup<'multiple', Shared>({ name: 'CheckboxCards', type: 'multiple' })
 
-/** Radix: item font-size per size (font-size-2 / 3 / 4). */
-const SIZE_FONT: Record<1 | 2 | 3, TextSize> = { 1: 2, 2: 3, 3: 4 }
-
 // Radix: padding-left = space-3/4/5, padding-y = space-3/1.2, space-4*0.875, space-5/1.2,
-// checkbox-size = space-4*0.875, space-4, space-4*1.25,
-// padding-right = padding-left * 2 + checkbox-size
-const SIZE_CONFIG: Record<CheckboxSize, { paddingLeft: number; paddingY: number; checkboxSize: number; radiusLevel: 3 | 4 }> = {
-  1: { paddingLeft: 12, paddingY: 10, checkboxSize: 14, radiusLevel: 3 },
-  2: { paddingLeft: 16, paddingY: 14, checkboxSize: 16, radiusLevel: 3 },
-  3: { paddingLeft: 24, paddingY: 20, checkboxSize: 20, radiusLevel: 4 },
+// padding-right = padding-left * 2 + checkbox-size (CHECKBOX_SIZE)
+const SIZE_CONFIG: Record<CheckboxSize, { paddingLeft: number; paddingY: number; radiusLevel: 3 | 4 }> = {
+  1: { paddingLeft: 12, paddingY: 10, radiusLevel: 3 },
+  2: { paddingLeft: 16, paddingY: 14, radiusLevel: 3 },
+  3: { paddingLeft: 24, paddingY: 20, radiusLevel: 4 },
 }
 
 // ─── Root Types ─────────────────────────────────────────────────────────────────
@@ -120,13 +114,12 @@ CheckboxCardsRoot.displayName = 'CheckboxCards.Root'
 
 function CheckboxCardsItem({ value, disabled, children, style }: CheckboxCardsItemProps) {
   const item = Selection.useItem(value, disabled)
-  const { scaling } = useThemeContext()
+  const { px } = useMetrics()
   const { size, variant, color, highContrast } = item.shared
   const cfg = SIZE_CONFIG[size]
-  const factor = scalingMap[scaling]
-  const paddingLeft = Math.round(cfg.paddingLeft * factor)
-  const paddingY = Math.round(cfg.paddingY * factor)
-  const paddingRight = paddingLeft * 2 + Math.round(cfg.checkboxSize * factor)
+  const paddingLeft = px(cfg.paddingLeft)
+  const paddingY = px(cfg.paddingY)
+  const paddingRight = paddingLeft * 2 + px(CHECKBOX_SIZE[size])
 
   return (
     <SelectionCard
@@ -138,7 +131,7 @@ function CheckboxCardsItem({ value, disabled, children, style }: CheckboxCardsIt
       variant={variant}
       color={color}
       highContrast={highContrast}
-      fontSize={SIZE_FONT[size]}
+      fontSize={SELECTION_CARD_FONT_SIZE[size]}
       radiusLevel={cfg.radiusLevel}
       padding={{ top: paddingY, right: paddingRight, bottom: paddingY, left: paddingLeft }}
       indicator={

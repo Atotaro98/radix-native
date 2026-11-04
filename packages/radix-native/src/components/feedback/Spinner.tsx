@@ -11,10 +11,9 @@ import Animated, {
   cancelAnimation,
   Easing,
 } from 'react-native-reanimated'
-import { useThemeContext } from '../../hooks/useThemeContext'
+import { useMetrics } from '../../hooks/useMetrics'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
-import { scalingMap } from '../../tokens/scaling'
 import type { MarginProps } from '../../types/marginProps'
 import type { NativeViewProps } from '../../types/nativeProps'
 import type { ThemeColor } from '../../theme/theme.types'
@@ -120,12 +119,11 @@ export function Spinner({
   children,
   ...rest
 }: SpinnerProps) {
-  const { scaling } = useThemeContext()
   const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
-  const scalingFactor = scalingMap[scaling]
-  const boxSize = Math.round(SIZE_PX[size] * scalingFactor)
+  const { px, radius } = useMetrics()
+  const boxSize = px(SIZE_PX[size])
 
   // Spinner uses currentColor on web — RN default is gray-a11
   const leafColor = color ? rc(color) : rc('gray', 'a11')
@@ -133,7 +131,8 @@ export function Spinner({
   // ─── Leaf dimensions ──────────────────────────────────────────────────
   const leafWidth = boxSize * 0.125
   const leafHeight = boxSize * 0.3
-  const leafRadius = Math.max(1, leafWidth / 2)
+  // Radix .rt-SpinnerLeaf::before: border-radius: var(--radius-1)
+  const leafRadius = radius(1)
 
   const containerStyle = useMemo<ViewStyle>(() => ({
     width: boxSize,

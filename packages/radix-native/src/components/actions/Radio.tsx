@@ -2,6 +2,7 @@ import React, { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 import type { ViewStyle, StyleProp, GestureResponderEvent } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
+import { useMetrics } from '../../hooks/useMetrics'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { useControllableState } from '../../hooks/useControllableState'
@@ -9,7 +10,6 @@ import { useInteraction } from '../../hooks/useInteraction'
 import { AnimatedPressable } from '../../hooks/usePressScale'
 import { getMinHitSlop } from '../../utils/hitSlop'
 import { FocusRing } from '../internal/FocusRing'
-import { scalingMap } from '../../tokens/scaling'
 import type { AccentColor } from '../../tokens/colors/types'
 import { getClassicEffect } from '../../utils/classicEffect'
 import { ClassicOverlay } from '../internal/ClassicOverlay'
@@ -71,7 +71,7 @@ export function Radio({
   hitSlop,
   ...rest
 }: RadioProps) {
-  const { appearance, scaling } = useThemeContext()
+  const { appearance } = useThemeContext()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
   const { focused, scaleStyle, handlers } = useInteraction({
     enabled: !disabled,
@@ -88,8 +88,8 @@ export function Radio({
     onChange: onCheckedChange,
   })
 
-  const scalingFactor = scalingMap[scaling]
-  const radioSize = Math.round(SIZE_PX[size] * scalingFactor)
+  const { px } = useMetrics()
+  const radioSize = px(SIZE_PX[size])
   const dotSize = Math.round(radioSize * DOT_SCALE)
 
   // ─── Colors ─────────────────────────────────────────────────────────────

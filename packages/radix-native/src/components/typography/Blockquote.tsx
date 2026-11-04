@@ -1,12 +1,11 @@
 import React from 'react'
 import { View, Text as RNText } from 'react-native'
 import type { StyleProp, ViewStyle } from 'react-native'
-import { useThemeContext } from '../../hooks/useThemeContext'
+import { useMetrics } from '../../hooks/useMetrics'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { useTextStyle } from '../../hooks/useTextStyle'
 import { TextContext } from './TextContext'
-import { scalingMap } from '../../tokens/scaling'
 import { space } from '../../tokens/spacing'
 import type { FontSizeToken } from '../../tokens/typography'
 import type { MarginProps } from '../../types/marginProps'
@@ -50,7 +49,6 @@ export function Blockquote({
   children,
   ...rest
 }: BlockquoteProps) {
-  const { scaling } = useThemeContext()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
   // ─── Color ──────────────────────────────────────────────────────────────────
@@ -61,7 +59,7 @@ export function Blockquote({
   // Block text: ignores any surrounding text. Margins go on the container.
   const text = useTextStyle({ size, weight, color: textColor, maxFontSizeMultiplier, truncate, wrap })
   const resolvedSize = text.contextFontSize
-  const scalingFactor = scalingMap[scaling]
+  const { scaling: scalingFactor } = useMetrics()
 
   // ─── Border & padding (match Radix CSS: dynamic based on font size) ────────
   // Space tokens are scaled in Radix: --space-N: calc(Npx * var(--scaling))
