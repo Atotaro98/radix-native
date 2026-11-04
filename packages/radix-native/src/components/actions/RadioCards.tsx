@@ -182,7 +182,6 @@ function RadioCardsItem({
     borderWidth,
     borderColor,
     backgroundColor: bgColor,
-    opacity: isDisabled ? 0.5 : undefined,
   }
 
   return (
@@ -201,7 +200,7 @@ function RadioCardsItem({
     >
       {/* Plain strings must live inside <Text> in RN */}
       {typeof children === 'string' || typeof children === 'number'
-        ? <Text size={SIZE_FONT[size]}>{children}</Text>
+        ? <Text size={SIZE_FONT[size]} style={colors.text ? { color: colors.text } : undefined}>{children}</Text>
         : children}
       <FocusRing visible={focused} color={rc(prefix, 8)} borderRadius={borderRadius} />
     </AnimatedPressable>

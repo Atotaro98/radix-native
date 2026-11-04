@@ -304,14 +304,21 @@ export type CardItemVariant = 'surface' | 'classic'
 export interface CardPaints {
   bg?: Paint
   border?: Paint
-  /** Pressed background; when absent the card fades instead. */
+  /** Ring while pressed (Radix :active box-shadow). */
+  pressedBorder?: Paint
+  /** Pressed background (ghost). */
   pressedBg?: Paint
 }
 
+/** `--base-card-classic-border-color`: gray-a3 in light mode, gray-a6 in dark mode. */
+const CARD_CLASSIC_BORDER = byMode(g('a3'), g('a6'))
+
 function card(s: WithVariant<CardVariant>): CardPaints {
   switch (s.variant) {
-    case 'surface': return { bg: g('surface'), border: g('a6') }
-    case 'classic': return { bg: g(2), border: g('a3') }
+    // card.css: background --color-panel; ring --base-card-surface-box-shadow (gray-a5, :active gray-a6)
+    case 'surface': return { bg: g('panel'), border: g('a5'), pressedBorder: g('a6') }
+    // ring --base-card-classic-border-color (:active gray-a4 light / gray-a6 dark)
+    case 'classic': return { bg: g('panel'), border: CARD_CLASSIC_BORDER, pressedBorder: byMode(g('a4'), g('a6')) }
     case 'ghost': return { pressedBg: g('a4') }
   }
 }
@@ -325,17 +332,22 @@ export interface CardItemPaints {
   text?: Paint
 }
 
-function checkboxCard(s: WithVariant<CardItemVariant>): CardItemPaints {
-  return s.variant === 'classic'
-    ? { bg: g(2), border: g('a3') }
-    : { bg: g('surface'), border: g('a5') }
+/** checkbox-cards.css / radio-cards.css: items fill with --color-surface. */
+function cardItem(s: WithVariant<CardItemVariant>): CardItemPaints {
+  const border = s.variant === 'classic' ? CARD_CLASSIC_BORDER : g('a5')
+  if (s.disabled) {
+    // :has(:disabled) → text gray-a9, gray-a2 over the background
+    return { bg: layers(g('a2'), g('surface')), border, text: g('a9') }
+  }
+  return { bg: g('surface'), border }
 }
 
+const checkboxCard = (s: WithVariant<CardItemVariant>): CardItemPaints => cardItem(s)
+
 function radioCard(s: WithVariant<CardItemVariant>): CardItemPaints {
-  const checkedBorder = s.highContrast ? c(12) : c(9)
-  return s.variant === 'classic'
-    ? { bg: g(2), border: g('a3'), checkedBorder }
-    : { bg: g('surface'), border: g('a6'), checkedBorder }
+  // [data-state='checked'] → 2px outline accent-indicator (hc accent-12, disabled gray-8)
+  const checkedBorder = s.disabled ? g(8) : s.highContrast ? c(12) : c('indicator')
+  return { ...cardItem(s), checkedBorder }
 }
 
 // ─── Family: text inputs (TextField, TextArea) — text-field.css, text-area.css ─

@@ -212,7 +212,6 @@ function CheckboxCardsItem({
     borderWidth: 1,
     borderColor,
     backgroundColor: bgColor,
-    opacity: isDisabled ? 0.5 : undefined,
   }
 
   return (
@@ -231,7 +230,7 @@ function CheckboxCardsItem({
     >
       {/* Plain strings must live inside <Text> in RN */}
       {typeof children === 'string' || typeof children === 'number'
-        ? <Text size={SIZE_FONT[size]}>{children}</Text>
+        ? <Text size={SIZE_FONT[size]} style={colors.text ? { color: colors.text } : undefined}>{children}</Text>
         : children}
       {/* Checkbox absolutely positioned on the right, matching Radix CSS */}
       <View
@@ -247,7 +246,7 @@ function CheckboxCardsItem({
       >
         <Checkbox
           size={size}
-          variant={isClassic ? 'classic' : 'surface'}
+          variant="surface" // Radix checkbox-cards.tsx always renders a surface Checkbox
           color={color}
           highContrast={highContrast}
           checked={isChecked}

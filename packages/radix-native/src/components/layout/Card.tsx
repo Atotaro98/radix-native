@@ -91,9 +91,10 @@ export function Card({
     const classicEffect = isClassic
       ? getClassicEffect(appearance, { pressed })
       : undefined
-    const pressedStyle = pressed && (colors.pressedBg
-      ? { backgroundColor: colors.pressedBg }
-      : { opacity: 0.88 })
+    // Radix :active: surface/classic change the ring, ghost fills with gray-a4
+    const pressedStyle = pressed
+      ? colors.pressedBg ? { backgroundColor: colors.pressedBg } : { borderColor: colors.pressedBorder }
+      : undefined
 
     return (
       <AnimatedPressable
