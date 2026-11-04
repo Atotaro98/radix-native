@@ -2,7 +2,7 @@ import React, { useMemo } from 'react'
 import { View, Text as RNText } from 'react-native'
 import type { ViewStyle, TextStyle, StyleProp } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
-import { useResolveColor } from '../../hooks/useResolveColor'
+import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { useTextStyle } from '../../hooks/useTextStyle'
 import { scalingMap } from '../../tokens/scaling'
@@ -58,11 +58,9 @@ export function Badge({
   ...rest
 }: BadgeProps) {
   const { scaling, radius: themeRadius } = useThemeContext()
-  const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
   const effectiveRadius = radiusProp ?? themeRadius
-  const prefix = color ?? 'accent'
 
   // ─── Dimensions ─────────────────────────────────────────────────────────
   const scalingFactor = scalingMap[scaling]
@@ -77,32 +75,7 @@ export function Badge({
   )
 
   // ─── Colors ─────────────────────────────────────────────────────────────
-  const colors = useMemo(() => {
-    const hc = highContrast
-    switch (variant) {
-      case 'solid': {
-        const bg = hc ? rc(prefix, 12) : rc(prefix, 9)
-        const text = hc ? rc(prefix, 1) : rc(prefix, 'contrast')
-        return { bg, text, border: undefined }
-      }
-      case 'soft': {
-        const bg = rc(prefix, 'a3')
-        const text = hc ? rc(prefix, 12) : rc(prefix, 'a11')
-        return { bg, text, border: undefined }
-      }
-      case 'surface': {
-        const bg = rc(prefix, 'surface')
-        const text = hc ? rc(prefix, 12) : rc(prefix, 'a11')
-        const border = rc(prefix, 'a6')
-        return { bg, text, border }
-      }
-      case 'outline': {
-        const text = hc ? rc(prefix, 12) : rc(prefix, 'a11')
-        const border = rc(prefix, 'a8')
-        return { bg: 'transparent', text, border }
-      }
-    }
-  }, [variant, prefix, highContrast, rc])
+  const colors = useVariantColors('badge', { variant, color, highContrast })
 
   // ─── Styles ─────────────────────────────────────────────────────────────
   const containerStyle = useMemo<ViewStyle>(() => ({

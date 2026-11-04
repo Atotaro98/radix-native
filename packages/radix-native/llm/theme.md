@@ -67,7 +67,7 @@ When `grayColor="auto"`, the gray scale is automatically matched to the accent c
 
 ## Color tokens
 
-31 color scales, each with 12 solid steps + 12 alpha steps + contrast + surface:
+31 color scales, each with 12 solid steps + 12 alpha steps + contrast, surface, indicator, track and panel:
 
 ```tsx
 import { useColor } from 'radix-native'
@@ -76,6 +76,8 @@ const accent9 = useColor('accent', 9)          // accent color step 9
 const softBg = useColor('accent', 'a3')        // accent alpha step 3
 const text = useColor('accent', 'contrast')     // text on accent-9 background
 const surface = useColor('gray', 'surface')     // translucent surface background
+const fill = useColor('accent', 'indicator')    // checked controls / progress fill (= step 9 unless overridden)
+const panel = useColor('gray', 'panel')         // Card background: white (light) / gray-2 (dark)
 const blue5 = useColor('blue', 5)              // specific named color
 
 // Single-param form:

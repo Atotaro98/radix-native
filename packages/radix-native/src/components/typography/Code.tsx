@@ -2,10 +2,10 @@ import React from 'react'
 import { Text as RNText } from 'react-native'
 import type { StyleProp, TextStyle } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
-import { useResolveColor } from '../../hooks/useResolveColor'
+import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { useTextStyle } from '../../hooks/useTextStyle'
-import { TextContext } from './TextContext'
+import { TextContext, useParentText } from './TextContext'
 import { getRadius } from '../../tokens/radius'
 import type { FontSizeToken } from '../../tokens/typography'
 import type { AccentColor } from '../../tokens/colors/types'
@@ -63,38 +63,16 @@ export function Code({
   ...rest
 }: CodeProps) {
   const { radius } = useThemeContext()
-  const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
-  // ─── Color helpers ───────────────────────────────────────────────────────────
-  // When `color` prop is set, use that color's steps; otherwise use 'accent-*'
-  const prefix = color ?? 'accent'
-
-  const hc = highContrast
-
-  const textColor = (() => {
-    switch (variant) {
-      case 'solid':
-        return hc ? rc(prefix, 1) : rc(prefix, 'contrast')
-      case 'soft':
-      case 'outline':
-      case 'ghost':
-      default:
-        return hc ? rc(prefix, 12) : rc(prefix, 'a11')
-    }
-  })()
-
-  const backgroundColor = (() => {
-    switch (variant) {
-      case 'solid': return hc ? rc(prefix, 12) : rc(prefix, 9)
-      case 'soft':  return rc(prefix, 'a3')
-      default:      return undefined
-    }
-  })()
-
-  const borderColor = variant === 'outline'
-    ? rc(prefix, 'a8')
-    : undefined
+  // ─── Colors ─────────────────────────────────────────────────────────────────
+  const colors = useVariantColors('code', { variant, color, highContrast })
+  // Ghost without a color inherits: from the parent text, else body text gray-12.
+  const isNested = useParentText() !== null
+  const fallbackColor = useVariantColors('text', {}).text
+  const textColor = colors.text ?? (isNested ? undefined : fallbackColor)
+  const backgroundColor = colors.bg
+  const borderColor = colors.border
 
   // ─── Text style ──────────────────────────────────────────────────────────────
   // Radix `--code-*`: 0.95em of the surrounding text (or of the size token when

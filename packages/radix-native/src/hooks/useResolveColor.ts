@@ -14,7 +14,13 @@ export type AlphaStep =
   | 'a1' | 'a2' | 'a3' | 'a4' | 'a5' | 'a6'
   | 'a7' | 'a8' | 'a9' | 'a10' | 'a11' | 'a12'
 
-export type ColorStep = SolidStep | AlphaStep | 'contrast' | 'surface'
+/**
+ * - `contrast`: text over step 9.
+ * - `surface`: translucent tinted surface.
+ * - `indicator` / `track`: the fill of checked controls and progress (step 9 unless overridden).
+ * - `panel`: solid panel background (white in light mode, step 2 in dark mode).
+ */
+export type ColorStep = SolidStep | AlphaStep | 'contrast' | 'surface' | 'indicator' | 'track' | 'panel'
 
 // ─── Overloaded return type ───────────────────────────────────────────────────
 

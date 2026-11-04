@@ -2,7 +2,7 @@ import React, { useMemo, useState, useCallback } from 'react'
 import { View, Image, Text as RNText } from 'react-native'
 import type { ViewStyle, TextStyle, ImageStyle, StyleProp, ImageProps } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
-import { useResolveColor } from '../../hooks/useResolveColor'
+import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { useTextStyle } from '../../hooks/useTextStyle'
 import { scalingMap } from '../../tokens/scaling'
@@ -70,7 +70,6 @@ export function Avatar({
   ...rest
 }: AvatarProps) {
   const { scaling, radius: themeRadius } = useThemeContext()
-  const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
   // ─── Image loading state (mirrors Radix idle → loaded | error) ──────────
@@ -84,7 +83,6 @@ export function Avatar({
     setStatus('idle')
   }
 
-  const prefix = color ?? 'accent'
 
   // ─── Dimensions ─────────────────────────────────────────────────────────
   const scalingFactor = scalingMap[scaling]
@@ -98,21 +96,7 @@ export function Avatar({
   )
 
   // ─── Colors ─────────────────────────────────────────────────────────────
-  const colors = useMemo(() => {
-    const hc = highContrast
-    switch (variant) {
-      case 'solid': {
-        const bg = hc ? rc(prefix, 12) : rc(prefix, 9)
-        const text = hc ? rc(prefix, 1) : rc(prefix, 'contrast')
-        return { bg, text }
-      }
-      case 'soft': {
-        const bg = rc(prefix, 'a3')
-        const text = hc ? rc(prefix, 12) : rc(prefix, 'a11')
-        return { bg, text }
-      }
-    }
-  }, [variant, prefix, highContrast, rc])
+  const colors = useVariantColors('avatar', { variant, color, highContrast })
 
   // ─── Image source ───────────────────────────────────────────────────────
   const imageSource = useMemo((): ImageProps['source'] | undefined => {

@@ -3,6 +3,7 @@ import { View } from 'react-native'
 import type { ViewStyle, StyleProp, GestureResponderEvent, NativeSyntheticEvent, TargetedEvent } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
+import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { useInteraction } from '../../hooks/useInteraction'
 import { AnimatedPressable } from '../../hooks/usePressScale'
@@ -71,24 +72,7 @@ export function Card({
   const borderRadius = getRadius(radius, SIZE_RADIUS_LEVEL[size])
 
   // ─── Colors ─────────────────────────────────────────────────────────────
-  const colors = useMemo(() => {
-    switch (variant) {
-      case 'surface':
-        return {
-          bg: rc('gray', 'surface'),
-          border: rc('gray', 'a6'),
-          showBorder: true,
-        }
-      case 'classic':
-        return {
-          bg: rc('gray', 2),
-          border: rc('gray', 'a3'),
-          showBorder: true,
-        }
-      case 'ghost':
-        return { bg: undefined, pressedBg: rc('gray', 'a4'), border: undefined, showBorder: false }
-    }
-  }, [variant, rc])
+  const colors = useVariantColors('card', { variant })
 
   const isClassic = variant === 'classic'
 
@@ -97,7 +81,7 @@ export function Card({
     padding: resolvedPadding,
     borderRadius,
     backgroundColor: colors.bg,
-    borderWidth: colors.showBorder ? 1 : undefined,
+    borderWidth: colors.border ? 1 : undefined,
     borderColor: colors.border,
     overflow: 'hidden',
     ...margins,
@@ -107,9 +91,10 @@ export function Card({
     const classicEffect = isClassic
       ? getClassicEffect(appearance, { pressed })
       : undefined
-    const pressedStyle = pressed && (colors.pressedBg
-      ? { backgroundColor: colors.pressedBg }
-      : { opacity: 0.88 })
+    // Radix :active: surface/classic change the ring, ghost fills with gray-a4
+    const pressedStyle = pressed
+      ? colors.pressedBg ? { backgroundColor: colors.pressedBg } : { borderColor: colors.pressedBorder }
+      : undefined
 
     return (
       <AnimatedPressable

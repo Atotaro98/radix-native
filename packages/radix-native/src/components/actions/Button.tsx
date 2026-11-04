@@ -18,7 +18,7 @@ import type { MarginProps } from '../../types/marginProps'
 import { ClassicOverlay } from '../internal/ClassicOverlay'
 import { FocusRing } from '../internal/FocusRing'
 import { Spinner, type SpinnerSize } from '../feedback/Spinner'
-import { getButtonColors } from './buttonColors'
+import { useVariantColors } from '../../hooks/useVariantColors'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -117,10 +117,7 @@ export function Button({
   )
 
   // ─── Colors ────────────────────────────────────────────────────────────────
-  const colors = useMemo(
-    () => getButtonColors(rc, variant, prefix, highContrast, isDisabled),
-    [rc, variant, prefix, highContrast, isDisabled],
-  )
+  const colors = useVariantColors('button', { variant, color, highContrast, disabled: isDisabled })
   const focusColor = rc(prefix, 8)
 
   // ─── Text style ────────────────────────────────────────────────────────────

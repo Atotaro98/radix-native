@@ -22,6 +22,8 @@ const colorMap: Record<string, ColorScaleWithModes> = {
  * - `'accent-a9'`       → alpha step a9 of the active accent color
  * - `'accent-contrast'` → contrast color (text over step 9 background)
  * - `'accent-surface'`  → translucent tinted surface
+ * - `'accent-indicator'`, `'accent-track'` → step 9 (follow overrides of 9)
+ * - `'gray-panel'`      → solid panel: white (light) / step 2 (dark)
  * - `'gray-9'`          → step 9 of the resolved gray color
  * - `'blue-9'`          → step 9 of the blue scale (exact, not aliased)
  * - `'#ff0000'`         → returned as-is (escape hatch)
@@ -50,26 +52,46 @@ export function resolveColor(
     step = color.slice(dashIdx + 1)
   }
 
-  // Check overrides first (per-scale, per-mode — like CSS custom properties in Radix web)
-  if (colorOverrides) {
-    const scaleOverride = colorOverrides[colorName as keyof ColorOverrides]
-    if (scaleOverride) {
-      const modeOverride = scaleOverride[appearance]
-      if (modeOverride) {
-        const value = (modeOverride as Record<string, string>)[step]
-        if (value !== undefined) return value
-      }
-    }
-  }
+  return resolveStep(colorName, step, appearance, colorOverrides, color as string)
+}
 
-  // Fall back to built-in scale
+/**
+ * Steps Radix derives from other steps. Resolving them through their base step
+ * means an override of the base (e.g. `9`) carries over, like CSS custom properties.
+ */
+const DERIVED_STEPS: Record<string, { light: string; dark: string }> = {
+  indicator: { light: '9', dark: '9' },
+  track: { light: '9', dark: '9' },
+  // Radix `--color-panel-solid`: white in light mode, gray-2 in dark mode
+  panel: { light: '#ffffff', dark: '2' },
+}
+
+function resolveStep(
+  colorName: string,
+  step: string,
+  appearance: 'light' | 'dark',
+  colorOverrides: ColorOverrides | undefined,
+  original: string,
+): string {
+  // Check overrides first (per-scale, per-mode — like CSS custom properties in Radix web)
+  const modeOverride = colorOverrides?.[colorName as keyof ColorOverrides]?.[appearance]
+  const overridden = (modeOverride as Record<string, string> | undefined)?.[step]
+  if (overridden !== undefined) return overridden
+
   const scale = colorMap[colorName]?.[appearance]
   if (!scale) {
-    if (isDev && !color.startsWith('#') && !color.startsWith('rgb')) {
-      console.warn(`[radix-native] Unknown color token: "${color}"`)
+    if (isDev && !original.startsWith('#') && !original.startsWith('rgb')) {
+      console.warn(`[radix-native] Unknown color token: "${original}"`)
     }
-    return color as string
+    return original
   }
 
-  return (scale as unknown as Record<string, string>)[step] ?? (color as string)
+  const derived = DERIVED_STEPS[step]?.[appearance]
+  if (derived !== undefined) {
+    return derived.startsWith('#')
+      ? derived
+      : resolveStep(colorName, derived, appearance, colorOverrides, original)
+  }
+
+  return (scale as unknown as Record<string, string>)[step] ?? original
 }

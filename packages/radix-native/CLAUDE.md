@@ -3,7 +3,7 @@
 React Native UI library that replicates the Radix Themes (web) API.
 Same prop names, same variants, same tokens. Web devs use it instantly.
 
-Domain vocabulary (Text style, Text role, Weight intent, Compact text, Radix parity…) lives in `GLOSSARY.md`.
+Domain vocabulary (Text style, Text role, Variant recipe, Variant family, Radix parity…) lives in `GLOSSARY.md`.
 
 ## Architecture
 
@@ -11,19 +11,21 @@ Domain vocabulary (Text style, Text role, Weight intent, Compact text, Radix par
 packages/radix-native/src/
   theme/          ThemeRoot (stateful) + ThemeImpl (inheritable) + Theme (public)
   hooks/          useThemeContext, useColor, useResolveColor (internal), useResolveSpace, useMargins,
-                  useControllableState (internal), useInteraction (internal), useTextStyle (internal), usePressScale
+                  useControllableState (internal), useInteraction (internal), useTextStyle (internal),
+                  useVariantColors (internal), usePressScale
   tokens/         colors/ (31 scales), spacing, typography, radius, scaling
   types/          nativeProps, marginProps
-  utils/          resolveColor, resolveSpace, applyScaling, classicEffect, textStyle, hitSlop, alpha, env, fonts
+  utils/          resolveColor, variantPalette, colorMath, resolveSpace, applyScaling, classicEffect, textStyle,
+                  hitSlop, alpha, env, fonts
   components/
     internal/     ClassicOverlay, FocusRing, ColumnRows, LabeledControl (not exported)
     layout/       Box, Flex, Grid, Separator, Card
     typography/   Text, Heading, Link, Blockquote, Code, Em, Strong, Quote, Kbd, TextContext
     display/      Avatar, Badge
-    actions/      Button, IconButton (shared buttonColors), Checkbox, CheckboxGroup, CheckboxCards,
+    actions/      Button, IconButton, Checkbox, CheckboxGroup, CheckboxCards,
                   Switch, Radio, RadioGroup, RadioCards
     feedback/     Spinner, Progress, Skeleton
-    forms/        TextField, TextArea (shared inputColors)
+    forms/        TextField, TextArea
     playground/   ThemeControls
   __tests__/      Jest + @testing-library/react-native
 ```
@@ -55,7 +57,8 @@ const gray1 = useColor('gray-1')
 
 **Internal** (`useResolveColor`): returns a resolver function for components that resolve many colors in one `useMemo`. Not exported publicly.
 
-Steps: solid `1-12` (numbers), alpha `'a1'-'a12'` (strings), special `'contrast' | 'surface'`.
+Steps: solid `1-12` (numbers), alpha `'a1'-'a12'` (strings), special `'contrast' | 'surface' | 'indicator' | 'track' | 'panel'`
+(`indicator` / `track` resolve through step 9 so overrides of 9 carry over; `panel` = white / dark step 2).
 
 ### Margins — `useMargins`
 
@@ -90,25 +93,28 @@ import { getRadiusThumb } from '../../tokens/radius'
 const trackRadius = Math.max(getRadius(r, level), getRadiusThumb(r))
 ```
 
-### Variant colors
+### Variant colors — `useVariantColors`
 
-Components compute colors in a `useMemo` with a switch on `variant`:
+Every color that depends on a variant or state comes from a **Variant recipe** in
+`utils/variantPalette.ts`, read through `useVariantColors` (`hooks/useVariantColors.ts`).
+Never write `switch (variant)` color code in a component.
+
 ```tsx
-const colors = useMemo(() => {
-  const hc = highContrast
-  switch (variant) {
-    case 'solid': {
-      const bg = hc ? rc(prefix, 12) : rc(prefix, 9)
-      const text = hc ? rc('gray', 1) : rc(prefix, 'contrast')
-      return { bg, text, border: undefined }
-    }
-    case 'soft': { ... }
-    case 'surface': { ... }
-    case 'outline': { ... }
-    case 'ghost': { ... }
-  }
-}, [variant, prefix, highContrast, rc])
+const colors = useVariantColors('checkbox', { variant, color, highContrast, checked, disabled })
+// → { bg, border?, indicator? } — strings ready for styles
 ```
+
+- Recipes return **paints** — `c(step)` (the `color` prop, accent by default), `g(step)` (gray),
+  `layers(top, …, bottom)` (flattened into one color), `fade(paint, opacity)`, `byMode(light, dark)`,
+  `blackA(n)` / `whiteA(n)` — so they test against Radix CSS without a theme.
+- Recipes are grouped by **Variant family** (buttons, chips, selection controls, tracks, cards,
+  text inputs, text). Radix is not uniform across families; keep its values even where they
+  look inconsistent (e.g. solid high-contrast text `gray-1` in Button, `accent-1` in Badge), and cite
+  the Radix selector in a comment.
+- `SHADOW_1_RING` is Radix `--shadow-1` as a border color (classic variants, sunken parts).
+- Add a row to `__tests__/variantPalette.test.ts` for every rule; `contrast.test.ts` walks the
+  real recipes.
+- Shadows (`getClassicEffect`, `ClassicOverlay`) and focus rings (`rc(prefix, 8)`) stay in components.
 
 ### Shared building blocks — use these instead of re-implementing
 
@@ -122,8 +128,7 @@ const colors = useMemo(() => {
 | Control + label row in groups | `<LabeledControl role control …>` |
 | Any rendered text (size, face, letter spacing, Font scaling cap, `truncate` / `wrap`, nesting) | `useTextStyle({ inline?, role?, size?, weight?, lineHeight?, color?, compact?, maxFontSizeMultiplier?, truncate?, wrap?, margins? })` → `{ style, textProps, contextFontSize }` — see Text style below |
 | Minimum touch target | `hitSlop ?? getMinHitSlop(width, height)` (44pt) |
-| Button / IconButton colors | `getButtonColors(rc, variant, prefix, highContrast, disabled)` |
-| TextField / TextArea colors | `getTextInputColors(rc, variant, prefix, focused, disabled)` |
+| Colors of a component's parts for its variant and state | `useVariantColors(recipe, { variant?, color, highContrast?, checked?, disabled?, pressed?, focused? })` — see Variant colors above |
 | Translucent hex | `withAlpha(color, alpha)` — never concatenate `hex + '99'` |
 | Dev-only logging | `isDev` from `utils/env` — never reference `__DEV__` directly (crashes outside Metro) |
 
@@ -268,7 +273,7 @@ const { scaleStyle, handlePressIn, handlePressOut } = usePressScale(!disabled)
 - Additive: works alongside Radix's pressed background color changes (not a replacement)
 - Disabled when component is disabled
 
-Components with pressed bg color changes (Button, IconButton, Card) read `pressed` from `useInteraction`, then compute bg/opacity outside JSX. The style is a static array, not a callback.
+Components with pressed color changes (Button, IconButton, Card) read `pressed` from `useInteraction`, then pick the pressed bg / ring / opacity from their Variant recipe outside JSX. The style is a static array, not a callback.
 
 ## Differences from Radix web
 
@@ -288,7 +293,7 @@ See `llm/differences.md` for the complete list of API changes, visual difference
 
 ## Testing
 
-`yarn test` (Jest + `@testing-library/react-native`, Reanimated 4 via `setUpTests()` and the worklets Babel plugin). Tests live in `src/__tests__/`; render inside a theme with `renderWithTheme` from `__tests__/helpers/render`. `contrast.test.ts` checks WCAG ratios of the token combinations components use.
+`yarn test` (Jest + `@testing-library/react-native`, Reanimated 4 via `setUpTests()` and the worklets Babel plugin). Tests live in `src/__tests__/`; render inside a theme with `renderWithTheme` from `__tests__/helpers/render`. `contrast.test.ts` checks WCAG ratios of every text-on-fill pair the Variant recipes produce.
 
 ## TypeScript rules
 

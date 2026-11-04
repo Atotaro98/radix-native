@@ -43,24 +43,21 @@ function MyComponent({ m, mx, my, mt, mr, mb, ml, ...props }: MyProps) {
 }
 ```
 
-## Variant color pattern
+## Variant colors
 
-Most interactive components follow the same color logic per variant:
+Components never pick color tokens themselves. Each one asks its **Variant recipe**
+(`src/utils/variantPalette.ts`) for the colors of its parts:
 
-| Variant | Background | Text | Border |
-|---------|-----------|------|--------|
-| solid | `accent-9` | `accent-contrast` | none |
-| soft | `accent-a3` | `accent-a11` | none |
-| surface | `accent-surface` | `accent-a11` | `accent-a7` |
-| outline | transparent | `accent-a11` | `accent-a8` |
-| ghost | transparent | `accent-a11` | none |
-| classic | `accent-9` + gradient overlay | `accent-contrast` | none |
+```tsx
+const colors = useVariantColors('button', { variant, color, highContrast, disabled })
+// → { bg, text, border, pressedBg, pressedOpacity }
+```
 
-With `highContrast`:
-- solid: bg=`accent-12`, text=`gray-1`
-- others: text=`accent-12`
-
-Disabled state always uses `gray-a3` bg, `gray-a8` text.
+Recipes are grouped by **Variant family** (buttons, chips, selection controls, tracks,
+cards, text inputs, text) and mirror Radix Themes CSS selector by selector — Radix is
+not uniform across families (e.g. solid high-contrast text is `gray-1` in Button but
+`accent-1` in Badge), so there is no single variant → token table. Change colors in the
+recipe, never in the component, and add a row to `__tests__/variantPalette.test.ts`.
 
 ## Scaling
 

@@ -1,7 +1,7 @@
 import React from 'react'
 import { Text as RNText } from 'react-native'
 import type { StyleProp, TextStyle } from 'react-native'
-import { useResolveColor } from '../../hooks/useResolveColor'
+import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { useTextStyle } from '../../hooks/useTextStyle'
 import { TextContext } from './TextContext'
@@ -55,11 +55,10 @@ export function Heading({
   children,
   ...rest
 }: HeadingProps) {
-  const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
   // Same color logic as Text (a Heading is never nested, so never inherits).
-  const textColor = color ? rc(color, highContrast ? 12 : 'a11') : rc('gray', 12)
+  const textColor = useVariantColors('text', { color, highContrast }).text
 
   // Block text: ignores any surrounding text, uses the tighter heading line heights.
   const text = useTextStyle({

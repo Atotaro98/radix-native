@@ -1,8 +1,7 @@
-import React, { useState, useCallback, useMemo } from 'react'
+import React, { useState, useCallback } from 'react'
 import { TextInput, View } from 'react-native'
 import type { TextInputProps, ViewStyle, TextStyle, StyleProp } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
-import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
 import { useTextStyle } from '../../hooks/useTextStyle'
 import { scalingMap } from '../../tokens/scaling'
@@ -10,7 +9,7 @@ import { getRadius, getFullRadius } from '../../tokens/radius'
 import type { RadiusToken, RadiusLevel } from '../../tokens/radius'
 import type { MarginProps } from '../../types/marginProps'
 import type { AccentColor } from '../../tokens/colors/types'
-import { getTextInputColors } from './inputColors'
+import { useVariantColors } from '../../hooks/useVariantColors'
 import { FocusRing } from '../internal/FocusRing'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -59,12 +58,10 @@ export function TextField({
   ...rest
 }: TextFieldProps) {
   const { scaling, radius: themeRadius } = useThemeContext()
-  const rc = useResolveColor()
   const [focused, setFocused] = useState(false)
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
   const effectiveRadius = radiusProp ?? themeRadius
-  const prefix = color ?? 'accent'
 
   const scalingFactor = scalingMap[scaling]
 
@@ -77,10 +74,7 @@ export function TextField({
   const borderRadius = Math.max(getRadius(effectiveRadius, level), getFullRadius(effectiveRadius))
 
   // ─── Colors ────────────────────────────────────────────────────────────────
-  const colors = useMemo(
-    () => getTextInputColors(rc, variant, prefix, focused, disabled),
-    [rc, variant, prefix, focused, disabled],
-  )
+  const colors = useVariantColors('textField', { variant, color, focused, disabled })
 
   // ─── Focus handlers ───────────────────────────────────────────────────────
   const onFocus = useCallback<NonNullable<TextInputProps['onFocus']>>((e) => {

@@ -1,7 +1,7 @@
 import React from 'react'
 import { Text as RNText, Linking } from 'react-native'
 import type { StyleProp, TextStyle } from 'react-native'
-import { useResolveColor } from '../../hooks/useResolveColor'
+import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { useTextStyle } from '../../hooks/useTextStyle'
 import { isDev } from '../../utils/env'
@@ -68,14 +68,13 @@ export function Link({
   children,
   ...rest
 }: LinkProps) {
-  const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
   const isNested = useParentText() !== null
 
   // ─── Color ──────────────────────────────────────────────────────────────────
   // Radix: colored links use a11, highContrast → step 12. Same as Text.
-  const prefix = color ?? 'accent'
-  const linkColor = rc(prefix, highContrast ? 12 : 'a11')
+  const colors = useVariantColors('link', { color, highContrast })
+  const linkColor = colors.text
 
   const text = useTextStyle({
     inline: true,
@@ -101,9 +100,7 @@ export function Link({
   const textDecorationLine: TextStyle['textDecorationLine'] =
     showUnderline ? 'underline' : 'none'
   // Radix: accent-a5 for normal underline, accent-a6 for highContrast
-  const textDecorationColor = showUnderline
-    ? rc(prefix, highContrast ? 'a6' : 'a5')
-    : undefined
+  const textDecorationColor = showUnderline ? colors.decoration : undefined
 
   // ─── Press handler ──────────────────────────────────────────────────────────
   const handlePress = React.useCallback(

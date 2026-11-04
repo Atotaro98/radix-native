@@ -3,7 +3,7 @@ import { View } from 'react-native'
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence, interpolate, cancelAnimation, Easing } from 'react-native-reanimated'
 import type { ViewStyle, StyleProp } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
-import { useResolveColor } from '../../hooks/useResolveColor'
+import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { scalingMap } from '../../tokens/scaling'
 import { getRadiusFactor, getRadiusThumb } from '../../tokens/radius'
@@ -54,10 +54,8 @@ export function Progress({
   ...rest
 }: ProgressProps) {
   const { scaling, radius: themeRadius } = useThemeContext()
-  const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
-  const prefix = color ?? 'accent'
   const effectiveRadius = radiusProp ?? themeRadius
   const scalingFactor = scalingMap[scaling]
   const resolvedHeight = Math.round(SIZE_HEIGHT[size] * scalingFactor)
@@ -74,33 +72,7 @@ export function Progress({
   const progress = isIndeterminate || !(max > 0) ? 0 : Math.min(Math.max(value / max, 0), 1)
 
   // ─── Colors ─────────────────────────────────────────────────────────────
-  const colors = useMemo(() => {
-    const hc = highContrast
-    const indicatorBg = hc ? rc(prefix, 12) : rc(prefix, 9)
-    switch (variant) {
-      case 'classic':
-        return {
-          trackBg: rc('gray', 'a3'),
-          trackBorder: rc('gray', 'a4'),
-          trackTopBorder: rc('gray', 'a5'),
-          indicatorBg,
-        }
-      case 'surface':
-        return {
-          trackBg: rc('gray', 'a3'),
-          trackBorder: rc('gray', 'a4'),
-          trackTopBorder: undefined,
-          indicatorBg,
-        }
-      case 'soft':
-        return {
-          trackBg: rc('gray', 'a4'),
-          trackBorder: undefined,
-          trackTopBorder: undefined,
-          indicatorBg,
-        }
-    }
-  }, [variant, prefix, highContrast, rc])
+  const colors = useVariantColors('progress', { variant, color, highContrast })
 
   // ─── Indeterminate animation ────────────────────────────────────────────
   const animValue = useSharedValue(0)
@@ -131,10 +103,9 @@ export function Progress({
   const trackStyle = useMemo<ViewStyle>(() => ({
     height: resolvedHeight,
     borderRadius,
-    backgroundColor: colors.trackBg,
-    borderWidth: colors.trackBorder ? 1 : undefined,
-    borderColor: colors.trackBorder,
-    borderTopColor: colors.trackTopBorder ?? colors.trackBorder,
+    backgroundColor: colors.track,
+    borderWidth: colors.border ? 1 : undefined,
+    borderColor: colors.border,
     overflow: 'hidden',
     ...margins,
   }), [resolvedHeight, borderRadius, colors, margins])
@@ -142,7 +113,7 @@ export function Progress({
   const indicatorBaseStyle: ViewStyle = {
     height: '100%',
     borderRadius,
-    backgroundColor: colors.indicatorBg,
+    backgroundColor: colors.indicator,
   }
 
   return (

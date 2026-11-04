@@ -2,7 +2,7 @@ import React from 'react'
 import { View, Text as RNText } from 'react-native'
 import type { StyleProp, ViewStyle } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
-import { useResolveColor } from '../../hooks/useResolveColor'
+import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { useTextStyle } from '../../hooks/useTextStyle'
 import { TextContext } from './TextContext'
@@ -51,16 +51,12 @@ export function Blockquote({
   ...rest
 }: BlockquoteProps) {
   const { scaling } = useThemeContext()
-  const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
   // ─── Color ──────────────────────────────────────────────────────────────────
-  // Radix scopes --accent-a6 per-component via data-accent-color.
-  // In RN we resolve the border color from the explicit color prop (or accent fallback).
-  const borderColor = rc(color ?? 'accent', 'a6')
-  const textColor = color
-    ? rc(color, highContrast ? 12 : 'a11')
-    : rc('gray', 12)
+  const colors = useVariantColors('blockquote', { color, highContrast })
+  const borderColor = colors.decoration
+  const textColor = colors.text
 
   // Block text: ignores any surrounding text. Margins go on the container.
   const text = useTextStyle({ size, weight, color: textColor, maxFontSizeMultiplier, truncate, wrap })
