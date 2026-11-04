@@ -3,6 +3,10 @@ import type { TextWeight } from '../components/typography/Text'
 
 // ─── Weight map ──────────────────────────────────────────────────────────────
 
+/**
+ * @deprecated Internal typography now resolves faces through the Text style module.
+ * Will be removed in the next minor release.
+ */
 export const FONT_WEIGHT: Record<TextWeight, NonNullable<TextStyle['fontWeight']>> = {
   light:   '300',
   regular: '400',
@@ -19,6 +23,10 @@ export const FONT_WEIGHT: Record<TextWeight, NonNullable<TextStyle['fontWeight']
 // Same approach as Tamagui's getSplitStyles: `delete style.fontWeight` when a
 // face override exists.
 
+/**
+ * @deprecated Internal typography now resolves faces through the Text style module.
+ * Will be removed in the next minor release.
+ */
 export function resolveFont(
   fontFamily: string | undefined,
   fontWeight: TextStyle['fontWeight'],
