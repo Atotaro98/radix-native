@@ -69,7 +69,10 @@ These are places where RN cannot replicate the exact Radix web visual, and we us
 | **Code** inline sizing | Web: `0.95em` relative to parent | RN: 0.95 × parent size when nested in a text component (via `TextContext`); token size when standalone |
 | **Em/Quote** font | Web: serif font (`Times New Roman`) at 118% | RN: same — system serif (`Times New Roman` on iOS, `serif` on Android) at 1.18 × the surrounding size, −0.025em tracking. Custom faces via `fonts.em` / `fonts.quote` |
 | **Custom fonts** | Web: one CSS family per role, the browser picks the weight / italic face | RN: one font file per face — `ThemeFonts` maps each weight (and the heading / code / strong / em / quote roles) to a face. A face's weight and style are baked in, so `fontWeight` / `fontStyle` are not set with it. A weight with no configured face renders with `fonts.regular` and warns in development |
-| **Kbd** classic shadow | Web: elaborate multi-layer box-shadow | RN: simple border + platform shadow |
+| **Kbd** classic shadow | Web: elaborate multi-layer box-shadow | RN: simple border + platform shadow, with the per-mode colors of `--kbd-box-shadow`: ring `gray-a5` / dark `gray-a7`, bottom edge `gray-a7` / dark `black-a11`, top highlight `gray-a3` / dark `gray-a11`, drop shadow `gray-12` / dark black |
+| **Button / IconButton** classic disabled | Web: `--base-button-classic-disabled-box-shadow` (inset rings + inner shadows) | RN: the outer ring only, as the border color (`gray-a4`; dark mode `gray-a5` over `gray-a2`) |
+| **TextField / TextArea** text state | Web: the browser repaints typed text when `color` changes | RN: the input always receives `value` (internal state when uncontrolled). iOS repaints only text it gets from React: a multiline input kept typed text in the old color after an appearance switch, and an uncontrolled one snapped back to `defaultValue` |
+| **TextField / TextArea** `color-scheme` | Web: `color-scheme: dark` in dark mode themes native widgets | RN: `keyboardAppearance` follows the Theme appearance (consumers can override it) |
 
 ---
 
@@ -82,9 +85,9 @@ These are the EXACT token mappings that intentionally differ between Radix web a
 | Badge/Avatar solid hc text | `accent-1` | `accent-1` | Matches (was `gray-1` bug, now fixed) |
 | Button/IconButton solid hc text | `gray-1` | `gray-1` | Matches (Button differs from Badge/Avatar in Radix) |
 | Badge surface border | `accent-a6` | `accent-a6` | Matches (was `a7` bug, now fixed) |
-| `color-surface` (Checkbox, Radio, Switch… unchecked; TextField / TextArea; card items) | `rgba(255,255,255,0.85)` / `rgba(0,0,0,0.25)` | `gray-surface` | Close approximation — RN has no page-level surface token |
+| `color-surface` (Checkbox, Radio, Switch… unchecked; TextField / TextArea; card items) | `rgba(255,255,255,0.85)` / `rgba(0,0,0,0.25)` | `gray-surface` | Close approximation — RN has no page-level surface token. In dark mode Radix darkens below the page (`rgba(0,0,0,0.25)`) while `gray-surface` (`#21212180`) lightens slightly above it |
 | `color-panel` (Card) | `--color-panel-solid` / translucent panel | `gray-panel` (white / dark `gray-2`) | The translucent panel over the page background resolves to the same color |
-| `accent-indicator` / `accent-track` | semantic | `accent-indicator` / `accent-track` | Matches — both resolve through step 9, so overrides of 9 carry over |
+| `accent-indicator` / `accent-track` | semantic | `accent-indicator` / `accent-track` | Both resolve through step 9, so overrides of 9 carry over. Differs for amber / lime / mint / sky / yellow: Radix dark `--{color}-track` mixes steps 8 and 9 (`color-mix(in oklab, 8, 9 65%)`, amber 75%) and yellow light uses step 10 for both; here they stay step 9 (pending) |
 | Stacked backgrounds (Switch, Progress soft, disabled inputs and card items) | several layered colors / gradients | one composited color | RN has one background per view |
 
 ---
