@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useEffect } from 'react'
 import { Pressable } from 'react-native'
 import Animated, {
   useSharedValue,
@@ -35,13 +35,19 @@ export function usePressScale(enabled = true) {
     })
   }, [enabled, scale])
 
+  // Always release: the component may have been disabled mid-press
+  // (e.g. `loading` set from onPressIn), and must not stay scaled down.
   const handlePressOut = useCallback(() => {
-    if (!enabled) return
     scale.value = withTiming(1, {
       duration: 150,
       easing: Easing.out(Easing.ease),
     })
-  }, [enabled, scale])
+  }, [scale])
+
+  // Disabled while scaled down: spring back even if no release arrives.
+  useEffect(() => {
+    if (!enabled) handlePressOut()
+  }, [enabled, handlePressOut])
 
   return {
     scaleStyle,
