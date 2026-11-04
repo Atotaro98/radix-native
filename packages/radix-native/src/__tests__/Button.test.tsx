@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Text as RNText } from 'react-native'
 import { fireEvent, screen } from '@testing-library/react-native'
 import { Button, IconButton } from '../index'
@@ -80,6 +80,29 @@ describe('Button', () => {
     expect(screen.getByRole('button').props.hitSlop).toEqual({ top: 10, bottom: 10, left: 0, right: 0 })
   })
 
+  it('keeps the label readable by screen readers while loading', () => {
+    renderWithTheme(<Button loading>Save</Button>)
+    expect(screen.getByRole('button', { name: 'Save' })).toBeTruthy()
+    // The inner spinner is decorative: the button itself reports busy.
+    expect(screen.queryByRole('progressbar')).toBeNull()
+  })
+
+  it('springs back when disabled mid-press', () => {
+    jest.useFakeTimers()
+    function SubmitButton() {
+      const [loading, setLoading] = useState(false)
+      return <Button loading={loading} onPressIn={() => setLoading(true)}>Send</Button>
+    }
+    renderWithTheme(<SubmitButton />)
+    const button = screen.getByRole('button')
+    // Reanimated's Jest setup exposes the live animated style on the host.
+    const scale = () => button.props.jestAnimatedStyle.value.transform
+    fireEvent(button, 'pressIn') // sets loading → the button disables while held
+    jest.advanceTimersByTime(500)
+    expect(scale()).toEqual([{ scale: 1 }])
+    jest.useRealTimers()
+  })
+
   it('lets the consumer override hitSlop and accessibilityRole', () => {
     renderWithTheme(
       <Button hitSlop={4} accessibilityRole="link">
@@ -102,6 +125,17 @@ describe('IconButton', () => {
     expect(screen.getByRole('button').props.hitSlop).toEqual({ top: 10, bottom: 10, left: 10, right: 10 })
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('accessibilityLabel'))
     warn.mockRestore()
+  })
+
+  it('renders a text child as its label, tinting icons', () => {
+    renderWithTheme(
+      <IconButton accessibilityLabel="Count">
+        <Icon />
+        {3}
+      </IconButton>,
+    )
+    expect(screen.getByText('3')).toBeTruthy()
+    expect(screen.getByTestId('icon')).toHaveTextContent(indigo.light.contrast)
   })
 
   it('does not warn when labelled', () => {

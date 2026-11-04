@@ -18,7 +18,7 @@ packages/radix-native/src/
   utils/          resolveColor, variantPalette, colorMath, resolveSpace, applyScaling, classicEffect, textStyle,
                   hitSlop, alpha, env, fonts
   components/
-    internal/     ClassicOverlay, FocusRing, ColumnRows, LabeledControl (not exported)
+    internal/     BaseButton, ControlLabel, ClassicOverlay, FocusRing, ColumnRows, LabeledControl (not exported)
     layout/       Box, Flex, Grid, Separator, Card
     typography/   Text, Heading, Link, Blockquote, Code, Em, Strong, Quote, Kbd, TextContext
     display/      Avatar, Badge
@@ -124,6 +124,8 @@ const colors = useVariantColors('checkbox', { variant, color, highContrast, chec
 | Pressed / focused state, press scale, composing consumer handlers | `useInteraction({ enabled, onPressIn, onPressOut, onFocus, onBlur })` → `{ pressed, focused, scaleStyle, handlers }` |
 | Focus indicator | `<FocusRing visible={focused} color={rc(prefix, 8)} borderRadius={r} offset={…} />` (offset only on hosts without `overflow: 'hidden'`) |
 | Classic gradient | `<ClassicOverlay borderRadius={r} />` |
+| A button (interaction, recipe colors, classic, loading, focus ring, touch target, prop order) | `<BaseButton {...props} iconOnly? />` — Button and IconButton are thin wrappers over it, like Radix `BaseButton` |
+| A row of text runs + icons inside a control (Control label) | `<ControlLabel size weight color maxFontSizeMultiplier>{children}</ControlLabel>` — merges adjacent text, one line, tints icons without `color` |
 | Equal-width columns | `<ColumnRows columns gap…>` (no `onLayout`, no `%` flexBasis) |
 | Control + label row in groups | `<LabeledControl role control …>` |
 | Any rendered text (size, face, letter spacing, Font scaling cap, `truncate` / `wrap`, nesting) | `useTextStyle({ inline?, role?, size?, weight?, lineHeight?, color?, compact?, maxFontSizeMultiplier?, truncate?, wrap?, margins? })` → `{ style, textProps, contextFontSize }` — see Text style below |
@@ -271,7 +273,7 @@ const { scaleStyle, handlePressIn, handlePressOut } = usePressScale(!disabled)
 - Scales to 0.97 on press (80ms ease-out), back to 1 on release (150ms)
 - Runs on UI thread via Reanimated shared values
 - Additive: works alongside Radix's pressed background color changes (not a replacement)
-- Disabled when component is disabled
+- Doesn't start when the component is disabled; always springs back to 1 — on release and as soon as it becomes disabled (e.g. `loading` set mid-press)
 
 Components with pressed color changes (Button, IconButton, Card) read `pressed` from `useInteraction`, then pick the pressed bg / ring / opacity from their Variant recipe outside JSX. The style is a static array, not a callback.
 

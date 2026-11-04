@@ -109,6 +109,25 @@ function AllSizes() {
   )
 }
 
+function Dot({ color }: { color?: string }) {
+  return <Text maxFontSizeMultiplier={1} style={{ color, fontSize: 10 }}>●</Text>
+}
+
+function WithIcons() {
+  return (
+    <Flex gap={3}>
+      {VARIANTS.map(variant => (
+        <Flex key={variant} direction="row" align="center" gap={2}>
+          <RowLbl label={capitalize(variant)} />
+          <Badge size={2} variant={variant}><Dot />Online</Badge>
+          <Badge size={2} variant={variant} color="green">Live {3}<Dot /></Badge>
+          <Badge size={2} variant={variant}><Dot color="#e5484d" />Custom</Badge>
+        </Flex>
+      ))}
+    </Flex>
+  )
+}
+
 export function BadgeSection() {
   return (
     <ComponentSection
@@ -117,6 +136,7 @@ export function BadgeSection() {
         { id: 'theme-colors', label: 'Theme colors', render: () => <ThemeColors /> },
         { id: 'all-colors', label: 'All colors', render: () => <AllColors /> },
         { id: 'all-sizes', label: 'All sizes', render: () => <AllSizes /> },
+        { id: 'with-icons', label: 'With icons', render: () => <WithIcons /> },
       ]}
     />
   )
