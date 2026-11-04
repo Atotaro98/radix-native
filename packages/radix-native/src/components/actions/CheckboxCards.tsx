@@ -3,6 +3,7 @@ import { View } from 'react-native'
 import type { StyleProp, ViewStyle } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
+import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { useControllableState } from '../../hooks/useControllableState'
 import { useInteraction } from '../../hooks/useInteraction'
@@ -195,8 +196,9 @@ function CheckboxCardsItem({
   // Card border & background — does NOT change on checked state (matches Radix)
   // Surface: box-shadow: 0 0 0 1px gray-a5 (simulated with borderWidth)
   // Classic: similar border + outer shadow
-  const borderColor = isClassic ? rc('gray', 'a3') : rc('gray', 'a5')
-  const bgColor = isClassic ? rc('gray', 2) : rc('gray', 'surface')
+  const colors = useVariantColors('checkboxCard', { variant: isClassic ? 'classic' : 'surface', color, highContrast, checked: isChecked, disabled: isDisabled })
+  const borderColor = colors.border
+  const bgColor = colors.bg
 
   const cardStyle: ViewStyle = {
     flexGrow: 1,

@@ -1,7 +1,7 @@
 import React from 'react'
 import { Text as RNText } from 'react-native'
 import type { StyleProp, TextStyle } from 'react-native'
-import { useResolveColor } from '../../hooks/useResolveColor'
+import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { useTextStyle } from '../../hooks/useTextStyle'
 import type { WeightIntent, TextWrapMode } from '../../utils/textStyle'
@@ -71,7 +71,6 @@ export function Text({
   children,
   ...rest
 }: TextProps) {
-  const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
   const isNested = useParentText() !== null
 
@@ -80,9 +79,8 @@ export function Text({
   //   color prop           → {color}-a11    (alpha step 11 — accessible foreground)
   //   no color, nested     → inherited from the parent text
   //   no color             → gray-12        (standard body text)
-  const textColor = color
-    ? rc(color, highContrast ? 12 : 'a11')
-    : isNested ? undefined : rc('gray', 12)
+  const colors = useVariantColors('text', { color, highContrast })
+  const textColor = !color && isNested ? undefined : colors.text
 
   const text = useTextStyle({
     inline: true,

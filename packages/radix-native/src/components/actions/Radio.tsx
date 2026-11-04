@@ -3,6 +3,7 @@ import { View } from 'react-native'
 import type { ViewStyle, StyleProp, GestureResponderEvent } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
+import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { useControllableState } from '../../hooks/useControllableState'
 import { useInteraction } from '../../hooks/useInteraction'
@@ -94,40 +95,7 @@ export function Radio({
   const dotSize = Math.round(radioSize * DOT_SCALE)
 
   // ─── Colors ─────────────────────────────────────────────────────────────
-  const colors = useMemo(() => {
-    const hc = highContrast
-    if (disabled) {
-      return {
-        bg: rc('gray', 'a3'),
-        border: rc('gray', 'a6'),
-        showBorder: true,
-        dot: checked ? rc('gray', 'a8') : undefined,
-      }
-    }
-    switch (variant) {
-      case 'classic':
-      case 'surface': {
-        if (checked) {
-          const bg = hc ? rc(prefix, 12) : rc(prefix, 9)
-          const dot = hc ? rc(prefix, 1) : rc(prefix, 'contrast')
-          return { bg, border: undefined, showBorder: false, dot }
-        }
-        return {
-          bg: rc('gray', 'surface'),
-          border: rc('gray', 'a7'),
-          showBorder: true,
-          dot: undefined,
-        }
-      }
-      case 'soft': {
-        const bg = rc(prefix, 'a4')
-        const dot = checked
-          ? (hc ? rc(prefix, 12) : rc(prefix, 'a11'))
-          : undefined
-        return { bg, border: undefined, showBorder: false, dot }
-      }
-    }
-  }, [variant, prefix, highContrast, checked, disabled, rc])
+  const colors = useVariantColors('radio', { variant, color, highContrast, checked, disabled })
 
   const handlePress = useCallback((e: GestureResponderEvent) => {
     if (disabled) return
@@ -146,7 +114,7 @@ export function Radio({
     height: radioSize,
     borderRadius: radioSize / 2,
     backgroundColor: colors.bg,
-    borderWidth: colors.showBorder ? 1 : undefined,
+    borderWidth: colors.border ? 1 : undefined,
     borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
@@ -164,17 +132,17 @@ export function Radio({
       accessibilityState={{ ...accessibilityState, checked, disabled }}
       style={[scaleStyle, radioStyle, classicStyle, style]}
     >
-      {colors.dot && (
+      {colors.indicator && (
         <View
           style={{
             width: dotSize,
             height: dotSize,
             borderRadius: dotSize / 2,
-            backgroundColor: colors.dot,
+            backgroundColor: colors.indicator,
           }}
         />
       )}
-      <FocusRing visible={focused} color={rc(color ?? 'accent', 8)} borderRadius={radioSize / 2} offset={2} />
+      <FocusRing visible={focused} color={rc(prefix, 8)} borderRadius={radioSize / 2} offset={2} />
     </AnimatedPressable>
   )
 }

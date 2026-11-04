@@ -3,6 +3,7 @@ import { View } from 'react-native'
 import type { StyleProp, ViewStyle, GestureResponderEvent } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
+import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { useControllableState } from '../../hooks/useControllableState'
 import { useInteraction } from '../../hooks/useInteraction'
@@ -104,66 +105,7 @@ export function Checkbox({
   const prefix = color ?? 'accent'
 
   // ─── Colors ────────────────────────────────────────────────────────────────
-  const colors = useMemo(() => {
-    if (disabled) {
-      const indicator = isActive ? rc('gray', 'a8') : undefined
-      switch (variant) {
-        case 'classic':
-        case 'surface':
-          return {
-            bg: rc('gray', 'a3'),
-            border: rc('gray', 'a6'),
-            indicator,
-            showBorder: true,
-          }
-        case 'soft':
-          return {
-            bg: rc('gray', 'a3'),
-            border: undefined,
-            indicator,
-            showBorder: false,
-          }
-      }
-    }
-
-    const hc = highContrast
-
-    switch (variant) {
-      case 'classic': {
-        if (isActive) {
-          const bg = hc ? rc(prefix, 12) : rc(prefix, 9)
-          const indicator = hc ? rc(prefix, 1) : rc(prefix, 'contrast')
-          return { bg, border: undefined, indicator, showBorder: false }
-        }
-        return {
-          bg: rc('gray', 'surface'),
-          border: rc('gray', 'a3'),
-          indicator: undefined,
-          showBorder: true,
-        }
-      }
-      case 'surface': {
-        if (isActive) {
-          const bg = hc ? rc(prefix, 12) : rc(prefix, 9)
-          const indicator = hc ? rc(prefix, 1) : rc(prefix, 'contrast')
-          return { bg, border: undefined, indicator, showBorder: false }
-        }
-        return {
-          bg: rc('gray', 'surface'),
-          border: rc('gray', 'a7'),
-          indicator: undefined,
-          showBorder: true,
-        }
-      }
-      case 'soft': {
-        const bg = rc(prefix, 'a5')
-        const indicator = isActive
-          ? (hc ? rc(prefix, 12) : rc(prefix, 'a11'))
-          : undefined
-        return { bg, border: undefined, indicator, showBorder: false }
-      }
-    }
-  }, [variant, prefix, highContrast, isActive, disabled, rc])
+  const colors = useVariantColors('checkbox', { variant, color, highContrast, checked: isActive, disabled })
 
   // ─── Toggle ────────────────────────────────────────────────────────────────
   // Radix: indeterminate → checked, checked → unchecked
@@ -185,7 +127,7 @@ export function Checkbox({
     height: boxSize,
     borderRadius,
     backgroundColor: colors.bg,
-    borderWidth: colors.showBorder ? 1 : undefined,
+    borderWidth: colors.border ? 1 : undefined,
     borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',

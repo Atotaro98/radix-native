@@ -3,6 +3,7 @@ import { View } from 'react-native'
 import type { StyleProp, ViewStyle } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
+import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { useControllableState } from '../../hooks/useControllableState'
 import { useInteraction } from '../../hooks/useInteraction'
@@ -167,12 +168,11 @@ function RadioCardsItem({
   const borderRadius = getRadius(radius, cfg.radiusLevel)
 
   const prefix = color ?? 'accent'
-  const hc = highContrast
 
-  const bgColor = isClassic ? rc('gray', 2) : rc('gray', 'surface')
-  const checkedBorder = hc ? rc(prefix, 12) : rc(prefix, 9)
+  const colors = useVariantColors('radioCard', { variant: isClassic ? 'classic' : 'surface', color, highContrast, checked: isChecked, disabled: isDisabled })
+  const bgColor = colors.bg
   const borderWidth = isChecked ? 2 : 1
-  const borderColor = isChecked ? checkedBorder : rc('gray', isClassic ? 'a3' : 'a6')
+  const borderColor = isChecked && colors.checkedBorder ? colors.checkedBorder : colors.border
 
   const cardStyle: ViewStyle = {
     flexGrow: 1,

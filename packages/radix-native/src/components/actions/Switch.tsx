@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback } from 'react'
 import { View } from 'react-native'
 import type { ViewStyle, StyleProp, GestureResponderEvent } from 'react-native'
 import Animated, {
@@ -9,6 +9,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
+import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { useControllableState } from '../../hooks/useControllableState'
 import { useInteraction } from '../../hooks/useInteraction'
@@ -131,49 +132,7 @@ export function Switch({
   }))
 
   // ─── Colors ────────────────────────────────────────────────────────────────
-  const colors = useMemo(() => {
-    if (disabled) {
-      return {
-        track: rc('gray', 'a3'),
-        trackBorder: variant !== 'soft' ? rc('gray', 'a6') : undefined,
-        thumb: rc('gray', 'a5'),
-      }
-    }
-
-    const hc = highContrast
-
-    if (isChecked) {
-      switch (variant) {
-        case 'classic':
-        case 'surface': {
-          const track = hc ? rc(prefix, 12) : rc(prefix, 9)
-          return { track, trackBorder: undefined, thumb: 'white' }
-        }
-        case 'soft': {
-          const track = rc(prefix, 'a5')
-          const thumb = hc ? rc(prefix, 12) : rc(prefix, 'a11')
-          return { track, trackBorder: undefined, thumb }
-        }
-      }
-    }
-
-    // Unchecked
-    switch (variant) {
-      case 'classic':
-      case 'surface':
-        return {
-          track: rc('gray', 'a3'),
-          trackBorder: rc('gray', 'a7'),
-          thumb: 'white',
-        }
-      case 'soft':
-        return {
-          track: rc('gray', 'a5'),
-          trackBorder: undefined,
-          thumb: rc('gray', 'a11'),
-        }
-    }
-  }, [variant, prefix, highContrast, isChecked, disabled, rc])
+  const colors = useVariantColors('switch', { variant, color, highContrast, checked: isChecked, disabled })
 
   // ─── Toggle ────────────────────────────────────────────────────────────────
   const handlePress = useCallback((e: GestureResponderEvent) => {
@@ -217,7 +176,7 @@ export function Switch({
       accessibilityState={{ ...accessibilityState, checked: isChecked, disabled }}
       style={[scaleStyle, trackStyle, classicStyle, style]}
     >
-      {colors.trackBorder && (
+      {colors.border && (
         <View
           pointerEvents="none"
           style={{
@@ -228,7 +187,7 @@ export function Switch({
             bottom: 0,
             borderRadius: trackRadius,
             borderWidth: 1,
-            borderColor: colors.trackBorder,
+            borderColor: colors.border,
           }}
         />
       )}
