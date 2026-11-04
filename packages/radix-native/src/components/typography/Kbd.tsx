@@ -55,7 +55,7 @@ export function Kbd({
   children,
   ...rest
 }: KbdProps) {
-  const { radius } = useThemeContext()
+  const { radius, appearance } = useThemeContext()
   const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
@@ -90,6 +90,12 @@ export function Kbd({
   const translateY = Math.round((kbdHeight - ascender) * 0.5)
 
   const isClassic = variant === 'classic'
+  // Radix --kbd-box-shadow differs per mode: in dark the bottom edge and drop
+  // shadow are black and the top highlight is bright (gray-a11).
+  const isDark = appearance === 'dark'
+  const bevel = isDark
+    ? { ring: rc('gray', 'a7'), bottom: 'rgba(0, 0, 0, 0.9)', highlight: rc('gray', 'a11'), shadow: '#000000', shadowOpacity: 0.95 }
+    : { ring: rc('gray', 'a5'), bottom: rc('gray', 'a7'), highlight: rc('gray', 'a3'), shadow: rc('gray', 12), shadowOpacity: 0.12 }
 
   const containerStyle: ViewStyle = {
     flexDirection: 'row',
@@ -105,9 +111,9 @@ export function Kbd({
     ...(isClassic
       ? {
           borderWidth: 1,
-          borderColor: rc('gray', 'a5'),
+          borderColor: bevel.ring,
           borderBottomWidth: 2,
-          borderBottomColor: rc('gray', 'a7'),
+          borderBottomColor: bevel.bottom,
         }
       : {}),
     transform: [{ translateY }],
@@ -115,9 +121,9 @@ export function Kbd({
     ...(isClassic
       ? Platform.select({
           ios: {
-            shadowColor: rc('gray', 12),
+            shadowColor: bevel.shadow,
             shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.12,
+            shadowOpacity: bevel.shadowOpacity,
             shadowRadius: 1,
           },
           android: {
@@ -137,7 +143,7 @@ export function Kbd({
         left: 1,
         right: 1,
         height: 1,
-        backgroundColor: rc('gray', 'a3'),
+        backgroundColor: bevel.highlight,
         borderTopLeftRadius: Math.max(0, borderR - 1),
         borderTopRightRadius: Math.max(0, borderR - 1),
       }
