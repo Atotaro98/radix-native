@@ -180,7 +180,7 @@ const { appearance, accentColor, onAppearanceChange } = useThemeContext()
 | ------------------- | ----------------------------------------------------------------- |
 | `useThemeContext()` | Access resolved theme values and change handlers                  |
 | `useColor()`        | Resolve color tokens to hex — `useColor('accent', 9)` or `useColor('gray-1')` |
-| `useResolveSpace()` | Resolve spacing tokens to pixels                                  |
+| `useMetrics()`      | Sizes, spacing and radius with the Theme scaling applied, as in Radix |
 | `useMargins()`      | Resolve margin props to memoized ViewStyle                        |
 | `usePressScale()`   | Subtle scale animation on press for custom components             |
 
@@ -280,7 +280,7 @@ radix-native/
 │           ├── tokens/        # colors (31 scales), spacing, typography, radius
 │           ├── theme/         # Theme, ThemeRoot, ThemeImpl, createTheme
 │           ├── hooks/         # useThemeContext, useColor, useMargins, useControllableState, useInteraction
-│           ├── utils/         # resolveColor, resolveSpace, textStyle, hitSlop, alpha, classicEffect
+│           ├── utils/         # resolveColor, metrics, textStyle, hitSlop, alpha, classicEffect
 │           ├── components/    # layout, typography, display, actions, feedback, forms (+ internal)
 │           └── __tests__/     # Jest + Testing Library
 ```

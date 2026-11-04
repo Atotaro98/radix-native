@@ -14,6 +14,10 @@ _Avoid_: Radix-like, inspired by Radix
 The settings every component reads: appearance, accent color, gray color, radius, scaling, fonts, color overrides and the Font scaling cap. A nested Theme inherits all of them from its parent and overrides only what it sets.
 _Avoid_: provider, config, global theme
 
+**Metrics**:
+The pixel values a component derives from the Theme — spacing, sizes and radius — with the Theme's scaling and radius factor already applied the way Radix applies them. A radius takes one of Radix's shapes: a plain step, a pill, a thumb, or one relative to the text size.
+_Avoid_: sizes, dimensions, tokens (for resolved values)
+
 ## Typography
 
 **Text style**:

@@ -10,12 +10,12 @@ Domain vocabulary (Text style, Text role, Variant recipe, Variant family, Radix 
 ```
 packages/radix-native/src/
   theme/          ThemeRoot (stateful) + ThemeImpl (inheritable) + Theme (public)
-  hooks/          useThemeContext, useColor, useResolveColor (internal), useResolveSpace, useMargins,
+  hooks/          useThemeContext, useColor, useResolveColor (internal), useMetrics, useMargins, useResolveSpace (deprecated),
                   useControllableState (internal), useInteraction (internal), useTextStyle (internal),
                   useVariantColors (internal), usePressScale
   tokens/         colors/ (31 scales), spacing, typography, radius, scaling
   types/          nativeProps, marginProps
-  utils/          resolveColor, variantPalette, colorMath, resolveSpace, applyScaling, classicEffect, textStyle,
+  utils/          resolveColor, variantPalette, colorMath, metrics, classicEffect, textStyle,
                   hitSlop, alpha, env, fonts
   components/
     internal/     BaseButton, BaseTextInput, ControlLabel, selectionGroup, SelectionCard, ClassicOverlay, FocusRing, ColumnRows, LabeledControl (not exported)
@@ -75,24 +75,30 @@ const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 // Then spread into style: { ...otherStyles, ...margins }
 ```
 
-### Radius
+### Metrics — `useMetrics`
+
+Every pixel value derived from the Theme (sizes, padding, gaps, radius) comes from **Metrics**
+(`useMetrics`, `hooks/useMetrics.ts`), a thin adapter over the pure `resolveMetrics` (`utils/metrics.ts`).
+Never write `Math.round(x * scalingMap[scaling])` or combine radius tokens by hand.
 
 ```tsx
-import { getRadius, getFullRadius } from 'radix-native'
-
-// Most components:
-const borderRadius = Math.max(
-  getRadius(effectiveRadius, SIZE_RADIUS_LEVEL[size]),
-  getFullRadius(effectiveRadius),
-)
-
-// Card, TextArea (no pill shape):
-const borderRadius = getRadius(radius, level)
-
-// Switch (uses thumb radius):
-import { getRadiusThumb } from '../../tokens/radius'
-const trackRadius = Math.max(getRadius(r, level), getRadiusThumb(r))
+const metrics = useMetrics({ radius: radiusProp })    // radius prop overrides the Theme's
+const height = metrics.px(SIZE_HEIGHT[size])          // calc(32px * var(--scaling)), rounded
+const gap = metrics.space(2)                          // var(--space-2), rounded; negatives allowed
+metrics.radius(level)                                 // var(--radius-N) — Card, TextArea, Checkbox…
+metrics.radius(level, 'pill')                         // max(var(--radius-N), var(--radius-full)) — Button, Badge, Avatar, TextField
+metrics.radius(level, 'thumb')                        // max(var(--radius-N), var(--radius-thumb)) — Switch
 ```
+
+- `radius` = `Npx × scaling × radius-factor`, **not rounded** (Radix keeps the fractional value).
+- One-off Radix `calc()` formulas stay in the component, written with the raw variables
+  `metrics.scaling`, `metrics.radiusFactor`, `metrics.radiusThumb`, citing the selector
+  (Kbd `factor × 0.35em`, Code `(0.5px + 0.2em) × factor`, Progress `max(factor × h/3, factor × thumb)`).
+- Size tables (`SIZE_HEIGHT`, …) stay in each component, in unscaled px; pass them through `px`.
+- Fonts are scaled by the Text style, not Metrics.
+- `getRadius`, `getFullRadius`, `getRadiusThumb`, `scalingMap`, `applyScaling`, `resolveSpace`,
+  `useResolveSpace` are deprecated public exports; don't use them inside the library.
+- Test new rules in `__tests__/metrics.test.ts` (pure tables against Radix CSS); component radius in `__tests__/radius.test.tsx`.
 
 ### Variant colors — `useVariantColors`
 
@@ -180,16 +186,14 @@ Never assemble `fontSize` / `fontFamily` / `fontWeight` / `maxFontSizeMultiplier
 
 ```tsx
 export function MyComponent({ size, variant, color, ..., m, mx, my, ..., style, ...rest }) {
-  const { scaling, fonts, radius: themeRadius } = useThemeContext()
   const rc = useResolveColor() // internal hook — not exported
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
+  const metrics = useMetrics({ radius: radiusProp })
 
   const prefix = color ?? 'accent'
-  const effectiveRadius = radiusProp ?? themeRadius
-  const scalingFactor = scalingMap[scaling]
 
-  // Dimensions (scaled)
-  // Radius
+  // Dimensions (metrics.px)
+  // Radius (metrics.radius)
   // Colors (useMemo)
   // Callbacks (useCallback)
   // Styles (useMemo, spread ...margins)
@@ -254,10 +258,10 @@ ThemeControls (dev tool) hardcodes `maxFontSizeMultiplier={1}` on all internal t
 
 | Token | Values | Usage |
 |-------|--------|-------|
-| Space | 0-9 → 0, 4, 8, 12, 16, 24, 32, 40, 48, 64 px | `resolveSpace(token, scaling)` |
-| Font size | 1-9 → 12, 14, 16, 18, 20, 24, 28, 35, 60 px | `fontSize[token] * scalingFactor` |
-| Radius | none/small/medium/large/full | `getRadius(token, level)` |
-| Scaling | 90%-110% | `scalingMap[mode]` → 0.9-1.1 |
+| Space | 0-9 → 0, 4, 8, 12, 16, 24, 32, 40, 48, 64 px | `useMetrics().space(token)` |
+| Font size | 1-9 → 12, 14, 16, 18, 20, 24, 28, 35, 60 px | `useTextStyle({ size })` |
+| Radius | none/small/medium/large/full; levels 1-6 → 3, 4, 6, 8, 12, 16 px × factor × scaling | `useMetrics().radius(level, shape?)` |
+| Scaling | 90%-110% | `useMetrics().px(n)`; raw factor `useMetrics().scaling` → 0.9-1.1 |
 | Colors | 31 scales × 12 solid + 12 alpha + contrast + surface | `useColor(name, step)` |
 
 ## Press scale animation

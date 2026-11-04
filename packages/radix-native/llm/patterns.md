@@ -59,33 +59,28 @@ not uniform across families (e.g. solid high-contrast text is `gray-1` in Button
 `accent-1` in Badge), so there is no single variant → token table. Change colors in the
 recipe, never in the component, and add a row to `__tests__/variantPalette.test.ts`.
 
-## Scaling
+## Metrics (scaling and radius)
 
-All dimensions (height, padding, gap, font-size, radius) multiply by the theme scaling factor:
-
-```tsx
-const { scaling } = useThemeContext()
-const scalingFactor = scalingMap[scaling]  // 0.9 | 0.95 | 1 | 1.05 | 1.1
-
-const resolvedHeight = Math.round(BASE_HEIGHT * scalingFactor)
-```
-
-## Radius computation
+Sizes, spacing and radius come from `useMetrics`, which applies the Theme scaling and
+radius factor the way Radix does (fonts are scaled by the Text style):
 
 ```tsx
-import { getRadius, getFullRadius } from 'radix-native'
+import { useMetrics } from 'radix-native'
 
-const effectiveRadius = radiusProp ?? themeRadius
+const metrics = useMetrics({ radius: radiusProp })   // radius prop overrides the Theme's
 
-// Standard (most components):
-const borderRadius = Math.max(
-  getRadius(effectiveRadius, level),    // level 1-6 based on component size
-  getFullRadius(effectiveRadius),       // 9999 only when token='full'
-)
+const height = metrics.px(32)                // calc(32px * var(--scaling)), rounded
+const gap = metrics.space(2)                 // var(--space-2), rounded
 
-// Card/TextArea (never pill-shaped):
-const borderRadius = getRadius(effectiveRadius, level)
+metrics.radius(level)                        // var(--radius-N) = Npx × scaling × radius-factor
+metrics.radius(level, 'pill')                // max(var(--radius-N), var(--radius-full))
+metrics.radius(level, 'thumb')               // max(var(--radius-N), var(--radius-thumb))
+
+// Raw Radix variables for one-off calc() formulas:
+const kbdRadius = metrics.radiusFactor * 0.35 * fontSize   // calc(var(--radius-factor) * 0.35em)
 ```
+
+Radius is not rounded: Radix keeps fractional values.
 
 ## Press scale animation
 

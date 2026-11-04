@@ -35,4 +35,4 @@ A React Native UI component library that mirrors the [Radix Themes](https://www.
 
 **Theme system**: Nested themes, 26 accent colors, 6 gray scales, auto gray matching, dark/light mode, radius and scaling tokens.
 
-**5 hooks**: `useThemeContext`, `useColor`, `useResolveSpace`, `useMargins`, `usePressScale`
+**5 hooks**: `useThemeContext`, `useColor`, `useMetrics`, `useMargins`, `usePressScale`

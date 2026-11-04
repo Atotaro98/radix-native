@@ -108,3 +108,6 @@ Used in margin props (`m`, `mt`, `mx`, etc.) and spacing props (`gap`, `p`, `px`
 | medium | 1 | Default rounding |
 | large | 1.5 | Pronounced rounding |
 | full | 1.5 + pill (9999) | Fully rounded / pill shape |
+
+Each component picks a radius level (1-6 → 3, 4, 6, 8, 12, 16 px). Like Radix `--radius-N`,
+the result is `level px × radius factor × scaling`; read it with `useMetrics().radius(level, shape?)`.
