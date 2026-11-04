@@ -11,3 +11,12 @@ Unify how all text renders and match Radix Themes typography more closely.
 - **Nested text**: `Strong`, `Em`, `Quote` and `Code` inside another text component no longer apply `flexShrink` or margins, matching `Text` and `Link`. Standalone `Strong` / `Em` / `Quote` default to size 3, like `Text`.
 - **Kbd** forwards native view props (`testID`, accessibility props, …).
 - `resolveFont` and `FONT_WEIGHT` are deprecated and will be removed in the next minor release.
+
+**Migration.** No props were removed or renamed, so existing code keeps compiling. Act only if one of these applies:
+
+| If you… | Do this |
+|---|---|
+| prefer the previous sans-serif `Em` / `Quote` | set your own italic face in `fonts.em` / `fonts.quote`, or override `fontFamily` / `fontSize` via `style` |
+| use `Strong` / `Em` / `Quote` standalone and relied on RN's 14px default | wrap them in `<Text size={2}>` |
+| pass a partial `fonts` map (e.g. only `regular`) and see dev warnings | add the missing weight faces (`medium`, `bold`, …) — rendering is unchanged |
+| import `resolveFont` / `FONT_WEIGHT` | render text with `<Text weight=…>` instead; both exports go away in the next minor |
