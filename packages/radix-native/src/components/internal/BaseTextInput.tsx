@@ -6,6 +6,7 @@ import { useMargins } from '../../hooks/useMargins'
 import { useTextStyle } from '../../hooks/useTextStyle'
 import { useInteraction } from '../../hooks/useInteraction'
 import { useVariantColors } from '../../hooks/useVariantColors'
+import { useControllableState } from '../../hooks/useControllableState'
 import { scalingMap } from '../../tokens/scaling'
 import { getRadius, getFullRadius } from '../../tokens/radius'
 import type { RadiusToken, RadiusLevel } from '../../tokens/radius'
@@ -53,6 +54,12 @@ const SIZE_RADIUS_LEVEL: Record<BaseTextInputSize, RadiusLevel> = { 1: 2, 2: 2, 
  * style and the order consumer props merge in. Read-only (`readOnly` or
  * `editable={false}`) looks disabled, as in Radix, but is not reported as
  * disabled to screen readers.
+ *
+ * The native input always receives `value` (internal state when the consumer
+ * passes `defaultValue` or nothing). React Native on iOS repaints only the text
+ * it gets from React when the text style changes: a multiline input keeps text
+ * the user typed in the old color (dark text after switching to dark mode), and
+ * an uncontrolled input snaps back to `defaultValue`.
  */
 export function BaseTextInput({
   multiline = false,
@@ -69,11 +76,20 @@ export function BaseTextInput({
   editable,
   readOnly,
   accessibilityState,
+  value: valueProp,
+  defaultValue,
+  onChangeText,
   ...rest
 }: InternalProps) {
-  const { scaling, radius: themeRadius } = useThemeContext()
+  const { scaling, radius: themeRadius, appearance } = useThemeContext()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
   const { focused, handlers } = useInteraction({ enabled: !disabled, onFocus, onBlur })
+
+  const [value, setValue] = useControllableState({
+    prop: valueProp,
+    defaultProp: defaultValue ?? '',
+    onChange: onChangeText,
+  })
 
   const isReadOnly = readOnly === true || editable === false
   const scalingFactor = scalingMap[scaling]
@@ -123,9 +139,13 @@ export function BaseTextInput({
     <View style={[containerStyle, style]}>
       <TextInput
         {...text.textProps}
+        // Radix sets color-scheme per appearance: native widgets (the iOS keyboard) follow the Theme
+        keyboardAppearance={appearance}
         {...rest}
         onFocus={handlers.onFocus}
         onBlur={handlers.onBlur}
+        value={value}
+        onChangeText={setValue}
         multiline={multiline}
         style={inputStyle}
         placeholderTextColor={colors.placeholder}

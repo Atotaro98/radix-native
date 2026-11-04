@@ -62,6 +62,39 @@ describe.each([
     expect(input.props.accessibilityState).toEqual({ disabled: false })
   })
 
+  // iOS multiline TextInput only recolors text the native view gets from
+  // React (RCTUITextView applies new text attributes to typing only), and an
+  // uncontrolled input snaps back to `defaultValue` when its style changes.
+  // So the input always receives `value`: typed text survives a theme switch
+  // and is repainted with the new appearance.
+  it('keeps typed text as its value across an appearance change', () => {
+    const onChangeText = jest.fn()
+    const { rerender } = renderWithTheme(<Input placeholder="Email" defaultValue="Hola" onChangeText={onChangeText} />)
+    expect(screen.getByPlaceholderText('Email').props.value).toBe('Hola')
+    fireEvent.changeText(screen.getByPlaceholderText('Email'), 'Adios')
+    expect(onChangeText).toHaveBeenCalledWith('Adios')
+    rerender(<Theme appearance="dark"><Input placeholder="Email" defaultValue="Hola" onChangeText={onChangeText} /></Theme>)
+    const input = screen.getByPlaceholderText('Email')
+    expect(input.props.value).toBe('Adios')
+    expect(input.props.defaultValue).toBeUndefined()
+    expect(input.props.style).toMatchObject({ color: slate.dark[12] })
+  })
+
+  it('the keyboard follows the Theme appearance unless overridden', () => {
+    const { rerender } = renderWithTheme(<Input placeholder="Email" />, { appearance: 'dark' })
+    expect(screen.getByPlaceholderText('Email').props.keyboardAppearance).toBe('dark')
+    rerender(<Theme appearance="dark"><Input placeholder="Email" keyboardAppearance="light" /></Theme>)
+    expect(screen.getByPlaceholderText('Email').props.keyboardAppearance).toBe('light')
+  })
+
+  it('a controlled value wins over typing', () => {
+    const onChangeText = jest.fn()
+    renderWithTheme(<Input placeholder="Email" value="fixed" onChangeText={onChangeText} />)
+    fireEvent.changeText(screen.getByPlaceholderText('Email'), 'other')
+    expect(onChangeText).toHaveBeenCalledWith('other')
+    expect(screen.getByPlaceholderText('Email').props.value).toBe('fixed')
+  })
+
   it('read-only focus ring is gray-8', () => {
     renderWithTheme(<Input placeholder="Email" readOnly />)
     const input = screen.getByPlaceholderText('Email')

@@ -77,13 +77,17 @@ export interface ButtonPaints {
   pressedOpacity?: number
 }
 
+const CLASSIC_DISABLED_RING = byMode(g('a4'), layers(g('a5'), g('a2')))
+
 function button(s: WithVariant<ButtonVariant>): ButtonPaints {
   const hc = !!s.highContrast
   if (s.disabled) {
     // .rt-BaseButton[data-disabled]
     const text = g('a8')
     switch (s.variant) {
-      case 'classic': return { bg: g(2), text, pressedBg: g(2) }
+      // --base-button-classic-disabled-box-shadow keeps a 1px ring: gray-a4 in
+      // light, gray-a5 over gray-a2 in dark (else gray-2 vanishes on gray-1)
+      case 'classic': return { bg: g(2), text, border: CLASSIC_DISABLED_RING, pressedBg: g(2) }
       case 'solid':
       case 'soft': return { bg: g('a3'), text, pressedBg: g('a3') }
       case 'surface': return { bg: g('a2'), text, border: g('a6'), pressedBg: g('a2') }

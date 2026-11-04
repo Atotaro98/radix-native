@@ -193,4 +193,21 @@ describe('Kbd', () => {
     renderWithTheme(<Kbd testID="key">⌘</Kbd>)
     expect(screen.getByTestId('key')).toBeTruthy()
   })
+
+  // kbd.css --kbd-box-shadow: light ring gray-a5, drop shadow gray-a7;
+  // dark ring gray-a7, bottom edge black-a11, highlight gray-a11, drop shadow black-a12.
+  it.each([
+    ['light', { ring: slate.light.a5, bottom: slate.light.a7, highlight: slate.light.a3, shadow: slate.light[12] }],
+    ['dark', { ring: slate.dark.a7, bottom: 'rgba(0, 0, 0, 0.9)', highlight: slate.dark.a11, shadow: '#000000' }],
+  ] as const)('classic bevel follows the %s appearance', (appearance, expected) => {
+    renderWithTheme(<Kbd testID="key">K</Kbd>, { appearance })
+    const key = screen.getByTestId('key')
+    expect(StyleSheet.flatten(key.props.style)).toMatchObject({
+      borderColor: expected.ring,
+      borderBottomColor: expected.bottom,
+      shadowColor: expected.shadow,
+    })
+    const highlight = (key.children[0] as unknown as { props: { style: object } }).props.style
+    expect(StyleSheet.flatten(highlight)).toMatchObject({ backgroundColor: expected.highlight })
+  })
 })

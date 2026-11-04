@@ -24,6 +24,9 @@ describe('buttons (base-button.css)', () => {
     ['.rt-variant-outline.rt-high-contrast', { variant: 'outline', highContrast: true }, { border: g('a11'), text: c(12) }],
     ['.rt-variant-ghost', { variant: 'ghost' }, { bg: TRANSPARENT, pressedBg: c('a4') }],
     ['[data-disabled] solid', { variant: 'solid', disabled: true }, { bg: g('a3'), text: g('a8') }],
+    // --base-button-classic-disabled-box-shadow: gray-a4 ring (light); gray-a5 over gray-a2 rings (dark)
+    ['.rt-variant-classic[data-disabled]', { variant: 'classic', disabled: true },
+      { bg: g(2), text: g('a8'), border: byMode(g('a4'), layers(g('a5'), g('a2'))) }],
   ] as const)('%s', (_selector, state, expected) => {
     expect(paints('button', state)).toMatchObject(expected)
   })
