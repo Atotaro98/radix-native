@@ -74,6 +74,8 @@ export interface ThemeChangeHandlers {
 }
 
 export interface ThemeContextValue extends ThemeChangeHandlers {
+  /** Whether this is the outermost Theme (only it can be changed through the handlers). */
+  isRoot: boolean
   /** Resolved appearance — always 'light' | 'dark', never 'inherit' */
   appearance: 'light' | 'dark'
   accentColor: AccentColor
@@ -88,6 +90,8 @@ export interface ThemeContextValue extends ThemeChangeHandlers {
   colorOverrides: ColorOverrides
   /** RN-only: global cap for font scaling (accessibility). Components use this as fallback when no local prop is set. */
   maxFontSizeMultiplier?: number
+  /** Resolves a ThemeColor token (`'accent-9'`, `'gray-a3'`, `'blue-9'`, `'#fff'`) with this Theme's values. */
+  resolveColor: (token: ThemeColor) => string
 }
 
 export interface ThemeProps {

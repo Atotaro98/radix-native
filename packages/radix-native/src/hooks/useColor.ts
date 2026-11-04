@@ -1,6 +1,5 @@
 import { useMemo } from 'react'
 import { useThemeContext } from './useThemeContext'
-import { resolveColor } from '../utils/resolveColor'
 import type { ThemeColor } from '../theme/theme.types'
 import type { ColorName, ColorStep } from './useResolveColor'
 
@@ -21,10 +20,7 @@ import type { ColorName, ColorStep } from './useResolveColor'
 export function useColor(token: ThemeColor): string
 export function useColor(color: ColorName, step: ColorStep): string
 export function useColor(first: ThemeColor | ColorName, step?: ColorStep): string {
-  const { appearance, accentColor, resolvedGrayColor, colorOverrides } = useThemeContext()
+  const { resolveColor } = useThemeContext()
   const token = step !== undefined ? `${first}-${step}` : first
-  return useMemo(
-    () => resolveColor(token, appearance, accentColor, resolvedGrayColor, colorOverrides),
-    [token, appearance, accentColor, resolvedGrayColor, colorOverrides],
-  )
+  return useMemo(() => resolveColor(token), [resolveColor, token])
 }

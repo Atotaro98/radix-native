@@ -17,7 +17,12 @@
 
 ## Nested themes
 
-Themes can nest. Inner themes inherit from outer and override specific props:
+Themes can nest. Inner themes inherit everything from the outer one and override only what they set (as Radix):
+
+- A nested Theme keeps the parent's *resolved* gray; `grayColor="auto"` must be set again to re-match a new accent.
+- `fonts` and `colorOverrides` merge with the parent's (fonts by key; overrides per scale, mode and step), the way CSS custom properties cascade.
+- A nested Theme draws a background only with an explicit `appearance` (or `hasBackground`).
+- Only the root Theme can be changed through the handlers; a nested Theme's handlers are no-ops (Radix). Place `ThemeControls` directly under the root.
 
 ```tsx
 <Theme appearance="dark" accentColor="blue">
@@ -46,7 +51,9 @@ function MyComponent() {
     scaling,              // ScalingMode
     fonts,                // ThemeFonts
     maxFontSizeMultiplier,// number | undefined — global cap
-    // Change handlers:
+    isRoot,               // boolean — whether this is the outermost Theme
+    resolveColor,         // (token: ThemeColor) => string, with this Theme's values
+    // Change handlers (no-ops in a nested Theme):
     onAppearanceChange,
     onAccentColorChange,
     onGrayColorChange,
