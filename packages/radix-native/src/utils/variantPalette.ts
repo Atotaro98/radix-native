@@ -167,35 +167,59 @@ export interface SelectionPaints {
   indicator?: Paint
 }
 
+/** Disabled ring: surface gray-a6, classic shadow-1, soft none. */
+function disabledSelectionBorder(variant: SelectionVariant): Paint | undefined {
+  if (variant === 'surface') return g('a6')
+  if (variant === 'classic') return SHADOW_1_RING
+  return undefined
+}
+
 function checkbox(s: WithVariant<SelectionVariant>): SelectionPaints {
   const hc = !!s.highContrast
   if (s.disabled) {
-    const indicator = s.checked ? g('a8') : undefined
-    return s.variant === 'soft'
-      ? { bg: g('a3'), indicator }
-      : { bg: g('a3'), border: g('a6'), indicator }
+    // checkbox.css :disabled → gray-a3 for every variant; indicator gray-a8
+    return {
+      bg: g('a3'),
+      border: disabledSelectionBorder(s.variant),
+      indicator: s.checked ? g('a8') : undefined,
+    }
   }
   if (s.variant === 'soft') {
+    // .rt-variant-soft → accent-a5; indicator accent-a11 (hc accent-12)
     return { bg: c('a5'), indicator: s.checked ? (hc ? c(12) : c('a11')) : undefined }
   }
   if (s.checked) {
-    return { bg: hc ? c(12) : c(9), indicator: hc ? c(1) : c('contrast') }
+    // checked → accent-indicator; indicator accent-contrast (hc: accent-12 / accent-1)
+    return { bg: hc ? c(12) : c('indicator'), indicator: hc ? c(1) : c('contrast') }
   }
-  return { bg: g('surface'), border: s.variant === 'classic' ? g('a3') : g('a7') }
+  // unchecked → color-surface; surface ring gray-a7, classic gray-a3 + shadow-1
+  return {
+    bg: g('surface'),
+    border: s.variant === 'classic' ? layers(g('a3'), SHADOW_1_RING) : g('a7'),
+  }
 }
 
 function radio(s: WithVariant<SelectionVariant>): SelectionPaints {
   const hc = !!s.highContrast
   if (s.disabled) {
-    return { bg: g('a3'), border: g('a6'), indicator: s.checked ? g('a8') : undefined }
+    return {
+      bg: g('a3'),
+      border: disabledSelectionBorder(s.variant),
+      indicator: s.checked ? g('a8') : undefined,
+    }
   }
   if (s.variant === 'soft') {
+    // .rt-variant-soft → accent-a4 (Checkbox uses a5); dot accent-a11 (hc accent-12)
     return { bg: c('a4'), indicator: s.checked ? (hc ? c(12) : c('a11')) : undefined }
   }
   if (s.checked) {
-    return { bg: hc ? c(12) : c(9), indicator: hc ? c(1) : c('contrast') }
+    return { bg: hc ? c(12) : c('indicator'), indicator: hc ? c(1) : c('contrast') }
   }
-  return { bg: g('surface'), border: g('a7') }
+  // unchecked → color-surface; surface ring gray-a7, classic solid gray-7 + shadow-1
+  return {
+    bg: g('surface'),
+    border: s.variant === 'classic' ? layers(g(7), SHADOW_1_RING) : g('a7'),
+  }
 }
 
 // ─── Family: tracks (Switch, Progress) — switch.css, progress.css ─────────────

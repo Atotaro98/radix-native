@@ -117,8 +117,10 @@ export function Checkbox({
 
   // ─── Classic effect ────────────────────────────────────────────────────────
   const isClassic = variant === 'classic'
-  const classicStyle = isClassic
-    ? getClassicEffect(appearance, { disabled })
+  // Radix: the raised bevel belongs to the checked state; unchecked classic is
+  // sunken (shadow-1), drawn by the border color from the recipe.
+  const classicStyle = isClassic && isActive && !disabled
+    ? getClassicEffect(appearance, {})
     : undefined
 
   // ─── Styles ────────────────────────────────────────────────────────────────

@@ -13,6 +13,7 @@ import { FocusRing } from '../internal/FocusRing'
 import { scalingMap } from '../../tokens/scaling'
 import type { AccentColor } from '../../tokens/colors/types'
 import { getClassicEffect } from '../../utils/classicEffect'
+import { ClassicOverlay } from '../internal/ClassicOverlay'
 import type { NativePressableProps } from '../../types/nativeProps'
 import type { MarginProps } from '../../types/marginProps'
 
@@ -132,6 +133,8 @@ export function Radio({
       accessibilityState={{ ...accessibilityState, checked, disabled }}
       style={[scaleStyle, radioStyle, classicStyle, style]}
     >
+      {/* Classic gradient simulation when checked */}
+      {isClassic && checked && !disabled && <ClassicOverlay borderRadius={radioSize / 2} />}
       {colors.indicator && (
         <View
           style={{
