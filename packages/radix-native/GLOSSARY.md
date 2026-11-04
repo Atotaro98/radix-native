@@ -23,7 +23,7 @@ The weight a piece of text asks for (`light`, `regular`, `medium`, `bold`), as d
 _Avoid_: font weight (when the configured face is meant)
 
 **Compact text**:
-Text inside a fixed-size control (Button, Badge, Kbd, Avatar, TextField, TextArea) whose layout would break under unbounded accessibility font scaling, so it gets a default Font scaling cap of 2.
+Text inside a control that grows with its label (Button, Badge, Kbd, TextField, TextArea) but whose layout would break under unbounded accessibility font scaling, so it gets a default Font scaling cap of 2. Text in a truly fixed-size box (Avatar initials) is capped at 1 instead.
 _Avoid_: small text, control text
 
 **Font scaling cap**:
