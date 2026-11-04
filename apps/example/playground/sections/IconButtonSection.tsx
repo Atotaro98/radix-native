@@ -55,18 +55,18 @@ function ThemeColors() {
           <Flex key={variant} direction="row" align="center" gap={2}>
             <RowLbl label={capitalize(variant)} />
             <Flex direction="row" gap={2} align="center" style={{ flex: 1 }}>
-              <IconButton size={2} variant={variant}><Icon /></IconButton>
-              <IconButton size={2} variant={variant} highContrast><Icon /></IconButton>
+              <IconButton accessibilityLabel="Sparkle" size={2} variant={variant}><Icon /></IconButton>
+              <IconButton accessibilityLabel="Sparkle" size={2} variant={variant} highContrast><Icon /></IconButton>
             </Flex>
             <Flex direction="row" gap={2} align="center" style={{ flex: 1 }}>
-              <IconButton size={2} variant={variant} color="gray"><Icon /></IconButton>
-              <IconButton size={2} variant={variant} color="gray" highContrast><Icon /></IconButton>
+              <IconButton accessibilityLabel="Sparkle" size={2} variant={variant} color="gray"><Icon /></IconButton>
+              <IconButton accessibilityLabel="Sparkle" size={2} variant={variant} color="gray" highContrast><Icon /></IconButton>
             </Flex>
             <Flex minWidth={60} align="start">
-              <IconButton size={2} variant={variant} disabled><Icon /></IconButton>
+              <IconButton accessibilityLabel="Sparkle" size={2} variant={variant} disabled><Icon /></IconButton>
             </Flex>
             <Flex minWidth={60} align="start">
-              <IconButton size={2} variant={variant} loading><Icon /></IconButton>
+              <IconButton accessibilityLabel="Sparkle" size={2} variant={variant} loading><Icon /></IconButton>
             </Flex>
           </Flex>
         ))}
@@ -93,8 +93,8 @@ function AllColors() {
             <RowLbl label={capitalize(color)} />
             {VARIANTS.map(variant => (
               <Flex key={variant} direction="row" gap={2} align="center" style={{ flex: 1 }}>
-                <IconButton size={2} variant={variant} color={color as AccentColor}><Icon /></IconButton>
-                <IconButton size={2} variant={variant} color={color as AccentColor} highContrast><Icon /></IconButton>
+                <IconButton accessibilityLabel="Sparkle" size={2} variant={variant} color={color as AccentColor}><Icon /></IconButton>
+                <IconButton accessibilityLabel="Sparkle" size={2} variant={variant} color={color as AccentColor} highContrast><Icon /></IconButton>
               </Flex>
             ))}
           </Flex>
@@ -126,7 +126,7 @@ function AllSizes() {
                 <RowLbl label={`Size ${size}`} />
                 {RADII.map(r => (
                   <Flex key={r.value} minWidth={60} align="start">
-                    <IconButton size={size} variant={variant} radius={r.value}><Icon /></IconButton>
+                    <IconButton accessibilityLabel="Sparkle" size={size} variant={variant} radius={r.value}><Icon /></IconButton>
                   </Flex>
                 ))}
               </Flex>

@@ -38,6 +38,9 @@ export type TextWrapMode = 'wrap' | 'nowrap' | 'pretty' | 'balance'
 // Font families are resolved per weight (RN loads one file per face), so the
 // table names a *family slot* instead of a CSS family list.
 
+/** RN ≥ 0.86 marks style props `readonly`; this builder fills them in place. */
+type Mutable<T> = { -readonly [K in keyof T]: T[K] }
+
 type FamilySlot = 'body' | 'heading' | 'code' | 'strong' | 'serif-em' | 'serif-quote'
 
 interface RoleSpec {
@@ -159,7 +162,7 @@ export function resolveTextStyle(
   // Explicit token, or standalone default → computed from the token scale.
   // Nested without a size → relative to the parent; with no adjustment RN text
   // inheritance does the work, so no size styles are set at all.
-  let metrics: Pick<TextStyle, 'fontSize' | 'lineHeight' | 'letterSpacing'> = {}
+  let metrics: Mutable<Pick<TextStyle, 'fontSize' | 'lineHeight' | 'letterSpacing'>> = {}
   let resolvedSize: number | undefined
   const token = request.size ?? (isNested ? undefined : request.defaultSize ?? 3)
 
@@ -180,7 +183,7 @@ export function resolveTextStyle(
   const face = resolveFace(theme.fonts, role, request.weight, isNested)
 
   // ─── Style ──────────────────────────────────────────────────────────────────
-  const style: TextStyle = { ...metrics }
+  const style: Mutable<TextStyle> = { ...metrics }
   if (face.fontFamily !== undefined) style.fontFamily = face.fontFamily
   if (face.fontWeight !== undefined) style.fontWeight = face.fontWeight
   if (face.fontStyle !== undefined) style.fontStyle = face.fontStyle
