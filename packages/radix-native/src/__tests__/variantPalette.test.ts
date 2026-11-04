@@ -119,6 +119,8 @@ describe('text inputs (text-field.css, text-area.css)', () => {
     ['surface :disabled', 'textField', { variant: 'surface', disabled: true },
       { bg: layers(g('a2'), g('surface')), border: g('a6'), text: g('a11'), placeholder: fade(g('a10'), 0.5) }],
     ['classic :disabled keeps shadow-1', 'textField', { variant: 'classic', disabled: true }, { border: SHADOW_1_RING }],
+    [':read-only:focus → gray-8 ring', 'textField', { variant: 'surface', disabled: true, focused: true }, { border: g(8) }],
+    ['soft :read-only:focus → gray-8 ring', 'textArea', { variant: 'soft', disabled: true, focused: true }, { border: g(8) }],
     ['soft :disabled keeps the accent placeholder', 'textField', { variant: 'soft', disabled: true },
       { bg: g('a3'), text: g('a11'), placeholder: fade(c(12), 0.3) }],
   ] as const)('%s', (_selector, name, state, expected) => {
