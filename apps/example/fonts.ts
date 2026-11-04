@@ -33,6 +33,15 @@ export const FONT_PRESETS: { label: string; fonts: ThemeFonts }[] = [
       medium: 'PlayfairDisplay_500Medium',
       bold: 'PlayfairDisplay_700Bold',
       heading: 'PlayfairDisplay_700Bold',
+      em: 'PlayfairDisplay_400Regular_Italic',
+      quote: 'PlayfairDisplay_400Regular_Italic',
+    },
+  },
+  {
+    // Only a regular face: medium / bold text falls back to it and warns in dev.
+    label: 'Open Sans (regular only)',
+    fonts: {
+      regular: 'OpenSans_400Regular',
     },
   },
 ]

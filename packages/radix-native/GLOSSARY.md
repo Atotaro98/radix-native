@@ -1,0 +1,35 @@
+# radix-native
+
+A React Native port of Radix Themes. This glossary names the concepts the library is built around, so that code, docs and design discussions use the same words.
+
+## Principles
+
+**Radix parity**:
+Matching the behaviour and values of Radix Themes on the web, adapted only where React Native forces a difference; every such difference is recorded in `llm/differences.md`.
+_Avoid_: Radix-like, inspired by Radix
+
+## Typography
+
+**Text style**:
+Everything that decides how a piece of text renders: size, line height, letter spacing, font face, font style, font scaling cap, wrapping, and what it inherits from or passes on to nested text. Every text-rendering module, including controls with internal labels, gets its Text style from one place.
+_Avoid_: typography (for the whole concept), font props, text config
+
+**Text role**:
+The typographic part a piece of text plays, taken from Radix: `default`, `heading`, `code`, `strong`, `em` or `quote`. Each role carries its own font family, relative size, style, weight and letter-spacing offset.
+_Avoid_: font role, text variant, text type
+
+**Weight intent**:
+The weight a piece of text asks for (`light`, `regular`, `medium`, `bold`), as distinct from the font face that ends up rendering it. When no face is configured for that weight, the intent is reported as unmet rather than silently dropped.
+_Avoid_: font weight (when the configured face is meant)
+
+**Compact text**:
+Text inside a fixed-size control (Button, Badge, Kbd, Avatar, TextField, TextArea) whose layout would break under unbounded accessibility font scaling, so it gets a default Font scaling cap of 2.
+_Avoid_: small text, control text
+
+**Font scaling cap**:
+The maximum multiplier that system accessibility font scaling may apply to a piece of text. It can be set on the text itself or globally on the Theme.
+_Avoid_: max font, font multiplier
+
+**Nested text**:
+Text rendered inside another radix-native text module. It flows inline, inherits size and color from its parent, and takes no layout of its own.
+_Avoid_: inline child, sub-text

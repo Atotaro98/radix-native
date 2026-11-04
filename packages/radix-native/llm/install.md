@@ -63,6 +63,16 @@ function Profile() {
     bold: 'Inter-Bold',
     heading: 'Inter-Bold',
     code: 'JetBrainsMono-Regular',
+    // optional — Radix role faces:
+    strong: 'Inter-Bold',        // falls back to bold → regular
+    em: 'Lora-Italic',           // falls back to the system serif
+    quote: 'Lora-Italic',        // falls back to the system serif
   }}
 >
+```
+
+Each entry is one font file (one face). Its weight / italic is baked in, so radix-native never adds
+`fontWeight` / `fontStyle` on top. A weight with no face renders with `regular` and warns in development.
+
+```tsx
 ```

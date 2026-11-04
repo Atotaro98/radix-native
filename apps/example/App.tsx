@@ -10,6 +10,7 @@ import {
 import { Lato_300Light, Lato_400Regular, Lato_700Bold } from '@expo-google-fonts/lato'
 import {
   PlayfairDisplay_400Regular,
+  PlayfairDisplay_400Regular_Italic,
   PlayfairDisplay_500Medium,
   PlayfairDisplay_700Bold,
 } from '@expo-google-fonts/playfair-display'
@@ -29,6 +30,7 @@ export default function App() {
     Lato_400Regular,
     Lato_700Bold,
     PlayfairDisplay_400Regular,
+    PlayfairDisplay_400Regular_Italic,
     PlayfairDisplay_500Medium,
     PlayfairDisplay_700Bold,
   })

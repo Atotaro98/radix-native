@@ -3,16 +3,18 @@
 React Native UI library that replicates the Radix Themes (web) API.
 Same prop names, same variants, same tokens. Web devs use it instantly.
 
+Domain vocabulary (Text style, Text role, Weight intent, Compact text, Radix parity…) lives in `GLOSSARY.md`.
+
 ## Architecture
 
 ```
 packages/radix-native/src/
   theme/          ThemeRoot (stateful) + ThemeImpl (inheritable) + Theme (public)
   hooks/          useThemeContext, useColor, useResolveColor (internal), useResolveSpace, useMargins,
-                  useControllableState (internal), useInteraction (internal), usePressScale
+                  useControllableState (internal), useInteraction (internal), useTextStyle (internal), usePressScale
   tokens/         colors/ (31 scales), spacing, typography, radius, scaling
   types/          nativeProps, marginProps
-  utils/          resolveColor, resolveSpace, applyScaling, classicEffect, typography, hitSlop, alpha, env, fonts
+  utils/          resolveColor, resolveSpace, applyScaling, classicEffect, textStyle, hitSlop, alpha, env, fonts
   components/
     internal/     ClassicOverlay, FocusRing, ColumnRows, LabeledControl (not exported)
     layout/       Box, Flex, Grid, Separator, Card
@@ -118,8 +120,7 @@ const colors = useMemo(() => {
 | Classic gradient | `<ClassicOverlay borderRadius={r} />` |
 | Equal-width columns | `<ColumnRows columns gap…>` (no `onLayout`, no `%` flexBasis) |
 | Control + label row in groups | `<LabeledControl role control …>` |
-| Font metrics | `resolveTypography(size, scaling, lineHeights?)` |
-| `truncate` / `wrap` | `getTextWrapProps(truncate, wrap)` |
+| Any rendered text (size, face, letter spacing, Font scaling cap, `truncate` / `wrap`, nesting) | `useTextStyle({ inline?, role?, size?, weight?, lineHeight?, color?, compact?, maxFontSizeMultiplier?, truncate?, wrap?, margins? })` → `{ style, textProps, contextFontSize }` — see Text style below |
 | Minimum touch target | `hitSlop ?? getMinHitSlop(width, height)` (44pt) |
 | Button / IconButton colors | `getButtonColors(rc, variant, prefix, highContrast, disabled)` |
 | TextField / TextArea colors | `getTextInputColors(rc, variant, prefix, focused, disabled)` |
@@ -143,9 +144,23 @@ Consumer props must never silently disable internal behavior:
 >
 ```
 
-### Text nesting
+### Text style — `useTextStyle`
 
-Typography components provide `TextContext` (`{ fontSize }`). A nested `Text` / `Link` without `size` (and `Text` without `color` / `weight`) must **not** set those styles so RN text inheritance applies; `Code` / `Kbd` derive their size from `parent.fontSize`.
+Every text-rendering module (typography and control labels) gets its Text style from `useTextStyle`
+(`hooks/useTextStyle.ts`), a thin adapter over the pure `resolveTextStyle` (`utils/textStyle.ts`).
+Never assemble `fontSize` / `fontFamily` / `fontWeight` / `maxFontSizeMultiplier` by hand.
+
+- **Text role** (`default | heading | code | strong | em | quote`): the `TEXT_ROLES` table mirrors Radix
+  `typography.css` (family slot, size adjust, style, weight, letter-spacing offset). Change values there only.
+- **Weight intent** → face: exact `ThemeFonts` face, else `fonts.regular` with a dev warning, else system
+  font + `fontWeight`. Custom faces never get `fontWeight` / `fontStyle` (baked into the file).
+- **Font scaling cap**: local prop > Theme prop > `2` for `compact: true` > none.
+- **Nesting**: `inline: true` reads `TextContext`. Nested text without a size inherits it (or derives it
+  from the parent for roles with a size adjust, e.g. Code 0.95, Em/Quote 1.18, Kbd 0.75 via `sizeAdjust`)
+  and never gets `flexShrink` / margins. Provide `contextFontSize` through `TextContext` from text that can
+  contain other text.
+- Color is resolved by the caller and passed in (`undefined` = inherit).
+- Test new rules in `__tests__/textStyle.test.ts` (pure tables), not through renders.
 
 ### Component structure (consistent across all components)
 
@@ -193,12 +208,13 @@ Access via `useThemeContext()` which returns:
 ## Font scaling (accessibility)
 
 All text components support `maxFontSizeMultiplier` and `allowFontScaling` props (from `NativeTextProps`).
-Components with internal text (Button, Badge, Kbd, Avatar, etc.) expose `maxFontSizeMultiplier` in their own interface.
+Components with internal text (Button, Badge, Kbd, TextField, TextArea, group items) expose `maxFontSizeMultiplier` in their own interface.
 
 Priority: **local prop > global Theme prop > undefined (no limit)**
 
-Compact components (Button, Badge, Kbd) use `minHeight` instead of `height` so they grow with font scaling.
-Their `maxFontSizeMultiplier` defaults to `2` when neither local nor global is set (WCAG AA 200%).
+Compact text (Button, Badge, Kbd, TextField, TextArea) sits in controls that use `minHeight` instead of `height` so they grow with font scaling.
+Its `maxFontSizeMultiplier` defaults to `2` when neither local nor global is set (WCAG AA 200%) — pass `compact: true` to `useTextStyle`.
+Avatar initials live in a fixed-size box and are always capped at `1`.
 
 ```tsx
 // Global cap — applies to all text components
@@ -263,7 +279,7 @@ See `llm/differences.md` for the complete list of API changes, visual difference
 - No `background-image` gradients — classic variant uses overlay Views
 - No `outline` — focus uses an absolutely positioned `FocusRing` view
 - Separator uses `StyleSheet.hairlineWidth` (1 physical pixel)
-- Em/Quote don't have serif font or 118% size adjustment (RN limitation)
+- Em/Quote use the system serif (`Times New Roman` on iOS, `serif` on Android) unless `fonts.em` / `fonts.quote` is set
 
 ## Hooks rules
 

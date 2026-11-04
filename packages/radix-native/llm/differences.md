@@ -63,7 +63,8 @@ These are places where RN cannot replicate the exact Radix web visual, and we us
 | **Card** ghost hover | Web: `gray-a3` background on hover | RN: no hover background |
 | **TextField/TextArea** focus | Web: 2px outline with offset | RN: 1px border color change + 1px inner ring |
 | **Code** inline sizing | Web: `0.95em` relative to parent | RN: 0.95 × parent size when nested in a text component (via `TextContext`); token size when standalone |
-| **Em/Quote** font | Web: serif font (`Times New Roman`) at 118% | RN: italic style only, no serif font or size adjustment |
+| **Em/Quote** font | Web: serif font (`Times New Roman`) at 118% | RN: same — system serif (`Times New Roman` on iOS, `serif` on Android) at 1.18 × the surrounding size, −0.025em tracking. Custom faces via `fonts.em` / `fonts.quote` |
+| **Custom fonts** | Web: one CSS family per role, the browser picks the weight / italic face | RN: one font file per face — `ThemeFonts` maps each weight (and the heading / code / strong / em / quote roles) to a face. A face's weight and style are baked in, so `fontWeight` / `fontStyle` are not set with it. A weight with no configured face renders with `fonts.regular` and warns in development |
 | **Kbd** classic shadow | Web: elaborate multi-layer box-shadow | RN: simple border + platform shadow |
 
 ---
@@ -117,4 +118,4 @@ These are the EXACT token mappings that intentionally differ between Radix web a
 
 ## Text nesting
 
-Typography components publish their resolved font size through `TextContext`. When `Text`, `Link`, `Code` or `Kbd` are nested inside another text component **without** an explicit `size` (and `Text` without `color` / `weight`), they inherit from the parent instead of resetting to their standalone defaults — matching how Radix behaves on the web.
+Typography components publish their resolved font size through `TextContext`. When `Text`, `Link`, `Code`, `Kbd`, `Strong`, `Em` or `Quote` are nested inside another text component **without** an explicit `size` (and `Text` without `color` / `weight`), they inherit from the parent instead of resetting to their standalone defaults — matching how Radix behaves on the web. Nested text never takes layout props (`flexShrink`, margins).

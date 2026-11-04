@@ -11,7 +11,7 @@
   scaling="100%"          // '90%' | '95%' | '100%' | '105%' | '110%'
   maxFontSizeMultiplier={2} // RN-only: global cap for accessibility font scaling
   hasBackground           // applies background color to the root view
-  fonts={{ regular: 'Inter-Regular', bold: 'Inter-Bold' }}
+  fonts={{ regular: 'Inter-Regular', bold: 'Inter-Bold' }} // one face per weight; also light, medium, heading, code, strong, em, quote
 >
 ```
 
