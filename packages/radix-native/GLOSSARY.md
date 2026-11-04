@@ -8,6 +8,12 @@ A React Native port of Radix Themes. This glossary names the concepts the librar
 Matching the behaviour and values of Radix Themes on the web, adapted only where React Native forces a difference; every such difference is recorded in `llm/differences.md`.
 _Avoid_: Radix-like, inspired by Radix
 
+## Theme
+
+**Theme**:
+The settings every component reads: appearance, accent color, gray color, radius, scaling, fonts, color overrides and the Font scaling cap. A nested Theme inherits all of them from its parent and overrides only what it sets.
+_Avoid_: provider, config, global theme
+
 ## Typography
 
 **Text style**:

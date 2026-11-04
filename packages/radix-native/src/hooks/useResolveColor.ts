@@ -1,6 +1,5 @@
 import React from 'react'
 import { useThemeContext } from './useThemeContext'
-import { resolveColor } from '../utils/resolveColor'
 import type { ThemeColor } from '../theme/theme.types'
 import type { AccentColor } from '../tokens/colors/types'
 
@@ -34,18 +33,14 @@ export interface ResolveColorFn {
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 /**
- * Internal hook — returns a memoized resolver function for components
- * that resolve many colors inside a single `useMemo`.
- * Not exported publicly — consumers should use `useColor` instead.
+ * Internal hook — the Theme's color resolver, also accepting the two-param
+ * form. Not exported publicly — consumers should use `useColor` instead.
  */
 export function useResolveColor(): ResolveColorFn {
-  const { appearance, accentColor, resolvedGrayColor, colorOverrides } = useThemeContext()
-
+  const { resolveColor } = useThemeContext()
   return React.useCallback(
-    ((first: ThemeColor | ColorName, step?: ColorStep): string => {
-      const token = step !== undefined ? `${first}-${step}` : first
-      return resolveColor(token, appearance, accentColor, resolvedGrayColor, colorOverrides)
-    }) as ResolveColorFn,
-    [appearance, accentColor, resolvedGrayColor, colorOverrides],
+    ((first: ThemeColor | ColorName, step?: ColorStep): string =>
+      resolveColor(step !== undefined ? `${first}-${step}` : first)) as ResolveColorFn,
+    [resolveColor],
   )
 }

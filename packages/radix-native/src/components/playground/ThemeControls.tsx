@@ -3,6 +3,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from '
 import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
+import { isDev } from '../../utils/env'
 import { Text } from '../typography/Text'
 import { Heading } from '../typography/Heading'
 import { getRadius } from '../../tokens/radius'
@@ -58,7 +59,14 @@ export function ThemeControls({ showCopyTheme, onCopyTheme, defaultOpen = false 
     onGrayColorChange,
     onRadiusChange,
     onScalingChange,
+    isRoot,
   } = useThemeContext()
+
+  React.useEffect(() => {
+    if (isDev && !isRoot) {
+      console.warn('[radix-native] ThemeControls is inside a nested Theme, where its changes have no effect (as in Radix). Place it directly under the root Theme.')
+    }
+  }, [isRoot])
 
   const rc = useResolveColor()
 

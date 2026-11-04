@@ -213,7 +213,10 @@ Access via `useThemeContext()` which returns:
 - `accentColor`, `grayColor`, `resolvedGrayColor`, `radius`, `scaling`
 - `fonts` (ThemeFonts)
 - `maxFontSizeMultiplier` (optional global cap)
-- Change handlers: `onAppearanceChange`, `onAccentColorChange`, etc.
+- `isRoot`, and `resolveColor(token)`: the Theme's color resolver (`useColor` / internal `useResolveColor` are thin wrappers over it)
+- Change handlers: `onAppearanceChange`, `onAccentColorChange`, etc. — no-ops in a nested Theme (Radix)
+
+`ThemeRoot` only holds the state ThemeControls can change (props win when they change) and renders `ThemeImpl`, which builds the context for root and nested Themes alike: inherit from the parent, override what is set, merge `fonts` / `colorOverrides`.
 
 ## Font scaling (accessibility)
 
