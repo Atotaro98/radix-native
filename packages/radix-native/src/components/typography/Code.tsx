@@ -4,12 +4,8 @@ import type { StyleProp, TextStyle } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
-import { resolveFont, FONT_WEIGHT } from '../../utils/resolveFont'
-import { getTextWrapProps } from '../../utils/typography'
-import { SYSTEM_MONOSPACE } from '../../utils/fonts'
-import { TextContext, useParentText } from './TextContext'
-import { fontSize, letterSpacingEm } from '../../tokens/typography'
-import { scalingMap } from '../../tokens/scaling'
+import { useTextStyle } from '../../hooks/useTextStyle'
+import { TextContext } from './TextContext'
 import { getRadius } from '../../tokens/radius'
 import type { FontSizeToken } from '../../tokens/typography'
 import type { AccentColor } from '../../tokens/colors/types'
@@ -44,9 +40,6 @@ export interface CodeProps extends NativeTextProps, MarginProps {
   style?: StyleProp<TextStyle>
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-
 // ─── Component ────────────────────────────────────────────────────────────────
 
 /**
@@ -69,20 +62,9 @@ export function Code({
   style,
   ...rest
 }: CodeProps) {
-  const { scaling, fonts, radius, maxFontSizeMultiplier: globalMax } = useThemeContext()
-  const effectiveMaxFont = maxFontSizeMultiplier ?? globalMax
+  const { radius } = useThemeContext()
   const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
-
-  // ─── Typography ─────────────────────────────────────────────────────────────
-  // Radix: inline code renders at 0.95em of the surrounding text. With an
-  // explicit size (or when standalone, default 3) the token is used instead.
-  const parent = useParentText()
-  const scalingFactor = scalingMap[scaling]
-  const resolvedSize = size === undefined && parent
-    ? Math.round(parent.fontSize * 0.95)
-    : Math.round(fontSize[size ?? 3] * scalingFactor * 0.95)
-  const resolvedLetterSpacing = letterSpacingEm[size ?? 3] * resolvedSize
 
   // ─── Color helpers ───────────────────────────────────────────────────────────
   // When `color` prop is set, use that color's steps; otherwise use 'accent-*'
@@ -114,12 +96,22 @@ export function Code({
     ? rc(prefix, 'a8')
     : undefined
 
-  // ─── Font family ─────────────────────────────────────────────────────────────
-  const effectiveWeight: TextWeight = weight ?? 'regular'
-  // Code always uses a monospace face: `fonts.code`, else the system monospace
-  const font = resolveFont(fonts.code ?? SYSTEM_MONOSPACE, FONT_WEIGHT[effectiveWeight])
-
-  // ─── Wrapping / truncation ──────────────────────────────────────────────────
+  // ─── Text style ──────────────────────────────────────────────────────────────
+  // Radix `--code-*`: 0.95em of the surrounding text (or of the size token when
+  // set / standalone), monospace face (`fonts.code`, else system monospace).
+  const text = useTextStyle({
+    inline: true,
+    role: 'code',
+    size,
+    weight,
+    lineHeight: 'none',
+    color: textColor,
+    maxFontSizeMultiplier,
+    truncate,
+    wrap,
+    margins,
+  })
+  const resolvedSize = text.contextFontSize
 
   // ─── Padding — Radix: 0.1em vertical, 0.25em horizontal. Ghost: no padding.
   const isGhost = variant === 'ghost'
@@ -128,26 +120,19 @@ export function Code({
 
   // ─── Style ──────────────────────────────────────────────────────────────────
   const codeStyle: TextStyle = {
-    fontSize:         resolvedSize,
-    letterSpacing:    resolvedLetterSpacing,
-    fontWeight:       font.fontWeight,
-    fontFamily:       font.fontFamily,
-    color:            textColor,
+    ...text.style,
     backgroundColor,
     borderRadius:     getRadius(radius, 1),
     borderWidth:      borderColor ? 1 : undefined,
     borderColor,
     paddingVertical,
     paddingHorizontal,
-    // Margins
-    ...margins,
   }
 
   return (
     <TextContext.Provider value={{ fontSize: resolvedSize }}>
       <RNText
-        {...getTextWrapProps(truncate, wrap)}
-        maxFontSizeMultiplier={effectiveMaxFont}
+        {...text.textProps}
         {...rest}
         style={[codeStyle, style]}
       />
