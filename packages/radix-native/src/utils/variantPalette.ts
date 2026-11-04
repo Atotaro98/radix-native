@@ -140,9 +140,12 @@ function chip(s: WithVariant<BadgeVariant | CodeVariant>): ChipPaints {
     case 'surface':
       return { bg: c('surface'), text: coloredText, border: c('a6') }
     case 'outline':
-      return { bg: TRANSPARENT, text: coloredText, border: c('a8') }
+      // high contrast: double inset ring accent-a7 + gray-a11 → one border (like buttons)
+      return { bg: TRANSPARENT, text: coloredText, border: hc ? g('a11') : c('a8') }
     case 'ghost':
-      return { text: coloredText }
+      // code.tsx sets data-accent-color on ghost only when `color` is passed;
+      // without it the text inherits (code.css .rt-variant-ghost[data-accent-color])
+      return { text: s.hasColor ? coloredText : undefined }
   }
 }
 

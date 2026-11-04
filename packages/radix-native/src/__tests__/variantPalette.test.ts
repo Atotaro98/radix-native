@@ -26,3 +26,21 @@ describe('buttons (base-button.css)', () => {
     expect(paints('button', state)).toMatchObject(expected)
   })
 })
+
+describe('chips (badge.css, avatar.css, code.css)', () => {
+  it.each([
+    ['badge .rt-variant-solid.rt-high-contrast', 'badge', { variant: 'solid', highContrast: true }, { bg: c(12), text: c(1) }],
+    ['badge .rt-variant-surface', 'badge', { variant: 'surface' }, { bg: c('surface'), border: c('a6'), text: c('a11') }],
+    ['badge .rt-variant-outline', 'badge', { variant: 'outline' }, { border: c('a8') }],
+    ['badge .rt-variant-outline.rt-high-contrast', 'badge', { variant: 'outline', highContrast: true }, { border: g('a11'), text: c(12) }],
+    ['avatar .rt-variant-soft', 'avatar', { variant: 'soft' }, { bg: c('a3'), text: c('a11') }],
+    ['code .rt-variant-outline.rt-high-contrast', 'code', { variant: 'outline', highContrast: true }, { border: g('a11') }],
+    ['code .rt-variant-ghost[data-accent-color]', 'code', { variant: 'ghost', hasColor: true }, { text: c('a11') }],
+  ] as const)('%s', (_selector, name, state, expected) => {
+    expect(paints(name, state)).toMatchObject(expected)
+  })
+
+  it('code ghost without color inherits the text color', () => {
+    expect(paints('code', { variant: 'ghost' }).text).toBeUndefined()
+  })
+})

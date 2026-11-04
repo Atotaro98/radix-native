@@ -5,7 +5,7 @@ import { useThemeContext } from '../../hooks/useThemeContext'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { useTextStyle } from '../../hooks/useTextStyle'
-import { TextContext } from './TextContext'
+import { TextContext, useParentText } from './TextContext'
 import { getRadius } from '../../tokens/radius'
 import type { FontSizeToken } from '../../tokens/typography'
 import type { AccentColor } from '../../tokens/colors/types'
@@ -67,7 +67,10 @@ export function Code({
 
   // ─── Colors ─────────────────────────────────────────────────────────────────
   const colors = useVariantColors('code', { variant, color, highContrast })
-  const textColor = colors.text
+  // Ghost without a color inherits: from the parent text, else body text gray-12.
+  const isNested = useParentText() !== null
+  const fallbackColor = useVariantColors('text', {}).text
+  const textColor = colors.text ?? (isNested ? undefined : fallbackColor)
   const backgroundColor = colors.bg
   const borderColor = colors.border
 
