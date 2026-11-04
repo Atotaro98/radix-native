@@ -4,13 +4,12 @@ import type { ViewStyle, TextStyle, ImageStyle, StyleProp, ImageProps } from 're
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
-import { resolveFont } from '../../utils/resolveFont'
+import { useTextStyle } from '../../hooks/useTextStyle'
 import { scalingMap } from '../../tokens/scaling'
 import { getRadius, getFullRadius } from '../../tokens/radius'
 import type { RadiusToken, RadiusLevel } from '../../tokens/radius'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { FontSizeToken } from '../../tokens/typography'
-import { fontSize, letterSpacingEm } from '../../tokens/typography'
 import type { MarginProps } from '../../types/marginProps'
 import type { NativeViewProps } from '../../types/nativeProps'
 
@@ -70,7 +69,7 @@ export function Avatar({
   style,
   ...rest
 }: AvatarProps) {
-  const { scaling, fonts, radius: themeRadius } = useThemeContext()
+  const { scaling, radius: themeRadius } = useThemeContext()
   const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
@@ -145,19 +144,17 @@ export function Avatar({
     borderRadius,
   }), [boxSize, borderRadius])
 
-  const textStyle = useMemo<TextStyle>(() => {
-    const letterCount = typeof fallback === 'string' ? fallback.length : 0
-    const fontToken = letterCount === 2 ? SIZE_FONT_TWO[size] : SIZE_FONT_ONE[size]
-    const resolvedFontSize = Math.round(fontSize[fontToken] * scalingFactor)
-    return {
-      fontSize: resolvedFontSize,
-      letterSpacing: letterSpacingEm[fontToken] * resolvedFontSize,
-      lineHeight: resolvedFontSize,
-      ...resolveFont(fonts.medium ?? fonts.regular, '500'),
-      textTransform: 'uppercase',
-      color: colors.text,
-    }
-  }, [size, scalingFactor, fallback, fonts.medium, fonts.regular, colors.text])
+  // Initials sit in a fixed-size box (not minHeight), so they never scale with
+  // the accessibility font size: Font scaling cap fixed at 1.
+  const letterCount = typeof fallback === 'string' ? fallback.length : 0
+  const text = useTextStyle({
+    size: letterCount === 2 ? SIZE_FONT_TWO[size] : SIZE_FONT_ONE[size],
+    weight: 'medium',
+    lineHeight: 'tight',
+    color: colors.text,
+    maxFontSizeMultiplier: 1,
+  })
+  const textStyle = useMemo<TextStyle>(() => ({ ...text.style, textTransform: 'uppercase' }), [text.style])
 
   // ─── Derived state ──────────────────────────────────────────────────────
   const showFallback = !src || status === 'error'
@@ -167,7 +164,7 @@ export function Avatar({
       {/* Fallback: shown only when no src or image failed */}
       {showFallback && (
         typeof fallback === 'string' || typeof fallback === 'number'
-          ? <RNText style={textStyle} maxFontSizeMultiplier={1}>{fallback}</RNText>
+          ? <RNText {...text.textProps} style={textStyle}>{fallback}</RNText>
           : React.isValidElement(fallback)
             ? React.cloneElement(fallback as React.ReactElement<{ color?: string }>, { color: colors.text })
             : fallback

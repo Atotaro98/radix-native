@@ -4,7 +4,7 @@ import type { TextInputProps, ViewStyle, TextStyle, StyleProp } from 'react-nati
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
-import { fontSize, letterSpacingEm } from '../../tokens/typography'
+import { useTextStyle } from '../../hooks/useTextStyle'
 import { scalingMap } from '../../tokens/scaling'
 import { getRadius, getFullRadius } from '../../tokens/radius'
 import type { RadiusToken, RadiusLevel } from '../../tokens/radius'
@@ -58,8 +58,7 @@ export function TextField({
   accessibilityState,
   ...rest
 }: TextFieldProps) {
-  const { scaling, fonts, radius: themeRadius, maxFontSizeMultiplier: globalMax } = useThemeContext()
-  const effectiveMaxFont = maxFontSizeMultiplier ?? globalMax ?? 2
+  const { scaling, radius: themeRadius } = useThemeContext()
   const rc = useResolveColor()
   const [focused, setFocused] = useState(false)
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
@@ -67,11 +66,7 @@ export function TextField({
   const effectiveRadius = radiusProp ?? themeRadius
   const prefix = color ?? 'accent'
 
-  // ─── Typography ────────────────────────────────────────────────────────────
   const scalingFactor = scalingMap[scaling]
-  const fontIdx = SIZE_FONT[size]
-  const resolvedFontSize = Math.round(fontSize[fontIdx] * scalingFactor)
-  const resolvedLetterSpacing = letterSpacingEm[fontIdx] * resolvedFontSize
 
   // ─── Dimensions ────────────────────────────────────────────────────────────
   const resolvedHeight = Math.round(SIZE_HEIGHT[size] * scalingFactor)
@@ -111,19 +106,25 @@ export function TextField({
     ...margins,
   }
 
-  const inputStyle: TextStyle = {
-    width: '100%',
-    fontSize: resolvedFontSize,
-    letterSpacing: resolvedLetterSpacing,
+  // Compact text; single-line inputs set no line height (iOS shifts the text).
+  const text = useTextStyle({
+    size: SIZE_FONT[size],
+    lineHeight: 'none',
     color: colors.text,
-    fontFamily: fonts.regular,
+    compact: true,
+    maxFontSizeMultiplier,
+  })
+
+  const inputStyle: TextStyle = {
+    ...text.style,
+    width: '100%',
     padding: 0,
   }
 
   return (
     <View style={[containerStyle, style]}>
       <TextInput
-        maxFontSizeMultiplier={effectiveMaxFont}
+        {...text.textProps}
         {...rest}
         style={inputStyle}
         placeholderTextColor={colors.placeholder}

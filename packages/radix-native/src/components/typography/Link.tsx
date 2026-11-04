@@ -1,11 +1,9 @@
 import React from 'react'
 import { Text as RNText, Linking } from 'react-native'
 import type { StyleProp, TextStyle } from 'react-native'
-import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
-import { resolveFont, FONT_WEIGHT } from '../../utils/resolveFont'
-import { resolveTypography, getTextWrapProps } from '../../utils/typography'
+import { useTextStyle } from '../../hooks/useTextStyle'
 import { isDev } from '../../utils/env'
 import type { FontSizeToken } from '../../tokens/typography'
 import { TextContext, useParentText } from './TextContext'
@@ -70,30 +68,25 @@ export function Link({
   children,
   ...rest
 }: LinkProps) {
-  const { scaling, fonts, maxFontSizeMultiplier: globalMax } = useThemeContext()
-  const effectiveMaxFont = maxFontSizeMultiplier ?? globalMax
   const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
-  const parent = useParentText()
-  const isNested = parent !== null
-
-  // ─── Typography ─────────────────────────────────────────────────────────────
-  // Nested without an explicit size → inherit the surrounding text size.
-  const typography = React.useMemo(
-    () => (size !== undefined || !isNested ? resolveTypography(size ?? 3, scaling) : undefined),
-    [size, isNested, scaling],
-  )
-  const contextFontSize = typography?.fontSize ?? parent?.fontSize ?? 0
+  const isNested = useParentText() !== null
 
   // ─── Color ──────────────────────────────────────────────────────────────────
   // Radix: colored links use a11, highContrast → step 12. Same as Text.
   const prefix = color ?? 'accent'
   const linkColor = rc(prefix, highContrast ? 12 : 'a11')
 
-  // ─── Font family ─────────────────────────────────────────────────────────────
-  const font = weight
-    ? resolveFont(fonts[weight] ?? fonts.regular, FONT_WEIGHT[weight])
-    : isNested ? undefined : resolveFont(fonts.regular, undefined)
+  const text = useTextStyle({
+    inline: true,
+    size,
+    weight,
+    color: linkColor,
+    maxFontSizeMultiplier,
+    truncate,
+    wrap,
+    margins,
+  })
 
   // ─── Underline ──────────────────────────────────────────────────────────────
   // Radix CSS rules for .rt-underline-auto:
@@ -127,24 +120,17 @@ export function Link({
   )
 
   // ─── Style ──────────────────────────────────────────────────────────────────
-  const linkStyle = React.useMemo<TextStyle>(() => ({
-    ...typography,
-    color:      linkColor,
-    fontWeight: font?.fontWeight,
-    fontFamily: font?.fontFamily,
-    textDecorationLine,
-    textDecorationColor,
-    ...(isNested ? null : { flexShrink: 1, ...margins }),
-  }), [typography, linkColor, font?.fontWeight, font?.fontFamily, textDecorationLine, textDecorationColor, isNested, margins])
-
-  const contextValue = React.useMemo(() => ({ fontSize: contextFontSize }), [contextFontSize])
+  const linkStyle = React.useMemo<TextStyle>(
+    () => ({ ...text.style, textDecorationLine, textDecorationColor }),
+    [text.style, textDecorationLine, textDecorationColor],
+  )
+  const contextValue = React.useMemo(() => ({ fontSize: text.contextFontSize }), [text.contextFontSize])
 
   return (
     <TextContext.Provider value={contextValue}>
       <RNText
         accessibilityRole="link"
-        {...getTextWrapProps(truncate, wrap)}
-        maxFontSizeMultiplier={effectiveMaxFont}
+        {...text.textProps}
         {...rest}
         onPress={handlePress}
         style={[linkStyle, style]}

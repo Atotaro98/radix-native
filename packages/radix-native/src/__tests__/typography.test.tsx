@@ -1,7 +1,8 @@
 import React from 'react'
 import { StyleSheet } from 'react-native'
 import { screen } from '@testing-library/react-native'
-import { Text, Link, Code, Heading, Strong } from '../index'
+import { Text, Link, Code, Heading, Strong, Em, Quote, Kbd, Button, Badge, Avatar, TextArea } from '../index'
+import { SYSTEM_SERIF } from '../utils/textStyle'
 import { renderWithTheme } from './helpers/render'
 import { indigo, slate } from '../tokens/colors'
 
@@ -77,5 +78,119 @@ describe('Heading', () => {
     )
     expect(screen.getByRole('header')).toBeTruthy()
     expect(styleOf('bold').fontSize).toBeUndefined()
+  })
+})
+
+describe('Radix parity — Strong / Em / Quote', () => {
+  it('nested Strong is bold and takes no layout props', () => {
+    renderWithTheme(
+      <Text>
+        Very <Strong>bold</Strong>
+      </Text>,
+    )
+    const strong = styleOf('bold')
+    expect(strong.fontWeight).toBe('700')
+    expect(strong.flexShrink).toBeUndefined()
+  })
+
+  it('nested Em is serif italic at 1.18em with −0.025em tracking', () => {
+    renderWithTheme(
+      <Text size={3}>
+        So <Em>much</Em>
+      </Text>,
+    )
+    const em = styleOf('much')
+    expect(em).toMatchObject({ fontSize: 19, fontStyle: 'italic', fontFamily: SYSTEM_SERIF })
+    expect(em.letterSpacing).toBeCloseTo(-0.025 * 19)
+    expect(em.flexShrink).toBeUndefined()
+  })
+
+  it('standalone Quote wraps children in curly quotes at 1.18 × size 3', () => {
+    renderWithTheme(<Quote>Hi</Quote>)
+    expect(styleOf('“Hi”')).toMatchObject({ fontSize: 19, fontStyle: 'italic', flexShrink: 1 })
+  })
+
+  it('a custom em face has its italic baked in', () => {
+    renderWithTheme(
+      <Text>
+        So <Em>lora</Em>
+      </Text>,
+      { fonts: { em: 'Lora-Italic' } },
+    )
+    const em = styleOf('lora')
+    expect(em.fontFamily).toBe('Lora-Italic')
+    expect(em.fontStyle).toBeUndefined()
+  })
+})
+
+describe('Custom fonts', () => {
+  it('a weight with no configured face renders with fonts.regular and warns once', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {})
+    renderWithTheme(
+      <>
+        <Text weight="medium">first</Text>
+        <Text weight="medium">second</Text>
+      </>,
+      { fonts: { regular: 'Inter' } },
+    )
+    expect(styleOf('first')).toMatchObject({ fontFamily: 'Inter' })
+    expect(styleOf('first').fontWeight).toBeUndefined()
+    expect(warn.mock.calls.filter(([msg]) => String(msg).includes('"medium"'))).toHaveLength(1)
+    warn.mockRestore()
+  })
+
+  it('uses the exact face when configured', () => {
+    renderWithTheme(<Text weight="bold">heavy</Text>, { fonts: { regular: 'Inter', bold: 'Inter-Bold' } })
+    expect(styleOf('heavy').fontFamily).toBe('Inter-Bold')
+  })
+})
+
+describe('Font scaling cap', () => {
+  const capOf = (text: string) => screen.getByText(text).props.maxFontSizeMultiplier
+
+  it('body text has no cap; compact text defaults to 2', () => {
+    renderWithTheme(
+      <>
+        <Text>body</Text>
+        <Button>press</Button>
+        <Badge>tag</Badge>
+        <Kbd>K</Kbd>
+      </>,
+    )
+    expect(capOf('body')).toBeUndefined()
+    expect(capOf('press')).toBe(2)
+    expect(capOf('tag')).toBe(2)
+    expect(capOf('K')).toBe(2)
+  })
+
+  it('the Theme cap applies everywhere and a local cap wins', () => {
+    renderWithTheme(
+      <>
+        <Text>body</Text>
+        <Button>press</Button>
+        <Button maxFontSizeMultiplier={3}>local</Button>
+      </>,
+      { maxFontSizeMultiplier: 1.5 },
+    )
+    expect(capOf('body')).toBe(1.5)
+    expect(capOf('press')).toBe(1.5)
+    expect(capOf('local')).toBe(3)
+  })
+
+  it('Avatar initials stay capped at 1', () => {
+    renderWithTheme(<Avatar fallback="AB" />, { maxFontSizeMultiplier: 3 })
+    expect(capOf('AB')).toBe(1)
+  })
+
+  it('TextArea is compact text', () => {
+    renderWithTheme(<TextArea testID="area" />)
+    expect(screen.getByTestId('area').props.maxFontSizeMultiplier).toBe(2)
+  })
+})
+
+describe('Kbd', () => {
+  it('forwards native view props', () => {
+    renderWithTheme(<Kbd testID="key">⌘</Kbd>)
+    expect(screen.getByTestId('key')).toBeTruthy()
   })
 })

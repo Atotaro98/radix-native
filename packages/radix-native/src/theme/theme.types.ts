@@ -26,8 +26,14 @@ export interface ThemeFonts {
   bold?: string
   /** Heading component — falls back to bold → regular */
   heading?: string
-  /** Code / Kbd — monospace font, falls back to system monospace */
+  /** Code — monospace font, falls back to system monospace */
   code?: string
+  /** Strong — falls back to bold → regular */
+  strong?: string
+  /** Em — falls back to the system serif (italic) */
+  em?: string
+  /** Quote — falls back to the system serif (italic) */
+  quote?: string
 }
 
 /**

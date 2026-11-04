@@ -80,7 +80,7 @@ export default function App() {
 | `Blockquote` | Block quote with left accent border                           |
 | `Code`       | Inline code with `solid`, `soft`, `outline`, `ghost` variants |
 | `Kbd`        | Keyboard key indicator                                        |
-| `Em`         | Italic emphasis                                               |
+| `Em`         | Serif italic emphasis (Radix `--em-*`)                        |
 | `Strong`     | Bold emphasis                                                 |
 | `Quote`      | Inline quotation with curly quotes                            |
 
@@ -136,6 +136,7 @@ export default function App() {
     bold: 'Inter-Bold',
     heading: 'Inter-Bold',
     code: 'JetBrainsMono',
+    em: 'Lora-Italic',      // optional: strong / em / quote faces (Radix roles)
   }}
 >
 ```
@@ -214,7 +215,7 @@ const { appearance, accentColor, onAppearanceChange } = useThemeContext()
 | Press feedback      | CSS `:active`                  | `usePressScale` animation       |
 | `Flex` default      | `row` (CSS)                    | `column` (mobile-first)         |
 | Separator thickness | `1px` CSS                      | `StyleSheet.hairlineWidth`      |
-| `fonts` prop        | N/A                            | Custom font families per weight |
+| `fonts` prop        | `--*-font-family` CSS vars     | One face per weight / role (strong, em, quote, heading, code) |
 | Focus indicator     | CSS `outline`                  | `FocusRing` overlay (`accent-8`) |
 | Touch targets       | Pointer-sized controls         | Default `hitSlop` up to 44×44pt |
 
@@ -279,7 +280,7 @@ radix-native/
 │           ├── tokens/        # colors (31 scales), spacing, typography, radius
 │           ├── theme/         # Theme, ThemeRoot, ThemeImpl, createTheme
 │           ├── hooks/         # useThemeContext, useColor, useMargins, useControllableState, useInteraction
-│           ├── utils/         # resolveColor, resolveSpace, typography, hitSlop, alpha, classicEffect
+│           ├── utils/         # resolveColor, resolveSpace, textStyle, hitSlop, alpha, classicEffect
 │           ├── components/    # layout, typography, display, actions, feedback, forms (+ internal)
 │           └── __tests__/     # Jest + Testing Library
 ```

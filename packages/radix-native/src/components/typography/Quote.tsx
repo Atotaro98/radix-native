@@ -1,10 +1,9 @@
 import React from 'react'
 import { Text as RNText } from 'react-native'
 import type { StyleProp, TextStyle } from 'react-native'
-import { useThemeContext } from '../../hooks/useThemeContext'
 import { useMargins } from '../../hooks/useMargins'
+import { useTextStyle } from '../../hooks/useTextStyle'
 import type { TextWrap } from './Text'
-import { getTextWrapProps } from '../../utils/typography'
 import type { NativeTextProps } from '../../types/nativeProps'
 import type { MarginProps } from '../../types/marginProps'
 
@@ -23,6 +22,8 @@ export interface QuoteProps extends NativeTextProps, MarginProps {
 /**
  * Inline quoted text. Wraps children with typographic curly quotes (" ").
  * Can be nested inside `<Text>` for inline use.
+ * Radix `--quote-*`: serif italic at 1.18× the surrounding size, −0.025em tracking.
+ * Face: `fonts.quote`, else the system serif.
  */
 export function Quote({
   truncate,
@@ -33,26 +34,11 @@ export function Quote({
   children,
   ...rest
 }: QuoteProps) {
-  const { maxFontSizeMultiplier: globalMax } = useThemeContext()
-  const effectiveMaxFont = maxFontSizeMultiplier ?? globalMax
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
-
-
-  const quoteStyle: TextStyle = {
-    fontStyle:    'italic',
-    // RN defaults flexShrink to 0; CSS defaults to 1. Without this, text
-    // inside a Flex row overflows instead of wrapping to the available width.
-    flexShrink:    1,
-    ...margins,
-  }
+  const text = useTextStyle({ inline: true, role: 'quote', maxFontSizeMultiplier, truncate, wrap, margins })
 
   return (
-    <RNText
-      {...getTextWrapProps(truncate, wrap)}
-      maxFontSizeMultiplier={effectiveMaxFont}
-      style={[quoteStyle, style]}
-      {...rest}
-    >
+    <RNText {...text.textProps} {...rest} style={[text.style, style]}>
       {'\u201c'}{children}{'\u201d'}
     </RNText>
   )

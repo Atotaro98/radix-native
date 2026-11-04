@@ -1,12 +1,12 @@
 import React, { createContext, useCallback, useContext, useMemo } from 'react'
 import { View } from 'react-native'
-import type { StyleProp, ViewStyle, TextStyle } from 'react-native'
+import type { StyleProp, ViewStyle } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
 import { useControllableState } from '../../hooks/useControllableState'
 import { resolveSpace } from '../../utils/resolveSpace'
-import { resolveTypography } from '../../utils/typography'
+import { useTextStyle } from '../../hooks/useTextStyle'
 import { scalingMap } from '../../tokens/scaling'
 import { LabeledControl } from '../internal/LabeledControl'
 import type { MarginProps } from '../../types/marginProps'
@@ -142,8 +142,7 @@ function CheckboxGroupItem({
   if (!ctx) throw new Error('CheckboxGroup.Item must be used within CheckboxGroup.Root')
 
   const { size, variant, color, highContrast, disabled: groupDisabled, value, onItemToggle } = ctx
-  const { scaling, fonts, maxFontSizeMultiplier: globalMax } = useThemeContext()
-  const effectiveMaxFont = maxFontSizeMultiplier ?? globalMax
+  const { scaling } = useThemeContext()
   const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
@@ -155,6 +154,13 @@ function CheckboxGroupItem({
   }, [isDisabled, onItemToggle, itemValue])
 
   const gap = Math.round(LABEL_GAP[size] * scalingMap[scaling])
+
+  // Called before the bare-item early return (rules of hooks).
+  const label = useTextStyle({
+    size: LABEL_FONT_SIZE[size],
+    color: isDisabled ? rc('gray', 'a8') : rc('gray', 12),
+    maxFontSizeMultiplier,
+  })
 
   const control = (
     <Checkbox
@@ -183,13 +189,6 @@ function CheckboxGroupItem({
     )
   }
 
-  const labelStyle: TextStyle = {
-    ...resolveTypography(LABEL_FONT_SIZE[size], scaling),
-    color: isDisabled ? rc('gray', 'a8') : rc('gray', 12),
-    fontFamily: fonts.regular,
-    flexShrink: 1,
-  }
-
   return (
     <LabeledControl
       role="checkbox"
@@ -198,9 +197,9 @@ function CheckboxGroupItem({
       onPress={handlePress}
       control={control}
       gap={gap}
-      labelStyle={labelStyle}
+      labelStyle={label.style}
       focusColor={rc(color ?? 'accent', 8)}
-      maxFontSizeMultiplier={effectiveMaxFont}
+      maxFontSizeMultiplier={label.textProps.maxFontSizeMultiplier}
       margins={margins}
       style={style}
     >

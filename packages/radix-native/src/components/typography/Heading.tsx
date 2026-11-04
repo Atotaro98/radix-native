@@ -1,12 +1,9 @@
 import React from 'react'
 import { Text as RNText } from 'react-native'
 import type { StyleProp, TextStyle } from 'react-native'
-import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
-import { resolveFont, FONT_WEIGHT } from '../../utils/resolveFont'
-import { resolveTypography, getTextWrapProps } from '../../utils/typography'
-import { headingLineHeight } from '../../tokens/typography'
+import { useTextStyle } from '../../hooks/useTextStyle'
 import { TextContext } from './TextContext'
 import type { FontSizeToken } from '../../tokens/typography'
 import type { AccentColor } from '../../tokens/colors/types'
@@ -42,9 +39,6 @@ export interface HeadingProps extends NativeTextProps, MarginProps {
   style?: StyleProp<TextStyle>
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function Heading({
@@ -61,51 +55,34 @@ export function Heading({
   children,
   ...rest
 }: HeadingProps) {
-  const { scaling, fonts, maxFontSizeMultiplier: globalMax } = useThemeContext()
-  const effectiveMaxFont = maxFontSizeMultiplier ?? globalMax
   const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
-  // ─── Typography ─────────────────────────────────────────────────────────────
-  // Heading uses the same font size scale as Text but has its own tighter
-  // line heights. Letter spacing values are identical to Text.
-  const typography = React.useMemo(() => resolveTypography(size, scaling, headingLineHeight), [size, scaling])
+  // Same color logic as Text (a Heading is never nested, so never inherits).
+  const textColor = color ? rc(color, highContrast ? 12 : 'a11') : rc('gray', 12)
 
-  // ─── Color ──────────────────────────────────────────────────────────────────
-  // Same logic as Text.
-  const textColor = color
-    ? rc(color, highContrast ? 12 : 'a11')
-    : rc('gray', 12)
+  // Block text: ignores any surrounding text, uses the tighter heading line heights.
+  const text = useTextStyle({
+    role: 'heading',
+    size,
+    weight,
+    lineHeight: 'heading',
+    color: textColor,
+    maxFontSizeMultiplier,
+    truncate,
+    wrap,
+    margins,
+  })
 
-  // ─── Font family ─────────────────────────────────────────────────────────────
-  // Heading prefers fonts.heading, then the specific weight's font, then bold, then regular.
-  const font = resolveFont(
-    fonts.heading ?? fonts[weight] ?? fonts.bold ?? fonts.regular,
-    FONT_WEIGHT[weight],
+  const headingStyle = React.useMemo<TextStyle>(
+    () => (align ? { ...text.style, textAlign: align } : text.style),
+    [text.style, align],
   )
-
-  // ─── Wrapping / truncation ──────────────────────────────────────────────────
-
-  // ─── Style ──────────────────────────────────────────────────────────────────
-  const headingStyle = React.useMemo<TextStyle>(() => ({
-    ...typography,
-    color:                  textColor,
-    textAlign:              align,
-    fontWeight:             font.fontWeight,
-    fontFamily:             font.fontFamily,
-    flexShrink:    1,
-    ...margins,
-  }), [typography, textColor, align, font.fontWeight, font.fontFamily, margins])
+  const contextValue = React.useMemo(() => ({ fontSize: text.contextFontSize }), [text.contextFontSize])
 
   return (
-    <TextContext.Provider value={{ fontSize: typography.fontSize }}>
-      <RNText
-        accessibilityRole="header"
-        {...getTextWrapProps(truncate, wrap)}
-        maxFontSizeMultiplier={effectiveMaxFont}
-        {...rest}
-        style={[headingStyle, style]}
-      >
+    <TextContext.Provider value={contextValue}>
+      <RNText accessibilityRole="header" {...text.textProps} {...rest} style={[headingStyle, style]}>
         {children}
       </RNText>
     </TextContext.Provider>

@@ -1,11 +1,10 @@
 import React from 'react'
 import { Text as RNText } from 'react-native'
 import type { StyleProp, TextStyle } from 'react-native'
-import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
-import { resolveFont, FONT_WEIGHT } from '../../utils/resolveFont'
-import { resolveTypography, getTextWrapProps } from '../../utils/typography'
+import { useTextStyle } from '../../hooks/useTextStyle'
+import type { WeightIntent, TextWrapMode } from '../../utils/textStyle'
 import type { FontSizeToken } from '../../tokens/typography'
 import { TextContext, useParentText } from './TextContext'
 import type { AccentColor } from '../../tokens/colors/types'
@@ -15,10 +14,10 @@ import type { NativeTextProps } from '../../types/nativeProps'
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type TextSize = FontSizeToken
-export type TextWeight = 'light' | 'regular' | 'medium' | 'bold'
+export type TextWeight = WeightIntent
 export type TextAlign = 'left' | 'center' | 'right'
 /** 'pretty' and 'balance' are not supported in React Native and have no effect. */
-export type TextWrap = 'wrap' | 'nowrap' | 'pretty' | 'balance'
+export type TextWrap = TextWrapMode
 
 export interface TextProps extends NativeTextProps, MarginProps {
   /**
@@ -26,7 +25,10 @@ export interface TextProps extends NativeTextProps, MarginProps {
    * text component, inherits the parent size (like Radix on the web).
    */
   size?: TextSize
-  /** Font weight. Each weight maps to its own fontFamily when configured in ThemeFonts. */
+  /**
+   * Font weight. Each weight maps to its own fontFamily when configured in ThemeFonts;
+   * a weight with no configured face renders with `fonts.regular` and warns in development.
+   */
   weight?: TextWeight
   /** Text alignment. */
   align?: TextAlign
@@ -69,20 +71,9 @@ export function Text({
   children,
   ...rest
 }: TextProps) {
-  const { scaling, fonts, maxFontSizeMultiplier: globalMax } = useThemeContext()
-  const effectiveMaxFont = maxFontSizeMultiplier ?? globalMax
   const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
-  const parent = useParentText()
-  const isNested = parent !== null
-
-  // ─── Typography ─────────────────────────────────────────────────────────────
-  // Nested without an explicit size → let RN text inheritance do its job.
-  const typography = React.useMemo(
-    () => (size !== undefined || !isNested ? resolveTypography(size ?? 3, scaling) : undefined),
-    [size, isNested, scaling],
-  )
-  const contextFontSize = typography?.fontSize ?? parent?.fontSize ?? 0
+  const isNested = useParentText() !== null
 
   // ─── Color ──────────────────────────────────────────────────────────────────
   //   color + highContrast → {color}-12     (solid step 12 — maximum contrast)
@@ -93,34 +84,26 @@ export function Text({
     ? rc(color, highContrast ? 12 : 'a11')
     : isNested ? undefined : rc('gray', 12)
 
-  // ─── Font family ─────────────────────────────────────────────────────────────
-  // Each weight maps to its own fontFamily — in RN, fontWeight alone doesn't
-  // load a different font file; the fontFamily must be registered per weight.
-  const font = weight
-    ? resolveFont(fonts[weight] ?? fonts.regular, FONT_WEIGHT[weight])
-    : isNested ? undefined : resolveFont(fonts.regular, undefined)
+  const text = useTextStyle({
+    inline: true,
+    size,
+    weight,
+    color: textColor,
+    maxFontSizeMultiplier,
+    truncate,
+    wrap,
+    margins,
+  })
 
-  // ─── Style ──────────────────────────────────────────────────────────────────
-  const textStyle = React.useMemo<TextStyle>(() => ({
-    ...typography,
-    color:      textColor,
-    textAlign:  align,
-    fontWeight: font?.fontWeight,
-    fontFamily: font?.fontFamily,
-    // Layout props are meaningless on nested (inline) text
-    ...(isNested ? null : { flexShrink: 1, ...margins }),
-  }), [typography, textColor, align, font?.fontWeight, font?.fontFamily, isNested, margins])
-
-  const contextValue = React.useMemo(() => ({ fontSize: contextFontSize }), [contextFontSize])
+  const textStyle = React.useMemo<TextStyle>(
+    () => (align ? { ...text.style, textAlign: align } : text.style),
+    [text.style, align],
+  )
+  const contextValue = React.useMemo(() => ({ fontSize: text.contextFontSize }), [text.contextFontSize])
 
   return (
     <TextContext.Provider value={contextValue}>
-      <RNText
-        {...getTextWrapProps(truncate, wrap)}
-        maxFontSizeMultiplier={effectiveMaxFont}
-        {...rest}
-        style={[textStyle, style]}
-      >
+      <RNText {...text.textProps} {...rest} style={[textStyle, style]}>
         {children}
       </RNText>
     </TextContext.Provider>

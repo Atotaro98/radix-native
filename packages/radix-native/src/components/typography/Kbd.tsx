@@ -1,22 +1,20 @@
 import React from 'react'
 import { Platform, View, Text as RNText } from 'react-native'
-import type { StyleProp, ViewStyle, TextStyle } from 'react-native'
+import type { StyleProp, ViewStyle } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
-import { resolveFont } from '../../utils/resolveFont'
-import { useParentText } from './TextContext'
-import { fontSize, letterSpacingEm } from '../../tokens/typography'
-import { scalingMap } from '../../tokens/scaling'
+import { useTextStyle } from '../../hooks/useTextStyle'
 import { getRadius } from '../../tokens/radius'
 import type { FontSizeToken } from '../../tokens/typography'
 import type { MarginProps } from '../../types/marginProps'
+import type { NativeViewProps } from '../../types/nativeProps'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type KbdVariant = 'classic' | 'soft'
 
-export interface KbdProps extends MarginProps {
+export interface KbdProps extends NativeViewProps, MarginProps {
   /**
    * Text size token (1–9).
    *
@@ -55,19 +53,26 @@ export function Kbd({
   m, mx, my, mt, mr, mb, ml,
   style,
   children,
+  ...rest
 }: KbdProps) {
-  const { scaling, fonts, radius, maxFontSizeMultiplier: globalMax } = useThemeContext()
-  const effectiveMaxFont = maxFontSizeMultiplier ?? globalMax ?? 2
+  const { radius } = useThemeContext()
   const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
-  const sf = scalingMap[scaling]
-
-  // Radix: 0.75em of the surrounding text. Explicit size (or standalone,
-  // default 2) uses the token instead.
-  const parent = useParentText()
-  const basePx = size === undefined && parent ? parent.fontSize : fontSize[size ?? 2] * sf
-  const kbdFontSize = Math.round(basePx * 0.75)
+  // Radix: 0.75em of the surrounding text, default (body) font — not monospace.
+  // Explicit size (or standalone, default 2) uses the token instead.
+  const text = useTextStyle({
+    inline: true,
+    size,
+    defaultSize: 2,
+    sizeAdjust: 0.75,
+    weight: 'regular',
+    lineHeight: 'none',
+    color: rc('gray', 12),
+    compact: true,
+    maxFontSizeMultiplier,
+  })
+  const kbdFontSize = text.contextFontSize
   // Radix: border-radius = radiusFactor * 0.35em (relative to kbdFontSize)
   const borderR = Math.max(2, Math.round(getRadius(radius, 2) * 0.35 * (kbdFontSize / 14)))
   // Radix: min-width 1.75em, line-height 1.7em (em = kbdFontSize)
@@ -80,7 +85,7 @@ export function Kbd({
   // Inline alignment: shift down so Kbd centers with surrounding text.
   // In RN, inline View bottom = text baseline. Kbd sticks above by
   // (kbdHeight - ascender). We shift it down by that amount.
-  const parentFontSize = Math.round(basePx)
+  const parentFontSize = Math.round(text.baseFontSize)
   const ascender = Math.round(parentFontSize * 0.82)
   const translateY = Math.round((kbdHeight - ascender) * 0.5)
 
@@ -123,14 +128,6 @@ export function Kbd({
     ...margins,
   }
 
-  const textStyle: TextStyle = {
-    fontSize: kbdFontSize,
-    // Radix uses the default (body) font, NOT monospace
-    ...resolveFont(fonts.regular, '400'),
-    color: rc('gray', 12),
-    letterSpacing: letterSpacingEm[size ?? 2] * kbdFontSize,
-  }
-
   // Classic variant: thin highlight line at the top to simulate
   // the inset box-shadow highlight from Radix
   const highlightStyle: ViewStyle | null = isClassic
@@ -147,9 +144,9 @@ export function Kbd({
     : null
 
   return (
-    <View style={[containerStyle, style]}>
+    <View {...rest} style={[containerStyle, style]}>
       {highlightStyle && <View style={highlightStyle} />}
-      <RNText style={textStyle} maxFontSizeMultiplier={effectiveMaxFont}>{children}</RNText>
+      <RNText {...text.textProps} style={text.style}>{children}</RNText>
     </View>
   )
 }

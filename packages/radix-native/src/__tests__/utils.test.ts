@@ -2,9 +2,7 @@ import { resolveColor } from '../utils/resolveColor'
 import { resolveSpace } from '../utils/resolveSpace'
 import { withAlpha } from '../utils/alpha'
 import { getMinHitSlop, MIN_TOUCH_TARGET } from '../utils/hitSlop'
-import { getTextWrapProps, resolveTypography } from '../utils/typography'
 import { getRadius, getFullRadius } from '../tokens/radius'
-import { headingLineHeight } from '../tokens/typography'
 import { indigo, slate, blue } from '../tokens/colors'
 
 describe('resolveColor', () => {
@@ -76,19 +74,5 @@ describe('getMinHitSlop', () => {
 
   it('returns undefined when the control is already large enough', () => {
     expect(getMinHitSlop(MIN_TOUCH_TARGET, 48)).toBeUndefined()
-  })
-})
-
-describe('typography helpers', () => {
-  it('maps truncate / wrap to numberOfLines + ellipsizeMode', () => {
-    expect(getTextWrapProps(true, 'nowrap')).toEqual({ numberOfLines: 1, ellipsizeMode: 'tail' })
-    expect(getTextWrapProps(false, 'nowrap')).toEqual({ numberOfLines: 1, ellipsizeMode: 'clip' })
-    expect(getTextWrapProps(undefined, 'wrap')).toEqual({})
-  })
-
-  it('resolves scaled font metrics', () => {
-    expect(resolveTypography(3, '100%')).toEqual({ fontSize: 16, lineHeight: 24, letterSpacing: 0 })
-    expect(resolveTypography(3, '100%', headingLineHeight).lineHeight).toBe(22)
-    expect(resolveTypography(2, '110%').fontSize).toBe(15)
   })
 })

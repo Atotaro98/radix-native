@@ -1,13 +1,11 @@
 import React from 'react'
 import { View, Text as RNText } from 'react-native'
-import type { StyleProp, ViewStyle, TextStyle } from 'react-native'
+import type { StyleProp, ViewStyle } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
-import { resolveFont, FONT_WEIGHT } from '../../utils/resolveFont'
-import { getTextWrapProps } from '../../utils/typography'
+import { useTextStyle } from '../../hooks/useTextStyle'
 import { TextContext } from './TextContext'
-import { fontSize as fontSizeMap, lineHeight, letterSpacingEm } from '../../tokens/typography'
 import { scalingMap } from '../../tokens/scaling'
 import { space } from '../../tokens/spacing'
 import type { FontSizeToken } from '../../tokens/typography'
@@ -37,9 +35,6 @@ export interface BlockquoteProps extends NativeViewProps, MarginProps {
   children?: React.ReactNode
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function Blockquote({
@@ -55,16 +50,9 @@ export function Blockquote({
   children,
   ...rest
 }: BlockquoteProps) {
-  const { scaling, fonts, maxFontSizeMultiplier: globalMax } = useThemeContext()
-  const effectiveMaxFont = maxFontSizeMultiplier ?? globalMax
+  const { scaling } = useThemeContext()
   const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
-
-  // ─── Typography ─────────────────────────────────────────────────────────────
-  const scalingFactor = scalingMap[scaling]
-  const resolvedSize        = Math.round(fontSizeMap[size] * scalingFactor)
-  const resolvedLineHeight  = Math.round(lineHeight[size] * scalingFactor)
-  const resolvedLetterSpacing = letterSpacingEm[size] * resolvedSize
 
   // ─── Color ──────────────────────────────────────────────────────────────────
   // Radix scopes --accent-a6 per-component via data-accent-color.
@@ -74,10 +62,10 @@ export function Blockquote({
     ? rc(color, highContrast ? 12 : 'a11')
     : rc('gray', 12)
 
-  // ─── Font family ─────────────────────────────────────────────────────────────
-  const font = resolveFont(fonts[weight] ?? fonts.regular, FONT_WEIGHT[weight])
-
-  // ─── Wrapping / truncation ──────────────────────────────────────────────────
+  // Block text: ignores any surrounding text. Margins go on the container.
+  const text = useTextStyle({ size, weight, color: textColor, maxFontSizeMultiplier, truncate, wrap })
+  const resolvedSize = text.contextFontSize
+  const scalingFactor = scalingMap[scaling]
 
   // ─── Border & padding (match Radix CSS: dynamic based on font size) ────────
   // Space tokens are scaled in Radix: --space-N: calc(Npx * var(--scaling))
@@ -100,23 +88,10 @@ export function Blockquote({
     ...margins,
   }
 
-  const textStyle: TextStyle = {
-    fontSize:      resolvedSize,
-    lineHeight:    resolvedLineHeight,
-    letterSpacing: resolvedLetterSpacing,
-    fontWeight:    font.fontWeight,
-    fontFamily:    font.fontFamily,
-    color:         textColor,
-  }
-
   return (
     <View {...rest} style={[containerStyle, style]}>
       <TextContext.Provider value={{ fontSize: resolvedSize }}>
-        <RNText
-          {...getTextWrapProps(truncate, wrap)}
-          maxFontSizeMultiplier={effectiveMaxFont}
-          style={textStyle}
-        >
+        <RNText {...text.textProps} style={text.style}>
           {children}
         </RNText>
       </TextContext.Provider>

@@ -1,11 +1,9 @@
 import React from 'react'
 import { Text as RNText } from 'react-native'
 import type { StyleProp, TextStyle } from 'react-native'
-import { useThemeContext } from '../../hooks/useThemeContext'
 import { useMargins } from '../../hooks/useMargins'
-import { resolveFont } from '../../utils/resolveFont'
+import { useTextStyle } from '../../hooks/useTextStyle'
 import type { TextWrap } from './Text'
-import { getTextWrapProps } from '../../utils/typography'
 import type { NativeTextProps } from '../../types/nativeProps'
 import type { MarginProps } from '../../types/marginProps'
 
@@ -23,7 +21,8 @@ export interface StrongProps extends NativeTextProps, MarginProps {
 
 /**
  * Inline bold text. Can be nested inside `<Text>` for inline use.
- * Uses `fonts.bold` when provided, otherwise `fontWeight: '700'`.
+ * Face: `fonts.strong`, else `fonts.bold`, else `fontWeight: '700'` on the system font
+ * (Radix `--strong-font-*`).
  */
 export function Strong({
   truncate,
@@ -33,26 +32,11 @@ export function Strong({
   style,
   ...rest
 }: StrongProps) {
-  const { fonts, maxFontSizeMultiplier: globalMax } = useThemeContext()
-  const effectiveMaxFont = maxFontSizeMultiplier ?? globalMax
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
-
-
-  const strongStyle: TextStyle = {
-    ...resolveFont(fonts.bold ?? fonts.regular, '700'),
-    // RN defaults flexShrink to 0; CSS defaults to 1. Without this, text
-    // inside a Flex row overflows instead of wrapping to the available width.
-    flexShrink:    1,
-    ...margins,
-  }
+  const text = useTextStyle({ inline: true, role: 'strong', maxFontSizeMultiplier, truncate, wrap, margins })
 
   return (
-    <RNText
-      {...getTextWrapProps(truncate, wrap)}
-      maxFontSizeMultiplier={effectiveMaxFont}
-      style={[strongStyle, style]}
-      {...rest}
-    />
+    <RNText {...text.textProps} {...rest} style={[text.style, style]} />
   )
 }
 Strong.displayName = 'Strong'

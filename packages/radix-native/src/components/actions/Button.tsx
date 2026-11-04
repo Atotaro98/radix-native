@@ -6,8 +6,7 @@ import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
 import { useInteraction } from '../../hooks/useInteraction'
 import { AnimatedPressable } from '../../hooks/usePressScale'
-import { resolveFont } from '../../utils/resolveFont'
-import { resolveTypography } from '../../utils/typography'
+import { useTextStyle } from '../../hooks/useTextStyle'
 import { getMinHitSlop, MIN_TOUCH_TARGET } from '../../utils/hitSlop'
 import { scalingMap } from '../../tokens/scaling'
 import { getRadius, getFullRadius } from '../../tokens/radius'
@@ -86,8 +85,7 @@ export function Button({
   hitSlop,
   ...rest
 }: ButtonProps) {
-  const { appearance, scaling, fonts, radius: themeRadius, maxFontSizeMultiplier: globalMax } = useThemeContext()
-  const effectiveMaxFont = maxFontSizeMultiplier ?? globalMax ?? 2
+  const { appearance, scaling, radius: themeRadius } = useThemeContext()
   const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
@@ -103,9 +101,7 @@ export function Button({
     onBlur,
   })
 
-  // ─── Typography ────────────────────────────────────────────────────────────
   const scalingFactor = scalingMap[scaling]
-  const typography = useMemo(() => resolveTypography(SIZE_FONT[size], scaling), [size, scaling])
 
   // ─── Dimensions ────────────────────────────────────────────────────────────
   const isGhost = variant === 'ghost'
@@ -127,20 +123,15 @@ export function Button({
   )
   const focusColor = rc(prefix, 8)
 
-  // ─── Font family ───────────────────────────────────────────────────────────
-  // Radix: only non-ghost uses font-weight: medium; ghost uses regular
-  const font = resolveFont(
-    isGhost ? fonts.regular : (fonts.medium ?? fonts.regular),
-    isGhost ? '400' : '500',
-  )
-
-  const textStyle = useMemo<TextStyle>(() => ({
-    ...typography,
+  // ─── Text style ────────────────────────────────────────────────────────────
+  // Compact text. Radix: only non-ghost uses font-weight: medium; ghost uses regular.
+  const text = useTextStyle({
+    size: SIZE_FONT[size],
+    weight: isGhost ? 'regular' : 'medium',
     color: colors.text,
-    fontWeight: font.fontWeight,
-    fontFamily: font.fontFamily,
-    flexShrink: 1,
-  }), [typography, colors.text, font.fontWeight, font.fontFamily])
+    compact: true,
+    maxFontSizeMultiplier,
+  })
 
   // ─── Press handler ─────────────────────────────────────────────────────────
   const handlePress = useCallback(
@@ -175,7 +166,7 @@ export function Button({
     ? getClassicEffect(appearance, { pressed, disabled: isDisabled && !loading })
     : undefined
 
-  const content = renderContent(children, textStyle, colors.text, effectiveMaxFont)
+  const content = renderContent(children, text.style, colors.text, text.textProps.maxFontSizeMultiplier)
 
   // ─── Render ────────────────────────────────────────────────────────────────
   return (
