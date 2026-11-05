@@ -134,3 +134,32 @@ describe('rows and cards show an Indicator, not a second Toggle', () => {
     expect(screen.getAllByRole('checkbox', { includeHiddenElements: true })).toHaveLength(1)
   })
 })
+
+describe('classic look, as in Radix', () => {
+  const hasDropShadow = (n: Node) => {
+    const s = flat(n) as ViewStyle & { shadowOpacity?: number; elevation?: number }
+    return (s.shadowOpacity ?? 0) > 0 || (s.elevation ?? 0) > 0
+  }
+  const shadowed = (role: 'checkbox' | 'radio' | 'switch') =>
+    screen.getByRole(role).findAll((n: Node) => typeof n.type === 'string' && hasDropShadow(n))
+
+  it.each([
+    ['Checkbox', Checkbox, 'checkbox'],
+    ['Radio', Radio, 'radio'],
+  ] as const)('checked classic %s is a bevel without a drop shadow', (_name, Component, role) => {
+    renderWithTheme(<Component variant="classic" defaultChecked />)
+    expect(shadowed(role)).toHaveLength(0)
+    // ClassicOverlay: two translucent halves
+    const halves = screen.getByRole(role).findAll(
+      (n: Node) => typeof n.type === 'string' && flat(n).height === '50%',
+    )
+    expect(halves).toHaveLength(2)
+  })
+
+  it.each(['surface', 'classic', 'soft'] as const)('%s Switch: the thumb has the drop shadow, the track has none', (variant) => {
+    renderWithTheme(<Switch variant={variant} defaultChecked />)
+    const [thumb, ...others] = shadowed('switch')
+    expect(others).toHaveLength(0)
+    expect(flat(thumb).width).toBe(flat(thumb).height)
+  })
+})

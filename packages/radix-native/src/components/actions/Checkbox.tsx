@@ -1,14 +1,12 @@
 import React, { useMemo } from 'react'
 import { View } from 'react-native'
 import type { StyleProp, ViewStyle } from 'react-native'
-import { useThemeContext } from '../../hooks/useThemeContext'
 import { useMetrics } from '../../hooks/useMetrics'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { ClassicOverlay } from '../internal/ClassicOverlay'
 import { BaseToggle, type CheckedState } from '../internal/BaseToggle'
 import type { AccentColor } from '../../tokens/colors/types'
-import { getClassicEffect } from '../../utils/classicEffect'
 import type { NativePressableProps } from '../../types/nativeProps'
 import type { MarginProps } from '../../types/marginProps'
 
@@ -72,15 +70,14 @@ export interface CheckboxIndicatorProps {
 
 /** Internal: the box and its check / dash, drawn from the checked state alone. */
 export function CheckboxIndicator({ size, variant, color, highContrast, checked, disabled }: CheckboxIndicatorProps) {
-  const { appearance } = useThemeContext()
   const { boxSize, indicatorSize, borderRadius } = useCheckboxBox(size)
   const isIndeterminate = checked === 'indeterminate'
   const isActive = checked !== false
   const colors = useVariantColors('checkbox', { variant, color, highContrast, checked: isActive, disabled })
 
-  // Radix: the raised bevel belongs to the checked state; unchecked classic is
-  // sunken (shadow-1), drawn by the border color from the recipe.
-  const isClassicRaised = variant === 'classic' && isActive && !disabled
+  // Radix: checked classic is a bevel (gradient + inset highlight), with no drop
+  // shadow; unchecked classic is sunken (shadow-1), drawn by the border color.
+  const isClassicBevel = variant === 'classic' && isActive && !disabled
 
   const boxStyle = useMemo<ViewStyle>(() => ({
     width: boxSize,
@@ -97,8 +94,8 @@ export function CheckboxIndicator({ size, variant, color, highContrast, checked,
   const indicatorColor = colors.indicator
 
   return (
-    <View style={[boxStyle, isClassicRaised ? getClassicEffect(appearance, {}) : undefined]}>
-      {isClassicRaised && <ClassicOverlay borderRadius={borderRadius} />}
+    <View style={boxStyle}>
+      {isClassicBevel && <ClassicOverlay borderRadius={borderRadius} />}
       {isActive && (
         isIndeterminate ? (
           <View style={{

@@ -1,5 +1,5 @@
 import React from 'react'
-import { View } from 'react-native'
+import { Platform, View } from 'react-native'
 import type { ViewStyle, StyleProp } from 'react-native'
 import Animated, {
   useSharedValue,
@@ -7,14 +7,12 @@ import Animated, {
   withTiming,
   Easing,
 } from 'react-native-reanimated'
-import { useThemeContext } from '../../hooks/useThemeContext'
 import { useMetrics } from '../../hooks/useMetrics'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { BaseToggle } from '../internal/BaseToggle'
 import type { RadiusToken, RadiusLevel } from '../../tokens/radius'
 import type { AccentColor } from '../../tokens/colors/types'
-import { getClassicEffect } from '../../utils/classicEffect'
 import type { NativePressableProps } from '../../types/nativeProps'
 import type { MarginProps } from '../../types/marginProps'
 
@@ -53,6 +51,25 @@ const THUMB_SIZE: Record<SwitchSize, number> = { 1: 14, 2: 18, 3: 22 }
 const THUMB_MARGIN = 1
 const SIZE_RADIUS_LEVEL: Record<SwitchSize, RadiusLevel> = { 1: 1, 2: 2, 3: 2 }
 
+// ─── Thumb shadow ─────────────────────────────────────────────────────────────
+
+/**
+ * Radix gives the thumb a soft drop shadow in every variant (`0 1px 3px
+ * black-a2/a3, 0 2px 4px -1px black-a1`; disabled `0 1px 3px black-a1`), while
+ * the track itself stays flat. Approximated with one platform shadow.
+ */
+function thumbShadow(disabled: boolean): ViewStyle {
+  return Platform.select<ViewStyle>({
+    ios: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: disabled ? 0.05 : 0.15,
+      shadowRadius: 1.5,
+    },
+    default: { elevation: disabled ? 0 : 1 },
+  })
+}
+
 // ─── Geometry ─────────────────────────────────────────────────────────────────
 
 function useSwitchTrack(size: SwitchSize, radius: RadiusToken | undefined) {
@@ -81,7 +98,6 @@ export interface SwitchIndicatorProps {
 
 /** Internal: the track and its sliding thumb, drawn from the checked state alone. */
 export function SwitchIndicator({ size, variant, color, highContrast, radius, checked, disabled }: SwitchIndicatorProps) {
-  const { appearance } = useThemeContext()
   const { trackWidth, trackHeight, trackRadius, thumbSize, thumbMargin } = useSwitchTrack(size, radius)
   const thumbRadius = Math.max(trackRadius - thumbMargin, 0)
 
@@ -103,9 +119,6 @@ export function SwitchIndicator({ size, variant, color, highContrast, radius, ch
   }))
 
   const colors = useVariantColors('switch', { variant, color, highContrast, checked, disabled })
-  const classicStyle = variant === 'classic' && checked && !disabled
-    ? getClassicEffect(appearance, {})
-    : undefined
 
   const trackStyle: ViewStyle = {
     width: trackWidth,
@@ -124,7 +137,7 @@ export function SwitchIndicator({ size, variant, color, highContrast, radius, ch
   }
 
   return (
-    <View style={[trackStyle, classicStyle]}>
+    <View style={trackStyle}>
       {colors.border && (
         <View
           pointerEvents="none"
@@ -140,7 +153,7 @@ export function SwitchIndicator({ size, variant, color, highContrast, radius, ch
           }}
         />
       )}
-      <Animated.View style={[thumbStyle, thumbAnimatedStyle]} />
+      <Animated.View style={[thumbStyle, thumbShadow(disabled), thumbAnimatedStyle]} />
     </View>
   )
 }

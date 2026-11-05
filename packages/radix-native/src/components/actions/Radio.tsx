@@ -1,13 +1,11 @@
 import React, { useMemo } from 'react'
 import { View } from 'react-native'
 import type { ViewStyle, StyleProp } from 'react-native'
-import { useThemeContext } from '../../hooks/useThemeContext'
 import { useMetrics } from '../../hooks/useMetrics'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { BaseToggle } from '../internal/BaseToggle'
 import type { AccentColor } from '../../tokens/colors/types'
-import { getClassicEffect } from '../../utils/classicEffect'
 import { ClassicOverlay } from '../internal/ClassicOverlay'
 import type { NativePressableProps } from '../../types/nativeProps'
 import type { MarginProps } from '../../types/marginProps'
@@ -58,12 +56,12 @@ export interface RadioIndicatorProps {
 
 /** Internal: the ring and its dot, drawn from the checked state alone. */
 export function RadioIndicator({ size, variant, color, highContrast, checked, disabled }: RadioIndicatorProps) {
-  const { appearance } = useThemeContext()
   const { px } = useMetrics()
   const radioSize = px(SIZE_PX[size])
   const dotSize = Math.round(radioSize * DOT_SCALE)
   const colors = useVariantColors('radio', { variant, color, highContrast, checked, disabled })
-  const isClassicRaised = variant === 'classic' && checked && !disabled
+  // Radix: checked classic is a bevel (gradient + inset highlight), with no drop shadow.
+  const isClassicBevel = variant === 'classic' && checked && !disabled
 
   const radioStyle = useMemo<ViewStyle>(() => ({
     width: radioSize,
@@ -77,8 +75,8 @@ export function RadioIndicator({ size, variant, color, highContrast, checked, di
   }), [radioSize, colors])
 
   return (
-    <View style={[radioStyle, isClassicRaised ? getClassicEffect(appearance, {}) : undefined]}>
-      {isClassicRaised && <ClassicOverlay borderRadius={radioSize / 2} />}
+    <View style={radioStyle}>
+      {isClassicBevel && <ClassicOverlay borderRadius={radioSize / 2} />}
       {colors.indicator && (
         <View
           style={{
