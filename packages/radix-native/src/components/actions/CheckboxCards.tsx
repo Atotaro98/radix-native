@@ -97,6 +97,7 @@ function CheckboxCardsRoot({
   return (
     <Selection.Root value={value} defaultValue={defaultValue} onValueChange={onValueChange} disabled={disabled} shared={shared}>
       <SelectionCardGrid
+        role="group"
         columns={columns}
         gap={gap}
         accessibilityLabel={accessibilityLabel}

@@ -116,7 +116,8 @@ interface SelectionCardGridProps {
   /** Number of equal-width columns; omitted = auto-fit (cards ≥ 160px, like Radix). */
   columns?: number
   gap: SpaceToken
-  role?: 'radiogroup'
+  /** Radix: `group` for CheckboxCards, `radiogroup` for RadioCards. */
+  role: 'group' | 'radiogroup'
   accessibilityLabel?: string
   testID?: string
   style?: StyleProp<ViewStyle>
@@ -133,7 +134,7 @@ export function SelectionCardGrid({ columns, gap, role, accessibilityLabel, test
   const { space } = useMetrics()
   const resolvedGap = space(gap)
   return (
-    <View accessibilityRole={role} accessibilityLabel={accessibilityLabel} testID={testID} style={style}>
+    <View role={role} accessibilityLabel={accessibilityLabel} testID={testID} style={style}>
       {columns !== undefined ? (
         <ColumnRows columns={columns} columnGap={resolvedGap} rowGap={resolvedGap} alignItems="stretch">
           {children}
