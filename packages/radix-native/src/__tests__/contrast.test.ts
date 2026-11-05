@@ -88,3 +88,29 @@ describe.each(cases)('$mode $name $variant (highContrast: $highContrast)', ({ mo
     expect(contrastRatio(colors.text!, bg)).toBeGreaterThanOrEqual(minimum)
   })
 })
+
+// ─── Kbd and control labels (gray only, every gray scale) ─────────────────────
+
+describe.each(MODES)('%s mode, gray-only recipes', (mode) => {
+  const ctx = (gray: GrayColor) => {
+    const rc = ((first: string, step?: string | number) =>
+      resolveColor(step === undefined ? first : `${first}-${step}`, mode, 'indigo', gray)) as ResolveColorFn
+    const page = mode === 'light' ? '#ffffff' : rc('gray', 1)
+    return { rc, page, paint: { rc, color: 'accent' as const, appearance: mode } }
+  }
+
+  it.each(GRAYS.flatMap(gray => (['classic', 'soft'] as const).map(variant => [variant, gray] as const)))(
+    'Kbd %s text on its background is AA (%s)',
+    (variant, gray) => {
+      const { page, paint } = ctx(gray)
+      const colors = resolveVariantColors('kbd', { appearance: mode, variant }, paint)
+      expect(contrastRatio(colors.text, toHex(composite(colors.bg, page)))).toBeGreaterThanOrEqual(4.5)
+    },
+  )
+
+  it.each(GRAYS)('an enabled control label is AAA on the background (%s)', (gray) => {
+    const { page, paint } = ctx(gray)
+    const colors = resolveVariantColors('controlLabel', { appearance: mode }, paint)
+    expect(contrastRatio(colors.text, page)).toBeGreaterThanOrEqual(7)
+  })
+})

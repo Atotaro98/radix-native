@@ -2,7 +2,6 @@ import React from 'react'
 import { Pressable, Text as RNText } from 'react-native'
 import type { StyleProp, ViewStyle } from 'react-native'
 import { useInteraction } from '../../hooks/useInteraction'
-import { useResolveColor } from '../../hooks/useResolveColor'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useTextStyle } from '../../hooks/useTextStyle'
 import type { AccentColor } from '../../tokens/colors/types'
@@ -43,12 +42,12 @@ export function LabeledControl({
   style,
   children,
 }: LabeledControlProps) {
-  const rc = useResolveColor()
   const { focused, handlers } = useInteraction({ enabled: !disabled })
   const focus = useVariantColors('focusRing', { color })
+  const labelColors = useVariantColors('controlLabel', { disabled })
   const label = useTextStyle({
     size,
-    color: disabled ? rc('gray', 'a8') : rc('gray', 12),
+    color: labelColors.text,
     maxFontSizeMultiplier,
   })
   const gap = Math.round((label.style.fontSize ?? 0) / 2)

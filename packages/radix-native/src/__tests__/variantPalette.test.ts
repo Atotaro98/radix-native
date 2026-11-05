@@ -150,6 +150,32 @@ describe('text (text.css, heading.css, link.css, blockquote.css)', () => {
   })
 })
 
+describe('kbd (kbd.css)', () => {
+  it('.rt-variant-soft → gray-a3, gray-12 text, no bevel', () => {
+    expect(paints('kbd', { variant: 'soft' })).toEqual({ bg: g('a3'), text: g(12) })
+  })
+
+  it('.rt-variant-classic → gray-1 with the per-mode --kbd-box-shadow colors', () => {
+    expect(paints('kbd', { variant: 'classic' })).toEqual({
+      bg: g(1),
+      text: g(12),
+      ring: byMode(g('a5'), g('a7')),
+      bottomEdge: byMode(g('a7'), blackA(11)),
+      highlight: byMode(g('a3'), g('a11')),
+      shadow: byMode(g(12), { raw: '#000000' }),
+      shadowOpacity: 0.12,
+    })
+    expect(getVariantPaints('kbd', { appearance: 'dark', variant: 'classic' }).shadowOpacity).toBe(0.95)
+  })
+})
+
+describe('control label (checkbox-group.css, radio-group.css)', () => {
+  it('gray-12, gray-a8 when disabled', () => {
+    expect(paints('controlLabel', {})).toEqual({ text: g(12) })
+    expect(paints('controlLabel', { disabled: true })).toEqual({ text: g('a8') })
+  })
+})
+
 describe('focus ring (color.css --focus-*)', () => {
   it(':focus-visible → outline focus-8', () => {
     expect(paints('focusRing', {})).toEqual({ ring: f(8) })

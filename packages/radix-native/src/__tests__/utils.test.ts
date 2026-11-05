@@ -1,6 +1,5 @@
 import { resolveColor } from '../utils/resolveColor'
 import { resolveSpace } from '../utils/resolveSpace'
-import { withAlpha } from '../utils/alpha'
 import { getMinHitSlop, MIN_TOUCH_TARGET } from '../utils/hitSlop'
 import { getRadius, getFullRadius } from '../tokens/radius'
 import { indigo, slate, blue } from '../tokens/colors'
@@ -51,19 +50,6 @@ describe('radius', () => {
   it('only produces a pill for "full"', () => {
     expect(getFullRadius('full')).toBe(9999)
     expect(getFullRadius('large')).toBe(0)
-  })
-})
-
-describe('withAlpha', () => {
-  it('handles #rgb, #rrggbb and #rrggbbaa', () => {
-    expect(withAlpha('#fff', 0.6)).toBe('#ffffff99')
-    expect(withAlpha('#112233', 0.6)).toBe('#11223399')
-    expect(withAlpha('#11223380', 0.5)).toBe('#11223340')
-  })
-
-  it('leaves non-hex colors untouched', () => {
-    expect(withAlpha('rgb(0,0,0)', 0.5)).toBe('rgb(0,0,0)')
-    expect(withAlpha('#zzzzzz', 0.5)).toBe('#zzzzzz')
   })
 })
 

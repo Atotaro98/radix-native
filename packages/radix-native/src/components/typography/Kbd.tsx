@@ -1,9 +1,8 @@
 import React from 'react'
 import { Platform, View, Text as RNText } from 'react-native'
 import type { StyleProp, ViewStyle } from 'react-native'
-import { useThemeContext } from '../../hooks/useThemeContext'
 import { useMetrics } from '../../hooks/useMetrics'
-import { useResolveColor } from '../../hooks/useResolveColor'
+import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { useTextStyle } from '../../hooks/useTextStyle'
 import type { FontSizeToken } from '../../tokens/typography'
@@ -12,7 +11,8 @@ import type { NativeViewProps } from '../../types/nativeProps'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type KbdVariant = 'classic' | 'soft'
+import type { KbdVariant } from '../../utils/variantPalette'
+export type { KbdVariant }
 
 export interface KbdProps extends NativeViewProps, MarginProps {
   /**
@@ -55,9 +55,8 @@ export function Kbd({
   children,
   ...rest
 }: KbdProps) {
-  const { appearance } = useThemeContext()
+  const colors = useVariantColors('kbd', { variant })
   const metrics = useMetrics()
-  const rc = useResolveColor()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
   // Radix: 0.75em of the surrounding text, default (body) font — not monospace.
@@ -69,7 +68,7 @@ export function Kbd({
     sizeAdjust: 0.75,
     weight: 'regular',
     lineHeight: 'none',
-    color: rc('gray', 12),
+    color: colors.text,
     compact: true,
     maxFontSizeMultiplier,
   })
@@ -91,13 +90,6 @@ export function Kbd({
   const translateY = Math.round((kbdHeight - ascender) * 0.5)
 
   const isClassic = variant === 'classic'
-  // Radix --kbd-box-shadow differs per mode: in dark the bottom edge and drop
-  // shadow are black and the top highlight is bright (gray-a11).
-  const isDark = appearance === 'dark'
-  const bevel = isDark
-    ? { ring: rc('gray', 'a7'), bottom: 'rgba(0, 0, 0, 0.9)', highlight: rc('gray', 'a11'), shadow: '#000000', shadowOpacity: 0.95 }
-    : { ring: rc('gray', 'a5'), bottom: rc('gray', 'a7'), highlight: rc('gray', 'a3'), shadow: rc('gray', 12), shadowOpacity: 0.12 }
-
   const containerStyle: ViewStyle = {
     flexDirection: 'row',
     alignItems: 'center',
@@ -107,14 +99,14 @@ export function Kbd({
     paddingHorizontal: ph,
     paddingBottom: pb,
     borderRadius: borderR,
-    backgroundColor: isClassic ? rc('gray', 1) : rc('gray', 'a3'),
+    backgroundColor: colors.bg,
     // Classic uses border to approximate box-shadow outline + bottom shadow
     ...(isClassic
       ? {
           borderWidth: 1,
-          borderColor: bevel.ring,
+          borderColor: colors.ring,
           borderBottomWidth: 2,
-          borderBottomColor: bevel.bottom,
+          borderBottomColor: colors.bottomEdge,
         }
       : {}),
     transform: [{ translateY }],
@@ -122,9 +114,9 @@ export function Kbd({
     ...(isClassic
       ? Platform.select({
           ios: {
-            shadowColor: bevel.shadow,
+            shadowColor: colors.shadow,
             shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: bevel.shadowOpacity,
+            shadowOpacity: colors.shadowOpacity,
             shadowRadius: 1,
           },
           android: {
@@ -144,7 +136,7 @@ export function Kbd({
         left: 1,
         right: 1,
         height: 1,
-        backgroundColor: bevel.highlight,
+        backgroundColor: colors.highlight,
         borderTopLeftRadius: Math.max(0, borderR - 1),
         borderTopRightRadius: Math.max(0, borderR - 1),
       }
