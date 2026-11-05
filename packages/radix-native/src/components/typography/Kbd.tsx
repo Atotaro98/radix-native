@@ -18,10 +18,8 @@ export interface KbdProps extends NativeViewProps, MarginProps {
   /**
    * Text size token (1–9).
    *
-   * In Radix web, Kbd uses `0.75em` to inherit from the parent.
-   * In RN there are no relative units, so `size` sets the *parent* text size
-   * and the Kbd font is derived as `fontSize[size] * 0.75` (matching Radix).
-   * When omitted inside a Text, the surrounding text size is used.
+   * Radix: with a size, the Kbd font is `font-size-N × 0.8`; without one it is
+   * `0.75em` of the surrounding text (inside a Text), or of size 2 standalone.
    */
   size?: FontSizeToken
   /** Visual variant. Default: `'classic'`. */
@@ -59,13 +57,13 @@ export function Kbd({
   const metrics = useMetrics()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
-  // Radix: 0.75em of the surrounding text, default (body) font — not monospace.
-  // Explicit size (or standalone, default 2) uses the token instead.
+  // Radix .rt-Kbd: 0.75em of the surrounding text, default (body) font — not
+  // monospace. .rt-Kbd.rt-r-size-N: calc(var(--font-size-N) * 0.8).
   const text = useTextStyle({
     inline: true,
     size,
     defaultSize: 2,
-    sizeAdjust: 0.75,
+    sizeAdjust: size !== undefined ? 0.8 : 0.75,
     weight: 'regular',
     lineHeight: 'none',
     color: colors.text,
@@ -145,7 +143,7 @@ export function Kbd({
   return (
     <View {...rest} style={[containerStyle, style]}>
       {highlightStyle && <View style={highlightStyle} />}
-      <RNText {...text.textProps} style={text.style}>{children}</RNText>
+      {text.provide(<RNText {...text.textProps} style={text.style}>{children}</RNText>)}
     </View>
   )
 }

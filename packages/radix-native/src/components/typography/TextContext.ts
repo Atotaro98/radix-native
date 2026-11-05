@@ -1,8 +1,11 @@
 import React from 'react'
+import type { TextRole } from '../../utils/textStyle'
 
 export interface TextContextValue {
   /** Resolved font size (px) of the closest typography ancestor. */
   fontSize: number
+  /** Text role of that ancestor (the same role nested in itself keeps its size). */
+  role?: TextRole
 }
 
 /**

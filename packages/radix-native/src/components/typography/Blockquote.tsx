@@ -5,7 +5,6 @@ import { useMetrics } from '../../hooks/useMetrics'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { useTextStyle } from '../../hooks/useTextStyle'
-import { TextContext } from './TextContext'
 import { space } from '../../tokens/spacing'
 import type { FontSizeToken } from '../../tokens/typography'
 import type { MarginProps } from '../../types/marginProps'
@@ -84,11 +83,11 @@ export function Blockquote({
 
   return (
     <View {...rest} style={[containerStyle, style]}>
-      <TextContext.Provider value={{ fontSize: resolvedSize }}>
+      {text.provide(
         <RNText {...text.textProps} style={text.style}>
           {children}
-        </RNText>
-      </TextContext.Provider>
+        </RNText>,
+      )}
     </View>
   )
 }

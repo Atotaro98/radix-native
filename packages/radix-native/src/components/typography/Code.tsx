@@ -5,7 +5,6 @@ import { useMetrics } from '../../hooks/useMetrics'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { useTextStyle } from '../../hooks/useTextStyle'
-import { TextContext, useParentText } from './TextContext'
 import type { FontSizeToken } from '../../tokens/typography'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { TextWeight, TextWrap } from './Text'
@@ -67,9 +66,7 @@ export function Code({
   // ─── Colors ─────────────────────────────────────────────────────────────────
   const colors = useVariantColors('code', { variant, color, highContrast })
   // Ghost without a color inherits: from the parent text, else body text gray-12.
-  const isNested = useParentText() !== null
-  const fallbackColor = useVariantColors('text', {}).text
-  const textColor = colors.text ?? (isNested ? undefined : fallbackColor)
+  const bodyColor = useVariantColors('text', {}).text
   const backgroundColor = colors.bg
   const borderColor = colors.border
 
@@ -82,7 +79,8 @@ export function Code({
     size,
     weight,
     lineHeight: 'none',
-    color: textColor,
+    color: colors.text,
+    standaloneColor: bodyColor,
     maxFontSizeMultiplier,
     truncate,
     wrap,
@@ -107,14 +105,12 @@ export function Code({
     paddingHorizontal,
   }
 
-  return (
-    <TextContext.Provider value={{ fontSize: resolvedSize }}>
-      <RNText
-        {...text.textProps}
-        {...rest}
-        style={[codeStyle, style]}
-      />
-    </TextContext.Provider>
+  return text.provide(
+    <RNText
+      {...text.textProps}
+      {...rest}
+      style={[codeStyle, style]}
+    />,
   )
 }
 Code.displayName = 'Code'

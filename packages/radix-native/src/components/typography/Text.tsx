@@ -6,7 +6,6 @@ import { useMargins } from '../../hooks/useMargins'
 import { useTextStyle } from '../../hooks/useTextStyle'
 import type { WeightIntent, TextWrapMode } from '../../utils/textStyle'
 import type { FontSizeToken } from '../../tokens/typography'
-import { TextContext, useParentText } from './TextContext'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { MarginProps } from '../../types/marginProps'
 import type { NativeTextProps } from '../../types/nativeProps'
@@ -72,7 +71,6 @@ export function Text({
   ...rest
 }: TextProps) {
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
-  const isNested = useParentText() !== null
 
   // ─── Color ──────────────────────────────────────────────────────────────────
   //   color + highContrast → {color}-12     (solid step 12 — maximum contrast)
@@ -80,13 +78,13 @@ export function Text({
   //   no color, nested     → inherited from the parent text
   //   no color             → gray-12        (standard body text)
   const colors = useVariantColors('text', { color, highContrast })
-  const textColor = !color && isNested ? undefined : colors.text
 
   const text = useTextStyle({
     inline: true,
     size,
     weight,
-    color: textColor,
+    color: color ? colors.text : undefined,
+    standaloneColor: colors.text,
     maxFontSizeMultiplier,
     truncate,
     wrap,
@@ -97,14 +95,11 @@ export function Text({
     () => (align ? { ...text.style, textAlign: align } : text.style),
     [text.style, align],
   )
-  const contextValue = React.useMemo(() => ({ fontSize: text.contextFontSize }), [text.contextFontSize])
 
-  return (
-    <TextContext.Provider value={contextValue}>
-      <RNText {...text.textProps} {...rest} style={[textStyle, style]}>
-        {children}
-      </RNText>
-    </TextContext.Provider>
+  return text.provide(
+    <RNText {...text.textProps} {...rest} style={[textStyle, style]}>
+      {children}
+    </RNText>,
   )
 }
 Text.displayName = 'Text'

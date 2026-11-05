@@ -4,7 +4,6 @@ import type { StyleProp, TextStyle } from 'react-native'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { useTextStyle } from '../../hooks/useTextStyle'
-import { TextContext } from './TextContext'
 import type { FontSizeToken } from '../../tokens/typography'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { MarginProps } from '../../types/marginProps'
@@ -77,14 +76,11 @@ export function Heading({
     () => (align ? { ...text.style, textAlign: align } : text.style),
     [text.style, align],
   )
-  const contextValue = React.useMemo(() => ({ fontSize: text.contextFontSize }), [text.contextFontSize])
 
-  return (
-    <TextContext.Provider value={contextValue}>
-      <RNText accessibilityRole="header" {...text.textProps} {...rest} style={[headingStyle, style]}>
-        {children}
-      </RNText>
-    </TextContext.Provider>
+  return text.provide(
+    <RNText accessibilityRole="header" {...text.textProps} {...rest} style={[headingStyle, style]}>
+      {children}
+    </RNText>,
   )
 }
 Heading.displayName = 'Heading'

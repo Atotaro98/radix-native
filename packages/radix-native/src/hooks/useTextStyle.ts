@@ -1,6 +1,6 @@
-import { useEffect, useMemo } from 'react'
+import { createElement, useCallback, useEffect, useMemo, type ReactNode } from 'react'
 import { useThemeContext } from './useThemeContext'
-import { useParentText } from '../components/typography/TextContext'
+import { TextContext, useParentText } from '../components/typography/TextContext'
 import { resolveTextStyle, type ResolvedTextStyle, type TextStyleRequest } from '../utils/textStyle'
 import { isDev } from '../utils/env'
 
@@ -11,6 +11,13 @@ export interface UseTextStyleOptions extends TextStyleRequest {
    * control labels) ignores any parent. Default: false.
    */
   inline?: boolean
+}
+
+export interface TextStyleResult extends ResolvedTextStyle {
+  /** Whether this text sits inside another radix-native text (always false for block text). */
+  isNested: boolean
+  /** Wraps the rendered text so nested typography inherits from it (memoized `TextContext`). */
+  provide: (children: ReactNode) => ReactNode
 }
 
 const warnedMissingFaces = new Set<string>()
@@ -32,25 +39,28 @@ export function useTextStyle({
   weight,
   lineHeight,
   color,
+  standaloneColor,
   compact,
   maxFontSizeMultiplier,
   truncate,
   wrap,
   margins,
-}: UseTextStyleOptions): ResolvedTextStyle {
+}: UseTextStyleOptions): TextStyleResult {
   const { scaling, fonts, maxFontSizeMultiplier: globalMax } = useThemeContext()
   const contextParent = useParentText()
-  const parentFontSize = inline ? contextParent?.fontSize : undefined
+  const parent = inline ? contextParent : null
+  const parentFontSize = parent?.fontSize
+  const parentRole = parent?.role
 
   const resolved = useMemo(
     () =>
       resolveTextStyle(
         { scaling, fonts, maxFontSizeMultiplier: globalMax },
-        { role, size, defaultSize, sizeAdjust, weight, lineHeight, color, compact, maxFontSizeMultiplier, truncate, wrap, margins },
-        parentFontSize === undefined ? null : { fontSize: parentFontSize },
+        { role, size, defaultSize, sizeAdjust, weight, lineHeight, color, standaloneColor, compact, maxFontSizeMultiplier, truncate, wrap, margins },
+        parentFontSize === undefined ? null : { fontSize: parentFontSize, role: parentRole },
       ),
-    [scaling, fonts, globalMax, role, size, defaultSize, sizeAdjust, weight, lineHeight, color, compact,
-      maxFontSizeMultiplier, truncate, wrap, margins, parentFontSize],
+    [scaling, fonts, globalMax, role, size, defaultSize, sizeAdjust, weight, lineHeight, color, standaloneColor, compact,
+      maxFontSizeMultiplier, truncate, wrap, margins, parentFontSize, parentRole],
   )
 
   const { missingFace } = resolved
@@ -67,5 +77,14 @@ export function useTextStyle({
     )
   }, [missingFace, roleName])
 
-  return resolved
+  const contextValue = useMemo(
+    () => ({ fontSize: resolved.contextFontSize, role: roleName }),
+    [resolved.contextFontSize, roleName],
+  )
+  const provide = useCallback(
+    (children: ReactNode) => createElement(TextContext.Provider, { value: contextValue }, children),
+    [contextValue],
+  )
+
+  return { ...resolved, isNested: parentFontSize !== undefined, provide }
 }

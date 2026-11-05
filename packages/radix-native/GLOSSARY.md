@@ -45,7 +45,7 @@ The maximum multiplier that system accessibility font scaling may apply to a pie
 _Avoid_: max font, font multiplier
 
 **Nested text**:
-Text rendered inside another radix-native text module. It flows inline, inherits size and color from its parent, and takes no layout of its own.
+Text rendered inside another radix-native text module. It flows inline, inherits color from its parent, and takes no layout of its own. Its size is the closest surrounding text's size scaled by its own Text role (an Em inside a Text is 1.18×, a Code inside that Em is 0.95× the Em), except that a role nested in itself keeps the outer size.
 _Avoid_: inline child, sub-text
 
 ## Color
