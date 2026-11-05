@@ -179,7 +179,7 @@ describe('Cards', () => {
     expect(screen.getByRole('checkbox', { name: 'Plain' })).toBeTruthy()
   })
 
-  it('RadioCards exposes a radiogroup and draws a 2px checked border without shifting content', () => {
+  it('RadioCards exposes a radiogroup', () => {
     renderWithTheme(
       <RadioCards accessibilityLabel="Size" defaultValue="b" columns={2}>
         <RadioCards.Item value="a">A</RadioCards.Item>
@@ -187,9 +187,56 @@ describe('Cards', () => {
       </RadioCards>,
     )
     expect(screen.getByLabelText('Size').props.role).toBe('radiogroup')
-    const a = StyleSheet.flatten(screen.getByRole('radio', { name: 'A' }).props.style)
-    const b = StyleSheet.flatten(screen.getByRole('radio', { name: 'B' }).props.style)
-    expect([a.borderWidth, b.borderWidth]).toEqual([1, 2])
-    expect(a.paddingTop + a.borderWidth).toBe(b.paddingTop + b.borderWidth)
+  })
+})
+
+describe('Selection card checked ring', () => {
+  type Host = { type: unknown; props: { style?: unknown }; findAll: (match: (n: Host) => boolean) => Host[] }
+  const flat = (node: { props: { style?: unknown } }): ViewStyle =>
+    StyleSheet.flatten(node.props.style as StyleProp<ViewStyle>) ?? {}
+  /** Where the content starts: border + padding on each side. */
+  const contentOffset = (card: Host) => {
+    const s = flat(card)
+    const border = s.borderWidth ?? 0
+    return {
+      top: border + Number(s.paddingTop ?? 0),
+      right: border + Number(s.paddingRight ?? 0),
+      bottom: border + Number(s.paddingBottom ?? 0),
+      left: border + Number(s.paddingLeft ?? 0),
+    }
+  }
+  const ringOf = (card: Host) => card.findAll((n) => n !== card && typeof n.type === 'string' && flat(n).borderWidth === 2)
+
+  // Radix draws the checked ring as an `::after` outline, so it takes no layout
+  // space; ThemeControls passes its own padding through `style`.
+  it.each([
+    ['default padding', undefined],
+    ['padding overridden through style', { paddingTop: 6, paddingBottom: 6, paddingLeft: 2, paddingRight: 2 }],
+  ] as const)('RadioCards: checked and unchecked items have the same content offset (%s)', (_, style) => {
+    renderWithTheme(
+      <RadioCards defaultValue="b" columns={2}>
+        <RadioCards.Item value="a" style={style}>A</RadioCards.Item>
+        <RadioCards.Item value="b" style={style}>B</RadioCards.Item>
+      </RadioCards>,
+    )
+    const a = screen.getByRole('radio', { name: 'A' }) as unknown as Host
+    const b = screen.getByRole('radio', { name: 'B' }) as unknown as Host
+    expect(contentOffset(b)).toEqual(contentOffset(a))
+    expect(ringOf(a)).toHaveLength(0)
+    expect(ringOf(b)).toHaveLength(1)
+    // Covers the card's outer 2px: pulled out over the 1px border.
+    expect(flat(ringOf(b)[0])).toMatchObject({ position: 'absolute', top: -1, left: -1, right: -1, bottom: -1, borderWidth: 2 })
+  })
+
+  it('CheckboxCards: checked and unchecked items have the same content offset', () => {
+    renderWithTheme(
+      <CheckboxCards defaultValue={['b']} columns={2}>
+        <CheckboxCards.Item value="a">A</CheckboxCards.Item>
+        <CheckboxCards.Item value="b">B</CheckboxCards.Item>
+      </CheckboxCards>,
+    )
+    const a = screen.getByRole('checkbox', { name: 'A' }) as unknown as Host
+    const b = screen.getByRole('checkbox', { name: 'B' }) as unknown as Host
+    expect(contentOffset(b)).toEqual(contentOffset(a))
   })
 })
