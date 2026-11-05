@@ -55,11 +55,11 @@ These are places where RN cannot replicate the exact Radix web visual, and we us
 | **Button / Badge / Code** outline hc border | Web: double shadow `accent-a7 + gray-a11` | RN: single `gray-a11` border |
 | **Button** surface pressed border | Web: border changes from `a7` to `a8` | RN: border stays `a7` |
 | **Switch** track | Web: gradient transition between checked/unchecked halves | RN: solid color swap; each state flattens its half of Radix's gradient stack into one color |
-| **Switch** thumb | Web: white with multi-layer shadow; soft adds `saturate(0.45)` | RN: flat white thumb (gray-2 when disabled) |
+| **Switch** thumb | Web: white with a multi-layer drop shadow in every variant; soft adds `saturate(0.45)` | RN: one platform drop shadow (lighter when disabled; gray-2 thumb), no saturate; the track has no shadow |
 | **Switch** checked pressed | Web: `brightness()` filter | RN: no filter |
 | **Checkbox** indicator | Web: SVG paths (ThickCheckIcon) | RN: View borders rotated -45deg |
 | **shadow-1** (classic Checkbox, Radio, Switch, Progress, TextField / TextArea; disabled classic controls) | Web: inset ring + inner top shadow | RN: the ring only, as the border color (`gray-a5`; dark mode `gray-a3` over `gray-a4`), composited with any ring drawn on top |
-| **Classic raised effect** | Web: bevel gradient + highlight on checked / solid parts | RN: drop shadow + `ClassicOverlay`, only where Radix has the bevel (checked Checkbox / Radio / Switch, Button, Card) |
+| **Classic raised effect** | Web: bevel gradient + highlight on checked / solid parts | RN: `ClassicOverlay` where Radix has the bevel; Button and Card also get a drop shadow, checked Checkbox / Radio do not (Radix's bevel there is inset only) |
 | **Card** surface/classic border | Web: `color-mix()` enhanced shadows | RN: simple `borderColor` with the un-mixed token (`gray-a5`, classic `gray-a3` / dark `gray-a6`) |
 | **Card** pressed | Web: `:active` ring color change | RN: same ring change plus the press scale |
 | **CheckboxGroup / RadioGroup** disabled label | Web: unchanged text, `cursor: not-allowed` | RN: label turns `gray-a8` — there is no cursor to signal it |

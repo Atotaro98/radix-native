@@ -1,17 +1,11 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useMemo } from 'react'
 import { View } from 'react-native'
-import type { ViewStyle, StyleProp, GestureResponderEvent } from 'react-native'
-import { useThemeContext } from '../../hooks/useThemeContext'
+import type { ViewStyle, StyleProp } from 'react-native'
 import { useMetrics } from '../../hooks/useMetrics'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
-import { useControllableState } from '../../hooks/useControllableState'
-import { useInteraction } from '../../hooks/useInteraction'
-import { AnimatedPressable } from '../../hooks/usePressScale'
-import { getMinHitSlop } from '../../utils/hitSlop'
-import { FocusRing } from '../internal/FocusRing'
+import { BaseToggle } from '../internal/BaseToggle'
 import type { AccentColor } from '../../tokens/colors/types'
-import { getClassicEffect } from '../../utils/classicEffect'
 import { ClassicOverlay } from '../internal/ClassicOverlay'
 import type { NativePressableProps } from '../../types/nativeProps'
 import type { MarginProps } from '../../types/marginProps'
@@ -49,65 +43,26 @@ export interface RadioProps extends NativePressableProps, MarginProps {
 const SIZE_PX: Record<RadioSize, number> = { 1: 14, 2: 16, 3: 20 }
 const DOT_SCALE = 0.4
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// ─── Indicator ────────────────────────────────────────────────────────────────
 
-export function Radio({
-  size = 2,
-  variant = 'surface',
-  color,
-  highContrast,
-  checked: checkedProp,
-  defaultChecked = false,
-  onCheckedChange,
-  disabled = false,
-  m, mx, my, mt, mr, mb, ml,
-  style,
-  onPress,
-  onPressIn,
-  onPressOut,
-  onFocus,
-  onBlur,
-  accessibilityState,
-  hitSlop,
-  ...rest
-}: RadioProps) {
-  const { appearance } = useThemeContext()
-  const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
-  const { focused, scaleStyle, handlers } = useInteraction({
-    enabled: !disabled,
-    onPressIn,
-    onPressOut,
-    onFocus,
-    onBlur,
-  })
+export interface RadioIndicatorProps {
+  size: RadioSize
+  variant: RadioVariant
+  color?: AccentColor
+  highContrast?: boolean
+  checked: boolean
+  disabled: boolean
+}
 
-  // Controlled / uncontrolled
-  const [checked, setChecked] = useControllableState({
-    prop: checkedProp,
-    defaultProp: defaultChecked,
-    onChange: onCheckedChange,
-  })
-
+/** Internal: the ring and its dot, drawn from the checked state alone. */
+export function RadioIndicator({ size, variant, color, highContrast, checked, disabled }: RadioIndicatorProps) {
   const { px } = useMetrics()
   const radioSize = px(SIZE_PX[size])
   const dotSize = Math.round(radioSize * DOT_SCALE)
-
-  // ─── Colors ─────────────────────────────────────────────────────────────
   const colors = useVariantColors('radio', { variant, color, highContrast, checked, disabled })
-  const focus = useVariantColors('focusRing', { color })
+  // Radix: checked classic is a bevel (gradient + inset highlight), with no drop shadow.
+  const isClassicBevel = variant === 'classic' && checked && !disabled
 
-  const handlePress = useCallback((e: GestureResponderEvent) => {
-    if (disabled) return
-    setChecked(true)
-    onPress?.(e)
-  }, [disabled, setChecked, onPress])
-
-  const isClassic = variant === 'classic'
-  const classicStyle = isClassic && checked && !disabled
-    ? getClassicEffect(appearance, {})
-    : undefined
-
-  // ─── Styles ─────────────────────────────────────────────────────────────
   const radioStyle = useMemo<ViewStyle>(() => ({
     width: radioSize,
     height: radioSize,
@@ -117,22 +72,11 @@ export function Radio({
     borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
-    ...margins,
-  }), [radioSize, colors, margins])
+  }), [radioSize, colors])
 
   return (
-    <AnimatedPressable
-      accessibilityRole="radio"
-      hitSlop={hitSlop ?? getMinHitSlop(radioSize, radioSize)}
-      {...rest}
-      {...handlers}
-      onPress={handlePress}
-      disabled={disabled}
-      accessibilityState={{ ...accessibilityState, checked, disabled }}
-      style={[scaleStyle, radioStyle, classicStyle, style]}
-    >
-      {/* Classic gradient simulation when checked */}
-      {isClassic && checked && !disabled && <ClassicOverlay borderRadius={radioSize / 2} />}
+    <View style={radioStyle}>
+      {isClassicBevel && <ClassicOverlay borderRadius={radioSize / 2} />}
       {colors.indicator && (
         <View
           style={{
@@ -143,8 +87,50 @@ export function Radio({
           }}
         />
       )}
-      <FocusRing visible={focused} color={focus.ring} borderRadius={radioSize / 2} offset={2} />
-    </AnimatedPressable>
+    </View>
+  )
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
+export function Radio({
+  size = 2,
+  variant = 'surface',
+  color,
+  highContrast,
+  defaultChecked = false,
+  disabled = false,
+  m, mx, my, mt, mr, mb, ml,
+  ...rest
+}: RadioProps) {
+  const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
+  const { px } = useMetrics()
+  const radioSize = px(SIZE_PX[size])
+
+  return (
+    <BaseToggle
+      role="radio"
+      {...rest}
+      defaultChecked={defaultChecked}
+      disabled={disabled}
+      color={color}
+      width={radioSize}
+      height={radioSize}
+      borderRadius={radioSize / 2}
+      focusOffset={2}
+      margins={margins}
+    >
+      {({ checked }) => (
+        <RadioIndicator
+          size={size}
+          variant={variant}
+          color={color}
+          highContrast={highContrast}
+          checked={checked}
+          disabled={disabled}
+        />
+      )}
+    </BaseToggle>
   )
 }
 Radio.displayName = 'Radio'

@@ -1,5 +1,5 @@
 import React from 'react'
-import { Pressable, View, Text as RNText } from 'react-native'
+import { Pressable, Text as RNText } from 'react-native'
 import type { StyleProp, ViewStyle } from 'react-native'
 import { useInteraction } from '../../hooks/useInteraction'
 import { useResolveColor } from '../../hooks/useResolveColor'
@@ -13,7 +13,7 @@ interface LabeledControlProps {
   checked: boolean
   disabled: boolean
   onPress: () => void
-  /** The visual control (Checkbox / Radio), rendered non-interactive. */
+  /** The Indicator of the Toggle (CheckboxIndicator / RadioIndicator). */
   control: React.ReactNode
   /** Group size: the label is Text size 1–3, as in Radix. */
   size: 1 | 2 | 3
@@ -63,9 +63,7 @@ export function LabeledControl({
       accessibilityState={{ checked, disabled }}
       style={[{ flexDirection: 'row', alignItems: 'center', gap, ...margins }, style]}
     >
-      <View pointerEvents="none" importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
-        {control}
-      </View>
+      {control}
       {typeof children === 'string' || typeof children === 'number' ? (
         <RNText style={label.style} {...label.textProps}>
           {children}

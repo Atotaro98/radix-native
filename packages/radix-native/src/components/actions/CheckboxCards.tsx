@@ -8,7 +8,7 @@ import { SelectionCard, SelectionCardGrid, SELECTION_CARD_FONT_SIZE, type Select
 import type { SpaceToken } from '../../tokens/spacing'
 import type { MarginProps } from '../../types/marginProps'
 import type { AccentColor } from '../../tokens/colors/types'
-import { Checkbox, CHECKBOX_SIZE, type CheckboxSize } from './Checkbox'
+import { CheckboxIndicator, CHECKBOX_SIZE, type CheckboxSize } from './Checkbox'
 
 export type CheckboxCardsVariant = SelectionCardVariant
 
@@ -138,10 +138,9 @@ function CheckboxCardsItem({ value, disabled, children, style }: CheckboxCardsIt
         // Checkbox on the right, vertically centered (Radix CSS)
         <View
           pointerEvents="none"
-          importantForAccessibility="no-hide-descendants"
           style={{ position: 'absolute', right: paddingLeft, top: 0, bottom: 0, justifyContent: 'center' }}
         >
-          <Checkbox
+          <CheckboxIndicator
             size={size}
             variant="surface" // Radix checkbox-cards.tsx always renders a surface Checkbox
             color={color}

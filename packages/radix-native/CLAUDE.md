@@ -18,7 +18,7 @@ packages/radix-native/src/
   utils/          resolveColor, variantPalette, colorMath, metrics, classicEffect, textStyle,
                   hitSlop, alpha, env, fonts
   components/
-    internal/     BaseButton, BaseTextInput, ControlLabel, selectionGroup, SelectionCard, ClassicOverlay, FocusRing, ColumnRows, LabeledControl (not exported)
+    internal/     BaseButton, BaseToggle, BaseTextInput, ControlLabel, selectionGroup, SelectionCard, ClassicOverlay, FocusRing, ColumnRows, LabeledControl (not exported)
     layout/       Box, Flex, Grid, Separator, Card
     typography/   Text, Heading, Link, Blockquote, Code, Em, Strong, Quote, Kbd, TextContext
     display/      Avatar, Badge
@@ -135,10 +135,12 @@ const colors = useVariantColors('checkbox', { variant, color, highContrast, chec
 | Focus indicator | `<FocusRing visible={focused} color={useVariantColors('focusRing', { color }).ring} borderRadius={r} offset={…} />` (offset only on hosts without `overflow: 'hidden'`) |
 | Classic gradient | `<ClassicOverlay borderRadius={r} />` |
 | A button (interaction, recipe colors, classic, loading, focus ring, touch target, prop order) | `<BaseButton {...props} iconOnly? />` — Button and IconButton are thin wrappers over it, like Radix `BaseButton` |
+| A Toggle (checked state, what a press does per role, a11y state incl. `'mixed'`, disabled gate, touch target, press scale, focus ring) | `<BaseToggle role="checkbox" \| "radio" \| "switch" {...rest} width height borderRadius focusOffset margins>{({ checked }) => <XIndicator … />}</BaseToggle>` — Checkbox, Radio and Switch are thin wrappers over it |
+| A Toggle's look without its behaviour | `CheckboxIndicator`, `RadioIndicator`, `SwitchIndicator` (exported from each control's file, not from `index.ts`) — rows and cards use these, never a nested Toggle |
 | A row of text runs + icons inside a control (Control label) | `<ControlLabel size weight color maxFontSizeMultiplier>{children}</ControlLabel>` — merges adjacent text, one line, tints icons without `color` |
 | A Text input (sizes, recipe colors, focus, read-only look, prop order) | `<BaseTextInput {...props} multiline? />` — TextField and TextArea are thin wrappers over it |
 | Equal-width columns | `<ColumnRows columns gap…>` (no `onLayout`, no `%` flexBasis) |
-| Control + label row in groups | `<LabeledControl role checked disabled onPress control size color …>` — owns the label style, the 0.5em gap and the focus ring |
+| Control + label row in groups | `<LabeledControl role checked disabled onPress control={<XIndicator …/>} size color …>` — owns the label style, the 0.5em gap and the focus ring |
 | A Selection group (one value or several, controlled or not, disabled propagation) | `createSelectionGroup({ name, type: 'single' \| 'multiple' })` → `{ Root, useItem(value, disabled) }` — one instance per family, like Radix's CheckboxGroup / RadioGroup primitives |
 | A CheckboxCards / RadioCards item and grid | `<SelectionCard recipe role … indicator? />`, `<SelectionCardGrid columns gap />` |
 | Any rendered text (size, face, letter spacing, Font scaling cap, `truncate` / `wrap`, nesting) | `useTextStyle({ inline?, role?, size?, weight?, lineHeight?, color?, compact?, maxFontSizeMultiplier?, truncate?, wrap?, margins? })` → `{ style, textProps, contextFontSize }` — see Text style below |
