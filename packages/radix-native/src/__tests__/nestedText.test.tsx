@@ -80,3 +80,20 @@ describe('color of nested text', () => {
     expect(resolveTextStyle(theme, { color: '#222', standaloneColor: '#111' }, { fontSize: 16 }).style.color).toBe('#222')
   })
 })
+
+describe('Kbd size (kbd.css)', () => {
+  const kbdSize = () => (StyleSheet.flatten(screen.getByText('K').props.style) as TextStyle).fontSize
+
+  it.each([[1, 12], [2, 14], [3, 16], [4, 18], [5, 20], [6, 24], [7, 28], [8, 35], [9, 60]] as const)(
+    '.rt-r-size-%i → font-size × 0.8',
+    (token, fontSize) => {
+      renderWithTheme(<Kbd size={token}>K</Kbd>)
+      expect(kbdSize()).toBe(Math.round(fontSize * 0.8))
+    },
+  )
+
+  it('without a size: 0.75em of the surrounding text', () => {
+    renderWithTheme(<Text size={6}>Press <Kbd>K</Kbd></Text>)
+    expect(kbdSize()).toBe(18)
+  })
+})
