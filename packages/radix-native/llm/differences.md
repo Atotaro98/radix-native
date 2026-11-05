@@ -45,7 +45,7 @@ These are places where RN cannot replicate the exact Radix web visual, and we us
 | **Linear gradients** | `background-image: linear-gradient(...)` | Not available on Views | Classic variant bevel is approximated with overlay Views |
 | **Multi-layer shadows** | Complex `box-shadow` stacks | Platform-specific: iOS `shadow*`, Android `elevation` | Less depth in shadows |
 | **Color-mix** | `color-mix(in oklab, ...)` | Not available | Border colors are simpler approximations |
-| **Outline** | `outline: 2px solid color; outline-offset: -1px` | Absolutely positioned `FocusRing` view (`focus-8`) | Shown on keyboard / TV / web focus for every pressable; inputs use border color + 1px inner ring |
+| **Outline** | `outline: 2px solid color; outline-offset: -1px` | Absolutely positioned `FocusRing` view (`focus-8`) | Shown on keyboard / TV / web focus for every pressable; inputs use border color + 1px inner ring. The checked RadioCards item ring is an absolute 2px overlay too, so it never moves the content |
 | **Separator thickness** | `height: 1px` (CSS pixel) | `StyleSheet.hairlineWidth` (1 physical pixel) | Separator may appear thinner on retina |
 
 ### Per component
