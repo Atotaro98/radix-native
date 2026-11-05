@@ -153,7 +153,7 @@ export function Kbd({
   return (
     <View {...rest} style={[containerStyle, style]}>
       {highlightStyle && <View style={highlightStyle} />}
-      <RNText {...text.textProps} style={text.style}>{children}</RNText>
+      {text.provide(<RNText {...text.textProps} style={text.style}>{children}</RNText>)}
     </View>
   )
 }

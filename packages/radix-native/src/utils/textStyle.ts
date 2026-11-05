@@ -108,6 +108,8 @@ export interface TextStyleRequest {
   lineHeight?: LineHeightScale
   /** Already-resolved color. `undefined` → inherit (no color set). */
   color?: string
+  /** Color used only when `color` is unset and the text is not nested (nested text inherits). */
+  standaloneColor?: string
   /** Compact text gets a default Font scaling cap of 2. */
   compact?: boolean
   /** Font scaling cap set on the text itself. Wins over the Theme cap. */
@@ -121,6 +123,8 @@ export interface TextStyleRequest {
 /** The surrounding radix-native text, or `null` when the text is not nested. */
 export interface ParentText {
   fontSize: number
+  /** Text role of the surrounding text. The same role nested in itself inherits its size unchanged. */
+  role?: TextRole
 }
 
 export interface ResolvedTextStyle {
@@ -156,7 +160,11 @@ export function resolveTextStyle(
   const role = TEXT_ROLES[request.role ?? 'default']
   const isNested = parent !== null
   const factor = scalingMap[theme.scaling]
-  const adjust = request.sizeAdjust ?? role.sizeAdjust
+  // Radix `.rt-Code :where(.rt-Code)`, `.rt-Em :where(.rt-Em)`…: the same role
+  // nested in itself inherits the size instead of applying its adjustment again.
+  // An explicit size token still resolves on its own.
+  const sameRole = parent !== null && request.size === undefined && parent.role === (request.role ?? 'default')
+  const adjust = request.sizeAdjust ?? (sameRole ? 1 : role.sizeAdjust)
 
   // ─── Size ───────────────────────────────────────────────────────────────────
   // Explicit token, or standalone default → computed from the token scale.
@@ -187,7 +195,8 @@ export function resolveTextStyle(
   if (face.fontFamily !== undefined) style.fontFamily = face.fontFamily
   if (face.fontWeight !== undefined) style.fontWeight = face.fontWeight
   if (face.fontStyle !== undefined) style.fontStyle = face.fontStyle
-  if (request.color !== undefined) style.color = request.color
+  const color = request.color ?? (isNested ? undefined : request.standaloneColor)
+  if (color !== undefined) style.color = color
   // Nested text is inline: layout props mean nothing there. Standalone text
   // gets CSS's flex-shrink default so it wraps inside Flex rows.
   if (!isNested) Object.assign(style, { flexShrink: 1 }, request.margins)

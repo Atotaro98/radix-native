@@ -6,7 +6,6 @@ import { useMargins } from '../../hooks/useMargins'
 import { useTextStyle } from '../../hooks/useTextStyle'
 import { isDev } from '../../utils/env'
 import type { FontSizeToken } from '../../tokens/typography'
-import { TextContext, useParentText } from './TextContext'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { MarginProps } from '../../types/marginProps'
 import type { TextWeight, TextWrap } from './Text'
@@ -69,7 +68,6 @@ export function Link({
   ...rest
 }: LinkProps) {
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
-  const isNested = useParentText() !== null
 
   // ─── Color ──────────────────────────────────────────────────────────────────
   // Radix: colored links use a11, highContrast → step 12. Same as Text.
@@ -96,7 +94,7 @@ export function Link({
   // for links inside running text (otherwise only color would distinguish them,
   // which fails WCAG 1.4.1 "Use of Color").
   const showUnderline =
-    underline === 'always' || (underline === 'auto' && (!!highContrast || isNested))
+    underline === 'always' || (underline === 'auto' && (!!highContrast || text.isNested))
   const textDecorationLine: TextStyle['textDecorationLine'] =
     showUnderline ? 'underline' : 'none'
   // Radix: accent-a5 for normal underline, accent-a6 for highContrast
@@ -121,20 +119,17 @@ export function Link({
     () => ({ ...text.style, textDecorationLine, textDecorationColor }),
     [text.style, textDecorationLine, textDecorationColor],
   )
-  const contextValue = React.useMemo(() => ({ fontSize: text.contextFontSize }), [text.contextFontSize])
 
-  return (
-    <TextContext.Provider value={contextValue}>
-      <RNText
-        accessibilityRole="link"
-        {...text.textProps}
-        {...rest}
-        onPress={handlePress}
-        style={[linkStyle, style]}
-      >
-        {children}
-      </RNText>
-    </TextContext.Provider>
+  return text.provide(
+    <RNText
+      accessibilityRole="link"
+      {...text.textProps}
+      {...rest}
+      onPress={handlePress}
+      style={[linkStyle, style]}
+    >
+      {children}
+    </RNText>,
   )
 }
 Link.displayName = 'Link'

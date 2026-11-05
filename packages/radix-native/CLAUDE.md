@@ -20,7 +20,7 @@ packages/radix-native/src/
   components/
     internal/     BaseButton, BaseToggle, BaseTextInput, ControlLabel, selectionGroup, SelectionCard, ClassicOverlay, FocusRing, ColumnRows, LabeledControl (not exported)
     layout/       Box, Flex, Grid, Separator, Card
-    typography/   Text, Heading, Link, Blockquote, Code, Em, Strong, Quote, Kbd, TextContext
+    typography/   Text, Heading, Link, Blockquote, Code, Em, Strong, Quote, Kbd, TextContext, InlineText (factory, not exported)
     display/      Avatar, Badge
     actions/      Button, IconButton, Checkbox, CheckboxGroup, CheckboxCards,
                   Switch, Radio, RadioGroup, RadioCards
@@ -179,9 +179,14 @@ Never assemble `fontSize` / `fontFamily` / `fontWeight` / `maxFontSizeMultiplier
 - **Font scaling cap**: local prop > Theme prop > `2` for `compact: true` > none.
 - **Nesting**: `inline: true` reads `TextContext`. Nested text without a size inherits it (or derives it
   from the parent for roles with a size adjust, e.g. Code 0.95, Em/Quote 1.18, Kbd 0.75 via `sizeAdjust`)
-  and never gets `flexShrink` / margins. Provide `contextFontSize` through `TextContext` from text that can
-  contain other text.
-- Color is resolved by the caller and passed in (`undefined` = inherit).
+  and never gets `flexShrink` / margins. The same role nested in itself (Code in Code, Em in Em…) keeps the
+  outer size, like Radix's `.rt-Code :where(.rt-Code) { font-size: inherit }`; an explicit `size` still wins.
+- **Providing**: wrap the rendered text in `text.provide(<RNText …/>)` — it supplies a memoized `TextContext`
+  (size + role) so nested typography inherits. Never render `TextContext.Provider` by hand; use `text.isNested`
+  instead of reading the context. Inline modules that only add a role (Em, Strong, Quote) come from
+  `createInlineText(role, displayName, renderChildren?)` in `typography/InlineText.tsx`.
+- Color is resolved by the caller and passed in (`undefined` = inherit). `standaloneColor` applies only when
+  the text is not nested and has no `color` (Text's gray-12, ghost Code's body color).
 - Test new rules in `__tests__/textStyle.test.ts` (pure tables), not through renders.
 
 ### Component structure (consistent across all components)
