@@ -1,16 +1,12 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useMemo } from 'react'
 import { View } from 'react-native'
-import type { StyleProp, ViewStyle, GestureResponderEvent } from 'react-native'
+import type { StyleProp, ViewStyle } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useMetrics } from '../../hooks/useMetrics'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
-import { useControllableState } from '../../hooks/useControllableState'
-import { useInteraction } from '../../hooks/useInteraction'
-import { AnimatedPressable } from '../../hooks/usePressScale'
-import { getMinHitSlop } from '../../utils/hitSlop'
 import { ClassicOverlay } from '../internal/ClassicOverlay'
-import { FocusRing } from '../internal/FocusRing'
+import { BaseToggle, type CheckedState } from '../internal/BaseToggle'
 import type { AccentColor } from '../../tokens/colors/types'
 import { getClassicEffect } from '../../utils/classicEffect'
 import type { NativePressableProps } from '../../types/nativeProps'
@@ -20,7 +16,7 @@ import type { MarginProps } from '../../types/marginProps'
 
 export type CheckboxSize = 1 | 2 | 3
 export type CheckboxVariant = 'classic' | 'surface' | 'soft'
-export type CheckedState = boolean | 'indeterminate'
+export type { CheckedState }
 
 export interface CheckboxProps extends NativePressableProps, MarginProps {
   /** Checkbox size (1–3). Default: 2. */
@@ -51,77 +47,41 @@ const INDICATOR_SIZE: Record<CheckboxSize, number> = { 1: 9, 2: 10, 3: 12 }
 /** Radius multiplier per size (relative to radius-level-1) */
 const RADIUS_MULT: Record<CheckboxSize, number> = { 1: 0.875, 2: 1, 3: 1.25 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// ─── Geometry ─────────────────────────────────────────────────────────────────
 
-export function Checkbox({
-  size = 2,
-  variant = 'surface',
-  color,
-  highContrast,
-  checked: checkedProp,
-  defaultChecked = false,
-  onCheckedChange,
-  disabled = false,
-  m, mx, my, mt, mr, mb, ml,
-  style,
-  onPress,
-  onPressIn,
-  onPressOut,
-  onFocus,
-  onBlur,
-  accessibilityState,
-  hitSlop,
-  ...rest
-}: CheckboxProps) {
-  const { appearance } = useThemeContext()
-  const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
-  const { focused, scaleStyle, handlers } = useInteraction({
-    enabled: !disabled,
-    onPressIn,
-    onPressOut,
-    onFocus,
-    onBlur,
-  })
-
-  // ─── Controlled / uncontrolled ─────────────────────────────────────────────
-  const [checkedState, setChecked] = useControllableState<CheckedState>({
-    prop: checkedProp,
-    defaultProp: defaultChecked,
-    onChange: onCheckedChange,
-  })
-  const isChecked = checkedState === true
-  const isIndeterminate = checkedState === 'indeterminate'
-  const isActive = isChecked || isIndeterminate
-
-  // ─── Dimensions ────────────────────────────────────────────────────────────
+function useCheckboxBox(size: CheckboxSize) {
   const metrics = useMetrics()
-  const boxSize = metrics.px(CHECKBOX_SIZE[size])
-  const indicatorSize = metrics.px(INDICATOR_SIZE[size])
-  // Radix: --checkbox-border-radius: calc(var(--radius-1) * 0.875 | 1 | 1.25)
-  const borderRadius = metrics.radius(1) * RADIUS_MULT[size]
+  return {
+    boxSize: metrics.px(CHECKBOX_SIZE[size]),
+    indicatorSize: metrics.px(INDICATOR_SIZE[size]),
+    // Radix: --checkbox-border-radius: calc(var(--radius-1) * 0.875 | 1 | 1.25)
+    borderRadius: metrics.radius(1) * RADIUS_MULT[size],
+  }
+}
 
+// ─── Indicator ────────────────────────────────────────────────────────────────
 
-  // ─── Colors ────────────────────────────────────────────────────────────────
+export interface CheckboxIndicatorProps {
+  size: CheckboxSize
+  variant: CheckboxVariant
+  color?: AccentColor
+  highContrast?: boolean
+  checked: CheckedState
+  disabled: boolean
+}
+
+/** Internal: the box and its check / dash, drawn from the checked state alone. */
+export function CheckboxIndicator({ size, variant, color, highContrast, checked, disabled }: CheckboxIndicatorProps) {
+  const { appearance } = useThemeContext()
+  const { boxSize, indicatorSize, borderRadius } = useCheckboxBox(size)
+  const isIndeterminate = checked === 'indeterminate'
+  const isActive = checked !== false
   const colors = useVariantColors('checkbox', { variant, color, highContrast, checked: isActive, disabled })
-  const focus = useVariantColors('focusRing', { color })
 
-  // ─── Toggle ────────────────────────────────────────────────────────────────
-  // Radix: indeterminate → checked, checked → unchecked
-  const handlePress = useCallback((e: GestureResponderEvent) => {
-    if (disabled) return
-    setChecked(prev => prev !== true)
-    onPress?.(e)
-  }, [disabled, setChecked, onPress])
-
-  // ─── Classic effect ────────────────────────────────────────────────────────
-  const isClassic = variant === 'classic'
   // Radix: the raised bevel belongs to the checked state; unchecked classic is
   // sunken (shadow-1), drawn by the border color from the recipe.
-  const classicStyle = isClassic && isActive && !disabled
-    ? getClassicEffect(appearance, {})
-    : undefined
+  const isClassicRaised = variant === 'classic' && isActive && !disabled
 
-  // ─── Styles ────────────────────────────────────────────────────────────────
   const boxStyle = useMemo<ViewStyle>(() => ({
     width: boxSize,
     height: boxSize,
@@ -131,29 +91,14 @@ export function Checkbox({
     borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
-    ...margins,
-  }), [boxSize, borderRadius, colors, margins])
+  }), [boxSize, borderRadius, colors])
 
   const strokeWidth = Math.max(2, Math.round(indicatorSize * 0.18))
   const indicatorColor = colors.indicator
 
   return (
-    <AnimatedPressable
-      accessibilityRole="checkbox"
-      hitSlop={hitSlop ?? getMinHitSlop(boxSize, boxSize)}
-      {...rest}
-      {...handlers}
-      onPress={handlePress}
-      disabled={disabled}
-      accessibilityState={{
-        ...accessibilityState,
-        checked: isIndeterminate ? 'mixed' : isChecked,
-        disabled,
-      }}
-      style={[scaleStyle, boxStyle, classicStyle, style]}
-    >
-      {/* Classic gradient simulation when checked */}
-      {isClassic && isActive && !disabled && <ClassicOverlay borderRadius={borderRadius} />}
+    <View style={[boxStyle, isClassicRaised ? getClassicEffect(appearance, {}) : undefined]}>
+      {isClassicRaised && <ClassicOverlay borderRadius={borderRadius} />}
       {isActive && (
         isIndeterminate ? (
           <View style={{
@@ -174,8 +119,49 @@ export function Checkbox({
           }} />
         )
       )}
-      <FocusRing visible={focused} color={focus.ring} borderRadius={borderRadius} offset={2} />
-    </AnimatedPressable>
+    </View>
+  )
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
+export function Checkbox({
+  size = 2,
+  variant = 'surface',
+  color,
+  highContrast,
+  defaultChecked = false,
+  disabled = false,
+  m, mx, my, mt, mr, mb, ml,
+  ...rest
+}: CheckboxProps) {
+  const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
+  const { boxSize, borderRadius } = useCheckboxBox(size)
+
+  return (
+    <BaseToggle
+      role="checkbox"
+      {...rest}
+      defaultChecked={defaultChecked}
+      disabled={disabled}
+      color={color}
+      width={boxSize}
+      height={boxSize}
+      borderRadius={borderRadius}
+      focusOffset={2}
+      margins={margins}
+    >
+      {({ checked }) => (
+        <CheckboxIndicator
+          size={size}
+          variant={variant}
+          color={color}
+          highContrast={highContrast}
+          checked={checked}
+          disabled={disabled}
+        />
+      )}
+    </BaseToggle>
   )
 }
 Checkbox.displayName = 'Checkbox'

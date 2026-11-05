@@ -7,7 +7,7 @@ import { LabeledControl } from '../internal/LabeledControl'
 import { createSelectionGroup } from '../internal/selectionGroup'
 import type { MarginProps } from '../../types/marginProps'
 import type { AccentColor } from '../../tokens/colors/types'
-import { Checkbox, type CheckboxSize, type CheckboxVariant } from './Checkbox'
+import { Checkbox, CheckboxIndicator, type CheckboxSize, type CheckboxVariant } from './Checkbox'
 
 interface Shared {
   size: CheckboxSize
@@ -133,7 +133,7 @@ function CheckboxGroupItem({
       disabled={item.disabled}
       onPress={item.select}
       control={
-        <Checkbox size={size} variant={variant} color={color} highContrast={highContrast} checked={item.checked} disabled={item.disabled} />
+        <CheckboxIndicator size={size} variant={variant} color={color} highContrast={highContrast} checked={item.checked} disabled={item.disabled} />
       }
       size={size}
       color={color}

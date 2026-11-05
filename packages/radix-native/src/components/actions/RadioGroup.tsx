@@ -7,7 +7,7 @@ import { LabeledControl } from '../internal/LabeledControl'
 import { createSelectionGroup } from '../internal/selectionGroup'
 import type { MarginProps } from '../../types/marginProps'
 import type { AccentColor } from '../../tokens/colors/types'
-import { Radio, type RadioSize, type RadioVariant } from './Radio'
+import { Radio, RadioIndicator, type RadioSize, type RadioVariant } from './Radio'
 
 interface Shared {
   size: RadioSize
@@ -134,7 +134,7 @@ function RadioGroupItem({
       disabled={item.disabled}
       onPress={item.select}
       control={
-        <Radio size={size} variant={variant} color={color} highContrast={highContrast} checked={item.checked} disabled={item.disabled} />
+        <RadioIndicator size={size} variant={variant} color={color} highContrast={highContrast} checked={item.checked} disabled={item.disabled} />
       }
       size={size}
       color={color}

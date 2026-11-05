@@ -82,26 +82,32 @@ describe('resolveColor track / indicator', () => {
   })
 })
 
-const bg = (el: { props: { style: unknown } }) =>
-  StyleSheet.flatten(el.props.style as never as object) as { backgroundColor?: string }
+const bg = (el: { props: { style?: unknown } }) =>
+  (StyleSheet.flatten(el.props.style as never as object) ?? {}) as { backgroundColor?: string }
+
+/** The Switch Indicator's track: the first host view with a background inside the switch. */
+const track = () =>
+  screen.getByRole('switch').findAll(
+    (n: { type: unknown; props: { style?: unknown } }) => typeof n.type === 'string' && bg(n).backgroundColor !== undefined,
+  )[0]
 
 describe('checked Switch track', () => {
   it.each(DARK_TRACK)('dark %s surface and classic', (accent, hex) => {
     for (const variant of ['surface', 'classic'] as const) {
       const { unmount } = renderWithTheme(<Switch checked variant={variant} />, { appearance: 'dark', accentColor: accent })
-      expect(bg(screen.getByRole('switch')).backgroundColor).toBe(hex)
+      expect(bg(track()).backgroundColor).toBe(hex)
       unmount()
     }
   })
 
   it('light yellow uses step 10', () => {
     renderWithTheme(<Switch checked />, { accentColor: 'yellow' })
-    expect(bg(screen.getByRole('switch')).backgroundColor).toBe('#ffdc00')
+    expect(bg(track()).backgroundColor).toBe('#ffdc00')
   })
 
   it('follows the color prop', () => {
     renderWithTheme(<Switch checked color="sky" />, { appearance: 'dark' })
-    expect(bg(screen.getByRole('switch')).backgroundColor).toBe('#5bbde2')
+    expect(bg(track()).backgroundColor).toBe('#5bbde2')
   })
 })
 

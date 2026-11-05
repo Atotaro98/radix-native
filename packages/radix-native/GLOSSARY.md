@@ -64,6 +64,14 @@ _Avoid_: generic palette, color scheme, theme colors
 The single row of content inside a Button, IconButton or Badge: runs of text and icons. Adjacent text reads as one piece of Compact text in the control's Text style, kept to one line; icons take the control's text color unless they set their own. While a button is loading, its Control label stays readable by screen readers even though it is hidden on screen.
 _Avoid_: content, children, button text
 
+**Toggle**:
+A control with a checked state the user flips by pressing it: Checkbox, Radio or Switch. Its role decides what a press does (a Checkbox toggles and leaves indeterminate as checked, a Radio only checks, a Switch toggles) and how the state is announced. What a Toggle looks like is its Indicator, which is drawn apart from the behaviour.
+_Avoid_: selection control (that is a Variant family), input
+
+**Indicator**:
+The visual part of a Toggle — the box and check, the ring and dot, the track and thumb — drawn from the checked state alone, with no behaviour of its own. Rows and cards that act as a Toggle show an Indicator without containing a second Toggle.
+_Avoid_: control (for the visual part), icon
+
 **Text input**:
 A field the user types into: TextField (one line) or TextArea (several lines). Both behave the same and differ only in line count, height and radius. A read-only Text input looks like a disabled one, but stays readable and copyable.
 _Avoid_: input, field (on their own)
