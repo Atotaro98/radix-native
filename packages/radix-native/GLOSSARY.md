@@ -18,6 +18,10 @@ _Avoid_: provider, config, global theme
 The pixel values a component derives from the Theme — spacing, sizes and radius — with the Theme's scaling and radius factor already applied the way Radix applies them. A radius takes one of Radix's shapes: a plain step, a pill, a thumb, or one relative to the text size.
 _Avoid_: sizes, dimensions, tokens (for resolved values)
 
+**Layout props**:
+The spacing, size, position and background props that the layout primitives (Box, Flex, Grid) share, resolved with the Theme's Metrics the way Radix resolves its layout props. Padding and margin read from the most specific side first, then the axis, then all sides.
+_Avoid_: style props, box props
+
 ## Typography
 
 **Text style**:

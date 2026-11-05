@@ -30,13 +30,10 @@
  */
 import React from 'react'
 import { View } from 'react-native'
-import type { ViewStyle, StyleProp, DimensionValue } from 'react-native'
+import type { ViewStyle } from 'react-native'
 import { useMetrics } from '../../hooks/useMetrics'
-import { useResolveColor } from '../../hooks/useResolveColor'
-import { useMargins } from '../../hooks/useMargins'
-import type { SpaceToken } from '../../tokens/spacing'
-import type { ThemeColor, RadiusToken } from '../../theme/theme.types'
-import type { MarginProps } from '../../types/marginProps'
+import { useLayoutStyle } from '../../hooks/useLayoutStyle'
+import type { GapProps, LayoutProps } from '../../types/layoutProps'
 import type { NativeViewProps } from '../../types/nativeProps'
 import { ColumnRows } from '../internal/ColumnRows'
 
@@ -45,49 +42,13 @@ import { ColumnRows } from '../internal/ColumnRows'
 export type GridAlign = 'start' | 'center' | 'end' | 'stretch'
 export type GridJustify = 'start' | 'center' | 'end' | 'between'
 
-export interface GridProps extends NativeViewProps, MarginProps {
+export interface GridProps extends NativeViewProps, LayoutProps, GapProps {
   /** Number of equal-width columns. Default: 1. */
   columns?: number
-  /** Space token applied to both row and column gaps. */
-  gap?: SpaceToken
-  /** Space token for column (horizontal) gaps only. Overrides `gap`. */
-  gapX?: SpaceToken
-  /** Space token for row (vertical) gaps only. Overrides `gap`. */
-  gapY?: SpaceToken
   /** Cross-axis alignment of items within their cells. */
   align?: GridAlign
   /** Horizontal alignment of items within their cells ('between' stretches them). */
   justify?: GridJustify
-  // ─── Padding ──────────────────────────────────────────────────────
-  p?: SpaceToken
-  px?: SpaceToken
-  py?: SpaceToken
-  pt?: SpaceToken
-  pr?: SpaceToken
-  pb?: SpaceToken
-  pl?: SpaceToken
-  // ─── Size ─────────────────────────────────────────────────────────
-  width?: DimensionValue
-  minWidth?: DimensionValue
-  maxWidth?: DimensionValue
-  height?: DimensionValue
-  minHeight?: DimensionValue
-  maxHeight?: DimensionValue
-  // ─── Position ─────────────────────────────────────────────────────
-  position?: 'relative' | 'absolute'
-  top?: DimensionValue
-  right?: DimensionValue
-  bottom?: DimensionValue
-  left?: DimensionValue
-  // ─── Layout ───────────────────────────────────────────────────────
-  overflow?: 'hidden' | 'visible' | 'scroll'
-  flexBasis?: DimensionValue
-  flexShrink?: number
-  flexGrow?: number
-  // ─── Theme ────────────────────────────────────────────────────────
-  bg?: ThemeColor
-  radius?: RadiusToken
-  style?: StyleProp<ViewStyle>
 }
 
 // ─── Alignment helpers ────────────────────────────────────────────────────────
@@ -108,74 +69,17 @@ const JUSTIFY_MAP: Record<GridJustify, ViewStyle['alignItems']> = {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function Grid({
-  columns = 1,
-  gap,
-  gapX,
-  gapY,
-  align,
-  justify,
-  p, px, py, pt, pr, pb, pl,
-  m, mx, my, mt, mr, mb, ml,
-  width, minWidth, maxWidth,
-  height, minHeight, maxHeight,
-  position,
-  top, right, bottom, left,
-  overflow,
-  flexBasis, flexShrink, flexGrow,
-  bg,
-  radius,
-  style,
-  children,
-  ...rest
-}: GridProps) {
-  const metrics = useMetrics({ radius })
-  const rc = useResolveColor()
-  const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
+export function Grid(props: GridProps) {
+  const {
+    style: layoutStyle,
+    rest: { columns = 1, gap, gapX, gapY, align, justify, style, children, ...rest },
+  } = useLayoutStyle(props)
+  const { space } = useMetrics()
+  const columnGap = space(gapX ?? gap ?? 0)
+  const rowGap = space(gapY ?? gap ?? 0)
 
-  const sp = (token: SpaceToken | undefined): number | undefined =>
-    token !== undefined ? metrics.space(token) : undefined
-
-  const columnGap = sp(gapX ?? gap) ?? 0
-  const rowGap = sp(gapY ?? gap) ?? 0
-
-  // ─── Container style ─────────────────────────────────────────────────────
-  const containerStyle: ViewStyle = {
-    // Padding
-    paddingTop:    sp(pt ?? py ?? p),
-    paddingBottom: sp(pb ?? py ?? p),
-    paddingLeft:   sp(pl ?? px ?? p),
-    paddingRight:  sp(pr ?? px ?? p),
-    // Margin
-    ...margins,
-    // Size
-    width:     width,
-    minWidth:  minWidth,
-    maxWidth:  maxWidth,
-    height:    height,
-    minHeight: minHeight,
-    maxHeight: maxHeight,
-    // Position
-    position,
-    top: top,
-    right: right,
-    bottom: bottom,
-    left: left,
-    // Layout
-    overflow: overflow as ViewStyle['overflow'],
-    flexBasis: flexBasis ?? undefined,
-    flexShrink,
-    flexGrow,
-    // Theme
-    backgroundColor: bg ? rc(bg) : undefined,
-    borderRadius: radius
-      ? metrics.radius(4, 'pill')
-      : undefined,
-  }
-
-  // ─── Render ──────────────────────────────────────────────────────────────
   return (
-    <View style={[containerStyle, style]} {...rest}>
+    <View style={[layoutStyle, style]} {...rest}>
       <ColumnRows
         columns={columns}
         columnGap={columnGap}

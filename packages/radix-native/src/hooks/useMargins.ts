@@ -1,14 +1,8 @@
 import { useMemo } from 'react'
 import type { ViewStyle } from 'react-native'
 import { useMetrics } from './useMetrics'
-import type { MarginProps, MarginValue } from '../types/marginProps'
-import type { Metrics } from '../utils/metrics'
-
-function resolveMargin(value: MarginValue | undefined, space: Metrics['space']): ViewStyle['marginTop'] {
-  if (value === undefined) return undefined
-  if (value === 'auto') return 'auto'
-  return space(value)
-}
+import type { MarginProps } from '../types/marginProps'
+import { resolveMargin } from '../utils/layoutStyle'
 
 /**
  * Resolves margin token props into a memoized ViewStyle.

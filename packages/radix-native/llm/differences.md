@@ -17,6 +17,7 @@ These are intentional changes to adapt the Radix API to React Native.
 | `<Avatar.Root>` + `<Avatar.Image>` + `<Avatar.Fallback>` | `<Avatar src={} fallback={} />` | Single-component API for RN |
 | `<TextField.Root>` + `<TextField.Slot>` | `<TextField />` | No slot system |
 | `extractProps(props, marginPropDefs)` | `useMargins({ m, mx, my, ... })` hook | JS-based prop extraction |
+| `extractProps(props, layoutPropDefs, marginPropDefs)` (Box / Flex / Grid) | internal `useLayoutStyle(props)` → `{ style, rest }` | Space tokens only for padding; no `inset` / grid-child props |
 | `data-accent-color`, `data-radius` attributes | Props resolved via hooks | No HTML data attributes in RN |
 | CSS `:hover` states | No hover (touch-only) | Mobile interaction model |
 | CSS `:active` states | `Pressable` `pressed` state | RN touch feedback |
