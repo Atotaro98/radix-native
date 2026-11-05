@@ -4,18 +4,28 @@
  */
 import React from 'react'
 import { fireEvent, screen } from '@testing-library/react-native'
-import { CheckboxGroup, RadioGroup } from '../index'
+import { CheckboxCards, CheckboxGroup, RadioCards, RadioGroup } from '../index'
 import { renderWithTheme } from './helpers/render'
 
 const GROUPS = [
-  { name: 'CheckboxGroup', Group: CheckboxGroup, itemRole: 'checkbox', afterPressingB: ['a', 'b'], initial: ['a'] },
-  { name: 'RadioGroup', Group: RadioGroup, itemRole: 'radio', afterPressingB: 'b', initial: 'a' },
+  { name: 'CheckboxGroup', Group: CheckboxGroup, rootRole: 'group', itemRole: 'checkbox', afterPressingB: ['a', 'b'], initial: ['a'] },
+  { name: 'RadioGroup', Group: RadioGroup, rootRole: 'radiogroup', itemRole: 'radio', afterPressingB: 'b', initial: 'a' },
 ] as const
 
-describe.each(GROUPS)('$name', ({ Group, itemRole, afterPressingB, initial }) => {
+describe.each(GROUPS)('$name', ({ Group, rootRole, itemRole, afterPressingB, initial }) => {
   // The two groups take different value types; the cast keeps one table for both.
   const G = Group as unknown as typeof CheckboxGroup
   const value = initial as never
+
+  it('announces the group with its Radix role and name', () => {
+    renderWithTheme(
+      <G accessibilityLabel="Fruit">
+        <G.Item value="a">Apple</G.Item>
+      </G>,
+    )
+    // The container is not itself focusable (that would hide its items): check the prop.
+    expect(screen.getByLabelText('Fruit').props.role).toBe(rootRole)
+  })
 
   it('uncontrolled: a labelled item is one accessible row that selects on press', () => {
     const onValueChange = jest.fn()
@@ -71,5 +81,20 @@ describe.each(GROUPS)('$name', ({ Group, itemRole, afterPressingB, initial }) =>
       fireEvent.press(item)
     }
     expect(onValueChange).not.toHaveBeenCalled()
+  })
+})
+
+describe.each([
+  ['CheckboxCards', CheckboxCards, 'group'],
+  ['RadioCards', RadioCards, 'radiogroup'],
+] as const)('%s', (_name, Cards, rootRole) => {
+  it('announces the group with its Radix role and name', () => {
+    const C = Cards as unknown as typeof CheckboxCards
+    renderWithTheme(
+      <C accessibilityLabel="Plan">
+        <C.Item value="a">A</C.Item>
+      </C>,
+    )
+    expect(screen.getByLabelText('Plan').props.role).toBe(rootRole)
   })
 })

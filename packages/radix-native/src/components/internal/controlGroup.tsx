@@ -63,8 +63,8 @@ export interface ControlGroupItemProps extends MarginProps {
 interface ControlGroupConfig<T extends SelectionType, S, V> {
   name: string
   type: T
-  /** Accessibility role of the group container. */
-  rootRole?: 'radiogroup'
+  /** Role of the group container (Radix: `group` for CheckboxGroup, `radiogroup` for RadioGroup). */
+  rootRole: 'group' | 'radiogroup'
   /** Accessibility role of each item. */
   itemRole: 'checkbox' | 'radio'
   /** The Toggle rendered for an item without a label. */
@@ -110,7 +110,7 @@ export function createControlGroup<T extends SelectionType, S, V>({
     return (
       <Selection.Root value={value} defaultValue={defaultValue} onValueChange={onValueChange} disabled={disabled} shared={shared}>
         <View
-          accessibilityRole={rootRole}
+          role={rootRole}
           accessibilityLabel={accessibilityLabel}
           testID={testID}
           // Radix: column, gap space-1

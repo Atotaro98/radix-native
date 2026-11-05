@@ -12,6 +12,7 @@ export type CheckboxGroupItemProps = ControlGroupItemProps
 export const CheckboxGroup = createControlGroup({
   name: 'CheckboxGroup',
   type: 'multiple',
+  rootRole: 'group',
   itemRole: 'checkbox',
   Control: Checkbox,
   Indicator: CheckboxIndicator,

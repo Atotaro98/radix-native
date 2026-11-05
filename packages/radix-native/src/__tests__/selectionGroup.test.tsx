@@ -131,7 +131,7 @@ describe('Groups', () => {
       </RadioGroup>,
     )
     // The group container is not itself focusable (that would hide its items)
-    expect(screen.getByLabelText('Plan').props.accessibilityRole).toBe('radiogroup')
+    expect(screen.getByLabelText('Plan').props.role).toBe('radiogroup')
   })
 
   it.each([
@@ -186,7 +186,7 @@ describe('Cards', () => {
         <RadioCards.Item value="b">B</RadioCards.Item>
       </RadioCards>,
     )
-    expect(screen.getByLabelText('Size').props.accessibilityRole).toBe('radiogroup')
+    expect(screen.getByLabelText('Size').props.role).toBe('radiogroup')
     const a = StyleSheet.flatten(screen.getByRole('radio', { name: 'A' }).props.style)
     const b = StyleSheet.flatten(screen.getByRole('radio', { name: 'B' }).props.style)
     expect([a.borderWidth, b.borderWidth]).toEqual([1, 2])
