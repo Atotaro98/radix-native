@@ -1,12 +1,16 @@
 import React, { useState } from 'react'
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated'
 import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native'
+import { Theme } from '../../theme/Theme'
 import { useThemeContext } from '../../hooks/useThemeContext'
-import { useResolveColor } from '../../hooks/useResolveColor'
+import { useColor } from '../../hooks/useColor'
 import { isDev } from '../../utils/env'
 import { resolveMetrics } from '../../utils/metrics'
 import { Text } from '../typography/Text'
 import { Heading } from '../typography/Heading'
+import { Button } from '../actions/Button'
+import { RadioCards } from '../actions/RadioCards'
+import { Flex } from '../layout/Flex'
 import type { AccentColor, GrayColor } from '../../tokens/colors/types'
 import type { RadiusToken } from '../../tokens/radius'
 import type { ScalingMode } from '../../tokens/scaling'
@@ -25,7 +29,12 @@ const GRAY_OPTIONS: (GrayColor | 'auto')[] = ['auto', 'gray', 'mauve', 'slate', 
 const RADIUS_OPTIONS: RadiusToken[] = ['none', 'small', 'medium', 'large', 'full']
 const SCALING_OPTIONS: ScalingMode[] = ['90%', '95%', '100%', '105%', '110%']
 
-const PANEL_WIDTH = 280
+const PANEL_WIDTH = 320
+
+/** Tight cards for the 5-column rows (radius, scaling) of the panel. */
+const COMPACT_CARD = { paddingTop: 6, paddingBottom: 6, paddingLeft: 2, paddingRight: 2, alignItems: 'center' } as const
+
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
 // ─── ThemeControls ────────────────────────────────────────────────────────────
 
@@ -38,10 +47,18 @@ export interface ThemeControlsProps {
   defaultOpen?: boolean
 }
 
+/**
+ * Floating panel that edits the root Theme live — radix-native's take on
+ * Radix's ThemePanel, built from the library's own components. Its text never
+ * grows with accessibility font scaling (a nested Theme caps it at 1), so the
+ * fixed-width panel keeps its layout.
+ */
 export function ThemeControls({ showCopyTheme, onCopyTheme, defaultOpen = false }: ThemeControlsProps = {}) {
   const [open, setOpen] = useState(defaultOpen)
   const slideAnim = useSharedValue(defaultOpen ? 0 : PANEL_WIDTH + 20)
   const { height: windowHeight } = useWindowDimensions()
+  const panelBg = useColor('gray-2')
+  const panelBorder = useColor('gray-6')
 
   const slideStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: slideAnim.value }],
@@ -68,8 +85,6 @@ export function ThemeControls({ showCopyTheme, onCopyTheme, defaultOpen = false 
     }
   }, [isRoot])
 
-  const rc = useResolveColor()
-
   const toggle = () => {
     const toValue = open ? PANEL_WIDTH + 20 : 0
     slideAnim.value = withTiming(toValue, { duration: 250, easing: Easing.out(Easing.ease) })
@@ -83,143 +98,103 @@ export function ThemeControls({ showCopyTheme, onCopyTheme, defaultOpen = false 
 
   return (
     <View style={styles.container} pointerEvents="box-none">
-      {/* "T" toggle button — always visible */}
-      <Pressable
-        onPress={toggle}
-        accessibilityRole="button"
-        accessibilityLabel="Toggle theme panel"
-        style={[
-          styles.toggleButton,
-          {
-            backgroundColor: rc('gray-2'),
-            borderColor: rc('gray-6'),
-          },
-        ]}
-      >
-        <Text size={2} weight="bold" maxFontSizeMultiplier={1} style={{ color: rc('gray-12') }}>T</Text>
-      </Pressable>
+      <Theme maxFontSizeMultiplier={1}>
+        {/* "T" toggle button — always visible */}
+        <Button size={2} variant="surface" color="gray" highContrast onPress={toggle} accessibilityLabel="Toggle theme panel">
+          T
+        </Button>
 
-      {/* Sliding panel */}
-      <Animated.View
-        style={[
-          styles.panelWrapper,
-          { maxHeight: windowHeight - 120 },
-          slideStyle,
-        ]}
-      >
-        <ScrollView
-          style={[styles.panel, { backgroundColor: rc('gray-2'), borderColor: rc('gray-6') }]}
-          contentContainerStyle={styles.panelContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Header */}
-          <View style={styles.headerRow}>
-            <Heading size={5} maxFontSizeMultiplier={1} style={{ color: rc('gray-12') }}>Theme</Heading>
-            <Pressable
-              onPress={toggle}
-              accessibilityRole="button"
-              accessibilityLabel="Close theme panel"
-              style={[styles.closeButton, { borderColor: rc('gray-6') }]}
-            >
-              <Text size={2} weight="bold" maxFontSizeMultiplier={1} style={{ color: rc('gray-12') }}>T</Text>
-            </Pressable>
-          </View>
+        {/* Sliding panel */}
+        <Animated.View style={[styles.panelWrapper, { maxHeight: windowHeight - 120 }, slideStyle]}>
+          <ScrollView
+            style={[styles.panel, { backgroundColor: panelBg, borderColor: panelBorder }]}
+            contentContainerStyle={styles.panelContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <Flex direction="row" align="center" justify="between">
+              <Heading size={5}>Theme</Heading>
+              <Button size={1} variant="soft" color="gray" highContrast onPress={toggle} accessibilityLabel="Close theme panel">
+                T
+              </Button>
+            </Flex>
 
-          {/* ─── Accent color ─────────────────────────────────────── */}
-          <SectionLabel rc={rc}>Accent color</SectionLabel>
-          <View style={styles.dotGrid}>
-            {ACCENT_COLORS.map((c) => (
-              <ColorDot
-                key={c}
-                color={`${c}-9`}
-                selected={accentColor === c}
-                onPress={() => onAccentColorChange(c)}
-                rc={rc}
-                label={c}
+            <Section label="Accent color">
+              <Swatches
+                label="Accent color"
+                options={ACCENT_COLORS}
+                value={accentColor}
+                onValueChange={onAccentColorChange}
+                swatch={(c) => `${c}-9`}
               />
-            ))}
-          </View>
+            </Section>
 
-          {/* ─── Gray color ───────────────────────────────────────── */}
-          <SectionLabel rc={rc}>Gray color</SectionLabel>
-          <View style={styles.dotGrid}>
-            {GRAY_OPTIONS.map((g) => {
-              const dotColor = g === 'auto'
-                ? `${resolvedGrayColor}-9`
-                : `${g}-9`
-              return (
-                <ColorDot
-                  key={g}
-                  color={dotColor}
-                  selected={grayColor === g}
-                  onPress={() => onGrayColorChange(g)}
-                  rc={rc}
-                  label={g}
-                />
-              )
-            })}
-          </View>
-
-          {/* ─── Appearance ───────────────────────────────────────── */}
-          <SectionLabel rc={rc}>Appearance</SectionLabel>
-          <View style={styles.segmentedRow}>
-            <SegmentedButton
-              label="Light"
-              icon={'\u2600\uFE0E'}
-              selected={appearance === 'light'}
-              onPress={() => onAppearanceChange('light')}
-              rc={rc}
-            />
-            <SegmentedButton
-              label="Dark"
-              icon={'\u263E'}
-              selected={appearance === 'dark'}
-              onPress={() => onAppearanceChange('dark')}
-              rc={rc}
-            />
-          </View>
-
-          {/* ─── Radius ───────────────────────────────────────────── */}
-          <SectionLabel rc={rc}>Radius</SectionLabel>
-          <View style={styles.radiusRow}>
-            {RADIUS_OPTIONS.map((r) => (
-              <RadiusPreview
-                key={r}
-                token={r}
-                selected={radius === r}
-                onPress={() => onRadiusChange(r)}
-                rc={rc}
+            <Section label="Gray color">
+              <Swatches
+                label="Gray color"
+                options={GRAY_OPTIONS}
+                value={grayColor}
+                onValueChange={onGrayColorChange}
+                swatch={(g) => `${g === 'auto' ? resolvedGrayColor : g}-9`}
               />
-            ))}
-          </View>
+            </Section>
 
-          {/* ─── Scaling ──────────────────────────────────────────── */}
-          <SectionLabel rc={rc}>Scaling</SectionLabel>
-          <View style={styles.chipRow}>
-            {SCALING_OPTIONS.map((s) => (
-              <Chip
-                key={s}
-                label={s}
-                selected={scaling === s}
-                onPress={() => onScalingChange(s)}
-                rc={rc}
-              />
-            ))}
-          </View>
+            <Section label="Appearance">
+              <RadioCards
+                size={1}
+                columns={2}
+                gap={2}
+                value={appearance}
+                onValueChange={(v) => onAppearanceChange(v as 'light' | 'dark')}
+                accessibilityLabel="Appearance"
+              >
+                <RadioCards.Item value="light">{'☀︎  Light'}</RadioCards.Item>
+                <RadioCards.Item value="dark">{'☾  Dark'}</RadioCards.Item>
+              </RadioCards>
+            </Section>
 
-          {/* ─── Copy Theme ───────────────────────────────────────── */}
-          {showCopyTheme && (
-            <Pressable
-              style={[styles.copyButton, { backgroundColor: rc('accent-9') }]}
-              onPress={handleCopyTheme}
-            >
-              <Text size={2} weight="bold" maxFontSizeMultiplier={1} style={{ color: rc('accent-contrast') }}>
+            <Section label="Radius">
+              <RadioCards
+                size={1}
+                columns={5}
+                gap={1}
+                value={radius}
+                onValueChange={(v) => onRadiusChange(v as RadiusToken)}
+                accessibilityLabel="Radius"
+              >
+                {RADIUS_OPTIONS.map((r) => (
+                  <RadioCards.Item key={r} value={r} style={COMPACT_CARD}>
+                    <RadiusShape token={r} />
+                    <Text size={1} align="center" wrap="nowrap">{capitalize(r)}</Text>
+                  </RadioCards.Item>
+                ))}
+              </RadioCards>
+            </Section>
+
+            <Section label="Scaling">
+              <RadioCards
+                size={1}
+                columns={5}
+                gap={1}
+                value={scaling}
+                onValueChange={(v) => onScalingChange(v as ScalingMode)}
+                accessibilityLabel="Scaling"
+              >
+                {SCALING_OPTIONS.map((s) => (
+                  <RadioCards.Item key={s} value={s} style={COMPACT_CARD}>
+                    <Text size={1} align="center">{s}</Text>
+                  </RadioCards.Item>
+                ))}
+              </RadioCards>
+            </Section>
+
+            {showCopyTheme && (
+              <Button size={2} mt={1} onPress={handleCopyTheme}>
                 Copy Theme
-              </Text>
-            </Pressable>
-          )}
-        </ScrollView>
-      </Animated.View>
+              </Button>
+            )}
+          </ScrollView>
+        </Animated.View>
+      </Theme>
     </View>
   )
 }
@@ -227,120 +202,65 @@ ThemeControls.displayName = 'ThemeControls'
 
 // ─── Internal components ──────────────────────────────────────────────────────
 
-type RC = (color: ThemeColor) => string
-
-function SectionLabel({ children, rc }: { children: string; rc: RC }) {
+function Section({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <Text size={2} weight="medium" maxFontSizeMultiplier={1} style={{ color: rc('accent-11'), marginTop: 4 }}>
+    <Flex gap={2}>
+      <Text size={2} weight="medium">{label}</Text>
       {children}
-    </Text>
+    </Flex>
   )
 }
 
-function ColorDot({
-  color, selected, onPress, rc, label,
-}: { color: ThemeColor; selected: boolean; onPress: () => void; rc: RC; label: string }) {
-  const bg = rc(color)
+/**
+ * Color swatches as a radio group (Radix ThemePanel draws these by hand too):
+ * one ring-wrapped dot per option, the selected one ringed in gray-12.
+ */
+function Swatches<T extends string>({
+  label, options, value, onValueChange, swatch,
+}: { label: string; options: T[]; value: T; onValueChange: (v: T) => void; swatch: (v: T) => string }) {
   return (
-    <Pressable
-      onPress={onPress}
-      accessibilityLabel={label}
-      accessibilityRole="button"
-      style={[
-        styles.dotOuter,
-        selected && { borderColor: rc('gray-12') },
-      ]}
-    >
-      <View style={[styles.dotInner, { backgroundColor: bg }]} />
-    </Pressable>
-  )
-}
-
-function SegmentedButton({
-  label, icon, selected, onPress, rc,
-}: { label: string; icon: string; selected: boolean; onPress: () => void; rc: RC }) {
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      style={[
-        styles.segmentedButton,
-        {
-          borderColor: selected ? rc('gray-12') : rc('gray-6'),
-          backgroundColor: selected ? rc('gray-3') : 'transparent',
-        },
-      ]}
-    >
-      <Text size={2} maxFontSizeMultiplier={1} style={{ color: rc('gray-12') }}>{icon}</Text>
-      <Text size={2} weight="medium" maxFontSizeMultiplier={1} style={{ color: rc('gray-12') }}>{label}</Text>
-    </Pressable>
-  )
-}
-
-function RadiusPreview({
-  token, selected, onPress, rc,
-}: { token: RadiusToken; selected: boolean; onPress: () => void; rc: RC }) {
-  const previewRadius = token === 'full'
-    ? 26
-    : resolveMetrics({ scaling: '100%', radius: token }).radius(5)
-
-  const label = token.charAt(0).toUpperCase() + token.slice(1)
-  const borderAccent = rc('accent-a8')
-
-  return (
-    <Pressable onPress={onPress} accessibilityRole="button" style={styles.radiusItem}>
-      <View
-        style={[
-          styles.radiusCard,
-          {
-            borderColor: selected ? rc('gray-12') : rc('gray-6'),
-            backgroundColor: selected ? rc('gray-3') : 'transparent',
-          },
-        ]}
-      >
-        <View
-          style={[
-            styles.radiusPreviewShape,
-            {
-              backgroundColor: rc('accent-4'),
-              borderTopLeftRadius: previewRadius,
-              borderTopWidth: 2,
-              borderLeftWidth: 2,
-              borderTopColor: borderAccent,
-              borderLeftColor: borderAccent,
-            },
-          ]}
+    <View role="radiogroup" accessibilityLabel={label} style={styles.swatches}>
+      {options.map((option) => (
+        <Swatch
+          key={option}
+          label={option}
+          color={swatch(option) as ThemeColor}
+          selected={value === option}
+          onPress={() => onValueChange(option)}
         />
-      </View>
-      <Text size={1} maxFontSizeMultiplier={1} style={{ color: rc('gray-11'), textAlign: 'center' }}>{label}</Text>
+      ))}
+    </View>
+  )
+}
+
+function Swatch({ label, color, selected, onPress }: { label: string; color: ThemeColor; selected: boolean; onPress: () => void }) {
+  const fill = useColor(color)
+  const ring = useColor('gray-12')
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="radio"
+      accessibilityLabel={label}
+      accessibilityState={{ checked: selected }}
+      style={[styles.swatchRing, selected && { borderColor: ring }]}
+    >
+      <View style={[styles.swatchDot, { backgroundColor: fill }]} />
     </Pressable>
   )
 }
 
-function Chip({
-  label, selected, onPress, rc,
-}: { label: string; selected: boolean; onPress: () => void; rc: RC }) {
+/** A corner drawn at the token's radius-5 (pill for 'full'), as in Radix ThemePanel. */
+function RadiusShape({ token }: { token: RadiusToken }) {
+  const fill = useColor('accent-4')
+  const edge = useColor('accent-a8')
+  const r = token === 'full' ? 26 : resolveMetrics({ scaling: '100%', radius: token }).radius(5)
   return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
+    <View
       style={[
-        styles.chip,
-        {
-          borderColor: selected ? rc('gray-12') : rc('gray-6'),
-          backgroundColor: selected ? rc('gray-3') : 'transparent',
-        },
+        styles.radiusShape,
+        { backgroundColor: fill, borderTopLeftRadius: r, borderTopColor: edge, borderLeftColor: edge },
       ]}
-    >
-      <Text
-        size={2}
-        weight={selected ? 'bold' : 'regular'}
-        maxFontSizeMultiplier={1}
-        style={{ color: rc('gray-12') }}
-      >
-        {label}
-      </Text>
-    </Pressable>
+    />
   )
 }
 
@@ -354,14 +274,6 @@ const styles = StyleSheet.create({
     zIndex: 1000,
     alignItems: 'flex-end',
   },
-  toggleButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   panelWrapper: {
     position: 'absolute',
     top: 0,
@@ -374,28 +286,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   panelContent: {
-    padding: 20,
-    rowGap: 10,
+    padding: 16,
+    rowGap: 14,
   },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  closeButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 6,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dotGrid: {
+  swatches: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 4,
   },
-  dotOuter: {
+  swatchRing: {
     width: 28,
     height: 28,
     borderRadius: 14,
@@ -404,62 +303,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dotInner: {
+  swatchDot: {
     width: 20,
     height: 20,
     borderRadius: 10,
   },
-  segmentedRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  segmentedButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-  },
-  chipRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-  },
-  chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    borderWidth: 1,
-  },
-  radiusRow: {
-    flexDirection: 'row',
-    gap: 6,
-  },
-  radiusItem: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 6,
-  },
-  radiusCard: {
-    width: '100%',
-    aspectRatio: 1,
-    borderRadius: 8,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  radiusPreviewShape: {
-    width: 32,
-    height: 32,
-  },
-  copyButton: {
-    marginTop: 6,
-    paddingVertical: 10,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
+  radiusShape: {
+    width: 24,
+    height: 24,
+    marginBottom: 4,
+    borderTopWidth: 2,
+    borderLeftWidth: 2,
   },
 })
