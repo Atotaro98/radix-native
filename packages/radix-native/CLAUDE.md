@@ -10,11 +10,11 @@ Domain vocabulary (Text style, Text role, Variant recipe, Variant family, Radix 
 ```
 packages/radix-native/src/
   theme/          ThemeRoot (stateful) + ThemeImpl (inheritable) + Theme (public)
-  hooks/          useThemeContext, useColor, useResolveColor (internal), useMetrics, useMargins, useResolveSpace (deprecated),
+  hooks/          useThemeContext, useColor, useResolveColor (internal), useMetrics, useMargins, useLayoutStyle (internal), useResolveSpace (deprecated),
                   useControllableState (internal), useInteraction (internal), useTextStyle (internal),
                   useVariantColors (internal), usePressScale
   tokens/         colors/ (31 scales), spacing, typography, radius, scaling
-  types/          nativeProps, marginProps
+  types/          nativeProps, marginProps, layoutProps (LayoutProps, PaddingProps, GapProps)
   utils/          resolveColor, variantPalette, colorMath, metrics, classicEffect, textStyle,
                   hitSlop, alpha, env, fonts
   components/
@@ -74,6 +74,14 @@ export interface MyProps extends NativeViewProps, MarginProps { ... }
 const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 // Then spread into style: { ...otherStyles, ...margins }
 ```
+
+### Layout props — `useLayoutStyle`
+
+Box, Flex and Grid share **Layout props** (`LayoutProps` = margins + padding + size + position + flex child +
+`bg` + `radius`). `useLayoutStyle(props)` splits them from the rest and returns `{ style, rest }`, memoized;
+the pure `resolveLayoutStyle(props, metrics, rc)` in `utils/layoutStyle` does the mapping (side > axis > all,
+`radius` = `radius(4, 'pill')`). `gap` / `gapX` / `gapY` (`GapProps`) stay in Flex and Grid. A new layout
+primitive extends `LayoutProps` and calls the hook — never re-declares or re-maps these props.
 
 ### Metrics — `useMetrics`
 

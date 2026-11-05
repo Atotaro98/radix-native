@@ -29,6 +29,7 @@ export type {
 // Native prop types
 export type { NativeViewProps, NativePressableProps, NativeTextProps } from './types/nativeProps'
 export type { MarginProps, MarginValue } from './types/marginProps'
+export type { LayoutProps, PaddingProps, GapProps } from './types/layoutProps'
 
 // Utils
 export { applyScaling } from './utils/applyScaling'
