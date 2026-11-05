@@ -1,5 +1,37 @@
 # radix-native
 
+## 0.10.0
+
+### Minor Changes
+
+- 379576a: Box, Flex and Grid now resolve their shared layout props in one place, and their computed style is memoized. Their props don't change. The `LayoutProps`, `PaddingProps` and `GapProps` types are now exported, so you can build your own layout primitives with the same props.
+- 4e3bc74: Checkbox, Radio and Switch now share one internal Toggle module, and their classic look follows Radix:
+
+  - Checked classic Checkbox and Radio keep the bevel but lose the drop shadow (Radix's bevel there is inset only).
+  - The Switch thumb gets Radix's soft drop shadow in every variant; the checked classic track no longer casts one.
+  - A labelled CheckboxGroup / RadioGroup item and a CheckboxCards item now contain only the visual indicator, not a second hidden interactive control.
+
+  No props change. A `style` passed to Checkbox, Radio or Switch now applies to the pressable wrapper around the indicator, so a `backgroundColor` or `borderColor` override no longer recolors the box or track.
+
+### Patch Changes
+
+- 56133e4: `CheckboxGroup` and `CheckboxCards` now announce themselves to screen readers as a group (`role="group"`), as in Radix. `RadioGroup` and `RadioCards` keep `radiogroup`, now set through the same `role` prop. Internally, CheckboxGroup and RadioGroup are built from one shared module; their props don't change.
+- ac5c2c0: Kbd and the CheckboxGroup / RadioGroup item labels now take their colors from Variant recipes, so they are covered by the contrast checks. Nothing looks different.
+- 5a7d49e: Text nested in other text now matches Radix in three cases where it was too small:
+
+  - Text inside `Em`, `Strong` or `Quote` is now sized relative to them. For example, `<Em><Code/></Em>` at size 3 is about 18px instead of 15px.
+  - A `Code` inside a `Code` keeps the outer size instead of shrinking twice. The same applies to `Em`, `Quote` and `Strong` nested in themselves.
+  - `Kbd` with an explicit `size` uses Radix's `font-size × 0.8` instead of `0.75`. For example, size 9 is now 48px instead of 45px.
+
+- fd8a056: A checked RadioCards item no longer moves its content by 1px. The 2px checked ring is now an overlay over the 1px border, like Radix's `::after` outline, instead of a thicker border. The padding passed through an item's `style` now stays as given.
+- aae9160: `ThemeControls` is now built from the library's own components:
+
+  - The appearance, radius and scaling sections use `RadioCards`.
+  - The toggle and "Copy Theme" controls are now `Button`s.
+  - The accent and gray swatches are announced to screen readers as radio groups.
+
+  The panel looks slightly different. Its props don't change.
+
 ## 0.9.0
 
 ### Minor Changes
