@@ -29,9 +29,9 @@ const GRAY_OPTIONS: (GrayColor | 'auto')[] = ['auto', 'gray', 'mauve', 'slate', 
 const RADIUS_OPTIONS: RadiusToken[] = ['none', 'small', 'medium', 'large', 'full']
 const SCALING_OPTIONS: ScalingMode[] = ['90%', '95%', '100%', '105%', '110%']
 
-const PANEL_WIDTH = 280
+const PANEL_WIDTH = 320
 
-/** Tight cards for the 5-column rows (radius, scaling) of a 280pt panel. */
+/** Tight cards for the 5-column rows (radius, scaling) of the panel. */
 const COMPACT_CARD = { paddingTop: 6, paddingBottom: 6, paddingLeft: 2, paddingRight: 2, alignItems: 'center' } as const
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
@@ -164,7 +164,7 @@ export function ThemeControls({ showCopyTheme, onCopyTheme, defaultOpen = false 
                 {RADIUS_OPTIONS.map((r) => (
                   <RadioCards.Item key={r} value={r} style={COMPACT_CARD}>
                     <RadiusShape token={r} />
-                    <Text size={1} align="center">{capitalize(r)}</Text>
+                    <Text size={1} align="center" wrap="nowrap">{capitalize(r)}</Text>
                   </RadioCards.Item>
                 ))}
               </RadioCards>
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   panelContent: {
-    padding: 20,
+    padding: 16,
     rowGap: 14,
   },
   swatches: {
