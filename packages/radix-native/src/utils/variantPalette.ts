@@ -444,6 +444,54 @@ function blockquote(s: PaletteState): TextPaints {
   return { ...text(s), decoration: c('a6') }
 }
 
+// ─── Kbd — kbd.css ────────────────────────────────────────────────────────────
+
+export type KbdVariant = 'classic' | 'soft'
+
+export interface KbdPaints {
+  bg: Paint
+  text: Paint
+  /** Classic only: the 1px ring of `--kbd-box-shadow`. */
+  ring?: Paint
+  /** Classic only: the darker bottom edge. */
+  bottomEdge?: Paint
+  /** Classic only: the inset top highlight. */
+  highlight?: Paint
+  /** Classic only: the outer drop shadow color and its opacity. */
+  shadow?: Paint
+  shadowOpacity?: number
+}
+
+/**
+ * `.rt-Kbd`: gray-12 text. Classic: gray-1 with `--kbd-box-shadow` (ring
+ * gray-a5 / dark gray-a7, bottom edge gray-a7 / dark black-a11, top highlight
+ * gray-a3 / dark gray-a11, drop shadow gray-12 / dark black). Soft: gray-a3.
+ */
+function kbd(s: WithVariant<KbdVariant>): KbdPaints {
+  if (s.variant === 'soft') return { bg: g('a3'), text: g(12) }
+  const dark = s.appearance === 'dark'
+  return {
+    bg: g(1),
+    text: g(12),
+    ring: byMode(g('a5'), g('a7')),
+    bottomEdge: byMode(g('a7'), blackA(11)),
+    highlight: byMode(g('a3'), g('a11')),
+    shadow: byMode(g(12), raw('#000000')),
+    shadowOpacity: dark ? 0.95 : 0.12,
+  }
+}
+
+// ─── Control label (CheckboxGroup / RadioGroup item text) ─────────────────────
+
+export interface ControlLabelPaints {
+  text: Paint
+}
+
+/** `.rt-BaseCheckboxRoot ~ label` text: gray-12, gray-a8 when disabled. */
+function controlLabel(s: PaletteState): ControlLabelPaints {
+  return { text: s.disabled ? g('a8') : g(12) }
+}
+
 // ─── Focus ring (every focusable control but text inputs) ─────────────────────
 
 export interface FocusRingPaints {
@@ -474,6 +522,8 @@ export const VARIANT_RECIPES = {
   text,
   link,
   blockquote,
+  kbd,
+  controlLabel,
   focusRing,
 } as const
 

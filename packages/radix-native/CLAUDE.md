@@ -104,7 +104,8 @@ metrics.radius(level, 'thumb')                        // max(var(--radius-N), va
 
 Every color that depends on a variant or state comes from a **Variant recipe** in
 `utils/variantPalette.ts`, read through `useVariantColors` (`hooks/useVariantColors.ts`).
-Never write `switch (variant)` color code in a component.
+Never write `switch (variant)` or `appearance === 'dark'` color code in a component. Calling `rc` directly
+is only for a fixed step with no variant, state or mode to decide (Spinner `gray-a11`, Skeleton, Separator).
 
 ```tsx
 const colors = useVariantColors('checkbox', { variant, color, highContrast, checked, disabled })
@@ -124,7 +125,8 @@ const colors = useVariantColors('checkbox', { variant, color, highContrast, chec
   real recipes.
 - Focus rings come from the `focusRing` recipe (`useVariantColors('focusRing', { color }).ring`);
   text inputs draw theirs as `border` from their own recipe.
-- Shadows (`getClassicEffect`, `ClassicOverlay`) stay in components.
+- Shadows (`getClassicEffect`, `ClassicOverlay`) stay in components; when a shadow's color depends on the
+  variant or mode, that color comes from the recipe (Kbd's `ring`, `bottomEdge`, `highlight`, `shadow`).
 
 ### Shared building blocks — use these instead of re-implementing
 
@@ -146,7 +148,7 @@ const colors = useVariantColors('checkbox', { variant, color, highContrast, chec
 | Any rendered text (size, face, letter spacing, Font scaling cap, `truncate` / `wrap`, nesting) | `useTextStyle({ inline?, role?, size?, weight?, lineHeight?, color?, compact?, maxFontSizeMultiplier?, truncate?, wrap?, margins? })` → `{ style, textProps, contextFontSize }` — see Text style below |
 | Minimum touch target | `hitSlop ?? getMinHitSlop(width, height)` (44pt) |
 | Colors of a component's parts for its variant and state | `useVariantColors(recipe, { variant?, color, highContrast?, checked?, disabled?, pressed?, focused? })` — see Variant colors above |
-| Translucent hex | `withAlpha(color, alpha)` — never concatenate `hex + '99'` |
+| Translucent color | `fadeColor(color, opacity)` from `utils/colorMath` (or `fade(paint, opacity)` inside a recipe) — never concatenate `hex + '99'` |
 | Dev-only logging | `isDev` from `utils/env` — never reference `__DEV__` directly (crashes outside Metro) |
 
 ### Pressable prop order
