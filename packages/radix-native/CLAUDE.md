@@ -18,7 +18,7 @@ packages/radix-native/src/
   utils/          resolveColor, variantPalette, colorMath, metrics, classicEffect, textStyle,
                   hitSlop, alpha, env, fonts
   components/
-    internal/     BaseButton, BaseToggle, BaseTextInput, ControlLabel, selectionGroup, SelectionCard, ClassicOverlay, FocusRing, ColumnRows, LabeledControl (not exported)
+    internal/     BaseButton, BaseToggle, BaseTextInput, ControlLabel, selectionGroup, controlGroup, SelectionCard, ClassicOverlay, FocusRing, ColumnRows, LabeledControl (not exported)
     layout/       Box, Flex, Grid, Separator, Card
     typography/   Text, Heading, Link, Blockquote, Code, Em, Strong, Quote, Kbd, TextContext
     display/      Avatar, Badge
@@ -141,6 +141,7 @@ const colors = useVariantColors('checkbox', { variant, color, highContrast, chec
 | A Text input (sizes, recipe colors, focus, read-only look, prop order) | `<BaseTextInput {...props} multiline? />` — TextField and TextArea are thin wrappers over it |
 | Equal-width columns | `<ColumnRows columns gap…>` (no `onLayout`, no `%` flexBasis) |
 | Control + label row in groups | `<LabeledControl role checked disabled onPress control={<XIndicator …/>} size color …>` — owns the label style, the 0.5em gap and the focus ring |
+| CheckboxGroup / RadioGroup (Root + Item, labelled or bare items, column layout) | `createControlGroup({ name, type, rootRole?, itemRole, Control, Indicator })` in `internal/controlGroup.tsx` — both groups are one call each |
 | A Selection group (one value or several, controlled or not, disabled propagation) | `createSelectionGroup({ name, type: 'single' \| 'multiple' })` → `{ Root, useItem(value, disabled) }` — one instance per family, like Radix's CheckboxGroup / RadioGroup primitives |
 | A CheckboxCards / RadioCards item and grid | `<SelectionCard recipe role … indicator? />`, `<SelectionCardGrid columns gap />` |
 | Any rendered text (size, face, letter spacing, Font scaling cap, `truncate` / `wrap`, nesting) | `useTextStyle({ inline?, role?, size?, weight?, lineHeight?, color?, compact?, maxFontSizeMultiplier?, truncate?, wrap?, margins? })` → `{ style, textProps, contextFontSize }` — see Text style below |
