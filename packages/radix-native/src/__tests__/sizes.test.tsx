@@ -55,6 +55,34 @@ describe('RadioCards item padding', () => {
   )
 })
 
+describe.each([
+  { name: 'CheckboxCards', Cards: CheckboxCards, role: 'checkbox' },
+  { name: 'RadioCards', Cards: RadioCards, role: 'radio' },
+] as const)('$name item size (Radix)', ({ name, Cards, role }) => {
+  // .rt-CheckboxCardsRoot / .rt-RadioCardsRoot :where(.rt-r-size-N): padding-x space-3/4/5,
+  // padding-y space-3/1.2, space-4*0.875, space-5/1.2, font-size-2/3/4, radius-3/3/4.
+  // CheckboxCards: padding-right = padding-x * 2 + checkbox size (14/16/20), Checkbox at padding-x.
+  it.each<[1 | 2 | 3, number, number, number, number, number]>([
+    [1, 12, 10, 14, 6, 14],
+    [2, 16, 14, 16, 6, 16],
+    [3, 24, 20, 18, 8, 20],
+  ])('size %i: %ipx × %ipx padding, %ipx text, %ipx radius', (size, x, y, fontSize, radius, checkbox) => {
+    renderWithTheme(
+      <Cards size={size}>
+        <Cards.Item value="a">A</Cards.Item>
+      </Cards>,
+    )
+    const card = screen.getByRole(role)
+    const right = name === 'CheckboxCards' ? x * 2 + checkbox : x
+    expect(flat(card)).toMatchObject({
+      paddingLeft: x, paddingRight: right, paddingTop: y, paddingBottom: y, borderRadius: radius,
+    })
+    expect(StyleSheet.flatten(screen.getByText('A').props.style)).toMatchObject({ fontSize })
+    const trailing = card.findAll((n: { type: unknown; props: { style?: unknown } }) => typeof n.type === 'string' && flat(n).position === 'absolute' && flat(n).right === x)
+    expect(trailing).toHaveLength(name === 'CheckboxCards' ? 1 : 0)
+  })
+})
+
 describe('Avatar', () => {
   // .rt-AvatarRoot --avatar-size: var(--space-5…9) for sizes 1–5, plain px for 6–9
   it.each<[1 | 2 | 3 | 4 | 5, number]>([[1, 26], [2, 35], [3, 44], [4, 53], [5, 70]])(
