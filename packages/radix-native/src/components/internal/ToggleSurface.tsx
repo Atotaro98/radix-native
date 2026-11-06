@@ -31,7 +31,7 @@ export interface ToggleGeometry {
  */
 export interface ToggleKind<P extends object> {
   geometry: (props: P, theme: MetricsInput) => ToggleGeometry
-  Indicator: React.ComponentType<P>
+  Indicator: (props: P) => React.ReactElement | null
 }
 
 /** Binds a Toggle's pure geometry to the current Theme (for its Indicator). */
