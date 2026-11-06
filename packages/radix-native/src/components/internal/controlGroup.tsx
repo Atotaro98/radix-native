@@ -1,9 +1,11 @@
 import React, { useMemo } from 'react'
-import { View } from 'react-native'
+import { Text as RNText, View } from 'react-native'
 import type { StyleProp, ViewStyle } from 'react-native'
 import { useMetrics } from '../../hooks/useMetrics'
 import { useMargins } from '../../hooks/useMargins'
-import { LabeledControl } from './LabeledControl'
+import { useTextStyle } from '../../hooks/useTextStyle'
+import { useVariantColors } from '../../hooks/useVariantColors'
+import { ToggleSurface, type ToggleKind } from './ToggleSurface'
 import { createSelectionGroup, type SelectionValue } from './selectionGroup'
 import type { MarginProps } from '../../types/marginProps'
 import type { AccentColor } from '../../tokens/colors/types'
@@ -69,22 +71,23 @@ interface ControlGroupConfig<T extends SelectionType, S, V> {
   itemRole: 'checkbox' | 'radio'
   /** The Toggle rendered for an item without a label. */
   Control: React.ComponentType<ControlProps<S, V>>
-  /** The Indicator shown next to a label. */
-  Indicator: React.ComponentType<IndicatorProps<S, V>>
+  /** The Toggle's Indicator and geometry, shown next to a label. */
+  kind: ToggleKind<IndicatorProps<S, V>>
 }
 
 /**
  * Internal: CheckboxGroup and RadioGroup — a Selection group of Toggles laid
  * out in a column (Radix: gap space-1). An item with a label is a single
- * LabeledControl row; without one, the Toggle itself is the item.
+ * row (a Toggle surface around the Indicator and the label); without one,
+ * the Toggle itself is the item.
  */
-export function createControlGroup<T extends SelectionType, S, V>({
+export function createControlGroup<T extends SelectionType, S extends 1 | 2 | 3, V>({
   name,
   type,
   rootRole,
   itemRole,
   Control,
-  Indicator,
+  kind,
 }: ControlGroupConfig<T, S, V>) {
   const Selection = createSelectionGroup<T, Shared<S, V>>({ name, type })
 
@@ -153,25 +156,75 @@ export function createControlGroup<T extends SelectionType, S, V>({
     }
 
     return (
-      <LabeledControl
+      <LabeledRow
         role={itemRole}
-        checked={item.checked}
-        disabled={item.disabled}
+        kind={kind}
+        indicator={{ size, variant, color, highContrast, checked: item.checked, disabled: item.disabled }}
         onPress={item.select}
-        control={
-          <Indicator size={size} variant={variant} color={color} highContrast={highContrast} checked={item.checked} disabled={item.disabled} />
-        }
-        size={size as 1 | 2 | 3}
-        color={color}
         maxFontSizeMultiplier={maxFontSizeMultiplier}
         margins={margins}
         style={style}
       >
         {children}
-      </LabeledControl>
+      </LabeledRow>
     )
   }
   Item.displayName = `${name}.Item`
 
   return Object.assign(Root, { Root, Item })
+}
+
+interface LabeledRowProps<S extends 1 | 2 | 3, V> {
+  role: 'checkbox' | 'radio'
+  kind: ToggleKind<IndicatorProps<S, V>>
+  indicator: IndicatorProps<S, V>
+  onPress: () => void
+  maxFontSizeMultiplier?: number
+  margins: ViewStyle
+  style?: StyleProp<ViewStyle>
+  children: React.ReactNode
+}
+
+/**
+ * A labelled item: one Toggle surface around the Indicator and the label, so
+ * the whole row is the touch target and is announced as one checkbox / radio
+ * named by its label. Radix: label is gray-12 (gray-a8 disabled), Text size
+ * 1–3 like the group, 0.5em away from the Indicator.
+ */
+function LabeledRow<S extends 1 | 2 | 3, V>({
+  role,
+  kind,
+  indicator,
+  onPress,
+  maxFontSizeMultiplier,
+  margins,
+  style,
+  children,
+}: LabeledRowProps<S, V>) {
+  const { size, color, checked, disabled } = indicator
+  const labelColors = useVariantColors('controlLabel', { disabled })
+  const label = useTextStyle({ size, color: labelColors.text, maxFontSizeMultiplier })
+  const fontSize = label.style.fontSize ?? 0
+  const gap = Math.round(fontSize / 2)
+
+  return (
+    <ToggleSurface
+      role={role}
+      checked={checked}
+      disabled={disabled}
+      onPress={onPress}
+      color={color}
+      indicator={{ kind, props: indicator }}
+      labelLineHeight={label.style.lineHeight ?? fontSize}
+      style={[{ flexDirection: 'row', alignItems: 'center', gap }, margins, style]}
+    >
+      {typeof children === 'string' || typeof children === 'number' ? (
+        <RNText style={label.style} {...label.textProps}>
+          {children}
+        </RNText>
+      ) : (
+        children
+      )}
+    </ToggleSurface>
+  )
 }

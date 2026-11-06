@@ -1,16 +1,11 @@
 import React, { useCallback } from 'react'
 import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native'
-import { useVariantColors } from '../../hooks/useVariantColors'
 import { useControllableState } from '../../hooks/useControllableState'
-import { useInteraction } from '../../hooks/useInteraction'
-import { AnimatedPressable } from '../../hooks/usePressScale'
-import { getMinHitSlop } from '../../utils/hitSlop'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { NativePressableProps } from '../../types/nativeProps'
-import { FocusRing } from './FocusRing'
+import { ToggleSurface, type CheckedState, type ToggleKind, type ToggleRole } from './ToggleSurface'
 
-export type CheckedState = boolean | 'indeterminate'
-export type ToggleRole = 'checkbox' | 'radio' | 'switch'
+export type { CheckedState, ToggleRole }
 
 /**
  * What a press does, per role (Radix):
@@ -28,68 +23,46 @@ interface ToggleState<T> {
   checked?: T
   defaultChecked: T
   onCheckedChange?: (checked: T) => void
-  /** Draws the Indicator for the current checked state. */
-  children: (state: { checked: T }) => React.ReactNode
 }
 
 type RoleProps =
   | ({ role: 'checkbox' } & ToggleState<CheckedState>)
   | ({ role: 'radio' | 'switch' } & ToggleState<boolean>)
 
-export type BaseToggleProps = RoleProps & Omit<NativePressableProps, 'children' | 'disabled'> & {
-  disabled: boolean
-  /** Accent color of the focus ring. */
-  color?: AccentColor
-  /** Outer size of the Indicator; used for the touch target and the focus ring. */
-  width: number
-  height: number
-  borderRadius: number
-  /** Gap between the Indicator and the focus ring. */
-  focusOffset: number
-  margins: ViewStyle
-  style?: StyleProp<ViewStyle>
-}
+export type BaseToggleProps<P extends { checked: CheckedState }> =
+  RoleProps & Omit<NativePressableProps, 'children' | 'disabled'> & {
+    disabled: boolean
+    /** Accent color of the focus ring. */
+    color?: AccentColor
+    /** The Toggle's Indicator and its geometry. */
+    kind: ToggleKind<P>
+    /** Indicator props; the checked state is filled in here. */
+    indicator: Omit<P, 'checked'>
+    margins: ViewStyle
+    style?: StyleProp<ViewStyle>
+  }
 
 /**
- * Internal: the behaviour shared by every Toggle (Checkbox, Radio, Switch).
- * Owns the checked state (controlled or not), what a press does for the role,
- * how the state is announced, the disabled gate, the minimum touch target, the
- * press scale and the focus ring. What the Toggle looks like is the Indicator
- * passed as `children`.
+ * Internal: a standalone Toggle (Checkbox, Radio, Switch). Owns the checked
+ * state (controlled or not) and what a press does for the role; everything
+ * else — role, announced state, disabled gate, touch target, press scale,
+ * focus ring — is the Toggle surface.
  */
-export function BaseToggle(props: BaseToggleProps) {
+export function BaseToggle<P extends { checked: CheckedState }>(props: BaseToggleProps<P>) {
   const {
     role,
     checked: checkedProp,
     defaultChecked,
     onCheckedChange,
-    children,
     disabled,
     color,
-    width,
-    height,
-    borderRadius,
-    focusOffset,
+    kind,
+    indicator,
     margins,
     style,
     onPress,
-    onPressIn,
-    onPressOut,
-    onFocus,
-    onBlur,
-    accessibilityState,
-    hitSlop,
     ...rest
   } = props
-
-  const { focused, scaleStyle, handlers } = useInteraction({
-    enabled: !disabled,
-    onPressIn,
-    onPressOut,
-    onFocus,
-    onBlur,
-  })
-  const focus = useVariantColors('focusRing', { color })
 
   const [checked, setChecked] = useControllableState<CheckedState>({
     prop: checkedProp,
@@ -98,30 +71,23 @@ export function BaseToggle(props: BaseToggleProps) {
   })
 
   const handlePress = useCallback((e: GestureResponderEvent) => {
-    if (disabled) return
     setChecked(NEXT[role])
     onPress?.(e)
-  }, [disabled, setChecked, role, onPress])
+  }, [setChecked, role, onPress])
 
-  const renderIndicator = children as (state: { checked: CheckedState }) => React.ReactNode
+  // A radio or switch never reaches 'indeterminate' (NEXT only yields booleans for them).
+  const indicatorProps = { ...indicator, checked } as unknown as P
 
   return (
-    <AnimatedPressable
-      accessibilityRole={role}
-      hitSlop={hitSlop ?? getMinHitSlop(width, height)}
+    <ToggleSurface
+      role={role}
       {...rest}
-      {...handlers}
-      onPress={handlePress}
+      checked={checked}
       disabled={disabled}
-      accessibilityState={{
-        ...accessibilityState,
-        checked: checked === 'indeterminate' ? 'mixed' : checked,
-        disabled,
-      }}
-      style={[scaleStyle, { width, height, ...margins }, style]}
-    >
-      {renderIndicator({ checked })}
-      <FocusRing visible={focused} color={focus.ring} borderRadius={borderRadius} offset={focusOffset} />
-    </AnimatedPressable>
+      onPress={handlePress}
+      color={color}
+      indicator={{ kind, props: indicatorProps }}
+      style={[margins, style]}
+    />
   )
 }

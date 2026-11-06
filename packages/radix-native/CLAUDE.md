@@ -18,7 +18,7 @@ packages/radix-native/src/
   utils/          resolveColor, variantPalette, colorMath, metrics, classicEffect, textStyle,
                   hitSlop, alpha, env, fonts
   components/
-    internal/     BaseButton, BaseToggle, BaseTextInput, ControlLabel, selectionGroup, controlGroup, SelectionCard, ClassicOverlay, FocusRing, ColumnRows, LabeledControl (not exported)
+    internal/     BaseButton, ToggleSurface, BaseToggle, BaseTextInput, ControlLabel, selectionGroup, controlGroup, SelectionCard, ClassicOverlay, FocusRing, ColumnRows (not exported)
     layout/       Box, Flex, Grid, Separator, Card
     typography/   Text, Heading, Link, Blockquote, Code, Em, Strong, Quote, Kbd, TextContext, InlineText (factory, not exported)
     display/      Avatar, Badge
@@ -145,15 +145,16 @@ const colors = useVariantColors('checkbox', { variant, color, highContrast, chec
 | Focus indicator | `<FocusRing visible={focused} color={useVariantColors('focusRing', { color }).ring} borderRadius={r} offset={…} />` (offset only on hosts without `overflow: 'hidden'`) |
 | Classic gradient | `<ClassicOverlay borderRadius={r} />` |
 | A button (interaction, recipe colors, classic, loading, focus ring, touch target, prop order) | `<BaseButton {...props} iconOnly? />` — Button and IconButton are thin wrappers over it, like Radix `BaseButton` |
-| A Toggle (checked state, what a press does per role, a11y state incl. `'mixed'`, disabled gate, touch target, press scale, focus ring) | `<BaseToggle role="checkbox" \| "radio" \| "switch" {...rest} width height borderRadius focusOffset margins>{({ checked }) => <XIndicator … />}</BaseToggle>` — Checkbox, Radio and Switch are thin wrappers over it |
-| A Toggle's look without its behaviour | `CheckboxIndicator`, `RadioIndicator`, `SwitchIndicator` (exported from each control's file, not from `index.ts`) — rows and cards use these, never a nested Toggle |
+| Anything that acts as a Toggle (role, a11y state incl. `'mixed'`, disabled gate, press scale, touch target, focus ring, consumer handlers) | `<ToggleSurface role checked disabled onPress color indicator={{ kind, props }} labelLineHeight? />` (focus ring around the Indicator) or `<ToggleSurface … borderRadius>{card}</ToggleSurface>` (focus ring on the card's edge) — holds no checked state |
+| A standalone Toggle (checked state, what a press does per role) | `<BaseToggle role="checkbox" \| "radio" \| "switch" {...rest} kind={CheckboxToggle} indicator={{ size, variant, … }} margins>` — Checkbox, Radio and Switch are thin wrappers over it, built on the Toggle surface |
+| A Toggle's Indicator and its size | `CheckboxToggle`, `RadioToggle`, `SwitchToggle` (`ToggleKind`: `Indicator` + pure `geometry(props, theme)`, exported from each control's file, not from `index.ts`) — the one source of an Indicator's width, height, radius and focus offset; Indicators read it with `useToggleGeometry` |
+| A Toggle's look without its behaviour | `CheckboxIndicator`, `RadioIndicator`, `SwitchIndicator` (exported from each control's file, not from `index.ts`) — rows and cards show these, never a nested Toggle |
 | A row of text runs + icons inside a control (Control label) | `<ControlLabel size weight color maxFontSizeMultiplier>{children}</ControlLabel>` — merges adjacent text, one line, tints icons without `color` |
 | A Text input (sizes, recipe colors, focus, read-only look, prop order) | `<BaseTextInput {...props} multiline? />` — TextField and TextArea are thin wrappers over it |
 | Equal-width columns | `<ColumnRows columns gap…>` (no `onLayout`, no `%` flexBasis) |
-| Control + label row in groups | `<LabeledControl role checked disabled onPress control={<XIndicator …/>} size color …>` — owns the label style, the 0.5em gap and the focus ring |
-| CheckboxGroup / RadioGroup (Root + Item, labelled or bare items, column layout) | `createControlGroup({ name, type, rootRole?, itemRole, Control, Indicator })` in `internal/controlGroup.tsx` — both groups are one call each |
+| CheckboxGroup / RadioGroup (Root + Item, labelled or bare items, column layout) | `createControlGroup({ name, type, rootRole, itemRole, Control, kind })` in `internal/controlGroup.tsx` — both groups are one call each; a labelled item is a Toggle surface row (label style, 0.5em gap) |
 | A Selection group (one value or several, controlled or not, disabled propagation) | `createSelectionGroup({ name, type: 'single' \| 'multiple' })` → `{ Root, useItem(value, disabled) }` — one instance per family, like Radix's CheckboxGroup / RadioGroup primitives |
-| A CheckboxCards / RadioCards item and grid | `<SelectionCard recipe role … indicator? />`, `<SelectionCardGrid columns gap />` |
+| A CheckboxCards / RadioCards item and grid | `<SelectionCard recipe role … indicator? />` (a Toggle surface with the card's look), `<SelectionCardGrid columns gap />` |
 | Any rendered text (size, face, letter spacing, Font scaling cap, `truncate` / `wrap`, nesting) | `useTextStyle({ inline?, role?, size?, weight?, lineHeight?, color?, compact?, maxFontSizeMultiplier?, truncate?, wrap?, margins? })` → `{ style, textProps, contextFontSize }` — see Text style below |
 | Minimum touch target | `hitSlop ?? getMinHitSlop(width, height)` (44pt) |
 | Colors of a component's parts for its variant and state | `useVariantColors(recipe, { variant?, color, highContrast?, checked?, disabled?, pressed?, focused? })` — see Variant colors above |
@@ -284,7 +285,7 @@ ThemeControls (dev tool) hardcodes `maxFontSizeMultiplier={1}` on all internal t
 
 ## Press scale animation
 
-All interactive components (Button, IconButton, Checkbox, Switch, Radio, Card, CheckboxCards, RadioCards) have a subtle scale-down animation on press. Inside the library use `useInteraction` (which wraps `usePressScale`); `usePressScale` + `AnimatedPressable` remain public for consumers:
+All interactive components (Button, IconButton, Checkbox, Switch, Radio, CheckboxGroup / RadioGroup rows, Card, CheckboxCards, RadioCards) have a subtle scale-down animation on press. Inside the library use `useInteraction` (which wraps `usePressScale`); `usePressScale` + `AnimatedPressable` remain public for consumers:
 
 ```tsx
 import { usePressScale, AnimatedPressable } from '../../hooks/usePressScale'
