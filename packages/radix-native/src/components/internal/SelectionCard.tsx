@@ -1,9 +1,10 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { View } from 'react-native'
 import type { StyleProp, ViewStyle } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useMetrics } from '../../hooks/useMetrics'
 import { useVariantColors } from '../../hooks/useVariantColors'
+import { useMargins } from '../../hooks/useMargins'
 import { getClassicEffect } from '../../utils/classicEffect'
 import type { SpaceToken } from '../../tokens/spacing'
 import type { RadiusLevel } from '../../tokens/radius'
@@ -12,6 +13,8 @@ import { Text } from '../typography/Text'
 import type { TextSize } from '../typography/Text'
 import { ToggleSurface, type ToggleKind } from './ToggleSurface'
 import { ColumnRows, AutoFitRows } from './ColumnRows'
+import { createSelectionGroup, type SelectionValue } from './selectionGroup'
+import type { MarginProps } from '../../types/marginProps'
 
 export type SelectionCardSize = 1 | 2 | 3
 export type SelectionCardVariant = 'surface' | 'classic'
@@ -195,4 +198,157 @@ export function SelectionCardGrid({ columns, gap, role, accessibilityLabel, test
       )}
     </View>
   )
+}
+
+// ─── Factory ────────────────────────────────────────────────────────────────────
+
+type SelectionType = 'single' | 'multiple'
+
+export interface SelectionCardsProps<T extends SelectionType> extends MarginProps {
+  /** Card size (1–3). Default: 2. */
+  size?: SelectionCardSize
+  /** Visual variant. Default: 'surface'. */
+  variant?: SelectionCardVariant
+  /** Accent color. Default: theme accent. */
+  color?: AccentColor
+  /** Increases color contrast with the background. */
+  highContrast?: boolean
+  /** Number of equal-width columns. Default: auto-fit (cards ≥ 160px, like Radix). */
+  columns?: number
+  /** Gap between cards as space token. Default: 4. */
+  gap?: SpaceToken
+  /** Controlled selection: one value (RadioCards) or several (CheckboxCards). */
+  value?: SelectionValue<T>
+  /** Uncontrolled default selection. */
+  defaultValue?: SelectionValue<T>
+  /** Called when the selection changes. */
+  onValueChange?: (value: SelectionValue<T>) => void
+  /** Disables every card. */
+  disabled?: boolean
+  /** Card items. */
+  children?: React.ReactNode
+  /** Accessible name for the whole group. */
+  accessibilityLabel?: string
+  testID?: string
+  style?: StyleProp<ViewStyle>
+}
+
+export interface SelectionCardsItemProps {
+  /** Unique value identifying this card. */
+  value: string
+  /** Disables this card (a disabled group always wins). */
+  disabled?: boolean
+  /** Card content. */
+  children?: React.ReactNode
+  style?: StyleProp<ViewStyle>
+}
+
+interface Shared {
+  size: SelectionCardSize
+  variant: SelectionCardVariant
+  color?: AccentColor
+  highContrast?: boolean
+}
+
+/** Props of a card's trailing Indicator. Radix checkbox-cards.tsx always renders a surface Checkbox. */
+interface CardIndicatorProps {
+  size: SelectionCardSize
+  variant: 'surface'
+  color?: AccentColor
+  highContrast?: boolean
+  checked: boolean
+  disabled: boolean
+}
+
+interface SelectionCardsConfig<T extends SelectionType> {
+  name: string
+  type: T
+  /** Role of the grid (Radix: `group` for CheckboxCards, `radiogroup` for RadioCards). */
+  rootRole: 'group' | 'radiogroup'
+  /** Accessibility role of each card. */
+  itemRole: 'checkbox' | 'radio'
+  recipe: 'checkboxCard' | 'radioCard'
+  /** The Toggle shown at each card's trailing edge, if any (CheckboxCards). */
+  kind?: ToggleKind<CardIndicatorProps>
+}
+
+/**
+ * Internal: CheckboxCards and RadioCards — a Selection group of Selection
+ * cards laid out in a grid. Both families are one call each.
+ */
+export function createSelectionCards<T extends SelectionType>({
+  name,
+  type,
+  rootRole,
+  itemRole,
+  recipe,
+  kind,
+}: SelectionCardsConfig<T>) {
+  const Selection = createSelectionGroup<T, Shared>({ name, type })
+
+  function Root({
+    size = 2,
+    variant = 'surface',
+    color,
+    highContrast,
+    columns,
+    gap = 4,
+    value,
+    defaultValue,
+    onValueChange,
+    disabled,
+    children,
+    accessibilityLabel,
+    testID,
+    m, mx, my, mt, mr, mb, ml,
+    style,
+  }: SelectionCardsProps<T>) {
+    const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
+    const shared = useMemo<Shared>(() => ({ size, variant, color, highContrast }), [size, variant, color, highContrast])
+
+    return (
+      <Selection.Root value={value} defaultValue={defaultValue} onValueChange={onValueChange} disabled={disabled} shared={shared}>
+        <SelectionCardGrid
+          role={rootRole}
+          columns={columns}
+          gap={gap}
+          accessibilityLabel={accessibilityLabel}
+          testID={testID}
+          style={[margins, style]}
+        >
+          {children}
+        </SelectionCardGrid>
+      </Selection.Root>
+    )
+  }
+  Root.displayName = `${name}.Root`
+
+  function Item({ value, disabled, children, style }: SelectionCardsItemProps) {
+    const item = Selection.useItem(value, disabled)
+    const { size, variant, color, highContrast } = item.shared
+
+    return (
+      <SelectionCard
+        recipe={recipe}
+        role={itemRole}
+        size={size}
+        checked={item.checked}
+        disabled={item.disabled}
+        onPress={item.select}
+        variant={variant}
+        color={color}
+        highContrast={highContrast}
+        indicator={kind && {
+          kind,
+          props: { size, variant: 'surface', color, highContrast, checked: item.checked, disabled: item.disabled },
+        }}
+        style={style}
+      >
+        {children}
+      </SelectionCard>
+    )
+  }
+  Item.displayName = `${name}.Item`
+
+  return Object.assign(Root, { Root, Item })
 }
