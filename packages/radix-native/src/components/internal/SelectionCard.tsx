@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react'
-import { View } from 'react-native'
+import { Text as RNText, View } from 'react-native'
 import type { StyleProp, ViewStyle } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useMetrics } from '../../hooks/useMetrics'
@@ -9,7 +9,7 @@ import { getClassicEffect } from '../../utils/classicEffect'
 import type { SpaceToken } from '../../tokens/spacing'
 import type { RadiusLevel } from '../../tokens/radius'
 import type { AccentColor } from '../../tokens/colors/types'
-import { Text } from '../typography/Text'
+import { useTextStyle } from '../../hooks/useTextStyle'
 import type { TextSize } from '../typography/Text'
 import { ToggleSurface, type ToggleKind } from './ToggleSurface'
 import { ColumnRows, AutoFitRows } from './ColumnRows'
@@ -86,6 +86,9 @@ export function SelectionCard<P extends object>({
   const indicatorWidth = indicator ? indicator.kind.geometry(indicator.props, { scaling, radius }).width : 0
   const checkedBorder = checked && 'checkedBorder' in colors ? colors.checkedBorder : undefined
   const borderRadius = metrics.radius(cfg.radiusLevel)
+  // Plain-text children: Radix item font size, body text gray-12 unless the recipe sets one (disabled).
+  const body = useVariantColors('text', {})
+  const label = useTextStyle({ size: cfg.fontSize, color: colors.text ?? body.text })
 
   const cardStyle: ViewStyle = {
     flexGrow: 1,
@@ -117,7 +120,7 @@ export function SelectionCard<P extends object>({
     >
       {/* Plain strings must live inside <Text> in RN */}
       {typeof children === 'string' || typeof children === 'number'
-        ? <Text size={cfg.fontSize} style={colors.text ? { color: colors.text } : undefined}>{children}</Text>
+        ? <RNText style={label.style} {...label.textProps}>{children}</RNText>
         : children}
       {indicator ? (
         // Trailing edge, vertically centered (Radix CSS)
