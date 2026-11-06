@@ -4,15 +4,13 @@ import type { StyleProp, ViewStyle } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useMetrics } from '../../hooks/useMetrics'
 import { useVariantColors } from '../../hooks/useVariantColors'
-import { useInteraction } from '../../hooks/useInteraction'
-import { AnimatedPressable } from '../../hooks/usePressScale'
 import { getClassicEffect } from '../../utils/classicEffect'
 import type { SpaceToken } from '../../tokens/spacing'
 import type { RadiusLevel } from '../../tokens/radius'
 import type { AccentColor } from '../../tokens/colors/types'
 import { Text } from '../typography/Text'
 import type { TextSize } from '../typography/Text'
-import { FocusRing } from './FocusRing'
+import { ToggleSurface } from './ToggleSurface'
 import { ColumnRows, AutoFitRows } from './ColumnRows'
 
 /** Radix CheckboxCards / RadioCards: item font-size per size (font-size-2 / 3 / 4). */
@@ -43,9 +41,10 @@ interface SelectionCardProps {
 
 /**
  * Internal: the shell shared by CheckboxCards.Item and RadioCards.Item — the
- * pressable card, its recipe colors, the classic effect, the focus ring and
- * plain-text children. When the recipe has a checked border (RadioCards) it is
- * drawn as a 2px overlay ring over the 1px border, like Radix's `::after`
+ * card's recipe colors, the classic effect and plain-text children, on a
+ * Toggle surface (role, announced state, press scale, focus ring on its edge).
+ * When the recipe has a checked border (RadioCards) it is drawn as a 2px
+ * overlay ring over the 1px border, like Radix's `::after`
  * outline, so checking an item never moves its content — even when the
  * consumer overrides the padding through `style`.
  */
@@ -66,10 +65,8 @@ export function SelectionCard({
   style,
 }: SelectionCardProps) {
   const { appearance } = useThemeContext()
-  const { focused, scaleStyle, handlers } = useInteraction({ enabled: !disabled })
   const metrics = useMetrics()
   const colors = useVariantColors(recipe, { variant, color, highContrast, checked, disabled })
-  const focus = useVariantColors('focusRing', { color })
 
   const checkedBorder = checked && 'checkedBorder' in colors ? colors.checkedBorder : undefined
   const borderRadius = metrics.radius(radiusLevel)
@@ -89,14 +86,14 @@ export function SelectionCard({
   }
 
   return (
-    <AnimatedPressable
-      {...handlers}
-      onPress={onPress}
+    <ToggleSurface
+      role={role}
+      checked={checked}
       disabled={disabled}
-      accessibilityRole={role}
-      accessibilityState={{ checked, disabled }}
+      onPress={onPress}
+      color={color}
+      borderRadius={borderRadius}
       style={[
-        scaleStyle,
         cardStyle,
         variant === 'classic' && !disabled ? getClassicEffect(appearance) : undefined,
         style,
@@ -108,8 +105,7 @@ export function SelectionCard({
         : children}
       {indicator}
       {checkedBorder ? <CheckedRing color={checkedBorder} borderRadius={borderRadius} /> : null}
-      <FocusRing visible={focused} color={focus.ring} borderRadius={borderRadius} />
-    </AnimatedPressable>
+    </ToggleSurface>
   )
 }
 
