@@ -1,7 +1,6 @@
 import React from 'react'
 import { Text as RNText } from 'react-native'
 import type { StyleProp, TextStyle } from 'react-native'
-import { useMetrics } from '../../hooks/useMetrics'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { useTextStyle } from '../../hooks/useTextStyle'
@@ -60,7 +59,6 @@ export function Code({
   style,
   ...rest
 }: CodeProps) {
-  const metrics = useMetrics()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
   // ─── Colors ─────────────────────────────────────────────────────────────────
@@ -86,19 +84,17 @@ export function Code({
     wrap,
     margins,
   })
-  const resolvedSize = text.contextFontSize
-
   // ─── Padding — Radix: 0.1em vertical, 0.25em horizontal. Ghost: no padding.
   const isGhost = variant === 'ghost'
-  const paddingVertical   = isGhost ? 0 : Math.round(resolvedSize * 0.1)
-  const paddingHorizontal = isGhost ? 0 : Math.round(resolvedSize * 0.25)
+  const paddingVertical   = isGhost ? 0 : text.em(0.1)
+  const paddingHorizontal = isGhost ? 0 : text.em(0.25)
 
   // ─── Style ──────────────────────────────────────────────────────────────────
   const codeStyle: TextStyle = {
     ...text.style,
     backgroundColor,
     // Radix .rt-Code: border-radius: calc((0.5px + 0.2em) * var(--radius-factor))
-    borderRadius:     (0.5 + 0.2 * resolvedSize) * metrics.radiusFactor,
+    borderRadius:     text.radius(0.2, 0.5),
     borderWidth:      borderColor ? 1 : undefined,
     borderColor,
     paddingVertical,
