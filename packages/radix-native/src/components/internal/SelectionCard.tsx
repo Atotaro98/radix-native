@@ -10,75 +10,88 @@ import type { RadiusLevel } from '../../tokens/radius'
 import type { AccentColor } from '../../tokens/colors/types'
 import { Text } from '../typography/Text'
 import type { TextSize } from '../typography/Text'
-import { ToggleSurface } from './ToggleSurface'
+import { ToggleSurface, type ToggleKind } from './ToggleSurface'
 import { ColumnRows, AutoFitRows } from './ColumnRows'
 
-/** Radix CheckboxCards / RadioCards: item font-size per size (font-size-2 / 3 / 4). */
-export const SELECTION_CARD_FONT_SIZE: Record<1 | 2 | 3, TextSize> = { 1: 2, 2: 3, 3: 4 }
-
+export type SelectionCardSize = 1 | 2 | 3
 export type SelectionCardVariant = 'surface' | 'classic'
 
-interface SelectionCardProps {
+/**
+ * Radix .rt-CheckboxCardsRoot / .rt-RadioCardsRoot :where(.rt-r-size-1/2/3), the
+ * same in both families:
+ * - item padding-x: var(--space-3/4/5) → 12 / 16 / 24px
+ * - item padding-y: calc(var(--space-3) / 1.2), calc(var(--space-4) * 0.875),
+ *   calc(var(--space-5) / 1.2) → 10 / 14 / 20px
+ * - item font-size: var(--font-size-2/3/4); item radius: var(--radius-3/3/4)
+ * A checkbox card's padding-right is padding-x * 2 + checkbox size, leaving
+ * room for the Checkbox at the trailing edge.
+ */
+const CARD_SIZE: Record<SelectionCardSize, { paddingX: number; paddingY: number; fontSize: TextSize; radiusLevel: RadiusLevel }> = {
+  1: { paddingX: 12, paddingY: 10, fontSize: 2, radiusLevel: 3 },
+  2: { paddingX: 16, paddingY: 14, fontSize: 3, radiusLevel: 3 },
+  3: { paddingX: 24, paddingY: 20, fontSize: 4, radiusLevel: 4 },
+}
+
+interface SelectionCardProps<P extends object> {
   /** Variant recipe: `checkboxCard` or `radioCard`. */
   recipe: 'checkboxCard' | 'radioCard'
   role: 'checkbox' | 'radio'
+  /** The group's size: decides padding, font size of plain text and radius. */
+  size: SelectionCardSize
   checked: boolean
   disabled: boolean
   onPress: () => void
   variant: SelectionCardVariant
   color?: AccentColor
   highContrast?: boolean
-  /** Font size of plain-text children. */
-  fontSize: TextSize
-  radiusLevel: RadiusLevel
-  /** Padding inside the 1px border (the checked ring is an overlay, it never changes layout). */
-  padding: { top: number; right: number; bottom: number; left: number }
-  /** Extra visual (e.g. the Checkbox on the right), not interactive. */
-  indicator?: React.ReactNode
+  /** Indicator shown at the trailing edge (checkbox cards), not interactive. */
+  indicator?: { kind: ToggleKind<P>; props: P }
   children?: React.ReactNode
   style?: StyleProp<ViewStyle>
 }
 
 /**
- * Internal: the shell shared by CheckboxCards.Item and RadioCards.Item — the
- * card's recipe colors, the classic effect and plain-text children, on a
- * Toggle surface (role, announced state, press scale, focus ring on its edge).
- * When the recipe has a checked border (RadioCards) it is drawn as a 2px
- * overlay ring over the 1px border, like Radix's `::after`
+ * Internal: a Selection card — CheckboxCards.Item and RadioCards.Item. Owns the
+ * card's Radix size, recipe colors, classic effect, trailing Indicator and
+ * plain-text children, on a Toggle surface (role, announced state, press scale,
+ * focus ring on its edge). When the recipe has a checked border (RadioCards) it
+ * is drawn as a 2px overlay ring over the 1px border, like Radix's `::after`
  * outline, so checking an item never moves its content — even when the
  * consumer overrides the padding through `style`.
  */
-export function SelectionCard({
+export function SelectionCard<P extends object>({
   recipe,
   role,
+  size,
   checked,
   disabled,
   onPress,
   variant,
   color,
   highContrast,
-  fontSize,
-  radiusLevel,
-  padding,
   indicator,
   children,
   style,
-}: SelectionCardProps) {
-  const { appearance } = useThemeContext()
+}: SelectionCardProps<P>) {
+  const { appearance, scaling, radius } = useThemeContext()
   const metrics = useMetrics()
   const colors = useVariantColors(recipe, { variant, color, highContrast, checked, disabled })
 
+  const cfg = CARD_SIZE[size]
+  const paddingX = metrics.px(cfg.paddingX)
+  const paddingY = metrics.px(cfg.paddingY)
+  const indicatorWidth = indicator ? indicator.kind.geometry(indicator.props, { scaling, radius }).width : 0
   const checkedBorder = checked && 'checkedBorder' in colors ? colors.checkedBorder : undefined
-  const borderRadius = metrics.radius(radiusLevel)
+  const borderRadius = metrics.radius(cfg.radiusLevel)
 
   const cardStyle: ViewStyle = {
     flexGrow: 1,
     position: 'relative',
     overflow: 'hidden',
-    paddingTop: padding.top,
-    paddingRight: padding.right,
-    paddingBottom: padding.bottom,
-    paddingLeft: padding.left,
+    paddingTop: paddingY,
+    paddingRight: indicator ? paddingX * 2 + indicatorWidth : paddingX,
+    paddingBottom: paddingY,
+    paddingLeft: paddingX,
     borderRadius,
     borderWidth: CARD_BORDER_WIDTH,
     borderColor: checkedBorder ?? colors.border,
@@ -101,9 +114,17 @@ export function SelectionCard({
     >
       {/* Plain strings must live inside <Text> in RN */}
       {typeof children === 'string' || typeof children === 'number'
-        ? <Text size={fontSize} style={colors.text ? { color: colors.text } : undefined}>{children}</Text>
+        ? <Text size={cfg.fontSize} style={colors.text ? { color: colors.text } : undefined}>{children}</Text>
         : children}
-      {indicator}
+      {indicator ? (
+        // Trailing edge, vertically centered (Radix CSS)
+        <View
+          pointerEvents="none"
+          style={{ position: 'absolute', right: paddingX, top: 0, bottom: 0, justifyContent: 'center' }}
+        >
+          <indicator.kind.Indicator {...indicator.props} />
+        </View>
+      ) : null}
       {checkedBorder ? <CheckedRing color={checkedBorder} borderRadius={borderRadius} /> : null}
     </ToggleSurface>
   )
