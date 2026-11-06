@@ -1,7 +1,6 @@
 import React from 'react'
 import { Platform, View, Text as RNText } from 'react-native'
 import type { StyleProp, ViewStyle } from 'react-native'
-import { useMetrics } from '../../hooks/useMetrics'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { useTextStyle } from '../../hooks/useTextStyle'
@@ -54,7 +53,6 @@ export function Kbd({
   ...rest
 }: KbdProps) {
   const colors = useVariantColors('kbd', { variant })
-  const metrics = useMetrics()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
   // Radix .rt-Kbd: 0.75em of the surrounding text, default (body) font — not
@@ -70,15 +68,13 @@ export function Kbd({
     compact: true,
     maxFontSizeMultiplier,
   })
-  const kbdFontSize = text.contextFontSize
-  // Radix .rt-Kbd: border-radius: calc(var(--radius-factor) * 0.35em)
-  const borderR = metrics.radiusFactor * 0.35 * kbdFontSize
-  // Radix: min-width 1.75em, line-height 1.7em (em = kbdFontSize)
-  const minW = Math.round(kbdFontSize * 1.75)
-  const kbdHeight = Math.round(kbdFontSize * 1.7)
-  // Radix: padding 0.5em horizontal, 0.05em bottom
-  const ph = Math.round(kbdFontSize * 0.5)
-  const pb = Math.round(kbdFontSize * 0.05)
+  // Radix: border-radius calc(var(--radius-factor) * 0.35em), min-width 1.75em,
+  // line-height 1.7em, padding 0.5em horizontal and 0.05em bottom.
+  const borderR = text.radius(0.35)
+  const minW = text.em(1.75)
+  const kbdHeight = text.em(1.7)
+  const ph = text.em(0.5)
+  const pb = text.em(0.05)
 
   // Inline alignment: shift down so Kbd centers with surrounding text.
   // In RN, inline View bottom = text baseline. Kbd sticks above by

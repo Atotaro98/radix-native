@@ -205,7 +205,8 @@ function LabeledRow<S extends 1 | 2 | 3, V>({
   const labelColors = useVariantColors('controlLabel', { disabled })
   const label = useTextStyle({ size, color: labelColors.text, maxFontSizeMultiplier })
   const fontSize = label.style.fontSize ?? 0
-  const gap = Math.round(fontSize / 2)
+  // Radix: gap calc(var(--font-size) / 2) between the Indicator and its label.
+  const gap = label.em(0.5)
 
   return (
     <ToggleSurface
