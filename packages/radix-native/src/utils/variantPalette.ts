@@ -742,6 +742,25 @@ function dialog(s: PaletteState): DialogPaints {
   }
 }
 
+// ─── Popper panel (Popover, HoverCard, menus, Select content) ────────────────
+
+export interface PanelPaints {
+  /** --color-panel-solid: white / dark gray-2. */
+  panel: Paint
+  /** The 1px ring of --shadow-4 / --shadow-5: color-mix(gray-a3 / dark gray-a6). */
+  ring: Paint
+  /** The rest of the shadow as one drop shadow. */
+  shadow: ShadowPaint
+}
+
+function popperPanel(s: PaletteState): PanelPaints {
+  return {
+    panel: byMode(WHITE, g(2)),
+    ring: byMode(mix(g('a3'), g(3), 0.25), mix(g('a6'), g(6), 0.25)),
+    shadow: { color: BLACK, opacity: s.appearance === 'dark' ? 0.4 : 0.12, offsetY: 8, radius: 20, elevation: 8 },
+  }
+}
+
 // ─── Control label (CheckboxGroup / RadioGroup item text) ─────────────────────
 
 export interface ControlLabelPaints {
@@ -791,6 +810,7 @@ export const VARIANT_RECIPES = {
   tabList,
   table,
   dialog,
+  popperPanel,
   controlLabel,
   focusRing,
 } as const

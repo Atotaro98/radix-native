@@ -43,6 +43,7 @@ import { TextFieldSection } from './playground/sections/TextFieldSection'
 import { SkeletonSection } from './playground/sections/SkeletonSection'
 import { SliderSection } from './playground/sections/SliderSection'
 import { SpinnerSection } from './playground/sections/SpinnerSection'
+import { PopoverSection } from './playground/sections/PopoverSection'
 import { ProgressSection } from './playground/sections/ProgressSection'
 import { RadioSection } from './playground/sections/RadioSection'
 import { RadioGroupSection } from './playground/sections/RadioGroupSection'
@@ -126,6 +127,7 @@ export function Playground({ fontIndex, onFontChange }: PlaygroundProps) {
         <InsetSection />
         <KbdSection />
         <LinkSection />
+        <PopoverSection />
         <ProgressSection />
         <QuoteSection />
         <RadioSection />

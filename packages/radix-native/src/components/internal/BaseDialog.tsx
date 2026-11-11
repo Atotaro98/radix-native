@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, useWindowDimensions } from 'react-native'
 import type { DimensionValue, GestureResponderEvent, StyleProp, ViewStyle } from 'react-native'
 import Animated, { Easing, runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated'
@@ -8,7 +8,7 @@ import { useThemeContext } from '../../hooks/useThemeContext'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { shadowStyle } from '../../utils/shadow'
 import { CardRing } from './CardRing'
-import { PortalHost } from './Portal'
+import { PortalHost, type PortalHostHandle } from './Portal'
 import { InsetContext, type InsetValues } from '../layout/InsetContext'
 import { Heading, type HeadingProps } from '../typography/Heading'
 import { Text, type TextProps } from '../typography/Text'
@@ -181,7 +181,10 @@ export function createDialog({ alert, name }: { alert: boolean; name: string }) 
       ],
     }))
 
+    const host = useRef<PortalHostHandle>(null)
     const requestClose = useCallback(() => {
+      // An Anchored overlay open inside the dialog takes the back button first (top layer only)
+      if (host.current?.dismissTop()) return
       let prevented = false
       onEscapeKeyDown?.({ preventDefault: () => { prevented = true } })
       if (!prevented) ctx.setOpen(false)
@@ -216,7 +219,7 @@ export function createDialog({ alert, name }: { alert: boolean; name: string }) 
         statusBarTranslucent
         onRequestClose={requestClose}
       >
-        <PortalHost>
+        <PortalHost ref={host}>
           {/* ::before backdrop, --color-overlay */}
           <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: colors.overlay }, backdropStyle]} />
           <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>

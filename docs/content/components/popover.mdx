@@ -1,0 +1,56 @@
+---
+metaTitle: Popover
+metaDescription: Floating element for displaying rich content, triggered by a button.
+sourcePath: components/overlays/Popover
+---
+
+# Popover
+
+```tsx
+<Popover.Root>
+  <Popover.Trigger><Button variant="soft">Comment</Button></Popover.Trigger>
+  <Popover.Content width={360}>
+    <TextArea placeholder="Write a comment…" style={{ height: 80 }} />
+    <Flex direction="row" justify="end" mt={3}>
+      <Popover.Close><Button size={1}>Comment</Button></Popover.Close>
+    </Flex>
+  </Popover.Content>
+</Popover.Root>
+```
+
+## API Reference
+
+### Root
+
+| Prop | Type | Default |
+|------|------|---------|
+| `open` / `defaultOpen` | `boolean` | `false` |
+| `onOpenChange` | `(open: boolean) => void` | — |
+| `modal` | `boolean` | `false` |
+
+### Content
+
+| Prop | Type | Default |
+|------|------|---------|
+| `size` | `1 \| 2 \| 3 \| 4` | `2` |
+| `width` `minWidth` `maxWidth` | `DimensionValue` | `maxWidth` 480 |
+| `height` `minHeight` `maxHeight` | `DimensionValue` | — |
+| `side` | `'top' \| 'right' \| 'bottom' \| 'left'` | `'bottom'` |
+| `sideOffset` | `number` | `8` |
+| `align` | `'start' \| 'center' \| 'end'` | `'start'` |
+| `alignOffset` | `number` | `0` |
+| `avoidCollisions` | `boolean` | `true` |
+| `collisionPadding` | `number \| Partial<Record<Side, number>>` | `10` |
+
+### Trigger, Anchor, Close
+
+One element each. Trigger toggles, Close closes, Anchor positions the content against another element.
+
+## Examples
+
+### Size
+
+```tsx
+<Popover.Content size={1} maxWidth={300}>…</Popover.Content>
+<Popover.Content size={4}>…</Popover.Content>
+```

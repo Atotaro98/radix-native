@@ -25,11 +25,16 @@ beforeEach(() => {
 })
 
 /** Background of the nearest host View above a test node: the Theme that paints (or not). */
+/** The background of the Theme's View above `testID` (the root Theme also wraps its portal host). */
 function backgroundAbove(testID: string) {
   let node = screen.getByTestId(testID).parent
-  while (node && node.type !== 'View') node = node.parent
-  if (!node) throw new Error(`no View above ${testID}`)
-  return StyleSheet.flatten(node.props.style)?.backgroundColor
+  while (node) {
+    if (node.type === 'View' && StyleSheet.flatten(node.props.style)?.flex === 1 && 'backgroundColor' in (StyleSheet.flatten(node.props.style) ?? {})) {
+      return StyleSheet.flatten(node.props.style)?.backgroundColor
+    }
+    node = node.parent
+  }
+  throw new Error(`no Theme View above ${testID}`)
 }
 
 /** Each change handler, the value it sets and the context key it changes. */
