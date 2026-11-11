@@ -66,6 +66,9 @@ These are places where RN cannot replicate the exact Radix web visual, and we us
 | **CheckboxGroup / RadioGroup** disabled label | Web: unchanged text, `cursor: not-allowed` | RN: label turns `gray-a8` — there is no cursor to signal it |
 | **CheckboxCards / RadioCards** disabled custom children | Web: `color: gray-a9` inherited by all content | RN: applied to plain-string children only; custom children set their own color |
 | **Card** ghost hover | Web: `gray-a3` background on hover | RN: no hover background |
+| **AspectRatio** | Web: an outer div with the padding-bottom trick, props on an inner absolutely-filled div | RN: one View with the `aspectRatio` style; `style` lands on it. No `asChild` |
+| **Container / Section** `display` | Web: `'initial'` = `flex` (Container) / `block` (Section) | RN: `'initial'` = `flex` for both (RN has no block) |
+| **Section** | Web: a `<section>` element | RN: a plain View — no landmark role on iOS / Android |
 | **Inset** | Web: reads the parent's `--inset-*` CSS variables | RN: reads an Inset context that Card provides with the same values; a padding the consumer sets on the Card through `style` is not seen by the Inset. No `asChild` |
 | **TextField/TextArea** focus | Web: 2px outline with offset | RN: 1px border color change + 1px inner ring |
 | **Code** inline sizing | Web: `0.95em` relative to parent | RN: 0.95 × parent size when nested in a text component (via `TextContext`); token size when standalone |

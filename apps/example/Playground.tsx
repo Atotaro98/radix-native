@@ -3,6 +3,7 @@ import { ScrollView, Pressable } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import { Box, Flex, Text, useThemeContext, useColor, ThemeControls } from 'radix-native'
 import { FONT_PRESETS } from './fonts'
+import { AspectRatioSection } from './playground/sections/AspectRatioSection'
 import { AvatarSection } from './playground/sections/AvatarSection'
 import { BadgeSection } from './playground/sections/BadgeSection'
 import { BlockquoteSection } from './playground/sections/BlockquoteSection'
@@ -13,7 +14,9 @@ import { CheckboxGroupSection } from './playground/sections/CheckboxGroupSection
 import { CheckboxCardsSection } from './playground/sections/CheckboxCardsSection'
 import { CodeSection } from './playground/sections/CodeSection'
 import { EmSection } from './playground/sections/EmSection'
+import { ContainerSection } from './playground/sections/ContainerSection'
 import { GridSection } from './playground/sections/GridSection'
+import { SectionSection } from './playground/sections/SectionSection'
 import { InsetSection } from './playground/sections/InsetSection'
 import { HeadingSection } from './playground/sections/HeadingSection'
 import { IconButtonSection } from './playground/sections/IconButtonSection'
@@ -88,6 +91,7 @@ export function Playground({ fontIndex, onFontChange }: PlaygroundProps) {
         </Flex>
 
         {/* Alphabetical order matching Radix playground */}
+        <AspectRatioSection />
         <AvatarSection />
         <BadgeSection />
         <BlockquoteSection />
@@ -97,6 +101,7 @@ export function Playground({ fontIndex, onFontChange }: PlaygroundProps) {
         <CheckboxGroupSection />
         <CheckboxCardsSection />
         <CodeSection />
+        <ContainerSection />
         <EmSection />
         <GridSection />
         <HeadingSection />
@@ -109,6 +114,7 @@ export function Playground({ fontIndex, onFontChange }: PlaygroundProps) {
         <RadioSection />
         <RadioGroupSection />
         <RadioCardsSection />
+        <SectionSection />
         <SeparatorSection />
         <SkeletonSection />
         <SpinnerSection />
