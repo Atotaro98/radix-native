@@ -1,22 +1,23 @@
 import React from 'react'
-import { AspectRatio, Box, Flex, Text } from 'radix-native'
-import { ComponentSection } from '../ui'
+import { AspectRatio, Box, Grid, Text, useColor } from 'radix-native'
+import { ComponentSection, PhotoPlaceholder } from '../ui'
 
-const RATIOS: [string, number][] = [['1 / 1', 1], ['16 / 9', 16 / 9], ['16 / 8', 2], ['3 / 4', 3 / 4]]
+// Radix playground sink/aspect-ratio, in its order
+const RATIOS: [string, number | undefined][] = [['1x2', 1 / 2], ['1x1', undefined], ['16x9', 16 / 9], ['2x1', 2 / 1]]
 
 function Ratios() {
+  const gray = useColor('gray-11')
   return (
-    <Flex gap={3}>
+    <Grid columns={4} gap={5}>
       {RATIOS.map(([label, ratio]) => (
-        <Box key={label} width={ratio < 1 ? 160 : undefined}>
+        <Box key={label}>
+          <Text size={1} mb={2} style={{ color: gray }}>{label}</Text>
           <AspectRatio ratio={ratio}>
-            <Flex flexGrow={1} align="center" justify="center" bg="accent-a4" radius="medium">
-              <Text size={2}>{label}</Text>
-            </Flex>
+            <PhotoPlaceholder radius={4} />
           </AspectRatio>
         </Box>
       ))}
-    </Flex>
+    </Grid>
   )
 }
 

@@ -3,7 +3,7 @@
  * Not part of radix-native — only used in the example app.
  */
 import React from 'react'
-import { Pressable, ScrollView } from 'react-native'
+import { Pressable, ScrollView, View } from 'react-native'
 import { Box, Flex, Text, Heading, Separator, useColor } from 'radix-native'
 
 // ─── Tab system ───────────────────────────────────────────────────────────────
@@ -120,5 +120,25 @@ export function LabeledRow({
         {children}
       </Box>
     </Flex>
+  )
+}
+
+/**
+ * Stand-in for the photo Radix's docs and playground use (a house in a forest):
+ * a tinted panel that fills its parent, so ratios and insets read clearly in
+ * every accent color and appearance without loading a remote image.
+ */
+export function PhotoPlaceholder({ height, radius }: { height?: number; radius?: number }) {
+  const bg = useColor('accent-a5')
+  const fg = useColor('accent-a9')
+  return (
+    <View
+      accessible
+      accessibilityRole="image"
+      accessibilityLabel="A house in a forest"
+      style={{ width: '100%', height: height ?? '100%', backgroundColor: bg, borderRadius: radius, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}
+    >
+      <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: fg, opacity: 0.6 }} />
+    </View>
   )
 }

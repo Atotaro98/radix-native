@@ -1,58 +1,92 @@
 import React from 'react'
-import { Box, Card, Flex, Inset, Text } from 'radix-native'
-import type { InsetClip, InsetSide } from 'radix-native'
-import { ComponentSection } from '../ui'
+import {
+  AspectRatio, Box, Button, Card, CheckboxCards, Flex, Inset, RadioCards, Separator, Strong, Text, useColor,
+} from 'radix-native'
+import { ComponentSection, PhotoPlaceholder } from '../ui'
 
-const SIDES: InsetSide[] = ['top', 'bottom', 'left', 'right', 'x', 'y', 'all']
-const CLIPS: InsetClip[] = ['border-box', 'padding-box']
-
-/** Stands in for the image in Radix's docs example. */
-function Media({ height = 96 }: { height?: number }) {
-  return <Box bg="accent-a5" height={height} />
+function Photo({ height }: { height?: number }) {
+  return <PhotoPlaceholder height={height} />
 }
 
-function Specimen() {
+/** Radix docs: the main Inset example. */
+function Docs() {
   return (
-    <Card size={2} style={{ maxWidth: 260 }}>
-      <Inset clip="padding-box" side="top" pb="current">
-        <Media height={140} />
-      </Inset>
-      <Text size={3}>
-        <Text weight="bold">Typography</Text> is the art and technique of arranging type to make written language legible.
-      </Text>
-    </Card>
+    <Box maxWidth={240}>
+      <Card size={2}>
+        <Inset clip="padding-box" side="top" pb="current">
+          <Photo height={140} />
+        </Inset>
+        <Text size={3}>
+          <Strong>Typography</Strong> is the art and technique of arranging type to make written language legible,
+          readable and appealing when displayed.
+        </Text>
+      </Card>
+    </Box>
   )
 }
 
-function AllSides() {
+function CardHeader() {
+  const gray = useColor('gray-11')
   return (
-    <Flex gap={3}>
-      {SIDES.map(side => (
-        <Card key={side} size={2}>
-          <Flex direction={side === 'left' || side === 'right' || side === 'x' ? 'row' : 'column'} gap={3}>
-            {side === 'right' || side === 'bottom' ? <Text size={2}>side="{side}"</Text> : null}
-            <Inset side={side} style={{ flexGrow: side === 'x' || side === 'left' || side === 'right' ? 0 : undefined }}>
-              <Box bg="accent-a5" width={side === 'left' || side === 'right' ? 64 : undefined} height={48} />
-            </Inset>
-            {side !== 'right' && side !== 'bottom' ? <Text size={2}>side="{side}"</Text> : null}
-          </Flex>
-        </Card>
-      ))}
+    <>
+      <Text size={5} weight="bold">Title</Text>
+      <Text size={2} mb={2} style={{ color: gray }}>Subtitle</Text>
+      <Text>
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer nec odio. Praesent libero. Sed cursus ante
+        dapibus diam. Sed nisi.
+      </Text>
+    </>
+  )
+}
+
+/** Radix playground test/inset: side="bottom" with an image, then side="x" with a Separator. */
+function Cards() {
+  return (
+    <Flex gap={5}>
+      <Card size={3}>
+        <CardHeader />
+        <Inset side="bottom" clip="padding-box" pt="current">
+          <AspectRatio ratio={16 / 9}><Photo /></AspectRatio>
+        </Inset>
+      </Card>
+      <Card size={3}>
+        <CardHeader />
+        <Inset side="x" py="current">
+          <Separator size={4} />
+        </Inset>
+        <Flex direction="row" justify="end" gap={4}>
+          <Button color="gray" variant="surface">Cancel</Button>
+          <Button>Save</Button>
+        </Flex>
+      </Card>
     </Flex>
   )
 }
 
-function Clip() {
+/** Radix playground test/inset: images bleeding into checkbox and radio cards. */
+function SelectionCards() {
   return (
-    <Flex gap={3}>
-      {CLIPS.map(clip => (
-        <Card key={clip} size={2} variant="classic">
-          <Inset clip={clip} side="top" pb="current">
-            <Media />
-          </Inset>
-          <Text size={2}>clip="{clip}"</Text>
-        </Card>
-      ))}
+    <Flex gap={5}>
+      <CheckboxCards.Root columns={1} defaultValue={['1']} size={3}>
+        {['1', '2'].map(v => (
+          <CheckboxCards.Item key={v} value={v}>
+            <Inset clip="padding-box" side="left" style={{ width: 64 }}>
+              <AspectRatio ratio={1}><Photo /></AspectRatio>
+            </Inset>
+            <Text size={4}>Checkbox Card {v}</Text>
+          </CheckboxCards.Item>
+        ))}
+      </CheckboxCards.Root>
+      <RadioCards.Root columns={1} defaultValue="1" size={3}>
+        {['1', '2'].map(v => (
+          <RadioCards.Item key={v} value={v}>
+            <Box flexGrow={1}><Text size={4}>Radio Card {v}</Text></Box>
+            <Inset clip="padding-box" side="right" style={{ width: 64 }}>
+              <AspectRatio ratio={1}><Photo /></AspectRatio>
+            </Inset>
+          </RadioCards.Item>
+        ))}
+      </RadioCards.Root>
     </Flex>
   )
 }
@@ -62,9 +96,9 @@ export function InsetSection() {
     <ComponentSection
       title="Inset"
       tabs={[
-        { id: 'example', label: 'Example', render: () => <Specimen /> },
-        { id: 'sides', label: 'Sides', render: () => <AllSides /> },
-        { id: 'clip', label: 'Clip', render: () => <Clip /> },
+        { id: 'docs', label: 'Example', render: () => <Docs /> },
+        { id: 'cards', label: 'Cards', render: () => <Cards /> },
+        { id: 'selection-cards', label: 'Selection cards', render: () => <SelectionCards /> },
       ]}
     />
   )

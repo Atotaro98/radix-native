@@ -1,51 +1,34 @@
 import React from 'react'
-import { Box, Container, Flex, Text } from 'radix-native'
-import type { ContainerAlign, ContainerSize } from 'radix-native'
+import { Box, Code, Container, Text, useColor } from 'radix-native'
 import { ComponentSection } from '../ui'
 
-const SIZES: ContainerSize[] = [1, 2, 3, 4]
-const ALIGNS: ContainerAlign[] = ['left', 'center', 'right']
-
-function Content({ label }: { label: string }) {
+function Panel({ children }: { children: React.ReactNode }) {
+  const bg = useColor('gray', 'panel')
+  const border = useColor('gray-a4')
   return (
-    <Box bg="accent-a4" p={3} radius="medium">
-      <Text size={2}>{label}</Text>
+    <Box p={2} radius="small" style={{ backgroundColor: bg, borderWidth: 1, borderColor: border }}>
+      <Text>{children}</Text>
     </Box>
   )
 }
 
-function Sizes() {
+/** Radix playground sink/container: nested Containers keep their own size. */
+function Nested() {
   return (
-    <Flex gap={3}>
-      {SIZES.map(size => (
-        <Box key={size} bg="gray-a2">
-          <Container size={size}><Content label={`size ${size}`} /></Container>
-        </Box>
-      ))}
-    </Flex>
-  )
-}
-
-function Align() {
-  return (
-    <Flex gap={3}>
-      {ALIGNS.map(align => (
-        <Box key={align} bg="gray-a2">
-          <Container align={align} maxWidth={180}><Content label={`align="${align}"`} /></Container>
-        </Box>
-      ))}
-    </Flex>
+    <Box>
+      <Text my={5}>
+        <Code>size</Code> can be set on nested <Code>Container</Code> instances:
+      </Text>
+      <Container size={4}>
+        <Panel>This should be size 4</Panel>
+        <Container size={1}>
+          <Panel>This should be size 1</Panel>
+        </Container>
+      </Container>
+    </Box>
   )
 }
 
 export function ContainerSection() {
-  return (
-    <ComponentSection
-      title="Container"
-      tabs={[
-        { id: 'sizes', label: 'Sizes', render: () => <Sizes /> },
-        { id: 'align', label: 'Align', render: () => <Align /> },
-      ]}
-    />
-  )
+  return <ComponentSection title="Container" tabs={[{ id: 'nested', label: 'Nested', render: () => <Nested /> }]} />
 }

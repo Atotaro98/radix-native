@@ -3,6 +3,7 @@ import { ScrollView, Pressable } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import { Box, Flex, Text, useThemeContext, useColor, ThemeControls } from 'radix-native'
 import { FONT_PRESETS } from './fonts'
+import { AccessibleIconSection } from './playground/sections/AccessibleIconSection'
 import { AspectRatioSection } from './playground/sections/AspectRatioSection'
 import { AvatarSection } from './playground/sections/AvatarSection'
 import { BadgeSection } from './playground/sections/BadgeSection'
@@ -17,6 +18,7 @@ import { EmSection } from './playground/sections/EmSection'
 import { ContainerSection } from './playground/sections/ContainerSection'
 import { GridSection } from './playground/sections/GridSection'
 import { SectionSection } from './playground/sections/SectionSection'
+import { VisuallyHiddenSection } from './playground/sections/VisuallyHiddenSection'
 import { InsetSection } from './playground/sections/InsetSection'
 import { HeadingSection } from './playground/sections/HeadingSection'
 import { IconButtonSection } from './playground/sections/IconButtonSection'
@@ -91,6 +93,7 @@ export function Playground({ fontIndex, onFontChange }: PlaygroundProps) {
         </Flex>
 
         {/* Alphabetical order matching Radix playground */}
+        <AccessibleIconSection />
         <AspectRatioSection />
         <AvatarSection />
         <BadgeSection />
@@ -98,8 +101,8 @@ export function Playground({ fontIndex, onFontChange }: PlaygroundProps) {
         <ButtonSection />
         <CardSection />
         <CheckboxSection />
-        <CheckboxGroupSection />
         <CheckboxCardsSection />
+        <CheckboxGroupSection />
         <CodeSection />
         <ContainerSection />
         <EmSection />
@@ -112,8 +115,8 @@ export function Playground({ fontIndex, onFontChange }: PlaygroundProps) {
         <ProgressSection />
         <QuoteSection />
         <RadioSection />
-        <RadioGroupSection />
         <RadioCardsSection />
+        <RadioGroupSection />
         <SectionSection />
         <SeparatorSection />
         <SkeletonSection />
@@ -123,6 +126,7 @@ export function Playground({ fontIndex, onFontChange }: PlaygroundProps) {
         <TextSection />
         <TextAreaSection />
         <TextFieldSection />
+        <VisuallyHiddenSection />
       </ScrollView>
       <ThemeControls />
     </Box>
