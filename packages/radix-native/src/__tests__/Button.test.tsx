@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { StyleSheet, Text as RNText } from 'react-native'
 import type { StyleProp, ViewStyle } from 'react-native'
 import { fireEvent, screen } from '@testing-library/react-native'
-import { Button, IconButton } from '../index'
+import { AccessibleIcon, Button, IconButton, VisuallyHidden } from '../index'
 import { renderWithTheme } from './helpers/render'
 import { crimson, indigo } from '../tokens/colors'
 
@@ -162,6 +162,23 @@ describe('IconButton', () => {
       </IconButton>,
     )
     expect(screen.getByLabelText('Close')).toBeTruthy()
+    expect(warn).not.toHaveBeenCalled()
+    warn.mockRestore()
+  })
+
+  it('does not warn when its content labels it (AccessibleIcon, VisuallyHidden)', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {})
+    renderWithTheme(
+      <>
+        <IconButton>
+          <AccessibleIcon label="Edit"><Icon /></AccessibleIcon>
+        </IconButton>
+        <IconButton>
+          <Icon />
+          <VisuallyHidden>Settings</VisuallyHidden>
+        </IconButton>
+      </>,
+    )
     expect(warn).not.toHaveBeenCalled()
     warn.mockRestore()
   })
