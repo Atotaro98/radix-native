@@ -53,6 +53,42 @@ export const whiteA = (step: OverlayStep): Paint => raw(`rgba(255, 255, 255, ${O
  */
 export const SHADOW_1_RING = byMode(g('a5'), layers(g('a3'), g('a4')))
 
+// ─── Shadows ──────────────────────────────────────────────────────────────────
+
+/**
+ * A drop shadow as a recipe part: its color is a paint, the rest are numbers in
+ * points. `shadowStyle` (utils/shadow.ts) turns the resolved shadow into iOS
+ * `shadow*` props and Android `elevation`. Radix's inset shadows have no RN
+ * equivalent; recipes keep them as rings (`border`) or the bevel instead.
+ */
+export interface ShadowPaint {
+  readonly color: Paint
+  readonly opacity: number
+  readonly offsetY: number
+  readonly radius: number
+  /** Android `elevation`. */
+  readonly elevation: number
+}
+
+/** A ShadowPaint with its color resolved. */
+export interface Shadow {
+  color: string
+  opacity: number
+  offsetY: number
+  radius: number
+  elevation: number
+}
+
+const BLACK = raw('#000000')
+
+/**
+ * The drop shadow of a raised classic part. Radix Card and card items have a real
+ * outer shadow (--base-card-classic-box-shadow-outer); Button draws its raised look
+ * with inset shadows only, which this stands in for (see llm/differences.md).
+ */
+const classicLift = (s: PaletteState): ShadowPaint =>
+  ({ color: BLACK, opacity: s.appearance === 'dark' ? 0.3 : 0.15, offsetY: 1, radius: 2, elevation: 2 })
+
 // ─── State ────────────────────────────────────────────────────────────────────
 
 export interface PaletteState {
@@ -81,6 +117,10 @@ export interface ButtonPaints {
   pressedBg: Paint
   /** Extra press feedback when the pressed bg cannot change (high-contrast solid). */
   pressedOpacity?: number
+  /** Classic only: the raised look's drop shadow, gone while pressed. */
+  shadow?: ShadowPaint
+  /** Classic only: the bevel gradient (`ClassicOverlay`). */
+  bevel?: true
 }
 
 const CLASSIC_DISABLED_RING = byMode(g('a4'), layers(g('a5'), g('a2')))
@@ -106,6 +146,9 @@ function button(s: WithVariant<ButtonVariant>): ButtonPaints {
     case 'classic':
     case 'solid':
       return {
+        // .rt-variant-classic: bevel gradient at rest and :active; :active sinks (no lift).
+        // [data-disabled] (set by loading too) drops both: handled above.
+        ...(s.variant === 'classic' ? { bevel: true as const, shadow: s.pressed ? undefined : classicLift(s) } : {}),
         bg: hc ? c(12) : c(9),
         // base-button is the only family whose high-contrast solid text is gray-1
         text: hc ? g(1) : c('contrast'),
@@ -175,6 +218,8 @@ export interface SelectionPaints {
   border?: Paint
   /** Check mark / dot. Undefined when unchecked. */
   indicator?: Paint
+  /** Classic checked: the bevel gradient (inset only in Radix, so no drop shadow). */
+  bevel?: true
 }
 
 /** Disabled ring: surface gray-a6, classic shadow-1, soft none. */
@@ -183,6 +228,10 @@ function disabledSelectionBorder(variant: SelectionVariant): Paint | undefined {
   if (variant === 'classic') return SHADOW_1_RING
   return undefined
 }
+
+/** `.rt-variant-classic[data-state='checked']`: the bevel gradient (never when disabled). */
+const classicBevel = (variant: SelectionVariant): { bevel?: true } =>
+  variant === 'classic' ? { bevel: true } : {}
 
 function checkbox(s: WithVariant<SelectionVariant>): SelectionPaints {
   const hc = !!s.highContrast
@@ -199,8 +248,9 @@ function checkbox(s: WithVariant<SelectionVariant>): SelectionPaints {
     return { bg: c('a5'), indicator: s.checked ? (hc ? c(12) : c('a11')) : undefined }
   }
   if (s.checked) {
-    // checked → accent-indicator; indicator accent-contrast (hc: accent-12 / accent-1)
-    return { bg: hc ? c(12) : c('indicator'), indicator: hc ? c(1) : c('contrast') }
+    // checked → accent-indicator; indicator accent-contrast (hc: accent-12 / accent-1);
+    // classic adds the bevel gradient
+    return { bg: hc ? c(12) : c('indicator'), indicator: hc ? c(1) : c('contrast'), ...classicBevel(s.variant) }
   }
   // unchecked → color-surface; surface ring gray-a7, classic gray-a3 + shadow-1
   return {
@@ -223,7 +273,7 @@ function radio(s: WithVariant<SelectionVariant>): SelectionPaints {
     return { bg: c('a4'), indicator: s.checked ? (hc ? c(12) : c('a11')) : undefined }
   }
   if (s.checked) {
-    return { bg: hc ? c(12) : c('indicator'), indicator: hc ? c(1) : c('contrast') }
+    return { bg: hc ? c(12) : c('indicator'), indicator: hc ? c(1) : c('contrast'), ...classicBevel(s.variant) }
   }
   // unchecked → color-surface; surface ring gray-a7, classic solid gray-7 + shadow-1
   return {
@@ -239,7 +289,17 @@ export interface SwitchPaints {
   /** Ring drawn over the track (Radix inset box-shadow). */
   border?: Paint
   thumb: Paint
+  /** The thumb's drop shadow (every variant). */
+  thumbShadow: ShadowPaint
 }
+
+/**
+ * `.rt-SwitchThumb`: a multi-layer drop shadow in every variant (`0 1px 3px
+ * black-a2/a3, 0 2px 4px -1px black-a1`; [data-disabled] `0 1px 3px black-a1`),
+ * approximated with one shadow.
+ */
+const switchThumbShadow = (disabled: boolean): ShadowPaint =>
+  ({ color: BLACK, opacity: disabled ? 0.05 : 0.15, offsetY: 1, radius: 1.5, elevation: disabled ? 0 : 1 })
 
 /** `--switch-high-contrast-checked-color-overlay`: black-a8 in light mode, none in dark. */
 const SWITCH_HC_OVERLAY = byMode(blackA(8), TRANSPARENT)
@@ -249,6 +309,10 @@ const SWITCH_HC_OVERLAY = byMode(blackA(8), TRANSPARENT)
  * half) over a background color; each state flattens its half of the stack.
  */
 function switchRecipe(s: WithVariant<SelectionVariant>): SwitchPaints {
+  return { ...switchColors(s), thumbShadow: switchThumbShadow(!!s.disabled) }
+}
+
+function switchColors(s: WithVariant<SelectionVariant>): Omit<SwitchPaints, 'thumbShadow'> {
   const hc = !!s.highContrast
   // .rt-SwitchThumb → white in every variant (soft only desaturates it); disabled gray-2
   const thumb = s.disabled ? g(2) : WHITE
@@ -318,6 +382,8 @@ export interface CardPaints {
   pressedBorder?: Paint
   /** Pressed background (ghost). */
   pressedBg?: Paint
+  /** Classic: the outer drop shadow, kept while pressed. */
+  shadow?: ShadowPaint
 }
 
 /** `--base-card-classic-border-color`: gray-a3 in light mode, gray-a6 in dark mode. */
@@ -328,7 +394,8 @@ function card(s: WithVariant<CardVariant>): CardPaints {
     // card.css: background --color-panel; ring --base-card-surface-box-shadow (gray-a5, :active gray-a6)
     case 'surface': return { bg: g('panel'), border: g('a5'), pressedBorder: g('a6') }
     // ring --base-card-classic-border-color (:active gray-a4 light / gray-a6 dark)
-    case 'classic': return { bg: g('panel'), border: CARD_CLASSIC_BORDER, pressedBorder: byMode(g('a4'), g('a6')) }
+    // shadow --base-card-classic-box-shadow-outer; :active (--base-card-classic-active-*) keeps it
+    case 'classic': return { bg: g('panel'), border: CARD_CLASSIC_BORDER, pressedBorder: byMode(g('a4'), g('a6')), shadow: classicLift(s) }
     case 'ghost': return { pressedBg: g('a4') }
   }
 }
@@ -340,6 +407,8 @@ export interface CardItemPaints {
   checkedBorder?: Paint
   /** Label color for plain-string children. Undefined = default text color. */
   text?: Paint
+  /** Classic: the outer drop shadow, kept when disabled. */
+  shadow?: ShadowPaint
 }
 
 /**
@@ -352,11 +421,13 @@ const OPAQUE_SURFACE = layers(g('surface'), byMode(WHITE, g(1)))
 /** checkbox-cards.css / radio-cards.css: items fill with --color-surface. */
 function cardItem(s: WithVariant<CardItemVariant>): CardItemPaints {
   const border = s.variant === 'classic' ? CARD_CLASSIC_BORDER : g('a5')
+  // classic: the card's outer shadow, which :has(:disabled) / :disabled keeps
+  const shadow = s.variant === 'classic' ? classicLift(s) : undefined
   if (s.disabled) {
     // :has(:disabled) → text gray-a9, gray-a2 over the background
-    return { bg: layers(g('a2'), OPAQUE_SURFACE), border, text: g('a9') }
+    return { bg: layers(g('a2'), OPAQUE_SURFACE), border, text: g('a9'), shadow }
   }
-  return { bg: OPAQUE_SURFACE, border }
+  return { bg: OPAQUE_SURFACE, border, shadow }
 }
 
 const checkboxCard = (s: WithVariant<CardItemVariant>): CardItemPaints => cardItem(s)
@@ -457,9 +528,8 @@ export interface KbdPaints {
   bottomEdge?: Paint
   /** Classic only: the inset top highlight. */
   highlight?: Paint
-  /** Classic only: the outer drop shadow color and its opacity. */
-  shadow?: Paint
-  shadowOpacity?: number
+  /** Classic only: the outer drop shadow. */
+  shadow?: ShadowPaint
 }
 
 /**
@@ -469,15 +539,19 @@ export interface KbdPaints {
  */
 function kbd(s: WithVariant<KbdVariant>): KbdPaints {
   if (s.variant === 'soft') return { bg: g('a3'), text: g(12) }
-  const dark = s.appearance === 'dark'
   return {
     bg: g(1),
     text: g(12),
     ring: byMode(g('a5'), g('a7')),
     bottomEdge: byMode(g('a7'), blackA(11)),
     highlight: byMode(g('a3'), g('a11')),
-    shadow: byMode(g(12), raw('#000000')),
-    shadowOpacity: dark ? 0.95 : 0.12,
+    shadow: {
+      color: byMode(g(12), BLACK),
+      opacity: s.appearance === 'dark' ? 0.95 : 0.12,
+      offsetY: 1,
+      radius: 1,
+      elevation: 1,
+    },
   }
 }
 
@@ -533,10 +607,14 @@ type RecipePaints<R extends RecipeName> = ReturnType<(typeof VARIANT_RECIPES)[R]
 
 /** A recipe's output with every paint resolved to a color string. */
 export type VariantColors<R extends RecipeName> = {
-  [K in keyof RecipePaints<R>]-?: Exclude<RecipePaints<R>[K], undefined> extends number
-    ? number | undefined
-    : undefined extends RecipePaints<R>[K] ? string | undefined : string
+  [K in keyof RecipePaints<R>]-?: Resolved<Exclude<RecipePaints<R>[K], undefined>, undefined extends RecipePaints<R>[K] ? true : false>
 }
+
+type Resolved<P, Optional extends boolean> =
+  P extends number ? number | undefined
+  : P extends true ? true | undefined
+  : P extends ShadowPaint ? (Optional extends true ? Shadow | undefined : Shadow)
+  : Optional extends true ? string | undefined : string
 
 // ─── Resolution ───────────────────────────────────────────────────────────────
 
@@ -571,11 +649,13 @@ export function resolveVariantColors<R extends RecipeName>(
   state: RecipeState<R>,
   ctx: PaintContext,
 ): VariantColors<R> {
-  const paints = getVariantPaints(name, state) as Record<string, Paint | number | undefined>
-  const colors: Record<string, string | number | undefined> = {}
+  const paints = getVariantPaints(name, state) as Record<string, Paint | ShadowPaint | number | true | undefined>
+  const colors: Record<string, string | number | true | Shadow | undefined> = {}
   for (const key of Object.keys(paints)) {
     const value = paints[key]
-    colors[key] = value === undefined || typeof value === 'number' ? value : resolvePaint(value, ctx)
+    if (value === undefined || typeof value === 'number' || value === true) colors[key] = value
+    else if ('elevation' in value) colors[key] = { ...value, color: resolvePaint(value.color, ctx) }
+    else colors[key] = resolvePaint(value, ctx)
   }
   return colors as VariantColors<R>
 }

@@ -1,6 +1,7 @@
 import React from 'react'
-import { Platform, View, Text as RNText } from 'react-native'
+import { View, Text as RNText } from 'react-native'
 import type { StyleProp, ViewStyle } from 'react-native'
+import { shadowStyle } from '../../utils/shadow'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { useTextStyle } from '../../hooks/useTextStyle'
@@ -104,20 +105,8 @@ export function Kbd({
         }
       : {}),
     transform: [{ translateY }],
-    // iOS shadow approximates the outer drop shadow from Radix box-shadow
-    ...(isClassic
-      ? Platform.select({
-          ios: {
-            shadowColor: colors.shadow,
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: colors.shadowOpacity,
-            shadowRadius: 1,
-          },
-          android: {
-            elevation: 1,
-          },
-        })
-      : {}),
+    // the outer drop shadow of --kbd-box-shadow
+    ...shadowStyle(colors.shadow),
     ...margins,
   }
 

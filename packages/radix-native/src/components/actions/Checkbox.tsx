@@ -80,10 +80,6 @@ export function CheckboxIndicator({ size, variant, color, highContrast, checked,
   const isActive = checked !== false
   const colors = useVariantColors('checkbox', { variant, color, highContrast, checked: isActive, disabled })
 
-  // Radix: checked classic is a bevel (gradient + inset highlight), with no drop
-  // shadow; unchecked classic is sunken (shadow-1), drawn by the border color.
-  const isClassicBevel = variant === 'classic' && isActive && !disabled
-
   const boxStyle = useMemo<ViewStyle>(() => ({
     width: boxSize,
     height: boxSize,
@@ -100,7 +96,7 @@ export function CheckboxIndicator({ size, variant, color, highContrast, checked,
 
   return (
     <View style={boxStyle}>
-      {isClassicBevel && <ClassicOverlay borderRadius={borderRadius} />}
+      {colors.bevel && <ClassicOverlay borderRadius={borderRadius} />}
       {isActive && (
         isIndeterminate ? (
           <View style={{

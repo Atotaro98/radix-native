@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react'
 import { View } from 'react-native'
 import type { ViewStyle, StyleProp, GestureResponderEvent, NativeSyntheticEvent, TargetedEvent } from 'react-native'
-import { useThemeContext } from '../../hooks/useThemeContext'
 import { useMetrics } from '../../hooks/useMetrics'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
@@ -10,7 +9,7 @@ import { AnimatedPressable } from '../../hooks/usePressScale'
 import { FocusRing } from '../internal/FocusRing'
 import type { RadiusLevel } from '../../tokens/radius'
 import type { MarginProps } from '../../types/marginProps'
-import { getClassicEffect } from '../../utils/classicEffect'
+import { shadowStyle } from '../../utils/shadow'
 import type { NativeViewProps } from '../../types/nativeProps'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -55,7 +54,6 @@ export function Card({
   children,
   ...rest
 }: CardProps) {
-  const { appearance } = useThemeContext()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
   const { pressed, focused, scaleStyle, handlers } = useInteraction({
     enabled: !!onPress,
@@ -73,9 +71,9 @@ export function Card({
   const colors = useVariantColors('card', { variant })
   const focus = useVariantColors('focusRing', {})
 
-  const isClassic = variant === 'classic'
-
   // ─── Styles ─────────────────────────────────────────────────────────────
+  // classic: the outer drop shadow, kept while pressed (Radix --base-card-classic-active-*)
+  const shadow = shadowStyle(colors.shadow)
   const cardStyle = useMemo<ViewStyle>(() => ({
     padding: resolvedPadding,
     borderRadius,
@@ -87,9 +85,6 @@ export function Card({
   }), [resolvedPadding, borderRadius, colors, margins])
 
   if (onPress) {
-    const classicEffect = isClassic
-      ? getClassicEffect(appearance, { pressed })
-      : undefined
     // Radix :active: surface/classic change the ring, ghost fills with gray-a4
     const pressedStyle = pressed
       ? colors.pressedBg ? { backgroundColor: colors.pressedBg } : { borderColor: colors.pressedBorder }
@@ -102,7 +97,7 @@ export function Card({
         {...handlers}
         onPress={onPress}
         onLongPress={onLongPress}
-        style={[scaleStyle, cardStyle, classicEffect, pressedStyle, style]}
+        style={[scaleStyle, cardStyle, shadow, pressedStyle, style]}
       >
         {children}
         <FocusRing visible={focused} color={focus.ring} borderRadius={borderRadius} />
@@ -111,7 +106,7 @@ export function Card({
   }
 
   return (
-    <View style={[cardStyle, isClassic ? getClassicEffect(appearance, {}) : undefined, style]} {...rest}>
+    <View style={[cardStyle, shadow, style]} {...rest}>
       {children}
     </View>
   )

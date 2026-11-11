@@ -1,5 +1,5 @@
 import React from 'react'
-import { Platform, View } from 'react-native'
+import { View } from 'react-native'
 import type { ViewStyle, StyleProp } from 'react-native'
 import Animated, {
   useSharedValue,
@@ -8,6 +8,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated'
 import { useVariantColors } from '../../hooks/useVariantColors'
+import { shadowStyle } from '../../utils/shadow'
 import { useMargins } from '../../hooks/useMargins'
 import { BaseToggle } from '../internal/BaseToggle'
 import { useToggleGeometry, type ToggleKind } from '../internal/ToggleSurface'
@@ -51,25 +52,6 @@ const TRACK_HEIGHT: Record<SwitchSize, number> = { 1: 16, 2: 20, 3: 24 }
 const THUMB_SIZE: Record<SwitchSize, number> = { 1: 14, 2: 18, 3: 22 }
 const THUMB_MARGIN = 1
 const SIZE_RADIUS_LEVEL: Record<SwitchSize, RadiusLevel> = { 1: 1, 2: 2, 3: 2 }
-
-// ─── Thumb shadow ─────────────────────────────────────────────────────────────
-
-/**
- * Radix gives the thumb a soft drop shadow in every variant (`0 1px 3px
- * black-a2/a3, 0 2px 4px -1px black-a1`; disabled `0 1px 3px black-a1`), while
- * the track itself stays flat. Approximated with one platform shadow.
- */
-function thumbShadow(disabled: boolean): ViewStyle {
-  return Platform.select<ViewStyle>({
-    ios: {
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: disabled ? 0.05 : 0.15,
-      shadowRadius: 1.5,
-    },
-    default: { elevation: disabled ? 0 : 1 },
-  })
-}
 
 // ─── Geometry ─────────────────────────────────────────────────────────────────
 
@@ -161,7 +143,7 @@ export function SwitchIndicator({ size, variant, color, highContrast, radius, ch
           }}
         />
       )}
-      <Animated.View style={[thumbStyle, thumbShadow(disabled), thumbAnimatedStyle]} />
+      <Animated.View style={[thumbStyle, shadowStyle(colors.thumbShadow), thumbAnimatedStyle]} />
     </View>
   )
 }
