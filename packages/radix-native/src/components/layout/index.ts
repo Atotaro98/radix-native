@@ -13,3 +13,4 @@ export { Inset, type InsetProps, type InsetSide, type InsetClip, type InsetPaddi
 export { Container, type ContainerProps, type ContainerSize, type ContainerAlign } from './Container'
 export { Section, type SectionProps, type SectionSize } from './Section'
 export { AspectRatio, type AspectRatioProps } from './AspectRatio'
+export { ScrollArea, type ScrollAreaProps, type ScrollAreaSize, type ScrollAreaScrollbars, type ScrollAreaType, type ScrollAreaRef } from './ScrollArea'

@@ -19,7 +19,7 @@ packages/radix-native/src/
                   hitSlop, alpha, env, fonts
   components/
     internal/     BaseButton, ToggleSurface, BaseToggle, BaseTextInput, ControlLabel, selectionGroup, controlGroup, SelectionCard, CardRing, BaseTabList, ClassicOverlay, FocusRing, ColumnRows, accessibleControl (not exported)
-    layout/       Box, Flex, Grid, Container, Section, AspectRatio, Separator, Card, Inset, InsetContext (Radix --inset-* values; Card provides them)
+    layout/       Box, Flex, Grid, Container, Section, AspectRatio, ScrollArea, Separator, Card, Inset, InsetContext (Radix --inset-* values; Card provides them)
     typography/   Text, Heading, Link, Blockquote, Code, Em, Strong, Quote, Kbd, TextContext, InlineText (factory, not exported)
     display/      Avatar, Badge, Callout, DataList
     actions/      Button, IconButton, Checkbox, CheckboxGroup, CheckboxCards,
