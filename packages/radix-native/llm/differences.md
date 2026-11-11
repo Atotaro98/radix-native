@@ -79,6 +79,8 @@ These are places where RN cannot replicate the exact Radix web visual, and we us
 | **DataList** text | Web: the `dl` carries the font, every descendant inherits it | RN: runs of text and text components (Text, Link, Code, Em, Strong, Quote, Kbd) are merged into one Text at the list's size; other elements keep their own size. No `overflow-wrap: anywhere` on iOS |
 | **SegmentedControl** widths | Web: grid `1fr` with `min-width: max-content` | RN: items report their width and all take the widest; hidden for the first frame while measuring |
 | **SegmentedControl** motion | Web: always animates | RN: no indicator / fade animation under Reduce Motion |
+| **Tabs** activation | Web: a trigger activates on mousedown, or on keyboard focus (`activationMode="automatic"`) | RN: on press; `activationMode` only matters for hardware-keyboard focus |
+| **TabNav** | Web: links with `href` / `asChild` for router links, `aria-current="page"`, `aria-label="Main"` | RN: `active` + `onPress`; announced as selected; pass your own `accessibilityLabel` |
 | **Inset** | Web: reads the parent's `--inset-*` CSS variables | RN: reads an Inset context that Card provides with the same values; a padding the consumer sets on the Card through `style` is not seen by the Inset. No `asChild` |
 | **TextField/TextArea** focus | Web: 2px outline with offset | RN: 1px border color change + 1px inner ring |
 | **Code** inline sizing | Web: `0.95em` relative to parent | RN: 0.95 × parent size when nested in a text component (via `TextContext`); token size when standalone |

@@ -96,6 +96,13 @@ export {
   Skeleton, type SkeletonProps,
 } from './components/feedback'
 
+// Components — Navigation
+export {
+  Tabs, type TabsRootProps, type TabsListProps, type TabsTriggerProps, type TabsContentProps,
+  TabNav, type TabNavRootProps, type TabNavLinkProps,
+  type TabListSize, type TabListWrap, type TabListJustify,
+} from './components/navigation'
+
 // Components — Utilities
 export {
   VisuallyHidden, type VisuallyHiddenProps,
