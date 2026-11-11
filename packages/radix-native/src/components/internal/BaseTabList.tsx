@@ -160,6 +160,11 @@ export function BaseTabTrigger({ active, disabled, onPress, role, style, childre
         <View style={[inner, { opacity: 0 }]} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
           {label('medium')}
         </View>
+        {/* The regular label too, with no height: a face whose medium is not wider (Roboto with the
+            active −0.01em letter spacing) would otherwise clip the inactive label */}
+        <View style={[inner, { height: 0, paddingVertical: 0, overflow: 'hidden', opacity: 0 }]} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
+          {label('regular')}
+        </View>
         <View style={[inner, { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center' }]}>
           {label(active ? 'medium' : 'regular')}
           {/* focus-visible outline on the inner, offset −2px */}

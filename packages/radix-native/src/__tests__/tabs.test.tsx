@@ -63,8 +63,11 @@ describe('Tabs (base-tab-list.css)', () => {
   it('active text is gray-12 in medium weight, inactive gray-a11 regular', () => {
     renderWithTheme(<Example />)
     const visible = (name: string) => screen.getAllByText(name, { includeHiddenElements: true }).map((t) => flat(t))
-    const [, active] = visible('Account')
-    const [, inactive] = visible('Documents')
+    // copies: hidden medium and regular (reserve the widest), then the visible label
+    const [reserveMedium, reserveRegular, active] = visible('Account')
+    const [, , inactive] = visible('Documents')
+    expect(reserveMedium.letterSpacing).toBeLessThan(0)
+    expect(reserveRegular.letterSpacing).toBe(0)
     expect(active.color).not.toBe(inactive.color)
     expect(active.letterSpacing).toBeLessThan(0)
     expect(inactive.letterSpacing).toBe(0)
