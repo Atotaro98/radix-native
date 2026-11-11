@@ -1,6 +1,6 @@
 import React from 'react'
 import { AspectRatio, Box, Code, Em, Kbd, Quote, ScrollArea, Strong, Text, useColor } from 'radix-native'
-import { ComponentSection, PhotoPlaceholder } from '../ui'
+import { ComponentSection, Photo } from '../ui'
 
 /** Radix playground sink/scroll-area: a 300 × 350 area scrolling both ways over wide and tall content. */
 function Both() {
@@ -17,7 +17,7 @@ function Both() {
             perhaps we can use this &quot;divine&quot; proportion to enhance these attributes in our typography.
           </Text>
           <Box my={3}>
-            <AspectRatio ratio={16 / 9}><PhotoPlaceholder /></AspectRatio>
+            <AspectRatio ratio={16 / 9}><Photo /></AspectRatio>
           </Box>
           <Text size={3}>
             The CSS rule <Code>-webkit-font-smoothing: antialiased;</Code> has been applied to all fonts.google.com
@@ -27,7 +27,7 @@ function Both() {
             particular between Chrome and Safari on MacOS.
           </Text>
           <Box mt={3}>
-            <AspectRatio ratio={1}><PhotoPlaceholder /></AspectRatio>
+            <AspectRatio ratio={1}><Photo /></AspectRatio>
           </Box>
         </Box>
       </ScrollArea>

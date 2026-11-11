@@ -1,5 +1,5 @@
 import React from 'react'
-import { Button, Dialog, Flex, Inset, Table, Text } from 'radix-native'
+import { Button, Dialog, Flex, Inset, Table, Text, TextField } from 'radix-native'
 import type { DialogSize } from 'radix-native'
 import { ComponentSection } from '../ui'
 
@@ -58,6 +58,33 @@ function WithInset() {
   )
 }
 
+/** Radix docs: the first Dialog example, a form (Name, Email) — also checks the keyboard. */
+function EditProfile() {
+  return (
+    <Dialog.Root>
+      <Flex direction="row"><Dialog.Trigger><Button>Edit profile</Button></Dialog.Trigger></Flex>
+      <Dialog.Content maxWidth={450}>
+        <Dialog.Title>Edit profile</Dialog.Title>
+        <Dialog.Description size={2} mb={4}>Make changes to your profile.</Dialog.Description>
+        <Flex gap={3}>
+          <Flex gap={1}>
+            <Text size={2} weight="bold">Name</Text>
+            <TextField defaultValue="Freja Johnsen" placeholder="Enter your full name" />
+          </Flex>
+          <Flex gap={1}>
+            <Text size={2} weight="bold">Email</Text>
+            <TextField defaultValue="freja@example.com" placeholder="Enter your email" keyboardType="email-address" />
+          </Flex>
+        </Flex>
+        <Flex direction="row" gap={3} mt={4} justify="end">
+          <Dialog.Close><Button variant="soft" color="gray">Cancel</Button></Dialog.Close>
+          <Dialog.Close><Button>Save</Button></Dialog.Close>
+        </Flex>
+      </Dialog.Content>
+    </Dialog.Root>
+  )
+}
+
 /** Each size, and align="start". */
 function Sizes() {
   return (
@@ -86,6 +113,7 @@ export function DialogSection() {
     <ComponentSection
       title="Dialog"
       tabs={[
+        { id: 'docs', label: 'Docs', render: () => <EditProfile /> },
         { id: 'playground', label: 'Example', render: () => <Playground /> },
         { id: 'inset', label: 'Inset', render: () => <WithInset /> },
         { id: 'sizes', label: 'Sizes', render: () => <Sizes /> },
