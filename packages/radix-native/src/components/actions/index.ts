@@ -7,3 +7,4 @@ export { Switch, type SwitchProps, type SwitchSize, type SwitchVariant } from '.
 export { Radio, type RadioProps, type RadioSize, type RadioVariant } from './Radio'
 export { RadioGroup, type RadioGroupProps, type RadioGroupItemProps } from './RadioGroup'
 export { RadioCards, type RadioCardsProps, type RadioCardsItemProps, type RadioCardsVariant } from './RadioCards'
+export { SegmentedControl, type SegmentedControlRootProps, type SegmentedControlItemProps, type SegmentedControlSize, type SegmentedControlVariant } from './SegmentedControl'

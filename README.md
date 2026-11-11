@@ -7,7 +7,7 @@ React Native components that match the [Radix Themes](https://www.radix-ui.com/t
 ## Features
 
 - **Identical API** to `@radix-ui/themes` — same component names, same props, same variants
-- **38 components** — layout, typography, actions, forms, display, feedback
+- **39 components** — layout, typography, actions, forms, display, feedback
 - **Full theme system** — 26 accent colors, 6 gray scales, radius, scaling, dark mode, nested themes
 - **31 color scales** from `@radix-ui/colors` with light/dark modes and alpha variants
 - **Minimal dependencies** — only `react`, `react-native`, and `react-native-reanimated` as peer deps
@@ -110,6 +110,7 @@ export default function App() {
 | `Radio`         | Radio button with dot indicator                                |
 | `RadioGroup`    | Compound `Root` + `Item` for labeled radio groups              |
 | `RadioCards`    | Card-style radio selection (border indicator)                  |
+| `SegmentedControl` | Toggle buttons for switching between values      |
 
 ### Utilities
 

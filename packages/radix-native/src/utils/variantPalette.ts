@@ -590,6 +590,39 @@ function callout(s: WithVariant<CalloutVariant>): CalloutPaints {
   }
 }
 
+// ─── Family: segmented (SegmentedControl) — segmented-control.css ─────────────
+
+export type SegmentedVariant = 'surface' | 'classic'
+
+export interface SegmentedPaints {
+  /** Root: gray-a3 over --color-surface (disabled: over gray-3). */
+  bg: Paint
+  text: Paint
+  /** --segmented-control-indicator-background-color: --color-background / dark gray-a3. */
+  indicator: Paint
+  /** The indicator's 1px ring: surface gray-a4, classic --shadow-2's gray-a3. None when disabled. */
+  indicatorRing?: Paint
+  /** classic: the rest of --shadow-2 as one drop shadow. */
+  indicatorShadow?: ShadowPaint
+  separator: Paint
+}
+
+/**
+ * Gray-only, like Radix (no `color` prop). Disabled: text gray-a8, root over
+ * gray-3, the indicator a flat gray-a3 with no ring or shadow.
+ */
+function segmented(s: WithVariant<SegmentedVariant>): SegmentedPaints {
+  if (s.disabled) return { bg: layers(g('a3'), g(3)), text: g('a8'), indicator: g('a3'), separator: g('a4') }
+  return {
+    bg: layers(g('a3'), g('surface')),
+    text: g(12),
+    indicator: byMode(WHITE, g('a3')),
+    indicatorRing: s.variant === 'classic' ? g('a3') : g('a4'),
+    indicatorShadow: s.variant === 'classic' ? classicLift(s) : undefined,
+    separator: g('a4'),
+  }
+}
+
 // ─── Control label (CheckboxGroup / RadioGroup item text) ─────────────────────
 
 export interface ControlLabelPaints {
@@ -634,6 +667,7 @@ export const VARIANT_RECIPES = {
   dataListLabel,
   kbd,
   callout,
+  segmented,
   controlLabel,
   focusRing,
 } as const

@@ -77,6 +77,8 @@ These are places where RN cannot replicate the exact Radix web visual, and we us
 | **Callout** icons | Web: icons inherit `currentColor` | RN: Callout.Icon passes the callout's color to icons that set no `color` |
 | **DataList** label column | Web: CSS subgrid makes every label as wide as the widest | RN: labels report their width and all take the widest; the list is hidden for the first frame while measuring |
 | **DataList** text | Web: the `dl` carries the font, every descendant inherits it | RN: runs of text and text components (Text, Link, Code, Em, Strong, Quote, Kbd) are merged into one Text at the list's size; other elements keep their own size. No `overflow-wrap: anywhere` on iOS |
+| **SegmentedControl** widths | Web: grid `1fr` with `min-width: max-content` | RN: items report their width and all take the widest; hidden for the first frame while measuring |
+| **SegmentedControl** motion | Web: always animates | RN: no indicator / fade animation under Reduce Motion |
 | **Inset** | Web: reads the parent's `--inset-*` CSS variables | RN: reads an Inset context that Card provides with the same values; a padding the consumer sets on the Card through `style` is not seen by the Inset. No `asChild` |
 | **TextField/TextArea** focus | Web: 2px outline with offset | RN: 1px border color change + 1px inner ring |
 | **Code** inline sizing | Web: `0.95em` relative to parent | RN: 0.95 × parent size when nested in a text component (via `TextContext`); token size when standalone |

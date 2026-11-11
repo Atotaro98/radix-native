@@ -86,6 +86,7 @@ export {
   Radio, type RadioProps, type RadioSize, type RadioVariant,
   RadioGroup, type RadioGroupProps, type RadioGroupItemProps,
   RadioCards, type RadioCardsProps, type RadioCardsItemProps, type RadioCardsVariant,
+  SegmentedControl, type SegmentedControlRootProps, type SegmentedControlItemProps, type SegmentedControlSize, type SegmentedControlVariant,
 } from './components/actions'
 
 // Components — Feedback

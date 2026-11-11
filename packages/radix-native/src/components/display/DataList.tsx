@@ -1,10 +1,11 @@
-import React, { createContext, useCallback, useContext, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import React, { createContext, useContext, useMemo } from 'react'
 import { Text as RNText, View } from 'react-native'
-import type { DimensionValue, LayoutChangeEvent, StyleProp, TextStyle, ViewStyle } from 'react-native'
+import type { DimensionValue, StyleProp, TextStyle, ViewStyle } from 'react-native'
 import { useMargins } from '../../hooks/useMargins'
 import { useMetrics } from '../../hooks/useMetrics'
 import { useTextStyle } from '../../hooks/useTextStyle'
 import { useVariantColors } from '../../hooks/useVariantColors'
+import { useWidest, useWidestCell, type WidestCells } from '../../hooks/useWidest'
 import { Text } from '../typography/Text'
 import { Link } from '../typography/Link'
 import { Code } from '../typography/Code'
@@ -77,10 +78,8 @@ interface RootContextValue {
   textStyle: StyleProp<TextStyle>
   textProps: object
   provide: (children: React.ReactNode) => React.ReactNode
-  /** Widest label (subgrid column), or null until measured. */
-  labelWidth: number | null
-  registerLabel: (id: object) => () => void
-  reportLabel: (id: object, width: number) => void
+  /** The label column (subgrid stand-in): every label takes the widest. */
+  labels: WidestCells
   trimStart: number
   trimEnd: number
 }
@@ -149,26 +148,7 @@ function DataListRoot({
   const gap = metrics.px(GAP[size])
 
   // Subgrid stand-in: every label reports its natural width; all take the widest
-  const widths = useRef(new Map<object, number>())
-  const [labelWidth, setLabelWidth] = useState<number | null>(null)
-  const [registered, setRegistered] = useState(0)
-  const [measured, setMeasured] = useState(0)
-  const widest = () => (widths.current.size ? Math.max(...Array.from(widths.current.values())) : null)
-  const registerLabel = useCallback((id: object) => {
-    setRegistered((n) => n + 1)
-    return () => {
-      setRegistered((n) => n - 1)
-      if (widths.current.delete(id)) {
-        setMeasured((n) => n - 1)
-        setLabelWidth(widest())
-      }
-    }
-  }, [])
-  const reportLabel = useCallback((id: object, width: number) => {
-    if (!widths.current.has(id)) setMeasured((n) => n + 1)
-    widths.current.set(id, width)
-    setLabelWidth(widest())
-  }, [])
+  const labels = useWidest()
 
   // text-box-trim stand-in (.rt-DataListRoot:where(.rt-r-trim-*)): 0.42em / 0.36em − line-height / 2
   const lineHeight = typeof text.style.lineHeight === 'number' ? text.style.lineHeight : text.contextFontSize
@@ -177,12 +157,12 @@ function DataListRoot({
 
   const ctx = useMemo<RootContextValue>(() => ({
     orientation, gap, fontSize: text.contextFontSize, textStyle: text.style, textProps: text.textProps,
-    provide: text.provide, labelWidth, registerLabel, reportLabel, trimStart, trimEnd,
-  }), [orientation, gap, text, labelWidth, registerLabel, reportLabel, trimStart, trimEnd])
+    provide: text.provide, labels, trimStart, trimEnd,
+  }), [orientation, gap, text, labels, trimStart, trimEnd])
 
   const items = React.Children.toArray(children)
   // Hidden until every label is measured, so the first frame never shows unaligned columns
-  const hidden = orientation === 'horizontal' && measured < registered
+  const hidden = orientation === 'horizontal' && !labels.ready
 
   return (
     <View style={[{ rowGap: gap, opacity: hidden ? 0 : undefined }, margins, style]} {...rest}>
@@ -231,16 +211,9 @@ function DataListLabel({ width, minWidth, maxWidth, color, highContrast, style, 
   const root = useRoot('Label')
   const colors = useVariantColors('dataListLabel', { color, highContrast })
   const horizontal = root.orientation === 'horizontal'
-  const id = useRef({}).current
-  const { registerLabel, reportLabel } = root
-
-  useLayoutEffect(() => (horizontal ? registerLabel(id) : undefined), [horizontal, registerLabel, id])
   // A grid auto column is as wide as its widest cell, counting a cell's own width / min-width
   const ownWidth = Math.max(typeof width === 'number' ? width : 0, typeof minWidth === 'number' ? minWidth : 0)
-  const onLayout = useCallback(
-    (e: LayoutChangeEvent) => reportLabel(id, Math.max(e.nativeEvent.layout.width, ownWidth)),
-    [reportLabel, id, ownWidth],
-  )
+  const onLayout = useWidestCell(root.labels, horizontal, ownWidth)
 
   const content = renderInline(children, root, colors.text)
   if (!horizontal) {
@@ -251,7 +224,7 @@ function DataListLabel({ width, minWidth, maxWidth, color, highContrast, style, 
       style={[{
         flexDirection: 'row',
         flexShrink: 0,
-        width: width ?? root.labelWidth ?? undefined,
+        width: width ?? root.labels.widest ?? undefined,
         minWidth: minWidth ?? LABEL_MIN_WIDTH,
         maxWidth,
       }, style]}

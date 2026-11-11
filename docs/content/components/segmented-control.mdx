@@ -1,0 +1,57 @@
+---
+metaTitle: Segmented Control
+metaDescription: Toggle buttons for switching between different values or views.
+sourcePath: components/actions/SegmentedControl
+---
+
+# Segmented Control
+
+```tsx
+<SegmentedControl.Root defaultValue="inbox">
+  <SegmentedControl.Item value="inbox">Inbox</SegmentedControl.Item>
+  <SegmentedControl.Item value="drafts">Drafts</SegmentedControl.Item>
+  <SegmentedControl.Item value="sent">Sent</SegmentedControl.Item>
+</SegmentedControl.Root>
+```
+
+## API Reference
+
+### Root
+
+Supports [margin props](/theme/spacing).
+
+| Prop | Type | Default |
+|------|------|---------|
+| `size` | `1 \| 2 \| 3` | `2` |
+| `variant` | `'surface' \| 'classic'` | `'surface'` |
+| `radius` | `'none' \| 'small' \| 'medium' \| 'large' \| 'full'` | — |
+| `disabled` | `boolean` | `false` |
+| `value` / `defaultValue` | `string` | — |
+| `onValueChange` | `(value: string) => void` | — |
+
+### Item
+
+| Prop | Type | Default |
+|------|------|---------|
+| `value` | `string` | required |
+
+## Examples
+
+### Size
+
+```tsx
+<SegmentedControl.Root defaultValue="inbox" size={1}>…</SegmentedControl.Root>
+<SegmentedControl.Root defaultValue="inbox" size={3}>…</SegmentedControl.Root>
+```
+
+### Variant
+
+```tsx
+<SegmentedControl.Root defaultValue="inbox" variant="classic">…</SegmentedControl.Root>
+```
+
+### Radius
+
+```tsx
+<SegmentedControl.Root defaultValue="inbox" radius="full">…</SegmentedControl.Root>
+```
