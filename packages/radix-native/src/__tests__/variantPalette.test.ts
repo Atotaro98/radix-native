@@ -299,3 +299,16 @@ describe('tab list (base-tab-list.css)', () => {
     expect(paints('tabList', state)).toMatchObject(expected)
   })
 })
+
+describe('slider (slider.css)', () => {
+  it.each([
+    ['.rt-variant-surface', { variant: 'surface' }, { track: g('a3'), trackBorder: g('a5'), range: c('track'), rangeBorder: g('a5'), thumb: WHITE, thumbRing: blackA(4) }],
+    ['.rt-variant-classic', { variant: 'classic' }, { track: g('a3'), trackBorder: SHADOW_1_RING, range: c('track'), thumbRing: blackA(3) }],
+    ['.rt-variant-soft', { variant: 'soft' }, { track: layers(whiteA(1), g('a4')), range: layers(c('a5'), c(6)) }],
+    ['.rt-high-contrast range (light only black-a8)', { variant: 'surface', highContrast: true }, { range: layers(byMode(blackA(8), TRANSPARENT), c('track')) }],
+    ['[data-disabled] surface', { variant: 'surface', disabled: true }, { range: TRANSPARENT, thumb: g(1), thumbRing: g(6), trackBorder: g('a4') }],
+    ['[data-disabled] soft', { variant: 'soft', disabled: true }, { range: TRANSPARENT, thumbRing: g(5) }],
+  ] as const)('%s', (_selector, state, expected) => {
+    expect(paints('slider', state)).toMatchObject(expected)
+  })
+})

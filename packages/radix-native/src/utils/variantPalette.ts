@@ -282,7 +282,7 @@ function radio(s: WithVariant<SelectionVariant>): SelectionPaints {
   }
 }
 
-// ─── Family: tracks (Switch, Progress) — switch.css, progress.css ─────────────
+// ─── Family: tracks (Switch, Progress, Slider) — switch.css, progress.css, slider.css
 
 export interface SwitchPaints {
   track: Paint
@@ -366,6 +366,59 @@ function progress(s: WithVariant<SelectionVariant>): ProgressPaints {
       return {
         track: layers(whiteA(1), g('a4')),
         indicator: layers(c('a5'), hc ? c(12) : c(8)),
+      }
+  }
+}
+
+export interface SliderPaints {
+  track: Paint
+  /** Ring over the track (inset box-shadow). */
+  trackBorder?: Paint
+  /** Invisible when disabled (Radix makes the range transparent). */
+  range: Paint
+  /** Ring over the range (inset box-shadow). */
+  rangeBorder?: Paint
+  thumb: Paint
+  /** The thumb's 1px ring (`0 0 0 1px …` in --slider-thumb-box-shadow). */
+  thumbRing: Paint
+  /** classic / soft: the rest of the thumb shadow as one drop shadow. */
+  thumbShadow?: ShadowPaint
+}
+
+const sliderThumbShadow: ShadowPaint = { color: BLACK, opacity: 0.1, offsetY: 1, radius: 2, elevation: 1 }
+
+/**
+ * slider.css. High contrast adds a black-a8 layer over the range in light mode
+ * only, in every variant. Disabled: range invisible, thumb gray-1 with a
+ * gray-6 ring (soft gray-5); Radix also blends the root (mix-blend-mode), which
+ * RN cannot.
+ */
+function slider(s: WithVariant<SelectionVariant>): SliderPaints {
+  const hc = (paint: Paint) => (s.highContrast ? layers(SWITCH_HC_OVERLAY, paint) : paint)
+  const thumb = s.disabled ? g(1) : WHITE
+  switch (s.variant) {
+    case 'surface':
+      if (s.disabled) return { track: g('a3'), trackBorder: g('a4'), range: TRANSPARENT, thumb, thumbRing: g(6) }
+      return { track: g('a3'), trackBorder: g('a5'), range: hc(c('track')), rangeBorder: g('a5'), thumb, thumbRing: blackA(4) }
+    case 'classic':
+      if (s.disabled) return { track: g('a3'), trackBorder: fade(SHADOW_1_RING, 0.5), range: TRANSPARENT, thumb, thumbRing: g(6) }
+      return {
+        track: g('a3'),
+        trackBorder: SHADOW_1_RING,
+        range: hc(c('track')),
+        rangeBorder: s.highContrast ? layers(g('a3'), blackA(2)) : layers(g('a3'), c('a4'), blackA(1)),
+        thumb,
+        thumbRing: blackA(3),
+        thumbShadow: sliderThumbShadow,
+      }
+    case 'soft':
+      if (s.disabled) return { track: g('a4'), range: TRANSPARENT, thumb, thumbRing: g(5) }
+      return {
+        track: layers(whiteA(1), g('a4')),
+        range: hc(layers(c('a5'), c(6))),
+        thumb,
+        thumbRing: blackA(3),
+        thumbShadow: sliderThumbShadow,
       }
   }
 }
@@ -675,6 +728,7 @@ export const VARIANT_RECIPES = {
   radio,
   switch: switchRecipe,
   progress,
+  slider,
   card,
   checkboxCard,
   radioCard,

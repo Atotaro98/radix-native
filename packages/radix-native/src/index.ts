@@ -113,6 +113,7 @@ export {
 export {
   TextField, type TextFieldProps, type TextFieldSize, type TextFieldVariant,
   TextArea, type TextAreaProps, type TextAreaSize, type TextAreaVariant,
+  Slider, type SliderProps, type SliderSize, type SliderVariant,
 } from './components/forms'
 
 // Playground
