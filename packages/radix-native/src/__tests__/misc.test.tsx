@@ -24,6 +24,29 @@ describe('loading toggles (rules of hooks)', () => {
   })
 })
 
+describe('Skeleton plain text', () => {
+  // The hidden text sizes the placeholder, so it must render like the text it stands in for.
+  const hidden = (text: string) => screen.getByText(text, { includeHiddenElements: true })
+  const fontSize = (text: string) => StyleSheet.flatten(hidden(text).props.style)?.fontSize
+
+  it('alone, it has the Text style of a standalone Text', () => {
+    renderWithTheme(<><Skeleton>Lorem</Skeleton><Text>Ipsum</Text></>)
+    expect(fontSize('Lorem')).toBeDefined()
+    expect(fontSize('Lorem')).toBe(fontSize('Ipsum'))
+  })
+
+  // Radix: the skeleton's text inherits the surrounding font size
+  it('inside a Text, it takes that Text\'s size', () => {
+    renderWithTheme(<Text size={5}>Hi <Skeleton>Lorem</Skeleton></Text>)
+    expect(fontSize('Lorem')).toBe(20)
+  })
+
+  it('it follows the Theme\'s Font scaling cap', () => {
+    renderWithTheme(<Skeleton>Lorem</Skeleton>, { maxFontSizeMultiplier: 1.5 })
+    expect(hidden('Lorem').props.maxFontSizeMultiplier).toBe(1.5)
+  })
+})
+
 describe('Grid', () => {
   it('groups children into rows of `columns`, padding the last row', () => {
     renderWithTheme(
