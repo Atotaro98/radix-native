@@ -70,6 +70,7 @@ export {
 export {
   Badge, type BadgeProps, type BadgeSize, type BadgeVariant,
   Avatar, type AvatarProps, type AvatarSize, type AvatarVariant,
+  Callout, type CalloutRootProps, type CalloutIconProps, type CalloutTextProps, type CalloutSize, type CalloutVariant,
 } from './components/display'
 
 // Components — Actions

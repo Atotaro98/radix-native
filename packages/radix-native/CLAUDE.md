@@ -21,7 +21,7 @@ packages/radix-native/src/
     internal/     BaseButton, ToggleSurface, BaseToggle, BaseTextInput, ControlLabel, selectionGroup, controlGroup, SelectionCard, CardRing, ClassicOverlay, FocusRing, ColumnRows, accessibleControl (not exported)
     layout/       Box, Flex, Grid, Container, Section, AspectRatio, Separator, Card, Inset, InsetContext (Radix --inset-* values; Card provides them)
     typography/   Text, Heading, Link, Blockquote, Code, Em, Strong, Quote, Kbd, TextContext, InlineText (factory, not exported)
-    display/      Avatar, Badge
+    display/      Avatar, Badge, Callout
     actions/      Button, IconButton, Checkbox, CheckboxGroup, CheckboxCards,
                   Switch, Radio, RadioGroup, RadioCards
     feedback/     Spinner, Progress, Skeleton
@@ -126,7 +126,7 @@ const colors = useVariantColors('checkbox', { variant, color, highContrast, chec
   `layers(top, …, bottom)` (flattened into one color), `fade(paint, opacity)`, `byMode(light, dark)`,
   `blackA(n)` / `whiteA(n)` — so they test against Radix CSS without a theme.
 - Recipes are grouped by **Variant family** (buttons, chips, selection controls, tracks, cards,
-  text inputs, text). Radix is not uniform across families; keep its values even where they
+  text inputs, callouts, text). Radix is not uniform across families; keep its values even where they
   look inconsistent (e.g. solid high-contrast text `gray-1` in Button, `accent-1` in Badge), and cite
   the Radix selector in a comment.
 - `SHADOW_1_RING` is Radix `--shadow-1` as a border color (classic variants, sunken parts).

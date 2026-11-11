@@ -1,0 +1,80 @@
+---
+metaTitle: Callout
+metaDescription: Short message to attract user's attention.
+sourcePath: components/display/Callout
+---
+
+# Callout
+
+```tsx
+<Callout.Root>
+  <Callout.Icon>
+    <InfoCircledIcon />
+  </Callout.Icon>
+  <Callout.Text>
+    You will need admin privileges to install and access this application.
+  </Callout.Text>
+</Callout.Root>
+```
+
+## API Reference
+
+### Root
+
+Inherits from View. Supports [margin props](/theme/spacing).
+
+| Prop | Type | Default |
+|------|------|---------|
+| `size` | `1 \| 2 \| 3` | `2` |
+| `variant` | `'soft' \| 'surface' \| 'outline'` | `'soft'` |
+| `color` | `AccentColor` | — |
+| `highContrast` | `boolean` | — |
+
+### Icon
+
+Contains the icon. Icons without their own `color` are tinted with the callout's color.
+
+### Text
+
+Inherits from [Text](/components/text).
+
+## Examples
+
+### Size
+
+```tsx
+<Flex gap={3}>
+  <Callout.Root size={1}>…</Callout.Root>
+  <Callout.Root size={2}>…</Callout.Root>
+  <Callout.Root size={3}>…</Callout.Root>
+</Flex>
+```
+
+### Variant
+
+```tsx
+<Callout.Root variant="soft">…</Callout.Root>
+<Callout.Root variant="surface">…</Callout.Root>
+<Callout.Root variant="outline">…</Callout.Root>
+```
+
+### Color
+
+```tsx
+<Callout.Root color="green">…</Callout.Root>
+<Callout.Root color="red">…</Callout.Root>
+```
+
+### High-contrast
+
+```tsx
+<Callout.Root color="gray" variant="soft" highContrast>…</Callout.Root>
+```
+
+### As alert
+
+Add `accessibilityRole="alert"` so screen readers announce urgent messages.
+
+```tsx
+<Callout.Root color="red" accessibilityRole="alert">…</Callout.Root>
+```

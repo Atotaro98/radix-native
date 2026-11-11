@@ -249,3 +249,17 @@ describe('shadows and bevel (classic look)', () => {
     expect(paints('kbd', { variant: 'soft' }).shadow).toBeUndefined()
   })
 })
+
+describe('callouts (callout.css)', () => {
+  it.each([
+    ['.rt-variant-soft', { variant: 'soft' }, { bg: c('a3'), text: c('a11') }],
+    ['.rt-variant-surface', { variant: 'surface' }, { bg: c('a2'), border: c('a6'), text: c('a11') }],
+    ['.rt-variant-outline', { variant: 'outline' }, { bg: TRANSPARENT, border: c('a7'), text: c('a11') }],
+    ['.rt-high-contrast (text only)', { variant: 'surface', highContrast: true }, { bg: c('a2'), border: c('a6'), text: c(12) }],
+  ] as const)('%s', (_selector, state, expected) => {
+    expect(paints('callout', state)).toMatchObject(expected)
+  })
+  it('soft has no ring', () => {
+    expect(paints('callout', { variant: 'soft' })).not.toHaveProperty('border')
+  })
+})
