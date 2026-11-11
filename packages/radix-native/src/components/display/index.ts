@@ -2,3 +2,4 @@ export { Badge, type BadgeProps, type BadgeSize, type BadgeVariant } from './Bad
 export { Avatar, type AvatarProps, type AvatarSize, type AvatarVariant } from './Avatar'
 export { Callout, type CalloutRootProps, type CalloutIconProps, type CalloutTextProps, type CalloutSize, type CalloutVariant } from './Callout'
 export { DataList, type DataListRootProps, type DataListItemProps, type DataListLabelProps, type DataListValueProps, type DataListSize, type DataListOrientation, type DataListTrim, type DataListItemAlign } from './DataList'
+export { Table, type TableRootProps, type TableSectionProps, type TableRowProps, type TableCellProps, type TableSize, type TableVariant, type TableLayout, type TableLength, type TableRowAlign, type TableCellJustify } from './Table'

@@ -1,0 +1,84 @@
+---
+metaTitle: Table
+metaDescription: Semantic table element for presenting data.
+sourcePath: components/display/Table
+---
+
+# Table
+
+```tsx
+<Table.Root>
+  <Table.Header>
+    <Table.Row>
+      <Table.ColumnHeaderCell>Full name</Table.ColumnHeaderCell>
+      <Table.ColumnHeaderCell>Email</Table.ColumnHeaderCell>
+      <Table.ColumnHeaderCell>Group</Table.ColumnHeaderCell>
+    </Table.Row>
+  </Table.Header>
+  <Table.Body>
+    <Table.Row>
+      <Table.RowHeaderCell>Danilo Sousa</Table.RowHeaderCell>
+      <Table.Cell>danilo@example.com</Table.Cell>
+      <Table.Cell>Developer</Table.Cell>
+    </Table.Row>
+    <Table.Row>
+      <Table.RowHeaderCell>Zahra Ambessa</Table.RowHeaderCell>
+      <Table.Cell>zahra@example.com</Table.Cell>
+      <Table.Cell>Admin</Table.Cell>
+    </Table.Row>
+  </Table.Body>
+</Table.Root>
+```
+
+## API Reference
+
+### Root
+
+| Prop | Type | Default |
+|------|------|---------|
+| `size` | `1 \| 2 \| 3` | `2` |
+| `variant` | `'surface' \| 'ghost'` | `'ghost'` |
+| `layout` | `'auto' \| 'fixed'` | `'auto'` |
+
+### Row
+
+| Prop | Type | Default |
+|------|------|---------|
+| `align` | `'start' \| 'center' \| 'end' \| 'baseline'` | — |
+
+### Cell, ColumnHeaderCell, RowHeaderCell
+
+| Prop | Type | Default |
+|------|------|---------|
+| `justify` | `'start' \| 'center' \| 'end'` | — |
+| `width` `minWidth` `maxWidth` | `number \| string` | — |
+| `p` … `pl` | `SpaceToken` | — |
+
+## Examples
+
+### Size
+
+```tsx
+<Table.Root size={1}>…</Table.Root>
+<Table.Root size={3}>…</Table.Root>
+```
+
+### Variant
+
+```tsx
+<Table.Root variant="surface">…</Table.Root>
+```
+
+### Layout
+
+```tsx
+<Table.Root layout="fixed">
+  <Table.Header>
+    <Table.Row>
+      <Table.ColumnHeaderCell width="40%">Full name</Table.ColumnHeaderCell>
+      <Table.ColumnHeaderCell>Group</Table.ColumnHeaderCell>
+    </Table.Row>
+  </Table.Header>
+  …
+</Table.Root>
+```

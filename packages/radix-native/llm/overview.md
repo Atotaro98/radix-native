@@ -28,7 +28,7 @@ A React Native UI component library that mirrors the [Radix Themes](https://www.
 **25 components** across 5 categories:
 - **Layout**: Box, Flex, Grid, Container, Section, AspectRatio, ScrollArea, Separator, Card, Inset
 - **Typography**: Text, Heading, Link, Blockquote, Code, Em, Strong, Quote, Kbd
-- **Display**: Avatar, Badge, Callout, DataList
+- **Display**: Avatar, Badge, Callout, DataList, Table
 - **Actions**: Button, IconButton, Checkbox, CheckboxGroup, CheckboxCards, Switch, Radio, RadioGroup, SegmentedControl
 - **Navigation**: Tabs, TabNav
 - **Utilities**: VisuallyHidden, AccessibleIcon

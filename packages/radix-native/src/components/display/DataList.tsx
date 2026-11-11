@@ -1,18 +1,12 @@
 import React, { createContext, useContext, useMemo } from 'react'
-import { Text as RNText, View } from 'react-native'
+import { View } from 'react-native'
 import type { DimensionValue, StyleProp, TextStyle, ViewStyle } from 'react-native'
 import { useMargins } from '../../hooks/useMargins'
 import { useMetrics } from '../../hooks/useMetrics'
 import { useTextStyle } from '../../hooks/useTextStyle'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useWidest, useWidestCell, type WidestCells } from '../../hooks/useWidest'
-import { Text } from '../typography/Text'
-import { Link } from '../typography/Link'
-import { Code } from '../typography/Code'
-import { Em } from '../typography/Em'
-import { Strong } from '../typography/Strong'
-import { Quote } from '../typography/Quote'
-import { Kbd } from '../typography/Kbd'
+import { renderInlineText } from '../internal/inlineText'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { MarginProps } from '../../types/marginProps'
 import type { NativeViewProps } from '../../types/nativeProps'
@@ -93,41 +87,6 @@ function useRoot(part: string): RootContextValue {
   const ctx = useContext(RootContext)
   if (!ctx) throw new Error(`DataList.${part} must be used within DataList.Root`)
   return ctx
-}
-
-// ─── Inline content ───────────────────────────────────────────────────────────
-
-/** Components that render as text and nest inside one RN Text (inheriting the list's size). */
-const INLINE_TEXT = new Set<unknown>([Text, Link, Code, Em, Strong, Quote, Kbd])
-
-/**
- * Radix sets the list's font on the `dl`, so text, Code, Link… inside a label
- * or value inherit it. RN only inherits inside a Text: runs of strings and
- * text components are merged into one Text at the list's size; other elements
- * (Badge, Flex, IconButton) render as they are.
- */
-function renderInline(children: React.ReactNode, ctx: RootContextValue, color: string) {
-  const nodes: React.ReactNode[] = []
-  let run: React.ReactNode[] = []
-  const flush = () => {
-    if (run.length === 0) return
-    nodes.push(
-      <RNText key={`t${nodes.length}`} style={[ctx.textStyle, { color, flexShrink: 1 }]} {...ctx.textProps}>
-        {ctx.provide(run)}
-      </RNText>,
-    )
-    run = []
-  }
-  React.Children.forEach(children, (child) => {
-    if (typeof child === 'string' || typeof child === 'number') run.push(child)
-    else if (React.isValidElement(child) && INLINE_TEXT.has(child.type)) run.push(React.cloneElement(child, { key: child.key ?? `i${run.length}` }))
-    else if (child != null && typeof child !== 'boolean') {
-      flush()
-      nodes.push(child)
-    }
-  })
-  flush()
-  return nodes
 }
 
 // ─── Parts ────────────────────────────────────────────────────────────────────
@@ -215,7 +174,7 @@ function DataListLabel({ width, minWidth, maxWidth, color, highContrast, style, 
   const ownWidth = Math.max(typeof width === 'number' ? width : 0, typeof minWidth === 'number' ? minWidth : 0)
   const onLayout = useWidestCell(root.labels, horizontal, ownWidth)
 
-  const content = renderInline(children, root, colors.text)
+  const content = renderInlineText(children, root, colors.text)
   if (!horizontal) {
     return <View style={[{ flexDirection: 'row', minWidth: 0 }, style]} {...rest}>{content}</View>
   }
@@ -256,7 +215,7 @@ function DataListValue({ style, children, ...rest }: DataListValueProps) {
   }
   return (
     <View style={[valueStyle, style]} {...rest}>
-      {renderInline(children, root, body.text)}
+      {renderInlineText(children, root, body.text)}
     </View>
   )
 }
