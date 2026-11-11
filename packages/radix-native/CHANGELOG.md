@@ -1,5 +1,43 @@
 # radix-native
 
+## 0.11.0
+
+### Minor Changes
+
+- 4e3080f: Add `VisuallyHidden` and `AccessibleIcon`. Inside a Button, IconButton, pressable Card or card item, an AccessibleIcon contributes only its label to the control's name and keeps the button's icon tint.
+- 2c4658c: Add `Callout` (Root, Icon, Text) with Radix's sizes and the soft / surface / outline variants, as a new "callouts" Variant family.
+- 920710c: Add `Inset`, which bleeds content to the edge of the surrounding Card like Radix Themes. Card now draws its border as a 1px ring over the content (content starts exactly at the card padding instead of 1px further in), provides the inset values, and a ghost Card pulls itself out by its padding with negative margins as in Radix.
+- 02126c9: Add `DataList` (Root, Item, Label, Value) with Radix's sizes, orientations, `trim`, label colors and the shared label column of horizontal lists.
+- 70a488e: Add `Dialog` and `AlertDialog` (Root, Trigger, Content, Title, Description, Close / Action / Cancel) with Radix's sizes, panel, overlay, shadow ring, layout, scroll and animations, in a native `Modal`. Adds the overlay infrastructure: an internal portal host on the root Theme and inside every Modal overlay, and a `safeAreaInsets` Theme prop. A Table inside an `Inset` now aligns its outer cells with the container's padding.
+- 8169cc8: Add `HoverCard` and `Tooltip`. On touch both open with a long-press (Radix: hover); Tooltip stays while the finger is down, with Radix's gray-12 label, size 1 text and 10 × 5 arrow.
+- 0001a5b: Add `Container`, `Section` and `AspectRatio`, matching Radix Themes: Container caps its inner content at 448 / 688 / 880 / 1136px with size props on the inner View, Section adds the size's vertical padding (overridable with padding props), and AspectRatio takes only `ratio`.
+- f9bddb0: Add `DropdownMenu` and `ContextMenu` on a shared menu (a new "menus" Variant family): sizes 1 / 2, solid / soft highlight, color, high contrast, items with shortcuts, checkbox and radio items, labels, groups, separators and sub-menus; ContextMenu opens with a 700ms long-press at the touch point. Anchored overlays that fit on neither side now stay on screen.
+- 89be7b2: Add `Popover` (Root, Trigger, Anchor, Content, Close) on a new Anchored overlay engine: Radix Popper placement (flip, shift, available height, transform origin), a layer per overlay in the portal host (outside touch and Android back dismiss the top one), and the popper open / close animations.
+- 7876ca6: Add `ScrollArea` on native ScrollViews: `scrollbars` picks the axes that scroll (`both` by default, as in Radix), `type="always"` keeps indicators visible on Android; `size` and `radius` are accepted for API parity.
+- f579b12: Add `SegmentedControl` (Root, Item) with Radix's sizes, surface / classic variants, radius, disabled state, equal-width items and the sliding indicator, as a new "segmented" Variant family. DataList and SegmentedControl share an internal `useWidest` measurement hook.
+- 0cc5957: Add `Select` (Root, Trigger, Content, Item, Group, Label, Separator) with Radix's trigger variants and sizes, solid / soft list with high contrast, and both positions: `item-aligned` (default, the selected item over the trigger) and `popper`.
+- 0c2f690: Add `Slider` with Radix's sizes, surface / classic / soft variants (in the tracks Variant family), color, high contrast, radius, ranges, `step`, `minStepsBetweenThumbs`, vertical orientation, `inverted`, `onValueCommit` and adjustable thumbs for screen readers. The slider math is ported from Radix Primitives.
+- 034bfb2: Add `Table` (Root, Header, Body, Row, Cell, ColumnHeaderCell, RowHeaderCell) with Radix's sizes, surface / ghost variants, row align, cell justify / width / padding, and `layout="auto"` (columns sized by content, measured) or `"fixed"` (first-row widths). Adds a `mix()` paint for `color-mix(in oklab)`.
+- b4b62e1: Add `Tabs` (Root, List, Trigger, Content) and `TabNav` (Root, Link) on one shared tab list matching Radix's `base-tab-list.css`: sizes 1 / 2, wrap, justify, color, high contrast, the instant 2px active bar and width-stable labels.
+
+### Patch Changes
+
+- 4e3080f: CheckboxCards and RadioCards items now match Radix's base card: content is laid out in a centered row with a `space-2` gap, the 1px border is drawn over the content (content starts at the item padding, not 1px further in), and an `Inset` inside an item bleeds to its edge.
+- e84bd67: The classic look now follows Radix in three states:
+
+  - A loading classic `Button` is flat, like a disabled one. It no longer keeps its drop shadow.
+  - A pressed classic `Card` keeps its drop shadow.
+  - A disabled classic `CheckboxCards` or `RadioCards` item keeps its drop shadow.
+
+  `getClassicEffect` is deprecated. Components take their shadows from their Variant recipe. It keeps working and will be removed in the next major version.
+
+- a7f3227: `IconButton` no longer warns about a missing `accessibilityLabel` when its content names it: text, an `AccessibleIcon` or `VisuallyHidden` content, as in Radix.
+- 0187299: Skeleton matches Radix more closely: an empty skeleton is `space-3` tall (scaled), the pulse starts at gray-a4 with CSS `ease`, it never takes touches, and a wrapped Button, Badge, Avatar, Card, text input, Checkbox, Radio, Switch or layout primitive with `radius` keeps its own shape instead of radius-1.
+- c438d95: `Skeleton` with plain-text children now sizes its placeholder with the library's Text style. It uses the Theme's fonts and Font scaling cap and, inside a `Text`, the surrounding text size, instead of React Native's default text. A placeholder now matches the size of the text it stands in for.
+- a89ec0e: `Blockquote` now rounds its border width and left padding to whole pixels, like every other component's spacing. At some sizes and scalings this differs from before by less than 1px. For example, at size 4 the border goes from 4.5px to 5px.
+- b2d0322: ThemeControls draws its appearance, radius and scaling options like Radix's ThemePanel (radius-1 cards with a gray-7 ring and a gray-12 outline when selected; radius names below their swatch; scaling in three columns, each value at its own scaling), fixing labels clipped since card items became rows.
+- 92aedb6: Labelled `CheckboxGroup` and `RadioGroup` items now behave like every other Toggle. A row press-scales, reaches the 44pt touch target vertically, and draws its focus ring around the checkbox or radio instead of the whole row, as Radix focuses the control rather than its label. `CheckboxCards` and `RadioCards` items keep their look and behaviour.
+
 ## 0.10.0
 
 ### Minor Changes
