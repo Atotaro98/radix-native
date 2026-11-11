@@ -87,3 +87,7 @@ _Avoid_: input, field (on their own)
 **Selection group**:
 A set of options where the user picks one (RadioGroup, RadioCards) or several (CheckboxGroup, CheckboxCards). The group owns the value and passes its size, variant, color and disabled state down to its items; a disabled group disables every item.
 _Avoid_: group (on its own), option list
+
+**Selection card**:
+An item of CheckboxCards or RadioCards: a card that acts as a Toggle inside a Selection group, takes its size from the group's size, and is announced as one checkbox or radio named by its content. A checkbox card shows its Indicator at the trailing edge; a radio card shows none and marks its checked state with a ring.
+_Avoid_: card item, option card
