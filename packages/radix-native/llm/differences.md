@@ -60,7 +60,7 @@ These are places where RN cannot replicate the exact Radix web visual, and we us
 | **Switch** checked pressed | Web: `brightness()` filter | RN: no filter |
 | **Checkbox** indicator | Web: SVG paths (ThickCheckIcon) | RN: View borders rotated -45deg |
 | **shadow-1** (classic Checkbox, Radio, Switch, Progress, TextField / TextArea; disabled classic controls) | Web: inset ring + inner top shadow | RN: the ring only, as the border color (`gray-a5`; dark mode `gray-a3` over `gray-a4`), composited with any ring drawn on top |
-| **Classic raised effect** | Web: bevel gradient + highlight on checked / solid parts | RN: `ClassicOverlay` where Radix has the bevel; Button and Card also get a drop shadow, checked Checkbox / Radio do not (Radix's bevel there is inset only) |
+| **Classic raised effect** | Web: bevel gradient + highlight on checked / solid parts | RN: `ClassicOverlay` where Radix has the bevel. Button stands in for its inset raised look with a drop shadow, dropped while pressed; a disabled or loading Button is flat. Card and card items have Radix's outer shadow as one platform shadow, kept while pressed (Card) and when disabled (items). Checked Checkbox / Radio get no drop shadow (Radix's bevel there is inset only) |
 | **Card** surface/classic border | Web: `color-mix()` enhanced shadows | RN: simple `borderColor` with the un-mixed token (`gray-a5`, classic `gray-a3` / dark `gray-a6`) |
 | **Card** pressed | Web: `:active` ring color change | RN: same ring change plus the press scale |
 | **CheckboxGroup / RadioGroup** disabled label | Web: unchanged text, `cursor: not-allowed` | RN: label turns `gray-a8` — there is no cursor to signal it |

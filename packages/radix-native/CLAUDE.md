@@ -15,7 +15,7 @@ packages/radix-native/src/
                   useVariantColors (internal), usePressScale
   tokens/         colors/ (31 scales), spacing, typography, radius, scaling
   types/          nativeProps, marginProps, layoutProps (LayoutProps, PaddingProps, GapProps)
-  utils/          resolveColor, variantPalette, colorMath, metrics, classicEffect, textStyle,
+  utils/          resolveColor, variantPalette, colorMath, metrics, shadow, classicEffect (deprecated), textStyle,
                   hitSlop, alpha, env, fonts
   components/
     internal/     BaseButton, ToggleSurface, BaseToggle, BaseTextInput, ControlLabel, selectionGroup, controlGroup, SelectionCard, ClassicOverlay, FocusRing, ColumnRows (not exported)
@@ -133,8 +133,12 @@ const colors = useVariantColors('checkbox', { variant, color, highContrast, chec
   real recipes.
 - Focus rings come from the `focusRing` recipe (`useVariantColors('focusRing', { color }).ring`);
   text inputs draw theirs as `border` from their own recipe.
-- Shadows (`getClassicEffect`, `ClassicOverlay`) stay in components; when a shadow's color depends on the
-  variant or mode, that color comes from the recipe (Kbd's `ring`, `bottomEdge`, `highlight`, `shadow`).
+- Drop shadows and the classic bevel are recipe parts too: `shadow` / `thumbShadow` (a `ShadowPaint`: color
+  paint, opacity, offsetY, radius, Android elevation) and `bevel: true`. The recipe decides when they apply
+  (Button classic loses its lift while pressed and both when disabled or loading; Card keeps its shadow while
+  pressed; card items keep it when disabled; Checkbox / Radio bevel only when checked). Components render
+  `shadowStyle(colors.shadow)` (`utils/shadow.ts`, the only `Platform.select` for shadows) and
+  `{colors.bevel && <ClassicOverlay />}`. `getClassicEffect` is a deprecated public export; don't use it.
 
 ### Shared building blocks — use these instead of re-implementing
 
@@ -143,7 +147,7 @@ const colors = useVariantColors('checkbox', { variant, color, highContrast, chec
 | Controlled / uncontrolled value | `useControllableState({ prop, defaultProp, onChange })` — setter accepts updater functions (no stale closures) |
 | Pressed / focused state, press scale, composing consumer handlers | `useInteraction({ enabled, onPressIn, onPressOut, onFocus, onBlur })` → `{ pressed, focused, scaleStyle, handlers }` |
 | Focus indicator | `<FocusRing visible={focused} color={useVariantColors('focusRing', { color }).ring} borderRadius={r} offset={…} />` (offset only on hosts without `overflow: 'hidden'`) |
-| Classic gradient | `<ClassicOverlay borderRadius={r} />` |
+| Classic gradient / drop shadow | `{colors.bevel && <ClassicOverlay borderRadius={r} />}`, `shadowStyle(colors.shadow)` — both from the recipe |
 | A button (interaction, recipe colors, classic, loading, focus ring, touch target, prop order) | `<BaseButton {...props} iconOnly? />` — Button and IconButton are thin wrappers over it, like Radix `BaseButton` |
 | Anything that acts as a Toggle (role, a11y state incl. `'mixed'`, disabled gate, press scale, touch target, focus ring, consumer handlers) | `<ToggleSurface role checked disabled onPress color indicator={{ kind, props }} labelLineHeight? />` (focus ring around the Indicator) or `<ToggleSurface … borderRadius>{card}</ToggleSurface>` (focus ring on the card's edge) — holds no checked state |
 | A standalone Toggle (checked state, what a press does per role) | `<BaseToggle role="checkbox" \| "radio" \| "switch" {...rest} kind={CheckboxToggle} indicator={{ size, variant, … }} margins>` — Checkbox, Radio and Switch are thin wrappers over it, built on the Toggle surface |
