@@ -48,6 +48,7 @@ export {
 } from './components/layout'
 export { Separator, type SeparatorProps, type SeparatorSize } from './components/layout'
 export { Card, type CardProps, type CardSize, type CardVariant } from './components/layout'
+export { Inset, type InsetProps, type InsetSide, type InsetClip, type InsetPadding } from './components/layout'
 
 // Components — Typography
 export {

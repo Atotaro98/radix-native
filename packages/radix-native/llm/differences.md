@@ -61,11 +61,12 @@ These are places where RN cannot replicate the exact Radix web visual, and we us
 | **Checkbox** indicator | Web: SVG paths (ThickCheckIcon) | RN: View borders rotated -45deg |
 | **shadow-1** (classic Checkbox, Radio, Switch, Progress, TextField / TextArea; disabled classic controls) | Web: inset ring + inner top shadow | RN: the ring only, as the border color (`gray-a5`; dark mode `gray-a3` over `gray-a4`), composited with any ring drawn on top |
 | **Classic raised effect** | Web: bevel gradient + highlight on checked / solid parts | RN: `ClassicOverlay` where Radix has the bevel. Button stands in for its inset raised look with a drop shadow, dropped while pressed; a disabled or loading Button is flat. Card and card items have Radix's outer shadow as one platform shadow, kept while pressed (Card) and when disabled (items). Checked Checkbox / Radio get no drop shadow (Radix's bevel there is inset only) |
-| **Card** surface/classic border | Web: `color-mix()` enhanced shadows | RN: simple `borderColor` with the un-mixed token (`gray-a5`, classic `gray-a3` / dark `gray-a6`) |
+| **Card** surface/classic border | Web: `color-mix()` enhanced shadows | RN: a 1px ring drawn over the content (like Radix's `::after`, so it takes no layout space) with the un-mixed token (`gray-a5`, classic `gray-a3` / dark `gray-a6`) |
 | **Card** pressed | Web: `:active` ring color change | RN: same ring change plus the press scale |
 | **CheckboxGroup / RadioGroup** disabled label | Web: unchanged text, `cursor: not-allowed` | RN: label turns `gray-a8` — there is no cursor to signal it |
 | **CheckboxCards / RadioCards** disabled custom children | Web: `color: gray-a9` inherited by all content | RN: applied to plain-string children only; custom children set their own color |
 | **Card** ghost hover | Web: `gray-a3` background on hover | RN: no hover background |
+| **Inset** | Web: reads the parent's `--inset-*` CSS variables | RN: reads an Inset context that Card provides with the same values; a padding the consumer sets on the Card through `style` is not seen by the Inset. No `asChild` |
 | **TextField/TextArea** focus | Web: 2px outline with offset | RN: 1px border color change + 1px inner ring |
 | **Code** inline sizing | Web: `0.95em` relative to parent | RN: 0.95 × parent size when nested in a text component (via `TextContext`); token size when standalone |
 | **Skeleton** plain text | Web: inline, inherits every font property of the surrounding text | RN: a View, so its hidden text gets the Text style of a Text in the same spot; inside a Text it takes the surrounding size, not the parent's face or line height |

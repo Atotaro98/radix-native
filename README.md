@@ -7,7 +7,7 @@ React Native components that match the [Radix Themes](https://www.radix-ui.com/t
 ## Features
 
 - **Identical API** to `@radix-ui/themes` — same component names, same props, same variants
-- **30 components** — layout, typography, actions, forms, display, feedback
+- **31 components** — layout, typography, actions, forms, display, feedback
 - **Full theme system** — 26 accent colors, 6 gray scales, radius, scaling, dark mode, nested themes
 - **31 color scales** from `@radix-ui/colors` with light/dark modes and alpha variants
 - **Minimal dependencies** — only `react`, `react-native`, and `react-native-reanimated` as peer deps
@@ -69,6 +69,7 @@ export default function App() {
 | `Grid`      | Equal-width column grid with wrapping                          |
 | `Separator` | Visual divider (horizontal/vertical)                           |
 | `Card`      | Container with background, border, and optional press behavior |
+| `Inset`     | Bleeds content to the edge of the surrounding Card             |
 
 ### Typography
 
