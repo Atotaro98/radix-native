@@ -35,6 +35,11 @@ export interface AnchoredContentProps extends AnchoredPlacementProps {
   timing?: { open: number; close: number }
   /** Content min-width = the anchor's width (Popover, Select). */
   matchAnchorWidth?: boolean
+  /**
+   * Replaces the Popper rules (Select's `item-aligned`): gets the anchor, the
+   * content size and the padded boundary, returns the content's top-left.
+   */
+  placeOverride?: (anchor: Rect, content: { width: number; height: number }, boundary: Rect) => { x: number; y: number }
   style?: StyleProp<ViewStyle>
   /** Gets the placement (max-height from the available space) and the anchor's window rect (Tooltip's arrow). */
   children: (placement: Placement | null, anchor: Rect | null) => React.ReactNode
@@ -67,7 +72,7 @@ export function AnchoredContent(props: AnchoredContentProps) {
 }
 
 function Placed({
-  open, onDismiss, anchor, modal = false, timing = POPPER_TIMING, matchAnchorWidth,
+  open, onDismiss, anchor, modal = false, timing = POPPER_TIMING, matchAnchorWidth, placeOverride,
   side = 'bottom', sideOffset = 0, align = 'center', alignOffset = 0,
   avoidCollisions = true, collisionPadding = 10, sticky = 'partial',
   style, children, testID, onExited,
@@ -92,8 +97,18 @@ function Placed({
     return () => sub.remove()
   }, [measure])
 
-  const placement = useMemo(() => {
+  const placement = useMemo<Placement | null>(() => {
     if (!anchorRect || !size) return null
+    if (placeOverride) {
+      const pad = typeof collisionPadding === 'number' ? collisionPadding : 10
+      const inner = {
+        x: insets.left + pad, y: insets.top + pad,
+        width: window.width - insets.left - insets.right - 2 * pad,
+        height: window.height - insets.top - insets.bottom - 2 * pad,
+      }
+      const { x, y } = placeOverride(anchorRect, size, inner)
+      return { x, y, side: 'bottom', align: 'start', availableWidth: inner.width, availableHeight: inner.height, originX: size.width / 2, originY: size.height / 2 }
+    }
     return place(anchorRect, size, {
       side, align, sideOffset, alignOffset, avoidCollisions, collisionPadding, sticky,
       boundary: {
@@ -102,7 +117,7 @@ function Placed({
         height: window.height - insets.top - insets.bottom,
       },
     })
-  }, [anchorRect, size, side, align, sideOffset, alignOffset, avoidCollisions, collisionPadding, sticky, insets, window])
+  }, [anchorRect, size, side, align, sideOffset, alignOffset, avoidCollisions, collisionPadding, sticky, insets, window, placeOverride])
 
   // Layer: outside touch (non-modal) and back button dismiss it
   const placementRef = useRef(placement)
@@ -144,11 +159,14 @@ function Placed({
   }, [open, placed, reducedMotion])
 
   const placedSide = placement?.side ?? side
+  // item-aligned content is not a .rt-PopperContent: it only fades
+  const slides = !placeOverride
   const animated = useAnimatedStyle(() => {
     const t = 1 - progress.value
     // rt-slide-from-{side}: 4px toward the anchor, scale 0.97
-    const dx = placedSide === 'left' ? 4 * t : placedSide === 'right' ? -4 * t : 0
-    const dy = placedSide === 'top' ? 4 * t : placedSide === 'bottom' ? -4 * t : 0
+    const dx = !slides ? 0 : placedSide === 'left' ? 4 * t : placedSide === 'right' ? -4 * t : 0
+    const dy = !slides ? 0 : placedSide === 'top' ? 4 * t : placedSide === 'bottom' ? -4 * t : 0
+    if (!slides) return { opacity: progress.value }
     return { opacity: progress.value, transform: [{ translateX: dx }, { translateY: dy }, { scale: 1 - 0.03 * t }] }
   })
 

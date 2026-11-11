@@ -34,6 +34,7 @@ import { IconButtonSection } from './playground/sections/IconButtonSection'
 import { KbdSection } from './playground/sections/KbdSection'
 import { LinkSection } from './playground/sections/LinkSection'
 import { QuoteSection } from './playground/sections/QuoteSection'
+import { SelectSection } from './playground/sections/SelectSection'
 import { SeparatorSection } from './playground/sections/SeparatorSection'
 import { StrongSection } from './playground/sections/StrongSection'
 import { SwitchSection } from './playground/sections/SwitchSection'
@@ -141,6 +142,7 @@ export function Playground({ fontIndex, onFontChange }: PlaygroundProps) {
         <ScrollAreaSection />
         <SectionSection />
         <SegmentedControlSection />
+        <SelectSection />
         <SeparatorSection />
         <SkeletonSection />
         <SliderSection />

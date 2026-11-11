@@ -28,7 +28,7 @@ packages/radix-native/src/
     navigation/   Tabs, TabNav (both on internal/BaseTabList)
     overlays/     Dialog, AlertDialog (internal/BaseDialog), Popover, HoverCard, Tooltip, DropdownMenu, ContextMenu (menus on internal/BaseMenu; all on internal/AnchoredContent + utils/popper; panels via internal/PopperPanel)
     utilities/    VisuallyHidden, AccessibleIcon
-    forms/        TextField, TextArea, Slider (math in utils/slider)
+    forms/        TextField, TextArea, Slider (math in utils/slider), Select (item-aligned in utils/selectLayout)
     playground/   ThemeControls
   __tests__/      Jest + @testing-library/react-native
 ```

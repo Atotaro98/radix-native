@@ -824,6 +824,50 @@ function menuChrome(_s: PaletteState): MenuChromePaints {
   return { label: g('a10'), separator: g('a6') }
 }
 
+// ─── Select trigger — select.css ──────────────────────────────────────────────
+
+export type SelectTriggerVariant = 'classic' | 'surface' | 'soft' | 'ghost'
+
+export interface SelectTriggerPaints {
+  bg: Paint
+  /** The inset 1px ring (surface, classic). */
+  border?: Paint
+  text: Paint
+  /** The value text when showing the placeholder. */
+  placeholder: Paint
+  /** The chevron (0.9 opacity except ghost; gray-a9 when disabled). */
+  icon: Paint
+}
+
+/**
+ * `.rt-SelectTrigger:where(.rt-variant-*)`. Surface / classic are gray; soft /
+ * ghost take the accent (`color`). Open (`[data-state=open]`, also hover on the
+ * web): surface ring gray-a8, soft accent-a4, ghost accent-a3. Classic's
+ * gradients flatten to gray-2.
+ */
+function selectTrigger(s: WithVariant<SelectTriggerVariant> & { open?: boolean }): SelectTriggerPaints {
+  if (s.disabled) {
+    const icon = g('a9')
+    switch (s.variant) {
+      case 'surface': return { bg: g('a2'), border: g('a6'), text: g('a11'), placeholder: g('a11'), icon }
+      case 'classic': return { bg: g(2), border: byMode(g('a4'), g('a5')), text: g('a11'), placeholder: g('a11'), icon }
+      case 'soft': return { bg: g('a3'), text: g('a11'), placeholder: g('a11'), icon }
+      case 'ghost': return { bg: TRANSPARENT, text: g('a11'), placeholder: g('a11'), icon }
+    }
+  }
+  switch (s.variant) {
+    case 'surface':
+      return { bg: g('surface'), border: s.open ? g('a8') : g('a7'), text: g(12), placeholder: g('a10'), icon: fade(g(12), 0.9) }
+    case 'classic':
+      // the gray-2 → gray-1 gradient and its subtle inset highlights flatten to gray-2
+      return { bg: g(2), border: byMode(g('a5'), whiteA(4)), text: g(12), placeholder: g('a10'), icon: fade(g(12), 0.9) }
+    case 'soft':
+      return { bg: s.open ? c('a4') : c('a3'), text: c(12), placeholder: fade(c(12), 0.6), icon: fade(c(12), 0.9) }
+    case 'ghost':
+      return { bg: s.open ? c('a3') : TRANSPARENT, text: c(12), placeholder: fade(c(12), 0.6), icon: c(12) }
+  }
+}
+
 // ─── Control label (CheckboxGroup / RadioGroup item text) ─────────────────────
 
 export interface ControlLabelPaints {
@@ -877,6 +921,7 @@ export const VARIANT_RECIPES = {
   tooltip,
   menuItem,
   menuChrome,
+  selectTrigger,
   controlLabel,
   focusRing,
 } as const

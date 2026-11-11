@@ -362,3 +362,17 @@ describe('menus (base-menu.css)', () => {
     expect(paints('menuChrome', {})).toEqual({ label: g('a10'), separator: g('a6') })
   })
 })
+
+describe('select trigger (select.css)', () => {
+  it.each([
+    ['.rt-variant-surface', { variant: 'surface' }, { bg: g('surface'), border: g('a7'), text: g(12), placeholder: g('a10') }],
+    ["surface [data-state='open']", { variant: 'surface', open: true }, { border: g('a8') }],
+    ['.rt-variant-soft', { variant: 'soft' }, { bg: c('a3'), text: c(12), placeholder: fade(c(12), 0.6) }],
+    ["soft [data-state='open']", { variant: 'soft', open: true }, { bg: c('a4') }],
+    ["ghost [data-state='open']", { variant: 'ghost', open: true }, { bg: c('a3') }],
+    ['surface :disabled', { variant: 'surface', disabled: true }, { bg: g('a2'), border: g('a6'), text: g('a11'), icon: g('a9') }],
+    ['soft :disabled', { variant: 'soft', disabled: true }, { bg: g('a3'), text: g('a11') }],
+  ] as const)('%s', (_selector, state, expected) => {
+    expect(paints('selectTrigger', state)).toMatchObject(expected)
+  })
+})

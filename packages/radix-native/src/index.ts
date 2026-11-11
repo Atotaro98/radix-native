@@ -130,6 +130,8 @@ export {
   TextField, type TextFieldProps, type TextFieldSize, type TextFieldVariant,
   TextArea, type TextAreaProps, type TextAreaSize, type TextAreaVariant,
   Slider, type SliderProps, type SliderSize, type SliderVariant,
+  Select, type SelectRootProps, type SelectTriggerProps, type SelectContentProps, type SelectItemProps,
+  type SelectSize, type SelectTriggerVariant, type SelectContentVariant,
 } from './components/forms'
 
 // Playground

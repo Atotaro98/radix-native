@@ -34,7 +34,7 @@ A React Native UI component library that mirrors the [Radix Themes](https://www.
 - **Overlays**: Dialog, AlertDialog, Popover, HoverCard, Tooltip, DropdownMenu, ContextMenu
 - **Utilities**: VisuallyHidden, AccessibleIcon
 - **Feedback**: Spinner, Progress, Skeleton
-- **Forms**: TextField, TextArea, Slider
+- **Forms**: TextField, TextArea, Slider, Select
 
 **Theme system**: Nested themes, 26 accent colors, 6 gray scales, auto gray matching, dark/light mode, radius and scaling tokens.
 
