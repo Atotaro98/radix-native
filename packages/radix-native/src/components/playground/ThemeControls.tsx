@@ -9,7 +9,6 @@ import { resolveMetrics } from '../../utils/metrics'
 import { Text } from '../typography/Text'
 import { Heading } from '../typography/Heading'
 import { Button } from '../actions/Button'
-import { RadioCards } from '../actions/RadioCards'
 import { Flex } from '../layout/Flex'
 import type { AccentColor, GrayColor } from '../../tokens/colors/types'
 import type { RadiusToken } from '../../tokens/radius'
@@ -31,8 +30,8 @@ const SCALING_OPTIONS: ScalingMode[] = ['90%', '95%', '100%', '105%', '110%']
 
 const PANEL_WIDTH = 320
 
-/** Tight cards for the 5-column rows (radius, scaling) of the panel. */
-const COMPACT_CARD = { paddingTop: 6, paddingBottom: 6, paddingLeft: 2, paddingRight: 2, alignItems: 'center' } as const
+// theme-panel.tsx: Scaling is `repeat(3, 1fr)` below the sm breakpoint (phones)
+const SCALING_COLUMNS = 3
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
@@ -139,52 +138,58 @@ export function ThemeControls({ showCopyTheme, onCopyTheme, defaultOpen = false 
             </Section>
 
             <Section label="Appearance">
-              <RadioCards
-                size={1}
-                columns={2}
-                gap={2}
-                value={appearance}
-                onValueChange={(v) => onAppearanceChange(v as 'light' | 'dark')}
-                accessibilityLabel="Appearance"
-              >
-                <RadioCards.Item value="light">{'☀︎  Light'}</RadioCards.Item>
-                <RadioCards.Item value="dark">{'☾  Dark'}</RadioCards.Item>
-              </RadioCards>
+              {/* theme-panel.tsx: Grid columns 2, gap 2; each card 32px, icon + Text size 1 medium */}
+              <View role="radiogroup" accessibilityLabel="Appearance" style={styles.row}>
+                {(['light', 'dark'] as const).map((value) => (
+                  <PanelRadioCard
+                    key={value}
+                    label={capitalize(value)}
+                    checked={appearance === value}
+                    onPress={() => onAppearanceChange(value)}
+                    style={styles.fill}
+                  >
+                    <View style={styles.cardContent}>
+                      <Text size={1}>{value === 'light' ? '\u2600\uFE0E' : '\u263E\uFE0E'}</Text>
+                      <Text size={1} weight="medium">{capitalize(value)}</Text>
+                    </View>
+                  </PanelRadioCard>
+                ))}
+              </View>
             </Section>
 
             <Section label="Radius">
-              <RadioCards
-                size={1}
-                columns={5}
-                gap={1}
-                value={radius}
-                onValueChange={(v) => onRadiusChange(v as RadiusToken)}
-                accessibilityLabel="Radius"
-              >
+              {/* theme-panel.tsx: Flex wrap gap 2; a card with a 24px corner (m 3), the name below (pt 2, size 1 gray) */}
+              <View role="radiogroup" accessibilityLabel="Radius" style={[styles.row, styles.wrap]}>
                 {RADIUS_OPTIONS.map((r) => (
-                  <RadioCards.Item key={r} value={r} style={COMPACT_CARD}>
-                    <RadiusShape token={r} />
-                    <Text size={1} align="center" wrap="nowrap">{capitalize(r)}</Text>
-                  </RadioCards.Item>
+                  <View key={r} style={styles.radiusOption}>
+                    <PanelRadioCard label={capitalize(r)} checked={radius === r} onPress={() => onRadiusChange(r)}>
+                      <RadiusShape token={r} />
+                    </PanelRadioCard>
+                    <Text size={1} color="gray" style={styles.radiusLabel}>{capitalize(r)}</Text>
+                  </View>
                 ))}
-              </RadioCards>
+              </View>
             </Section>
 
             <Section label="Scaling">
-              <RadioCards
-                size={1}
-                columns={5}
-                gap={1}
-                value={scaling}
-                onValueChange={(v) => onScalingChange(v as ScalingMode)}
-                accessibilityLabel="Scaling"
-              >
-                {SCALING_OPTIONS.map((s) => (
-                  <RadioCards.Item key={s} value={s} style={COMPACT_CARD}>
-                    <Text size={1} align="center">{s}</Text>
-                  </RadioCards.Item>
+              {/* theme-panel.tsx: Grid repeat(3, 1fr) on phones, gap 2; each value drawn at its own scaling */}
+              <View role="radiogroup" accessibilityLabel="Scaling" style={[styles.row, styles.wrap]}>
+                {SCALING_OPTIONS.map((value) => (
+                  <PanelRadioCard
+                    key={value}
+                    label={value}
+                    checked={scaling === value}
+                    onPress={() => onScalingChange(value)}
+                    style={styles.scalingCard}
+                  >
+                    <View style={styles.cardContent}>
+                      <Theme scaling={value}>
+                        <Text size={1} weight="medium">{value}</Text>
+                      </Theme>
+                    </View>
+                  </PanelRadioCard>
                 ))}
-              </RadioCards>
+              </View>
             </Section>
 
             {showCopyTheme && (
@@ -249,6 +254,35 @@ function Swatch({ label, color, selected, onPress }: { label: string; color: The
   )
 }
 
+/**
+ * `.rt-ThemePanelRadioCard`: radius-1, a 1px gray-7 ring; checked draws a 2px
+ * gray-12 outline at offset -1px (theme-panel.css). Announced as a radio.
+ */
+function PanelRadioCard({
+  label, checked, onPress, style, children,
+}: { label: string; checked: boolean; onPress: () => void; style?: object; children: React.ReactNode }) {
+  const ring = useColor('gray-7')
+  const outline = useColor('gray-12')
+  const radius = resolveMetrics({ scaling: '100%', radius: 'medium' }).radius(1)
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="radio"
+      accessibilityLabel={label}
+      accessibilityState={{ checked }}
+      style={[{ borderRadius: radius, borderWidth: 1, borderColor: ring }, style]}
+    >
+      {children}
+      {checked ? (
+        <View
+          pointerEvents="none"
+          style={{ position: 'absolute', top: -1, left: -1, right: -1, bottom: -1, borderRadius: radius + 1, borderWidth: 2, borderColor: outline }}
+        />
+      ) : null}
+    </Pressable>
+  )
+}
+
 /** A corner drawn at the token's radius-5 (pill for 'full'), as in Radix ThemePanel. */
 function RadiusShape({ token }: { token: RadiusToken }) {
   const fill = useColor('accent-4')
@@ -308,10 +342,38 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
   },
+  row: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  wrap: {
+    flexWrap: 'wrap',
+  },
+  fill: {
+    flex: 1,
+  },
+  cardContent: {
+    height: 32,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  radiusOption: {
+    alignItems: 'center',
+  },
+  radiusLabel: {
+    paddingTop: 8,
+  },
+  // 3 columns: (panel content width − 2 gaps) / 3
+  scalingCard: {
+    width: (PANEL_WIDTH - 2 * 16 - 2 - (SCALING_COLUMNS - 1) * 8) / SCALING_COLUMNS,
+  },
+  // Box m="3" width/height 24px; top and left 2px accent-a8 edges
   radiusShape: {
     width: 24,
     height: 24,
-    marginBottom: 4,
+    margin: 12,
     borderTopWidth: 2,
     borderLeftWidth: 2,
   },

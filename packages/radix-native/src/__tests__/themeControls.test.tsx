@@ -24,7 +24,7 @@ function renderPanel(props: React.ComponentProps<typeof ThemeControls> = {}) {
 }
 
 describe('ThemeControls', () => {
-  it('changes the appearance, radius and scaling through RadioCards', () => {
+  it('changes the appearance, radius and scaling through its radio cards', () => {
     renderPanel()
     expect(state()).toBe('light indigo auto medium 100%')
     fireEvent.press(screen.getByRole('radio', { name: /Dark/ }))
