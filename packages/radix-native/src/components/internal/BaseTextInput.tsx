@@ -12,6 +12,7 @@ import type { RadiusToken, RadiusLevel } from '../../tokens/radius'
 import type { MarginProps } from '../../types/marginProps'
 import type { AccentColor } from '../../tokens/colors/types'
 import { FocusRing } from './FocusRing'
+import { useSkeletonRadius } from '../feedback/SkeletonContext'
 
 export type BaseTextInputSize = 1 | 2 | 3
 export type BaseTextInputVariant = 'classic' | 'surface' | 'soft'
@@ -94,6 +95,7 @@ export function BaseTextInput({
   const metrics = useMetrics({ radius: radiusProp })
   // Radix: TextField is max(radius, full); TextArea uses the plain radius.
   const borderRadius = metrics.radius(SIZE_RADIUS_LEVEL[size], multiline ? 'box' : 'pill')
+  useSkeletonRadius(borderRadius)
 
   const colors = useVariantColors(multiline ? 'textArea' : 'textField', {
     variant,

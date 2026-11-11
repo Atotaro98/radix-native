@@ -1,0 +1,52 @@
+---
+metaTitle: Skeleton
+metaDescription: Replaces content with same shape placeholder that indicates a loading state.
+sourcePath: components/feedback/Skeleton
+---
+
+# Skeleton
+
+```tsx
+<Skeleton loading={loading}>
+  <Switch defaultChecked />
+</Skeleton>
+```
+
+## API Reference
+
+Inherits from View. Supports [margin props](/theme/spacing).
+
+| Prop | Type | Default |
+|------|------|---------|
+| `loading` | `boolean` | `true` |
+| `width` `minWidth` `maxWidth` | `DimensionValue` | — |
+| `height` `minHeight` `maxHeight` | `DimensionValue` | — |
+
+## Examples
+
+### Size
+
+```tsx
+<Skeleton width={48} height={48} />
+```
+
+### With children
+
+The wrapped component keeps its size and its own shape.
+
+```tsx
+<Flex direction="row" gap={4}>
+  <Skeleton loading={loading}><Switch defaultChecked /></Skeleton>
+  <Skeleton loading={loading}><Button>Submit</Button></Skeleton>
+</Flex>
+```
+
+### With text
+
+Wrap text in Skeleton inside a Text to keep the text's size.
+
+```tsx
+<Text>
+  <Skeleton>Lorem ipsum dolor sit amet.</Skeleton>
+</Text>
+```
