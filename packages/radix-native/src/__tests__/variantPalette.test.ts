@@ -274,3 +274,18 @@ describe('DataList label (data-list.css)', () => {
     expect(paints('dataListLabel', state)).toMatchObject(expected)
   })
 })
+
+describe('segmented (segmented-control.css)', () => {
+  it.each([
+    ['.rt-SegmentedControlRoot', { variant: 'surface' }, { bg: layers(g('a3'), g('surface')), text: g(12), indicator: byMode(WHITE, g('a3')), indicatorRing: g('a4'), separator: g('a4') }],
+    ['.rt-variant-classic indicator --shadow-2', { variant: 'classic' }, { indicatorRing: g('a3') }],
+    ['[data-disabled]', { variant: 'surface', disabled: true }, { bg: layers(g('a3'), g(3)), text: g('a8'), indicator: g('a3') }],
+  ] as const)('%s', (_selector, state, expected) => {
+    expect(paints('segmented', state)).toMatchObject(expected)
+  })
+  it('classic adds a drop shadow; disabled drops ring and shadow', () => {
+    expect(paints('segmented', { variant: 'classic' }).indicatorShadow).toBeDefined()
+    expect(paints('segmented', { variant: 'surface' }).indicatorShadow).toBeUndefined()
+    expect(paints('segmented', { variant: 'classic', disabled: true })).not.toHaveProperty('indicatorRing')
+  })
+})

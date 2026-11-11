@@ -23,7 +23,7 @@ packages/radix-native/src/
     typography/   Text, Heading, Link, Blockquote, Code, Em, Strong, Quote, Kbd, TextContext, InlineText (factory, not exported)
     display/      Avatar, Badge, Callout, DataList
     actions/      Button, IconButton, Checkbox, CheckboxGroup, CheckboxCards,
-                  Switch, Radio, RadioGroup, RadioCards
+                  Switch, Radio, RadioGroup, RadioCards, SegmentedControl
     feedback/     Spinner, Progress, Skeleton
     utilities/    VisuallyHidden, AccessibleIcon
     forms/        TextField, TextArea
@@ -126,7 +126,7 @@ const colors = useVariantColors('checkbox', { variant, color, highContrast, chec
   `layers(top, …, bottom)` (flattened into one color), `fade(paint, opacity)`, `byMode(light, dark)`,
   `blackA(n)` / `whiteA(n)` — so they test against Radix CSS without a theme.
 - Recipes are grouped by **Variant family** (buttons, chips, selection controls, tracks, cards,
-  text inputs, callouts, text). Radix is not uniform across families; keep its values even where they
+  text inputs, callouts, segmented, text). Radix is not uniform across families; keep its values even where they
   look inconsistent (e.g. solid high-contrast text `gray-1` in Button, `accent-1` in Badge), and cite
   the Radix selector in a comment.
 - `SHADOW_1_RING` is Radix `--shadow-1` as a border color (classic variants, sunken parts).
@@ -159,6 +159,7 @@ const colors = useVariantColors('checkbox', { variant, color, highContrast, chec
 | Content inside a control announced as one element (button, pressable Card) | wrap it in `<AccessibleControlContext.Provider value>` (`internal/accessibleControl`); accessible content inside reads `useIsInsideAccessibleControl()` and contributes only its label (AccessibleIcon) |
 | A base card's border (Card, card items) | `<CardRing color borderRadius width? />` (`internal/CardRing`) drawn after the content — never a layout `borderWidth`; publish the Inset values with `InsetContext.Provider` (padding − border width) |
 | Inside a Skeleton, keep the component's shape | `useSkeletonRadius(borderRadius)` (`feedback/SkeletonContext`) in any component with its own radius; layout primitives report through `useLayoutStyle` |
+| Cells as wide as the widest (CSS grid `auto` / `1fr` / subgrid) | `useWidest()` + `useWidestCell(cells)` (`hooks/useWidest`, internal): cells report their natural width, all take the widest; hide the parent until `ready` — DataList labels, SegmentedControl items |
 | Equal-width columns | `<ColumnRows columns gap…>` (no `onLayout`, no `%` flexBasis) |
 | CheckboxGroup / RadioGroup (Root + Item, labelled or bare items, column layout) | `createControlGroup({ name, type, rootRole, itemRole, Control, kind })` in `internal/controlGroup.tsx` — both groups are one call each; a labelled item is a Toggle surface row (label style, 0.5em gap) |
 | A Selection group (one value or several, controlled or not, disabled propagation) | `createSelectionGroup({ name, type: 'single' \| 'multiple' })` → `{ Root, useItem(value, disabled) }` — one instance per family, like Radix's CheckboxGroup / RadioGroup primitives |
