@@ -289,3 +289,13 @@ describe('segmented (segmented-control.css)', () => {
     expect(paints('segmented', { variant: 'classic', disabled: true })).not.toHaveProperty('indicatorRing')
   })
 })
+
+describe('tab list (base-tab-list.css)', () => {
+  it.each([
+    ['.rt-BaseTabListTrigger', {}, { text: g('a11'), indicator: c('indicator'), rule: g('a5') }],
+    ["[data-state='active']", { checked: true }, { text: g(12) }],
+    ['.rt-high-contrast ::before', { highContrast: true }, { indicator: c(12) }],
+  ] as const)('%s', (_selector, state, expected) => {
+    expect(paints('tabList', state)).toMatchObject(expected)
+  })
+})

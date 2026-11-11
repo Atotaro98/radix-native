@@ -31,6 +31,8 @@ import { QuoteSection } from './playground/sections/QuoteSection'
 import { SeparatorSection } from './playground/sections/SeparatorSection'
 import { StrongSection } from './playground/sections/StrongSection'
 import { SwitchSection } from './playground/sections/SwitchSection'
+import { TabNavSection } from './playground/sections/TabNavSection'
+import { TabsSection } from './playground/sections/TabsSection'
 import { TextSection } from './playground/sections/TextSection'
 import { TextAreaSection } from './playground/sections/TextAreaSection'
 import { TextFieldSection } from './playground/sections/TextFieldSection'
@@ -129,6 +131,8 @@ export function Playground({ fontIndex, onFontChange }: PlaygroundProps) {
         <SpinnerSection />
         <StrongSection />
         <SwitchSection />
+        <TabNavSection />
+        <TabsSection />
         <TextSection />
         <TextAreaSection />
         <TextFieldSection />

@@ -623,6 +623,25 @@ function segmented(s: WithVariant<SegmentedVariant>): SegmentedPaints {
   }
 }
 
+// ─── Tab list (Tabs, TabNav) — _internal/base-tab-list.css ────────────────────
+
+export interface TabListPaints {
+  /** Trigger text: gray-a11, active gray-12. */
+  text: Paint
+  /** The active trigger's 2px bar: --accent-indicator, high contrast accent-12. */
+  indicator: Paint
+  /** The list's bottom rule (inset 0 -1px 0 0). */
+  rule: Paint
+}
+
+function tabList(s: PaletteState): TabListPaints {
+  return {
+    text: s.checked ? g(12) : g('a11'),
+    indicator: s.highContrast ? c(12) : c('indicator'),
+    rule: g('a5'),
+  }
+}
+
 // ─── Control label (CheckboxGroup / RadioGroup item text) ─────────────────────
 
 export interface ControlLabelPaints {
@@ -668,6 +687,7 @@ export const VARIANT_RECIPES = {
   kbd,
   callout,
   segmented,
+  tabList,
   controlLabel,
   focusRing,
 } as const

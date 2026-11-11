@@ -1,0 +1,30 @@
+---
+metaTitle: Tab Nav
+metaDescription: Navigation menu with links styled as tabs.
+sourcePath: components/navigation/TabNav
+---
+
+# Tab Nav
+
+```tsx
+<TabNav.Root accessibilityLabel="Main">
+  <TabNav.Link active onPress={…}>Account</TabNav.Link>
+  <TabNav.Link onPress={…}>Documents</TabNav.Link>
+  <TabNav.Link onPress={…}>Settings</TabNav.Link>
+</TabNav.Root>
+```
+
+## API Reference
+
+### Root
+
+Same props as [Tabs.List](/components/tabs): `size`, `wrap`, `justify`, `color`, `highContrast`.
+
+### Link
+
+| Prop | Type | Default |
+|------|------|---------|
+| `active` | `boolean` | `false` |
+| `onPress` | `() => void` | — |
+
+TabNav keeps no state; set `active` from your router.
