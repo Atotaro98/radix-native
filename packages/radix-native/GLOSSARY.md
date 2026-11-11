@@ -91,3 +91,17 @@ _Avoid_: group (on its own), option list
 **Selection card**:
 An item of CheckboxCards or RadioCards: a card that acts as a Toggle inside a Selection group, takes its size from the group's size, and is announced as one checkbox or radio named by its content. A checkbox card shows its Indicator at the trailing edge; a radio card shows none and marks its checked state with a ring.
 _Avoid_: card item, option card
+
+## Overlays
+
+**Overlay**:
+Content shown above the rest of the screen, outside the layout flow, that the user can dismiss. It takes its Theme from where its content is placed among the components, not from where it ends up drawn on screen.
+_Avoid_: popup, modal (on its own), sheet
+
+**Modal overlay**:
+An Overlay that blocks interaction with everything else until it is closed: Dialog and AlertDialog.
+_Avoid_: modal (on its own), dialog (for the whole category)
+
+**Anchored overlay**:
+An Overlay placed relative to the element that triggered it, its anchor: Popover, Tooltip, HoverCard, DropdownMenu, ContextMenu and the content of a Select. Popover and HoverCard are not modal: touching outside closes them and still reaches what is underneath. Menus and Select block that touch.
+_Avoid_: floating element, dropdown (for the whole category)
