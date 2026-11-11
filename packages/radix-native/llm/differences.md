@@ -68,6 +68,7 @@ These are places where RN cannot replicate the exact Radix web visual, and we us
 | **Card** ghost hover | Web: `gray-a3` background on hover | RN: no hover background |
 | **TextField/TextArea** focus | Web: 2px outline with offset | RN: 1px border color change + 1px inner ring |
 | **Code** inline sizing | Web: `0.95em` relative to parent | RN: 0.95 × parent size when nested in a text component (via `TextContext`); token size when standalone |
+| **Skeleton** plain text | Web: inline, inherits every font property of the surrounding text | RN: a View, so its hidden text gets the Text style of a Text in the same spot; inside a Text it takes the surrounding size, not the parent's face or line height |
 | **Em/Quote** font | Web: serif font (`Times New Roman`) at 118% | RN: same — system serif (`Times New Roman` on iOS, `serif` on Android) at 1.18 × the surrounding size, −0.025em tracking. Custom faces via `fonts.em` / `fonts.quote` |
 | **Custom fonts** | Web: one CSS family per role, the browser picks the weight / italic face | RN: one font file per face — `ThemeFonts` maps each weight (and the heading / code / strong / em / quote roles) to a face. A face's weight and style are baked in, so `fontWeight` / `fontStyle` are not set with it. A weight with no configured face renders with `fonts.regular` and warns in development |
 | **Kbd** classic shadow | Web: elaborate multi-layer box-shadow | RN: simple border + platform shadow, with the per-mode colors of `--kbd-box-shadow`: ring `gray-a5` / dark `gray-a7`, bottom edge `gray-a7` / dark `black-a11`, top highlight `gray-a3` / dark `gray-a11`, drop shadow `gray-12` / dark black |
@@ -108,7 +109,6 @@ These are the EXACT token mappings that intentionally differ between Radix web a
 | `Section` component | Semantic sections | Not implemented |
 | Dialog, Popover, Tooltip, etc. | Overlay components | Not implemented |
 | Select, Tabs, SegmentedControl | Selection components | Not implemented |
-| Skeleton | Loading placeholder | Not implemented |
 | Slider | Range input | Not implemented |
 | Table, DataList | Data display | Not implemented |
 | ScrollArea | Custom scroll container | Not implemented |
