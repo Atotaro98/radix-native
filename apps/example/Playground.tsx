@@ -14,6 +14,7 @@ import { CheckboxCardsSection } from './playground/sections/CheckboxCardsSection
 import { CodeSection } from './playground/sections/CodeSection'
 import { EmSection } from './playground/sections/EmSection'
 import { GridSection } from './playground/sections/GridSection'
+import { InsetSection } from './playground/sections/InsetSection'
 import { HeadingSection } from './playground/sections/HeadingSection'
 import { IconButtonSection } from './playground/sections/IconButtonSection'
 import { KbdSection } from './playground/sections/KbdSection'
@@ -100,6 +101,7 @@ export function Playground({ fontIndex, onFontChange }: PlaygroundProps) {
         <GridSection />
         <HeadingSection />
         <IconButtonSection />
+        <InsetSection />
         <KbdSection />
         <LinkSection />
         <ProgressSection />

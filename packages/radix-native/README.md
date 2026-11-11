@@ -30,7 +30,7 @@ export default function App() {
 ## Features
 
 - Full Radix Themes color system (31 color scales, light & dark mode)
-- Layout primitives: `Box`, `Flex`, `Grid`
+- Layout primitives: `Box`, `Flex`, `Grid`, `Card`, `Inset`
 - Typography: `Text`, `Heading`, `Link`, `Code`, `Kbd`, `Blockquote`, `Em`, `Strong`, `Quote`
 - Actions: `Button`, `Checkbox`, `CheckboxGroup`, `CheckboxCards`
 - Theme system with `accentColor`, `grayColor`, `radius`, `scaling`, and `appearance`

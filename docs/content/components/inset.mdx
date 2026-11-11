@@ -1,0 +1,62 @@
+---
+metaTitle: Inset
+metaDescription: Applies a negative margin to allow content to bleed into the surrounding container.
+sourcePath: components/layout/Inset
+---
+
+# Inset
+
+```tsx
+<Card size={2} style={{ maxWidth: 240 }}>
+  <Inset clip="padding-box" side="top" pb="current">
+    <Image source={cover} style={{ height: 140 }} />
+  </Inset>
+  <Text size={3}>
+    <Strong>Typography</Strong> is the art and technique of arranging type to make written language legible.
+  </Text>
+</Card>
+```
+
+## API Reference
+
+Inherits from View. Supports [margin props](/theme/spacing).
+
+| Prop | Type | Default |
+|------|------|---------|
+| `side` | `'all' \| 'x' \| 'y' \| 'top' \| 'bottom' \| 'left' \| 'right'` | `'all'` |
+| `clip` | `'border-box' \| 'padding-box'` | `'border-box'` |
+| `p` `px` `py` `pt` `pr` `pb` `pl` | `'current' \| '0'` | — |
+
+Inset reads its values from the surrounding Card. Outside a Card it only clips its content.
+
+## Examples
+
+### Side
+
+```tsx
+<Card size={2}>
+  <Flex direction="row" gap={3}>
+    <Inset side="left">
+      <Image source={cover} style={{ width: 96, height: '100%' }} />
+    </Inset>
+    <Text>Image bleeds to the left edge.</Text>
+  </Flex>
+</Card>
+```
+
+### Clip
+
+`border-box` keeps the content inside the card's border; `padding-box` runs it under the border to the outer edge.
+
+```tsx
+<Card size={2} variant="classic">
+  <Inset clip="border-box" side="top" pb="current">
+    <Image source={cover} style={{ height: 96 }} />
+  </Inset>
+  <Text>Border-box</Text>
+</Card>
+```
+
+### Padding
+
+`pb="current"` restores the card's padding below the bled content.
