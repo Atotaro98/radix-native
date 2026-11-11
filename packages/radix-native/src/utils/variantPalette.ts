@@ -1,5 +1,5 @@
 import type { ColorName, ColorStep, ResolveColorFn } from '../hooks/useResolveColor'
-import { compositeLayers, fadeColor } from './colorMath'
+import { compositeLayers, fadeColor, mixOklab } from './colorMath'
 
 /**
  * Variant recipes — how each Variant family turns a Variant and state into the
@@ -29,6 +29,8 @@ export type Paint =
   | { readonly layers: readonly Paint[] }
   | { readonly fade: Paint; readonly opacity: number }
   | { readonly light: Paint; readonly dark: Paint }
+  /** CSS `color-mix(in oklab, a, b weightB)`. */
+  | { readonly mix: readonly [Paint, Paint]; readonly weight: number }
 
 export const c = (step: ColorStep): Paint => ({ scale: 'color', step })
 export const g = (step: ColorStep): Paint => ({ scale: 'gray', step })
@@ -37,6 +39,8 @@ export const raw = (value: string): Paint => ({ raw: value })
 export const layers = (...stack: Paint[]): Paint => ({ layers: stack })
 export const fade = (paint: Paint, opacity: number): Paint => ({ fade: paint, opacity })
 export const byMode = (light: Paint, dark: Paint): Paint => ({ light, dark })
+/** `color-mix(in oklab, a, b)`; `weightB` is b's share (CSS default 50%). */
+export const mix = (a: Paint, b: Paint, weightB = 0.5): Paint => ({ mix: [a, b], weight: weightB })
 
 export const TRANSPARENT = raw('transparent')
 export const WHITE = raw('#ffffff')
@@ -695,6 +699,27 @@ function tabList(s: PaletteState): TabListPaints {
   }
 }
 
+// ─── Table — table.css ────────────────────────────────────────────────────────
+
+export type TableVariant = 'surface' | 'ghost'
+
+export interface TablePaints {
+  text: Paint
+  /** Row divider: inset 0 -1px var(--gray-a5) on every cell. */
+  divider: Paint
+  /** surface: the root's background (--color-panel). */
+  bg?: Paint
+  /** surface: 1px border, color-mix(in oklab, gray-a5, gray-6). */
+  border?: Paint
+  /** surface: header row background. */
+  headerBg?: Paint
+}
+
+function table(s: WithVariant<TableVariant>): TablePaints {
+  if (s.variant === 'ghost') return { text: g(12), divider: g('a5') }
+  return { text: g(12), divider: g('a5'), bg: g('panel'), border: mix(g('a5'), g(6), 0.5), headerBg: g('a2') }
+}
+
 // ─── Control label (CheckboxGroup / RadioGroup item text) ─────────────────────
 
 export interface ControlLabelPaints {
@@ -742,6 +767,7 @@ export const VARIANT_RECIPES = {
   callout,
   segmented,
   tabList,
+  table,
   controlLabel,
   focusRing,
 } as const
@@ -781,6 +807,7 @@ export function resolvePaint(paint: Paint, ctx: PaintContext): string {
   if ('scale' in paint) return ctx.rc(scaleColor(paint.scale, ctx.color), paint.step)
   if ('layers' in paint) return compositeLayers(paint.layers.map(p => resolvePaint(p, ctx)))
   if ('fade' in paint) return fadeColor(resolvePaint(paint.fade, ctx), paint.opacity)
+  if ('mix' in paint) return mixOklab(resolvePaint(paint.mix[0], ctx), resolvePaint(paint.mix[1], ctx), paint.weight)
   return resolvePaint(paint[ctx.appearance], ctx)
 }
 

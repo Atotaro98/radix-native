@@ -33,6 +33,7 @@ import { SeparatorSection } from './playground/sections/SeparatorSection'
 import { StrongSection } from './playground/sections/StrongSection'
 import { SwitchSection } from './playground/sections/SwitchSection'
 import { TabNavSection } from './playground/sections/TabNavSection'
+import { TableSection } from './playground/sections/TableSection'
 import { TabsSection } from './playground/sections/TabsSection'
 import { TextSection } from './playground/sections/TextSection'
 import { TextAreaSection } from './playground/sections/TextAreaSection'
@@ -136,6 +137,7 @@ export function Playground({ fontIndex, onFontChange }: PlaygroundProps) {
         <StrongSection />
         <SwitchSection />
         <TabNavSection />
+        <TableSection />
         <TabsSection />
         <TextSection />
         <TextAreaSection />

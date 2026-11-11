@@ -18,10 +18,10 @@ packages/radix-native/src/
   utils/          resolveColor, variantPalette, colorMath, metrics, shadow, classicEffect (deprecated), textStyle,
                   hitSlop, alpha, env, fonts
   components/
-    internal/     BaseButton, ToggleSurface, BaseToggle, BaseTextInput, ControlLabel, selectionGroup, controlGroup, SelectionCard, CardRing, BaseTabList, ClassicOverlay, FocusRing, ColumnRows, accessibleControl (not exported)
+    internal/     BaseButton, ToggleSurface, BaseToggle, BaseTextInput, ControlLabel, selectionGroup, controlGroup, SelectionCard, CardRing, BaseTabList, inlineText, ClassicOverlay, FocusRing, ColumnRows, accessibleControl (not exported)
     layout/       Box, Flex, Grid, Container, Section, AspectRatio, ScrollArea, Separator, Card, Inset, InsetContext (Radix --inset-* values; Card provides them)
     typography/   Text, Heading, Link, Blockquote, Code, Em, Strong, Quote, Kbd, TextContext, InlineText (factory, not exported)
-    display/      Avatar, Badge, Callout, DataList
+    display/      Avatar, Badge, Callout, DataList, Table (column sizing in utils/tableLayout)
     actions/      Button, IconButton, Checkbox, CheckboxGroup, CheckboxCards,
                   Switch, Radio, RadioGroup, RadioCards, SegmentedControl
     feedback/     Spinner, Progress, Skeleton
@@ -124,7 +124,7 @@ const colors = useVariantColors('checkbox', { variant, color, highContrast, chec
 
 - Recipes return **paints** — `c(step)` (the `color` prop, accent by default), `g(step)` (gray),
   `f(step)` (Radix `--focus-*`: like `c`, but a gray component keeps the theme accent),
-  `layers(top, …, bottom)` (flattened into one color), `fade(paint, opacity)`, `byMode(light, dark)`,
+  `layers(top, …, bottom)` (flattened into one color), `fade(paint, opacity)`, `byMode(light, dark)`, `mix(a, b, weightB?)` (`color-mix(in oklab)`),
   `blackA(n)` / `whiteA(n)` — so they test against Radix CSS without a theme.
 - Recipes are grouped by **Variant family** (buttons, chips, selection controls, tracks, cards,
   text inputs, callouts, segmented, text). Radix is not uniform across families; keep its values even where they
@@ -161,6 +161,7 @@ const colors = useVariantColors('checkbox', { variant, color, highContrast, chec
 | A base card's border (Card, card items) | `<CardRing color borderRadius width? />` (`internal/CardRing`) drawn after the content — never a layout `borderWidth`; publish the Inset values with `InsetContext.Provider` (padding − border width) |
 | Inside a Skeleton, keep the component's shape | `useSkeletonRadius(borderRadius)` (`feedback/SkeletonContext`) in any component with its own radius; layout primitives report through `useLayoutStyle` |
 | Cells as wide as the widest (CSS grid `auto` / `1fr` / subgrid) | `useWidest()` + `useWidestCell(cells)` (`hooks/useWidest`, internal): cells report their natural width, all take the widest; hide the parent until `ready` — DataList labels, SegmentedControl items |
+| Text inside a container that sets the font (DataList, Table) | `renderInlineText(children, { textStyle, textProps, provide }, color)` (`internal/inlineText`): merges strings and text components into one Text |
 | Equal-width columns | `<ColumnRows columns gap…>` (no `onLayout`, no `%` flexBasis) |
 | CheckboxGroup / RadioGroup (Root + Item, labelled or bare items, column layout) | `createControlGroup({ name, type, rootRole, itemRole, Control, kind })` in `internal/controlGroup.tsx` — both groups are one call each; a labelled item is a Toggle surface row (label style, 0.5em gap) |
 | A Selection group (one value or several, controlled or not, disabled propagation) | `createSelectionGroup({ name, type: 'single' \| 'multiple' })` → `{ Root, useItem(value, disabled) }` — one instance per family, like Radix's CheckboxGroup / RadioGroup primitives |

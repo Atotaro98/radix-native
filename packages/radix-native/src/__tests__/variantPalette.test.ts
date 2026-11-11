@@ -3,7 +3,7 @@
  * mirrors; expectations are paints (tokens), so no theme is needed.
  */
 import {
-  getVariantPaints, resolvePaint, c, g, f, raw, layers, fade, byMode, blackA, whiteA, TRANSPARENT, WHITE, SHADOW_1_RING,
+  getVariantPaints, resolvePaint, c, g, f, raw, layers, fade, byMode, mix, blackA, whiteA, TRANSPARENT, WHITE, SHADOW_1_RING,
 } from '../utils/variantPalette'
 import type { RecipeName, RecipeState } from '../utils/variantPalette'
 
@@ -310,5 +310,17 @@ describe('slider (slider.css)', () => {
     ['[data-disabled] soft', { variant: 'soft', disabled: true }, { range: TRANSPARENT, thumbRing: g(5) }],
   ] as const)('%s', (_selector, state, expected) => {
     expect(paints('slider', state)).toMatchObject(expected)
+  })
+})
+
+describe('table (table.css)', () => {
+  it.each([
+    ['.rt-variant-ghost', { variant: 'ghost' }, { text: g(12), divider: g('a5') }],
+    ['.rt-variant-surface', { variant: 'surface' }, { bg: g('panel'), border: mix(g('a5'), g(6)), headerBg: g('a2') }],
+  ] as const)('%s', (_selector, state, expected) => {
+    expect(paints('table', state)).toMatchObject(expected)
+  })
+  it('ghost has no border or background', () => {
+    expect(paints('table', { variant: 'ghost' })).not.toHaveProperty('bg')
   })
 })
