@@ -81,6 +81,9 @@ These are places where RN cannot replicate the exact Radix web visual, and we us
 | **SegmentedControl** motion | Web: always animates | RN: no indicator / fade animation under Reduce Motion |
 | **Tabs** activation | Web: a trigger activates on mousedown, or on keyboard focus (`activationMode="automatic"`) | RN: on press; `activationMode` only matters for hardware-keyboard focus |
 | **TabNav** | Web: links with `href` / `asChild` for router links, `aria-current="page"`, `aria-label="Main"` | RN: `active` + `onPress`; announced as selected; pass your own `accessibilityLabel` |
+| **Slider** thumb | Web: ring and shadows as box-shadow outside the disc; a 3× invisible hit area | RN: the 1px ring is a border inside the disc; the root's hit area is padded to 44pt |
+| **Slider** disabled | Web: root `mix-blend-mode: multiply` / `screen` | RN: no blending; range invisible and thumb gray-1 as in Radix |
+| **Slider** input | Web: pointer capture and keyboard (arrows, Page, Home / End) | RN: the Responder system (a drag inside a ScrollView keeps the touch) and accessibility increment / decrement |
 | **Inset** | Web: reads the parent's `--inset-*` CSS variables | RN: reads an Inset context that Card provides with the same values; a padding the consumer sets on the Card through `style` is not seen by the Inset. No `asChild` |
 | **TextField/TextArea** focus | Web: 2px outline with offset | RN: 1px border color change + 1px inner ring |
 | **Code** inline sizing | Web: `0.95em` relative to parent | RN: 0.95 × parent size when nested in a text component (via `TextContext`); token size when standalone |

@@ -1,0 +1,67 @@
+---
+metaTitle: Slider
+metaDescription: Provides user selection from a range of values.
+sourcePath: components/forms/Slider
+---
+
+# Slider
+
+```tsx
+<Slider defaultValue={[50]} />
+```
+
+## API Reference
+
+Supports [margin props](/theme/spacing).
+
+| Prop | Type | Default |
+|------|------|---------|
+| `size` | `1 \| 2 \| 3` | `2` |
+| `variant` | `'classic' \| 'surface' \| 'soft'` | `'surface'` |
+| `color` | `AccentColor` | — |
+| `highContrast` | `boolean` | — |
+| `radius` | `'none' \| 'small' \| 'medium' \| 'large' \| 'full'` | — |
+| `value` / `defaultValue` | `number[]` | — |
+| `onValueChange` / `onValueCommit` | `(value: number[]) => void` | — |
+| `min` / `max` / `step` | `number` | `0` / `100` / `1` |
+| `minStepsBetweenThumbs` | `number` | `0` |
+| `orientation` | `'horizontal' \| 'vertical'` | `'horizontal'` |
+| `inverted` | `boolean` | `false` |
+| `disabled` | `boolean` | `false` |
+
+## Examples
+
+### Size
+
+```tsx
+<Slider defaultValue={[25]} size={1} />
+<Slider defaultValue={[50]} size={2} />
+<Slider defaultValue={[75]} size={3} />
+```
+
+### Variant
+
+```tsx
+<Slider defaultValue={[25]} variant="surface" />
+<Slider defaultValue={[50]} variant="classic" />
+<Slider defaultValue={[75]} variant="soft" />
+```
+
+### Color
+
+```tsx
+<Slider defaultValue={[20]} color="indigo" />
+<Slider defaultValue={[40]} color="cyan" />
+```
+
+### High-contrast
+
+```tsx
+<Slider defaultValue={[20]} color="gray" highContrast />
+```
+
+### Range
+
+```tsx
+<Slider defaultValue={[25, 75]} />
+```

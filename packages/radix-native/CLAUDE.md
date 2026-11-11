@@ -27,7 +27,7 @@ packages/radix-native/src/
     feedback/     Spinner, Progress, Skeleton
     navigation/   Tabs, TabNav (both on internal/BaseTabList)
     utilities/    VisuallyHidden, AccessibleIcon
-    forms/        TextField, TextArea
+    forms/        TextField, TextArea, Slider (math in utils/slider)
     playground/   ThemeControls
   __tests__/      Jest + @testing-library/react-native
 ```
