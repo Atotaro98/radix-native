@@ -2,6 +2,7 @@ import React from 'react'
 import { Text, View } from 'react-native'
 import type { ViewStyle } from 'react-native'
 import type { NativeViewProps } from '../../types/nativeProps'
+import { textOf } from '../internal/accessibleControl'
 
 export type VisuallyHiddenProps = NativeViewProps
 
@@ -34,3 +35,5 @@ export function VisuallyHidden({ style, children, ...rest }: VisuallyHiddenProps
   )
 }
 VisuallyHidden.displayName = 'VisuallyHidden'
+/** Inside a control, the hidden text is part of the control's name. */
+VisuallyHidden.accessibleName = (props: VisuallyHiddenProps) => textOf(props.children)
