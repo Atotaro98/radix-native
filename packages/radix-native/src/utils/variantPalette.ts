@@ -761,6 +761,19 @@ function popperPanel(s: PaletteState): PanelPaints {
   }
 }
 
+// ─── Tooltip — tooltip.css ────────────────────────────────────────────────────
+
+export interface TooltipPaints {
+  /** gray-12 (near-black in light, near-white in dark): the scale inverts it. */
+  bg: Paint
+  /** gray-1. */
+  text: Paint
+}
+
+function tooltip(_s: PaletteState): TooltipPaints {
+  return { bg: g(12), text: g(1) }
+}
+
 // ─── Control label (CheckboxGroup / RadioGroup item text) ─────────────────────
 
 export interface ControlLabelPaints {
@@ -811,6 +824,7 @@ export const VARIANT_RECIPES = {
   table,
   dialog,
   popperPanel,
+  tooltip,
   controlLabel,
   focusRing,
 } as const

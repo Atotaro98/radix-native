@@ -112,6 +112,8 @@ export {
   Dialog, type DialogRootProps, type DialogContentProps, type DialogSlotProps, type DialogSize,
   AlertDialog,
   Popover, type PopoverRootProps, type PopoverContentProps, type PopoverSlotProps, type PopoverSize,
+  HoverCard, type HoverCardRootProps, type HoverCardContentProps, type HoverCardSize,
+  Tooltip, type TooltipProps,
 } from './components/overlays'
 
 // Components — Utilities

@@ -1,20 +1,13 @@
 import React, { createContext, useCallback, useContext, useMemo, useRef } from 'react'
-import { ScrollView, View } from 'react-native'
 import type { DimensionValue, GestureResponderEvent, StyleProp, ViewStyle } from 'react-native'
 import { useControllableState } from '../../hooks/useControllableState'
-import { useMetrics } from '../../hooks/useMetrics'
-import { useVariantColors } from '../../hooks/useVariantColors'
-import { shadowStyle } from '../../utils/shadow'
 import { AnchoredContent, type AnchoredPlacementProps, type Measurable } from '../internal/AnchoredContent'
 import { anchorSlot } from '../internal/anchorSlot'
-import { CardRing } from '../internal/CardRing'
-import { InsetContext, type InsetValues } from '../layout/InsetContext'
-import type { RadiusLevel } from '../../tokens/radius'
-import type { SpaceToken } from '../../tokens/spacing'
+import { PopperPanel, type PanelSize } from '../internal/PopperPanel'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type PopoverSize = 1 | 2 | 3 | 4
+export type PopoverSize = PanelSize
 
 export interface PopoverRootProps {
   open?: boolean
@@ -43,14 +36,6 @@ export interface PopoverContentProps extends AnchoredPlacementProps {
   testID?: string
   accessibilityLabel?: string
   children?: React.ReactNode
-}
-
-// popover.css .rt-PopoverContent:where(.rt-r-size-N)
-const SIZES: Record<PopoverSize, { padding: SpaceToken; radius: RadiusLevel }> = {
-  1: { padding: 3, radius: 4 },
-  2: { padding: 4, radius: 4 },
-  3: { padding: 5, radius: 5 },
-  4: { padding: 6, radius: 5 },
 }
 
 // ─── Context ──────────────────────────────────────────────────────────────────
@@ -120,14 +105,6 @@ function PopoverContent({
   style, testID, accessibilityLabel, children,
 }: PopoverContentProps) {
   const ctx = usePopover('Content')
-  const metrics = useMetrics()
-  const colors = useVariantColors('popperPanel', {})
-  const cfg = SIZES[size]
-  const padding = metrics.space(cfg.padding)
-  const borderRadius = metrics.radius(cfg.radius)
-  const inset = useMemo<InsetValues>(() => ({
-    padding: { top: padding, right: padding, bottom: padding, left: padding }, borderWidth: 0, borderRadius: 0,
-  }), [padding])
   const close = useCallback(() => ctx.setOpen(false), [ctx])
 
   return (
@@ -142,28 +119,16 @@ function PopoverContent({
       testID={testID}
     >
       {(placement) => (
-        <View
+        <PopperPanel
+          size={size}
+          width={width} minWidth={minWidth} maxWidth={maxWidth} height={height} minHeight={minHeight} maxHeight={maxHeight}
+          availableHeight={placement?.availableHeight}
+          style={style}
           accessibilityLabel={accessibilityLabel}
-          style={[
-            {
-              width, minWidth, maxWidth, height, minHeight,
-              // overflow: auto within the space left on the placed side
-              maxHeight: maxHeight ?? placement?.availableHeight,
-              borderRadius,
-              backgroundColor: colors.panel,
-            },
-            shadowStyle(colors.shadow),
-            style,
-          ]}
         >
-          <ScrollView bounces={false} style={{ borderRadius }} contentContainerStyle={{ padding }}>
-            {/* The portal host is elsewhere in the tree: re-provide the Popover context to Close */}
-            <PopoverContext.Provider value={ctx}>
-              <InsetContext.Provider value={inset}>{children}</InsetContext.Provider>
-            </PopoverContext.Provider>
-          </ScrollView>
-          <CardRing color={colors.ring} borderRadius={borderRadius} />
-        </View>
+          {/* The portal host is elsewhere in the tree: re-provide the Popover context to Close */}
+          <PopoverContext.Provider value={ctx}>{children}</PopoverContext.Provider>
+        </PopperPanel>
       )}
     </AnchoredContent>
   )

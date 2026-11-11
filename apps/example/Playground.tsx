@@ -24,9 +24,11 @@ import { GridSection } from './playground/sections/GridSection'
 import { SegmentedControlSection } from './playground/sections/SegmentedControlSection'
 import { ScrollAreaSection } from './playground/sections/ScrollAreaSection'
 import { SectionSection } from './playground/sections/SectionSection'
+import { TooltipSection } from './playground/sections/TooltipSection'
 import { VisuallyHiddenSection } from './playground/sections/VisuallyHiddenSection'
 import { InsetSection } from './playground/sections/InsetSection'
 import { HeadingSection } from './playground/sections/HeadingSection'
+import { HoverCardSection } from './playground/sections/HoverCardSection'
 import { IconButtonSection } from './playground/sections/IconButtonSection'
 import { KbdSection } from './playground/sections/KbdSection'
 import { LinkSection } from './playground/sections/LinkSection'
@@ -123,6 +125,7 @@ export function Playground({ fontIndex, onFontChange }: PlaygroundProps) {
         <EmSection />
         <GridSection />
         <HeadingSection />
+        <HoverCardSection />
         <IconButtonSection />
         <InsetSection />
         <KbdSection />
@@ -148,6 +151,7 @@ export function Playground({ fontIndex, onFontChange }: PlaygroundProps) {
         <TextSection />
         <TextAreaSection />
         <TextFieldSection />
+        <TooltipSection />
         <VisuallyHiddenSection />
       </ScrollView>
       <ThemeControls />

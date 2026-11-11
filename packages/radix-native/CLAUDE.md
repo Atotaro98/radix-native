@@ -26,7 +26,7 @@ packages/radix-native/src/
                   Switch, Radio, RadioGroup, RadioCards, SegmentedControl
     feedback/     Spinner, Progress, Skeleton
     navigation/   Tabs, TabNav (both on internal/BaseTabList)
-    overlays/     Dialog, AlertDialog (internal/BaseDialog), Popover (internal/AnchoredContent + utils/popper)
+    overlays/     Dialog, AlertDialog (internal/BaseDialog), Popover, HoverCard, Tooltip (internal/AnchoredContent + utils/popper; panels via internal/PopperPanel)
     utilities/    VisuallyHidden, AccessibleIcon
     forms/        TextField, TextArea, Slider (math in utils/slider)
     playground/   ThemeControls

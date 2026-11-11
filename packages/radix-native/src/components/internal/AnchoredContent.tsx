@@ -36,8 +36,8 @@ export interface AnchoredContentProps extends AnchoredPlacementProps {
   /** Content min-width = the anchor's width (Popover, Select). */
   matchAnchorWidth?: boolean
   style?: StyleProp<ViewStyle>
-  /** Gets the placement, for max-height from the available space. */
-  children: (placement: Placement | null) => React.ReactNode
+  /** Gets the placement (max-height from the available space) and the anchor's window rect (Tooltip's arrow). */
+  children: (placement: Placement | null, anchor: Rect | null) => React.ReactNode
   testID?: string
 }
 
@@ -179,7 +179,7 @@ function Placed({
           style,
         ]}
       >
-        {children(placement)}
+        {children(placement, anchorRect)}
       </Animated.View>
     </View>
   )

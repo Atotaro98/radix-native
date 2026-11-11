@@ -334,3 +334,9 @@ describe('dialog (base-dialog.css)', () => {
     })
   })
 })
+
+describe('tooltip (tooltip.css)', () => {
+  it('gray-12 background, gray-1 text (inverted by the scale in dark mode)', () => {
+    expect(paints('tooltip', {})).toEqual({ bg: g(12), text: g(1) })
+  })
+})
