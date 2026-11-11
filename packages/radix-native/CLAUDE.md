@@ -26,7 +26,7 @@ packages/radix-native/src/
                   Switch, Radio, RadioGroup, RadioCards, SegmentedControl
     feedback/     Spinner, Progress, Skeleton
     navigation/   Tabs, TabNav (both on internal/BaseTabList)
-    overlays/     Dialog, AlertDialog (internal/BaseDialog), Popover, HoverCard, Tooltip (internal/AnchoredContent + utils/popper; panels via internal/PopperPanel)
+    overlays/     Dialog, AlertDialog (internal/BaseDialog), Popover, HoverCard, Tooltip, DropdownMenu, ContextMenu (menus on internal/BaseMenu; all on internal/AnchoredContent + utils/popper; panels via internal/PopperPanel)
     utilities/    VisuallyHidden, AccessibleIcon
     forms/        TextField, TextArea, Slider (math in utils/slider)
     playground/   ThemeControls
@@ -128,7 +128,7 @@ const colors = useVariantColors('checkbox', { variant, color, highContrast, chec
   `layers(top, …, bottom)` (flattened into one color), `fade(paint, opacity)`, `byMode(light, dark)`, `mix(a, b, weightB?)` (`color-mix(in oklab)`),
   `blackA(n)` / `whiteA(n)` — so they test against Radix CSS without a theme.
 - Recipes are grouped by **Variant family** (buttons, chips, selection controls, tracks, cards,
-  text inputs, callouts, segmented, text). Radix is not uniform across families; keep its values even where they
+  text inputs, callouts, segmented, menus, text). Radix is not uniform across families; keep its values even where they
   look inconsistent (e.g. solid high-contrast text `gray-1` in Button, `accent-1` in Badge), and cite
   the Radix selector in a comment.
 - `SHADOW_1_RING` is Radix `--shadow-1` as a border color (classic variants, sunken parts).

@@ -60,7 +60,8 @@ export function PopperPanel({
         style,
       ]}
     >
-      <ScrollView bounces={false} style={{ borderRadius }} contentContainerStyle={{ padding }}>
+      {/* flexGrow 0: a ScrollView grows to its parent's max-height otherwise, inflating the measured size */}
+      <ScrollView bounces={false} style={{ borderRadius, flexGrow: 0 }} contentContainerStyle={{ padding }}>
         <InsetContext.Provider value={inset}>{children}</InsetContext.Provider>
       </ScrollView>
       <CardRing color={colors.ring} borderRadius={borderRadius} />

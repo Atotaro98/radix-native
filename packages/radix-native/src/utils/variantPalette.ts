@@ -774,6 +774,56 @@ function tooltip(_s: PaletteState): TooltipPaints {
   return { bg: g(12), text: g(1) }
 }
 
+// ─── Family: menus (DropdownMenu, ContextMenu, Select content) — base-menu.css ──
+
+export type MenuVariant = 'solid' | 'soft'
+
+export interface MenuItemPaints {
+  /** Undefined = no background. */
+  bg?: Paint
+  /** Item text (and indicator / chevron). */
+  text: Paint
+  /** The shortcut: gray-a11, inherits the text color when highlighted or disabled. */
+  shortcut: Paint
+}
+
+export interface MenuItemState extends WithVariant<MenuVariant> {
+  /** Pressed on touch (Radix `[data-highlighted]`). */
+  highlighted?: boolean
+  /** An open SubTrigger. */
+  subOpen?: boolean
+}
+
+/**
+ * `.rt-BaseMenuItem`: gray-12 text (accent-a11 with its own `color`), disabled
+ * gray-a8 with no highlight. Highlighted: solid accent-9 / accent-contrast
+ * (high contrast accent-12 / accent-1, except items with their own color);
+ * soft accent-a4. An open SubTrigger: solid gray-a3, soft accent-a3.
+ */
+function menuItem(s: MenuItemState): MenuItemPaints {
+  const rest = s.hasColor ? c('a11') : g(12)
+  if (s.disabled) return { text: g('a8'), shortcut: g('a8') }
+  if (s.highlighted) {
+    if (s.variant === 'soft') return { bg: c('a4'), text: rest, shortcut: rest }
+    const hc = s.highContrast && !s.hasColor
+    const text = hc ? c(1) : c('contrast')
+    return { bg: hc ? c(12) : c(9), text, shortcut: text }
+  }
+  if (s.subOpen) return { bg: s.variant === 'soft' ? c('a3') : g('a3'), text: rest, shortcut: rest }
+  return { text: rest, shortcut: g('a11') }
+}
+
+export interface MenuChromePaints {
+  /** `.rt-BaseMenuLabel`. */
+  label: Paint
+  /** `.rt-BaseMenuSeparator`. */
+  separator: Paint
+}
+
+function menuChrome(_s: PaletteState): MenuChromePaints {
+  return { label: g('a10'), separator: g('a6') }
+}
+
 // ─── Control label (CheckboxGroup / RadioGroup item text) ─────────────────────
 
 export interface ControlLabelPaints {
@@ -825,6 +875,8 @@ export const VARIANT_RECIPES = {
   dialog,
   popperPanel,
   tooltip,
+  menuItem,
+  menuChrome,
   controlLabel,
   focusRing,
 } as const

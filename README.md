@@ -7,7 +7,7 @@ React Native components that match the [Radix Themes](https://www.radix-ui.com/t
 ## Features
 
 - **Identical API** to `@radix-ui/themes` — same component names, same props, same variants
-- **49 components** — layout, typography, actions, forms, display, feedback
+- **51 components** — layout, typography, actions, forms, display, feedback
 - **Full theme system** — 26 accent colors, 6 gray scales, radius, scaling, dark mode, nested themes
 - **31 color scales** from `@radix-ui/colors` with light/dark modes and alpha variants
 - **Minimal dependencies** — only `react`, `react-native`, and `react-native-reanimated` as peer deps
@@ -130,6 +130,8 @@ export default function App() {
 | `Popover`     | Floating panel anchored to a trigger                |
 | `HoverCard`   | Link preview, opened with a long-press              |
 | `Tooltip`     | Label for a control, shown while long-pressing      |
+| `DropdownMenu`| Menu of actions opened from a button                |
+| `ContextMenu` | Menu opened with a long-press at the touch point    |
 
 ### Utilities
 

@@ -114,6 +114,9 @@ export {
   Popover, type PopoverRootProps, type PopoverContentProps, type PopoverSlotProps, type PopoverSize,
   HoverCard, type HoverCardRootProps, type HoverCardContentProps, type HoverCardSize,
   Tooltip, type TooltipProps,
+  DropdownMenu, type DropdownMenuRootProps, type MenuContentProps, type MenuItemProps, type MenuCheckboxItemProps,
+  type MenuRadioGroupProps, type MenuRadioItemProps, type MenuSubProps, type MenuSelectEvent, type MenuSize, type MenuVariant,
+  ContextMenu, type ContextMenuRootProps, type ContextMenuTriggerProps,
 } from './components/overlays'
 
 // Components — Utilities

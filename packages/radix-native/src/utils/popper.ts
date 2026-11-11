@@ -95,6 +95,14 @@ export function place(anchor: Rect, content: Size, o: PlaceOptions): Placement {
     }
   }
 
+  // RN addition: when neither side fits (a sub-menu on a phone), keep the content on
+  // screen on the side axis too, over its anchor, instead of overflowing like Floating UI
+  if (o.avoidCollisions && sideOverflow(pos, content, side, inner) > 0) {
+    pos = vertical(side)
+      ? { ...pos, y: Math.min(Math.max(pos.y, inner.y), inner.y + inner.height - content.height) }
+      : { ...pos, x: Math.min(Math.max(pos.x, inner.x), inner.x + inner.width - content.width) }
+  }
+
   // shift along the alignment axis, kept inside the padded boundary
   if (o.avoidCollisions) {
     if (vertical(side)) {

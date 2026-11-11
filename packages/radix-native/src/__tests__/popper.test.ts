@@ -38,6 +38,11 @@ describe('popper placement (Radix Popper middleware)', () => {
     expect(place(anchor, { width: 200, height: 100 }, { ...base, side: 'right', align: 'center' })).toMatchObject({ originX: 0, originY: 50 })
   })
 
+  it('keeps the content on screen when neither side fits (a sub-menu on a phone)', () => {
+    const p = place({ x: 90, y: 450, width: 250, height: 32 }, { width: 200, height: 150 }, { ...base, side: 'right', alignOffset: -8 })
+    expect(p).toMatchObject({ side: 'left', x: 10, y: 442 })
+  })
+
   it('does not move without avoidCollisions', () => {
     const p = place({ ...anchor, y: 700 }, { width: 200, height: 150 }, { ...base, avoidCollisions: false })
     expect(p.side).toBe('bottom')

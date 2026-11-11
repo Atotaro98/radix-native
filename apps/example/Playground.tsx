@@ -18,6 +18,7 @@ import { CheckboxCardsSection } from './playground/sections/CheckboxCardsSection
 import { CodeSection } from './playground/sections/CodeSection'
 import { DataListSection } from './playground/sections/DataListSection'
 import { DialogSection } from './playground/sections/DialogSection'
+import { DropdownMenuSection } from './playground/sections/DropdownMenuSection'
 import { EmSection } from './playground/sections/EmSection'
 import { ContainerSection } from './playground/sections/ContainerSection'
 import { GridSection } from './playground/sections/GridSection'
@@ -122,6 +123,7 @@ export function Playground({ fontIndex, onFontChange }: PlaygroundProps) {
         <ContainerSection />
         <DataListSection />
         <DialogSection />
+        <DropdownMenuSection />
         <EmSection />
         <GridSection />
         <HeadingSection />
