@@ -1,0 +1,27 @@
+---
+metaTitle: Alert Dialog
+metaDescription: Modal confirmation dialog that interrupts the user and expects a response.
+sourcePath: components/overlays/AlertDialog
+---
+
+# Alert Dialog
+
+```tsx
+<AlertDialog.Root>
+  <AlertDialog.Trigger><Button color="red">Revoke access</Button></AlertDialog.Trigger>
+  <AlertDialog.Content maxWidth={450}>
+    <AlertDialog.Title>Revoke access</AlertDialog.Title>
+    <AlertDialog.Description size={2}>
+      Are you sure? This application will no longer be accessible and any existing sessions will be expired.
+    </AlertDialog.Description>
+    <Flex direction="row" gap={3} mt={4} justify="end">
+      <AlertDialog.Cancel><Button variant="soft" color="gray">Cancel</Button></AlertDialog.Cancel>
+      <AlertDialog.Action><Button variant="solid" color="red">Revoke access</Button></AlertDialog.Action>
+    </Flex>
+  </AlertDialog.Content>
+</AlertDialog.Root>
+```
+
+## API Reference
+
+Same as [Dialog](/components/dialog), with **Action** and **Cancel** (both close) instead of Close. A backdrop press does not close it.

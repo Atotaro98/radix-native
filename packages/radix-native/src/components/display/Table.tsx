@@ -6,6 +6,7 @@ import { useMetrics } from '../../hooks/useMetrics'
 import { useTextStyle } from '../../hooks/useTextStyle'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { renderInlineText } from '../internal/inlineText'
+import { useInsetContext } from '../layout/InsetContext'
 import { resolveColumnWidths, type TableCellSize, type TableLength } from '../../utils/tableLayout'
 import type { SpaceToken } from '../../tokens/spacing'
 import type { RadiusLevel } from '../../tokens/radius'
@@ -81,7 +82,7 @@ interface TableContextValue {
 
 const TableContext = createContext<TableContextValue | null>(null)
 const SectionContext = createContext<{ header: boolean; first: boolean }>({ header: false, first: false })
-const RowContext = createContext<{ first: boolean; last: boolean; col: number }>({ first: false, last: false, col: 0 })
+const RowContext = createContext<{ first: boolean; last: boolean; col: number; cols?: number }>({ first: false, last: false, col: 0 })
 
 function useTable(part: string): TableContextValue {
   const ctx = useContext(TableContext)
@@ -234,7 +235,7 @@ function TableRow({ align = 'start', style, children, ...rest }: TableRowProps) 
       {...rest}
     >
       {cells.map((cell, col) => (
-        <RowContext.Provider key={React.isValidElement(cell) && cell.key != null ? cell.key : col} value={{ ...position, col }}>
+        <RowContext.Provider key={React.isValidElement(cell) && cell.key != null ? cell.key : col} value={{ ...position, col, cols: cells.length }}>
           {cell}
         </RowContext.Provider>
       ))}
@@ -252,7 +253,8 @@ function makeCell(kind: 'cell' | 'column' | 'row', name: string) {
     style, children, ...rest
   }: TableCellProps) {
     const table = useTable(name)
-    const { col, first } = useContext(RowContext)
+    const { col, first, cols } = useContext(RowContext)
+    const inset = useInsetContext()
     const metrics = useMetrics()
     const cfg = SIZES[table.size]
     // ColumnHeaderCell is bold (700, not medium); RowHeaderCell normal
@@ -270,8 +272,9 @@ function makeCell(kind: 'cell' | 'column' | 'row', name: string) {
     const padding: ViewStyle = {
       paddingTop: sp(pt ?? py ?? p) ?? metrics.space(cfg.paddingY),
       paddingBottom: sp(pb ?? py ?? p) ?? metrics.space(cfg.paddingY),
-      paddingLeft: sp(pl ?? px ?? p) ?? metrics.space(cfg.paddingX),
-      paddingRight: sp(pr ?? px ?? p) ?? metrics.space(cfg.paddingX),
+      // .rt-Inset :where(.rt-TableCell:first-child / :last-child): the container's inset padding
+      paddingLeft: sp(pl ?? px ?? p) ?? (inset.insideInset && col === 0 ? inset.padding.left : metrics.space(cfg.paddingX)),
+      paddingRight: sp(pr ?? px ?? p) ?? (inset.insideInset && cols !== undefined && col === cols - 1 ? inset.padding.right : metrics.space(cfg.paddingX)),
     }
 
     return (

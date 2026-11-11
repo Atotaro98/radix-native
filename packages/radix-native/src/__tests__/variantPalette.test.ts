@@ -324,3 +324,13 @@ describe('table (table.css)', () => {
     expect(paints('table', { variant: 'ghost' })).not.toHaveProperty('bg')
   })
 })
+
+describe('dialog (base-dialog.css)', () => {
+  it('backdrop --color-overlay, solid panel, --shadow-6 ring', () => {
+    expect(paints('dialog', {})).toMatchObject({
+      overlay: byMode(blackA(6), blackA(8)),
+      panel: byMode(WHITE, g(2)),
+      ring: byMode(mix(g('a3'), g(3), 0.25), mix(g('a6'), g(6), 0.25)),
+    })
+  })
+})

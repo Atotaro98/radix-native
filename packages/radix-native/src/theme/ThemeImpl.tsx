@@ -3,6 +3,7 @@ import { View } from 'react-native'
 import { ThemeContext } from './ThemeContext'
 import { resolveGrayColor } from './resolveGrayColor'
 import { resolveColor } from '../utils/resolveColor'
+import { PortalHost } from '../components/internal/Portal'
 import type {
   ThemeProps, ThemeContextValue, ThemeChangeHandlers, ThemeFonts, ColorOverrides, ColorScaleOverride,
 } from './theme.types'
@@ -14,6 +15,7 @@ interface ThemeImplProps extends ThemeProps, Partial<ThemeChangeHandlers> {
 const noop = () => {}
 const EMPTY_FONTS: ThemeFonts = {}
 const EMPTY_OVERRIDES: ColorOverrides = {}
+const NO_INSETS = { top: 0, right: 0, bottom: 0, left: 0 }
 
 /**
  * Builds the Theme context (Radix `ThemeImpl`), for the root and nested
@@ -33,6 +35,7 @@ export function ThemeImpl({
   fonts: fontsProp,
   colorOverrides: colorOverridesProp,
   maxFontSizeMultiplier: maxFontSizeMultiplierProp,
+  safeAreaInsets: safeAreaInsetsProp,
   onAppearanceChange = noop,
   onAccentColorChange = noop,
   onGrayColorChange = noop,
@@ -52,6 +55,15 @@ export function ThemeImpl({
   const radius = radiusProp ?? parent?.radius ?? 'medium'
   const scaling = scalingProp ?? parent?.scaling ?? '100%'
   const maxFontSizeMultiplier = maxFontSizeMultiplierProp ?? parent?.maxFontSizeMultiplier
+  const parentInsets = parent?.safeAreaInsets ?? NO_INSETS
+  const insetTop = safeAreaInsetsProp?.top ?? parentInsets.top
+  const insetRight = safeAreaInsetsProp?.right ?? parentInsets.right
+  const insetBottom = safeAreaInsetsProp?.bottom ?? parentInsets.bottom
+  const insetLeft = safeAreaInsetsProp?.left ?? parentInsets.left
+  const safeAreaInsets = React.useMemo(
+    () => ({ top: insetTop, right: insetRight, bottom: insetBottom, left: insetLeft }),
+    [insetTop, insetRight, insetBottom, insetLeft],
+  )
 
   const parentFonts = parent?.fonts ?? EMPTY_FONTS
   const fonts = React.useMemo(
@@ -81,13 +93,14 @@ export function ThemeImpl({
     colorOverrides,
     maxFontSizeMultiplier,
     resolveColor: resolve,
+    safeAreaInsets,
     onAppearanceChange,
     onAccentColorChange,
     onGrayColorChange,
     onRadiusChange,
     onScalingChange,
   }), [isRoot, appearance, accentColor, grayColor, resolvedGrayColor, radius, scaling, fonts, colorOverrides,
-    maxFontSizeMultiplier, resolve, onAppearanceChange, onAccentColorChange, onGrayColorChange, onRadiusChange, onScalingChange])
+    maxFontSizeMultiplier, resolve, safeAreaInsets, onAppearanceChange, onAccentColorChange, onGrayColorChange, onRadiusChange, onScalingChange])
 
   // Radix: the root always has a background; a nested Theme only with an explicit appearance.
   const hasBackground = hasBackgroundProp ?? (isRoot || isExplicitAppearance)
@@ -97,7 +110,12 @@ export function ThemeImpl({
   return (
     <ThemeContext.Provider value={value}>
       {isRoot || hasBackground
-        ? <View style={{ flex: 1, backgroundColor: hasBackground ? backgroundColor : undefined }}>{children}</View>
+        ? (
+          <View style={{ flex: 1, backgroundColor: hasBackground ? backgroundColor : undefined }}>
+            {/* The root hosts Anchored overlays (Popover, menus…); Modal overlays mount their own host */}
+            {isRoot ? <PortalHost>{children}</PortalHost> : children}
+          </View>
+        )
         : children}
     </ThemeContext.Provider>
   )

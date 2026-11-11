@@ -7,7 +7,7 @@ React Native components that match the [Radix Themes](https://www.radix-ui.com/t
 ## Features
 
 - **Identical API** to `@radix-ui/themes` — same component names, same props, same variants
-- **44 components** — layout, typography, actions, forms, display, feedback
+- **46 components** — layout, typography, actions, forms, display, feedback
 - **Full theme system** — 26 accent colors, 6 gray scales, radius, scaling, dark mode, nested themes
 - **31 color scales** from `@radix-ui/colors` with light/dark modes and alpha variants
 - **Minimal dependencies** — only `react`, `react-native`, and `react-native-reanimated` as peer deps
@@ -120,6 +120,13 @@ export default function App() {
 | --------- | ------------------------------------------- |
 | `Tabs`    | Layered sections shown one at a time        |
 | `TabNav`  | Navigation links styled as tabs             |
+
+### Overlays
+
+| Component     | Description                                         |
+| ------------- | --------------------------------------------------- |
+| `Dialog`      | Modal window over the app                           |
+| `AlertDialog` | Confirmation dialog that expects a response         |
 
 ### Utilities
 

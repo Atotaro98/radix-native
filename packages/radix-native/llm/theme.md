@@ -10,6 +10,7 @@
   radius="medium"         // 'none' | 'small' | 'medium' | 'large' | 'full'
   scaling="100%"          // '90%' | '95%' | '100%' | '105%' | '110%'
   maxFontSizeMultiplier={2} // RN-only: global cap for accessibility font scaling
+  safeAreaInsets={insets}   // RN-only: { top, right, bottom, left } overlays keep clear of (default 0)
   hasBackground           // applies background color to the root view
   fonts={{ regular: 'Inter-Regular', bold: 'Inter-Bold' }} // one face per weight; also light, medium, heading, code, strong, em, quote
 >
@@ -51,6 +52,7 @@ function MyComponent() {
     scaling,              // ScalingMode
     fonts,                // ThemeFonts
     maxFontSizeMultiplier,// number | undefined — global cap
+    safeAreaInsets,       // { top, right, bottom, left } — RN-only, inherited
     isRoot,               // boolean — whether this is the outermost Theme
     resolveColor,         // (token: ThemeColor) => string, with this Theme's values
     // Change handlers (no-ops in a nested Theme):
@@ -111,3 +113,16 @@ Used in margin props (`m`, `mt`, `mx`, etc.) and spacing props (`gap`, `p`, `px`
 
 Each component picks a radius level (1-6 → 3, 4, 6, 8, 12, 16 px). Like Radix `--radius-N`,
 the result is `level px × radius factor × scaling`; read it with `useMetrics().radius(level, shape?)`.
+
+## Safe area (RN-only)
+
+Overlays (Dialog, AlertDialog, and later Popover, menus, Select) keep clear of the notch and home indicator using the root Theme's `safeAreaInsets`. radix-native adds no dependency for it: pass the insets from your safe-area library.
+
+```tsx
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+
+function App() {
+  const insets = useSafeAreaInsets()
+  return <Theme safeAreaInsets={insets}>…</Theme>
+}
+```

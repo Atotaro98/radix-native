@@ -1,0 +1,64 @@
+---
+metaTitle: Dialog
+metaDescription: Modal dialog window displayed above the page.
+sourcePath: components/overlays/Dialog
+---
+
+# Dialog
+
+```tsx
+<Dialog.Root>
+  <Dialog.Trigger><Button>Edit profile</Button></Dialog.Trigger>
+  <Dialog.Content maxWidth={450}>
+    <Dialog.Title>Edit profile</Dialog.Title>
+    <Dialog.Description size={2} mb={4}>Make changes to your profile.</Dialog.Description>
+    <Flex direction="row" gap={3} mt={4} justify="end">
+      <Dialog.Close><Button variant="soft" color="gray">Cancel</Button></Dialog.Close>
+      <Dialog.Close><Button>Save</Button></Dialog.Close>
+    </Flex>
+  </Dialog.Content>
+</Dialog.Root>
+```
+
+## API Reference
+
+### Root
+
+| Prop | Type | Default |
+|------|------|---------|
+| `open` / `defaultOpen` | `boolean` | `false` |
+| `onOpenChange` | `(open: boolean) => void` | — |
+
+### Content
+
+| Prop | Type | Default |
+|------|------|---------|
+| `size` | `1 \| 2 \| 3 \| 4` | `3` |
+| `align` | `'start' \| 'center'` | `'center'` |
+| `width` `minWidth` `maxWidth` | `DimensionValue` | `maxWidth` 600 |
+| `height` `minHeight` `maxHeight` | `DimensionValue` | — |
+| `onEscapeKeyDown` | `(e) => void` | — |
+
+### Title, Description, Trigger, Close
+
+Title is a Heading size 5; Description a Text size 3. Trigger and Close take one element and compose its `onPress`.
+
+## Examples
+
+### Size
+
+```tsx
+<Dialog.Content size={1} maxWidth={300}>…</Dialog.Content>
+<Dialog.Content size={4}>…</Dialog.Content>
+```
+
+### With inset content
+
+```tsx
+<Dialog.Content>
+  <Dialog.Title>Users</Dialog.Title>
+  <Inset side="x" my={5}>
+    <Table.Root>…</Table.Root>
+  </Inset>
+</Dialog.Content>
+```
