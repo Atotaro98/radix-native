@@ -15,6 +15,7 @@ import type { MarginProps } from '../../types/marginProps'
 import { Spinner, type SpinnerSize } from '../feedback/Spinner'
 import { ClassicOverlay } from './ClassicOverlay'
 import { ControlLabel } from './ControlLabel'
+import { AccessibleControlContext } from './accessibleControl'
 import { FocusRing } from './FocusRing'
 
 export type BaseButtonSize = 1 | 2 | 3 | 4
@@ -158,18 +159,20 @@ export function BaseButton({
       style={[scaleStyle, containerStyle, stateStyle, classicStyle, style]}
     >
       {colors.bevel && <ClassicOverlay />}
-      {loading ? (
-        <>
-          {/* Radix: the label stays in place (keeping the size) and readable by
-              screen readers, but invisible; the spinner sits on top. */}
-          <View style={{ opacity: 0, flexDirection: 'row', alignItems: 'center', gap }}>{label}</View>
-          <View style={FILL} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
-            <Spinner size={SIZE_SPINNER[size]} color={colors.text} />
-          </View>
-        </>
-      ) : (
-        label
-      )}
+      <AccessibleControlContext.Provider value>
+        {loading ? (
+          <>
+            {/* Radix: the label stays in place (keeping the size) and readable by
+                screen readers, but invisible; the spinner sits on top. */}
+            <View style={{ opacity: 0, flexDirection: 'row', alignItems: 'center', gap }}>{label}</View>
+            <View style={FILL} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
+              <Spinner size={SIZE_SPINNER[size]} color={colors.text} />
+            </View>
+          </>
+        ) : (
+          label
+        )}
+      </AccessibleControlContext.Provider>
       <FocusRing visible={focused} color={focusColor} borderRadius={borderRadius} />
     </AnimatedPressable>
   )

@@ -12,6 +12,9 @@ import type { AccentColor } from '../../tokens/colors/types'
 import { useTextStyle } from '../../hooks/useTextStyle'
 import type { TextSize } from '../typography/Text'
 import { ToggleSurface, type ToggleKind } from './ToggleSurface'
+import { CardRing } from './CardRing'
+import { AccessibleControlContext } from './accessibleControl'
+import { InsetContext, type InsetValues } from '../layout/InsetContext'
 import { ColumnRows, AutoFitRows } from './ColumnRows'
 import { createSelectionGroup, type SelectionValue } from './selectionGroup'
 import type { MarginProps } from '../../types/marginProps'
@@ -57,10 +60,11 @@ interface SelectionCardProps<P extends object> {
  * Internal: a Selection card — CheckboxCards.Item and RadioCards.Item. Owns the
  * card's Radix size, recipe colors, classic effect, trailing Indicator and
  * plain-text children, on a Toggle surface (role, announced state, press scale,
- * focus ring on its edge). When the recipe has a checked border (RadioCards) it
- * is drawn as a 2px overlay ring over the 1px border, like Radix's `::after`
- * outline, so checking an item never moves its content — even when the
- * consumer overrides the padding through `style`.
+ * focus ring on its edge). Like Radix's `base-card.css`, its 1px border — and
+ * the 2px checked outline of RadioCards — is a ring drawn over the content, so
+ * content starts at the item padding and checking an item never moves it, even
+ * when the consumer overrides the padding through `style`. Provides the Inset
+ * values (padding − border width) to an `Inset` inside it.
  */
 export function SelectionCard<P extends object>({
   recipe,
@@ -94,15 +98,30 @@ export function SelectionCard<P extends object>({
     flexGrow: 1,
     position: 'relative',
     overflow: 'hidden',
+    // .rt-CheckboxCardsItem / .rt-RadioCardsItem: display flex, align-items center, gap space-2
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: metrics.space(2),
     paddingTop: paddingY,
     paddingRight: indicator ? paddingX * 2 + indicatorWidth : paddingX,
     paddingBottom: paddingY,
     paddingLeft: paddingX,
     borderRadius,
-    borderWidth: CARD_BORDER_WIDTH,
-    borderColor: checkedBorder ?? colors.border,
     backgroundColor: colors.bg,
   }
+
+  // base-card.css: --inset-padding-* = item padding − border width
+  const paddingRight = cardStyle.paddingRight as number
+  const inset = useMemo<InsetValues>(() => ({
+    padding: {
+      top: paddingY - CARD_BORDER_WIDTH,
+      right: paddingRight - CARD_BORDER_WIDTH,
+      bottom: paddingY - CARD_BORDER_WIDTH,
+      left: paddingX - CARD_BORDER_WIDTH,
+    },
+    borderWidth: CARD_BORDER_WIDTH,
+    borderRadius,
+  }), [paddingX, paddingY, paddingRight, borderRadius])
 
   return (
     <ToggleSurface
@@ -118,10 +137,14 @@ export function SelectionCard<P extends object>({
         style,
       ]}
     >
-      {/* Plain strings must live inside <Text> in RN */}
-      {typeof children === 'string' || typeof children === 'number'
-        ? <RNText style={label.style} {...label.textProps}>{children}</RNText>
-        : children}
+      <AccessibleControlContext.Provider value>
+        <InsetContext.Provider value={inset}>
+          {/* Plain strings must live inside <Text> in RN */}
+          {typeof children === 'string' || typeof children === 'number'
+            ? <RNText style={[label.style, { flexShrink: 1 }]} {...label.textProps}>{children}</RNText>
+            : children}
+        </InsetContext.Provider>
+      </AccessibleControlContext.Provider>
       {indicator ? (
         // Trailing edge, vertically centered (Radix CSS)
         <View
@@ -131,7 +154,10 @@ export function SelectionCard<P extends object>({
           <indicator.kind.Indicator {...indicator.props} />
         </View>
       ) : null}
-      {checkedBorder ? <CheckedRing color={checkedBorder} borderRadius={borderRadius} /> : null}
+      {/* The ring is drawn over the content (Radix ::after); checked RadioCards draw a 2px outline instead */}
+      {checkedBorder
+        ? <CardRing color={checkedBorder} borderRadius={borderRadius} width={CHECKED_RING_WIDTH} />
+        : <CardRing color={colors.border} borderRadius={borderRadius} />}
     </ToggleSurface>
   )
 }
@@ -140,32 +166,6 @@ export function SelectionCard<P extends object>({
 const CARD_BORDER_WIDTH = 1
 /** `.rt-RadioCardsItem[data-state='checked']::after { outline: 2px }`. */
 const CHECKED_RING_WIDTH = 2
-
-/**
- * Radix draws the checked ring as a 2px `outline` (offset -1px) on the `::after`
- * inset by the 1px border, so it covers the outer 2px of the card without
- * taking layout space. Absolute children are placed from the padding box, so
- * the overlay is pulled out by the border width to reach the card's edge.
- */
-function CheckedRing({ color, borderRadius }: { color: string; borderRadius: number }) {
-  return (
-    <View
-      pointerEvents="none"
-      importantForAccessibility="no-hide-descendants"
-      accessibilityElementsHidden
-      style={{
-        position: 'absolute',
-        top: -CARD_BORDER_WIDTH,
-        left: -CARD_BORDER_WIDTH,
-        right: -CARD_BORDER_WIDTH,
-        bottom: -CARD_BORDER_WIDTH,
-        borderRadius,
-        borderWidth: CHECKED_RING_WIDTH,
-        borderColor: color,
-      }}
-    />
-  )
-}
 
 interface SelectionCardGridProps {
   /** Number of equal-width columns; omitted = auto-fit (cards ≥ 160px, like Radix). */

@@ -4,6 +4,7 @@ import type { StyleProp, ViewStyle } from 'react-native'
 import { screen } from '@testing-library/react-native'
 import { renderWithTheme } from './helpers/render'
 import { Card } from '../components/layout/Card'
+import { RadioCards } from '../components/actions/RadioCards'
 import { Inset, resolveInsetStyle } from '../components/layout/Inset'
 import { NO_INSET, type InsetValues } from '../components/layout/InsetContext'
 
@@ -101,5 +102,19 @@ describe('Card border', () => {
     const card = screen.getByTestId('c')
     expect(card.findAll((n: Node) => typeof n.type === 'string' && flat(n).borderWidth === 1)).toHaveLength(0)
     expect(flat(card)).toMatchObject({ marginTop: 8 - 12, marginLeft: -12, marginRight: -12, marginBottom: -12 })
+  })
+})
+
+describe('Inset inside card items (base-card.css)', () => {
+  it('reads the RadioCards item padding minus its border', () => {
+    renderWithTheme(
+      <RadioCards defaultValue="a" size={3}>
+        <RadioCards.Item value="a">
+          <Inset side="right" clip="padding-box" testID="i"><View /></Inset>
+        </RadioCards.Item>
+      </RadioCards>,
+    )
+    // size 3: padding-x space-5 (24), padding-y space-5 / 1.2 (20); border 1px
+    expect(flat(screen.getByTestId('i'))).toMatchObject({ marginRight: -24, marginTop: -20, marginBottom: -20 })
   })
 })

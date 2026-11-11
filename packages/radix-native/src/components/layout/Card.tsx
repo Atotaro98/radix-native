@@ -7,6 +7,8 @@ import { useMargins } from '../../hooks/useMargins'
 import { useInteraction } from '../../hooks/useInteraction'
 import { AnimatedPressable } from '../../hooks/usePressScale'
 import { FocusRing } from '../internal/FocusRing'
+import { AccessibleControlContext } from '../internal/accessibleControl'
+import { CardRing } from '../internal/CardRing'
 import { InsetContext, type InsetValues } from './InsetContext'
 import type { RadiusLevel } from '../../tokens/radius'
 import type { MarginProps } from '../../types/marginProps'
@@ -38,7 +40,7 @@ export interface CardProps extends NativeViewProps, MarginProps {
 // Radix .rt-Card:where(.rt-r-size-1…5) --card-padding: var(--space-3/4/5/6/8)
 const SIZE_PADDING: Record<CardSize, number> = { 1: 12, 2: 16, 3: 24, 4: 32, 5: 48 }
 const SIZE_RADIUS_LEVEL: Record<CardSize, RadiusLevel> = { 1: 4, 2: 4, 3: 5, 4: 5, 5: 6 }
-// Radix --card-border-width: 1px (surface, classic), 0px (ghost)
+// Radix --card-border-width: 1px (surface, classic), 0px (ghost); drawn by CardRing
 const BORDER_WIDTH = 1
 
 /** `--margin-*-override: calc(var(--margin-*) - var(--card-padding))` (ghost). `auto` stays `auto`. */
@@ -124,7 +126,7 @@ export function Card({
         onLongPress={onLongPress}
         style={[scaleStyle, cardStyle, shadow, pressedBg, style]}
       >
-        {content}
+        <AccessibleControlContext.Provider value>{content}</AccessibleControlContext.Provider>
         {ringColor ? <CardRing color={ringColor} borderRadius={borderRadius} /> : null}
         <FocusRing visible={focused} color={focus.ring} borderRadius={borderRadius} />
       </AnimatedPressable>
@@ -140,26 +142,3 @@ export function Card({
 }
 Card.displayName = 'Card'
 
-/**
- * The card's 1px border, drawn over the content like Radix's `::after` box-shadow
- * ring, so it takes no layout space and an `Inset` with `clip="padding-box"` runs under it.
- */
-function CardRing({ color, borderRadius }: { color: string; borderRadius: number }) {
-  return (
-    <View
-      pointerEvents="none"
-      importantForAccessibility="no-hide-descendants"
-      accessibilityElementsHidden
-      style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        borderRadius,
-        borderWidth: BORDER_WIDTH,
-        borderColor: color,
-      }}
-    />
-  )
-}

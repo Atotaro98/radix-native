@@ -224,8 +224,9 @@ describe('Selection card checked ring', () => {
     expect(contentOffset(b)).toEqual(contentOffset(a))
     expect(ringOf(a)).toHaveLength(0)
     expect(ringOf(b)).toHaveLength(1)
-    // Covers the card's outer 2px: pulled out over the 1px border.
-    expect(flat(ringOf(b)[0])).toMatchObject({ position: 'absolute', top: -1, left: -1, right: -1, bottom: -1, borderWidth: 2 })
+    // base-card.css: no layout border, the ring is drawn over the card's outer 2px.
+    expect(flat(b).borderWidth).toBeUndefined()
+    expect(flat(ringOf(b)[0])).toMatchObject({ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderWidth: 2 })
   })
 
   it('CheckboxCards: checked and unchecked items have the same content offset', () => {
@@ -238,5 +239,18 @@ describe('Selection card checked ring', () => {
     const a = screen.getByRole('checkbox', { name: 'A' }) as unknown as Host
     const b = screen.getByRole('checkbox', { name: 'B' }) as unknown as Host
     expect(contentOffset(b)).toEqual(contentOffset(a))
+  })
+})
+
+describe('Selection card layout', () => {
+  // .rt-CheckboxCardsItem / .rt-RadioCardsItem { display: flex; align-items: center; gap: var(--space-2) }
+  it('lays its content out in a centered row with a space-2 gap', () => {
+    renderWithTheme(
+      <RadioCards defaultValue="a">
+        <RadioCards.Item value="a">A</RadioCards.Item>
+      </RadioCards>,
+    )
+    const s = StyleSheet.flatten(screen.getByRole('radio', { name: 'A' }).props.style as StyleProp<ViewStyle>)
+    expect(s).toMatchObject({ flexDirection: 'row', alignItems: 'center', gap: 8 })
   })
 })

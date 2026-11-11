@@ -1,0 +1,23 @@
+---
+metaTitle: Accessible Icon
+metaDescription: Makes icons accessible by adding a label.
+sourcePath: components/utilities/AccessibleIcon
+---
+
+# Accessible Icon
+
+```tsx
+<IconButton variant="ghost">
+  <AccessibleIcon label="Close">
+    <CloseIcon />
+  </AccessibleIcon>
+</IconButton>
+```
+
+## API Reference
+
+| Prop | Type | Default |
+|------|------|---------|
+| `label` | `string` | required |
+
+Takes exactly one icon. Inside a button the label becomes part of the button's name; standalone the icon is announced as an image with that label.

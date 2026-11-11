@@ -30,6 +30,7 @@ A React Native UI component library that mirrors the [Radix Themes](https://www.
 - **Typography**: Text, Heading, Link, Blockquote, Code, Em, Strong, Quote, Kbd
 - **Display**: Avatar, Badge
 - **Actions**: Button, IconButton, Checkbox, CheckboxGroup, CheckboxCards, Switch, Radio, RadioGroup
+- **Utilities**: VisuallyHidden, AccessibleIcon
 - **Feedback**: Spinner, Progress
 - **Forms**: TextField, TextArea
 
