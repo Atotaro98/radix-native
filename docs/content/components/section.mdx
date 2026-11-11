@@ -1,0 +1,35 @@
+---
+metaTitle: Section
+metaDescription: Denotes a section of page content.
+sourcePath: components/layout/Section
+---
+
+# Section
+
+```tsx
+<Box bg="gray-a2">
+  <Section size={2}>
+    <DecorativeBox height={96} />
+  </Section>
+</Box>
+```
+
+## API Reference
+
+Inherits from View. Supports [layout props](/theme/spacing); padding props override the size's padding.
+
+| Prop | Type | Default |
+|------|------|---------|
+| `size` | `1-4` | `3` |
+| `display` | `'none' \| 'initial'` | — |
+
+## Examples
+
+### Size
+
+Vertical padding is `space-5`, `space-7`, `space-9` or 80px (scaled).
+
+```tsx
+<Section size={1}><DecorativeBox /></Section>
+<Section size={4}><DecorativeBox /></Section>
+```

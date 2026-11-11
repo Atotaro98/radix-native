@@ -1,0 +1,44 @@
+---
+metaTitle: Container
+metaDescription: Constrains the maximum width of page content.
+sourcePath: components/layout/Container
+---
+
+# Container
+
+```tsx
+<Box bg="gray-a2">
+  <Container size={1}>
+    <DecorativeBox height={96} />
+  </Container>
+</Box>
+```
+
+## API Reference
+
+Inherits from View. Supports [layout props](/theme/spacing). Size props (`width`, `maxWidth`, `height`…) apply to the inner content, the rest to the outer View.
+
+| Prop | Type | Default |
+|------|------|---------|
+| `size` | `1-4` | `4` |
+| `align` | `'left' \| 'center' \| 'right'` | `'center'` |
+| `display` | `'none' \| 'initial'` | — |
+
+## Examples
+
+### Size
+
+Max widths are 448, 688, 880 and 1136px, not affected by scaling.
+
+```tsx
+<Flex gap={3}>
+  <Container size={1}><DecorativeBox /></Container>
+  <Container size={2}><DecorativeBox /></Container>
+</Flex>
+```
+
+### Align
+
+```tsx
+<Container size={1} align="left"><DecorativeBox /></Container>
+```

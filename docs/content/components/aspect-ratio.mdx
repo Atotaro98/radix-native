@@ -1,0 +1,25 @@
+---
+metaTitle: Aspect Ratio
+metaDescription: Displays content within a desired ratio.
+sourcePath: components/layout/AspectRatio
+---
+
+# Aspect Ratio
+
+```tsx
+<AspectRatio ratio={16 / 8}>
+  <Image
+    source={photo}
+    resizeMode="cover"
+    style={{ width: '100%', height: '100%', borderRadius: 4 }}
+  />
+</AspectRatio>
+```
+
+## API Reference
+
+Inherits from View. No margin or layout props, as in Radix.
+
+| Prop | Type | Default |
+|------|------|---------|
+| `ratio` | `number` | `1` |
