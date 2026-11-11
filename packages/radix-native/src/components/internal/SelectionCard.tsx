@@ -5,7 +5,7 @@ import { useThemeContext } from '../../hooks/useThemeContext'
 import { useMetrics } from '../../hooks/useMetrics'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
-import { getClassicEffect } from '../../utils/classicEffect'
+import { shadowStyle } from '../../utils/shadow'
 import type { SpaceToken } from '../../tokens/spacing'
 import type { RadiusLevel } from '../../tokens/radius'
 import type { AccentColor } from '../../tokens/colors/types'
@@ -76,7 +76,7 @@ export function SelectionCard<P extends object>({
   children,
   style,
 }: SelectionCardProps<P>) {
-  const { appearance, scaling, radius } = useThemeContext()
+  const { scaling, radius } = useThemeContext()
   const metrics = useMetrics()
   const colors = useVariantColors(recipe, { variant, color, highContrast, checked, disabled })
 
@@ -114,7 +114,7 @@ export function SelectionCard<P extends object>({
       borderRadius={borderRadius}
       style={[
         cardStyle,
-        variant === 'classic' && !disabled ? getClassicEffect(appearance) : undefined,
+        shadowStyle(colors.shadow),
         style,
       ]}
     >

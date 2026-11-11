@@ -1,14 +1,13 @@
 import React, { useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 import type { StyleProp, ViewStyle, GestureResponderEvent } from 'react-native'
-import { useThemeContext } from '../../hooks/useThemeContext'
 import { useMetrics } from '../../hooks/useMetrics'
 import { useMargins } from '../../hooks/useMargins'
 import { useInteraction } from '../../hooks/useInteraction'
 import { AnimatedPressable } from '../../hooks/usePressScale'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { getMinHitSlop, MIN_TOUCH_TARGET } from '../../utils/hitSlop'
-import { getClassicEffect } from '../../utils/classicEffect'
+import { shadowStyle } from '../../utils/shadow'
 import type { RadiusToken, RadiusLevel } from '../../tokens/radius'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { NativePressableProps } from '../../types/nativeProps'
@@ -88,12 +87,9 @@ export function BaseButton({
   hitSlop,
   ...rest
 }: InternalProps) {
-  const { appearance } = useThemeContext()
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
   const isDisabled = disabled || loading
-  const isClassic = variant === 'classic'
-
   const { pressed, focused, scaleStyle, handlers } = useInteraction({
     enabled: !isDisabled,
     onPressIn,
@@ -107,7 +103,7 @@ export function BaseButton({
   const gap = metrics.px(SIZE_GAP[size])
   const borderRadius = metrics.radius(SIZE_RADIUS_LEVEL[size], 'pill')
 
-  const colors = useVariantColors('button', { variant, color, highContrast, disabled: isDisabled })
+  const colors = useVariantColors('button', { variant, color, highContrast, disabled: isDisabled, pressed })
   const focusColor = useVariantColors('focusRing', { color }).ring
 
   const handlePress = useCallback(
@@ -136,9 +132,7 @@ export function BaseButton({
     opacity: pressed ? colors.pressedOpacity : undefined,
   }
 
-  const classicStyle = isClassic
-    ? getClassicEffect(appearance, { pressed, disabled: isDisabled && !loading })
-    : undefined
+  const classicStyle = shadowStyle(colors.shadow)
 
   // Radix: Button text is medium, except ghost which is regular.
   const label = (
@@ -163,7 +157,7 @@ export function BaseButton({
       accessibilityState={{ ...accessibilityState, disabled: isDisabled, busy: loading }}
       style={[scaleStyle, containerStyle, stateStyle, classicStyle, style]}
     >
-      {isClassic && !isDisabled && <ClassicOverlay />}
+      {colors.bevel && <ClassicOverlay />}
       {loading ? (
         <>
           {/* Radix: the label stays in place (keeping the size) and readable by

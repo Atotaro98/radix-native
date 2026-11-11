@@ -66,8 +66,6 @@ export function RadioIndicator({ size, variant, color, highContrast, checked, di
   const { width: radioSize } = useToggleGeometry(radioGeometry, { size })
   const dotSize = Math.round(radioSize * DOT_SCALE)
   const colors = useVariantColors('radio', { variant, color, highContrast, checked, disabled })
-  // Radix: checked classic is a bevel (gradient + inset highlight), with no drop shadow.
-  const isClassicBevel = variant === 'classic' && checked && !disabled
 
   const radioStyle = useMemo<ViewStyle>(() => ({
     width: radioSize,
@@ -82,7 +80,7 @@ export function RadioIndicator({ size, variant, color, highContrast, checked, di
 
   return (
     <View style={radioStyle}>
-      {isClassicBevel && <ClassicOverlay borderRadius={radioSize / 2} />}
+      {colors.bevel && <ClassicOverlay borderRadius={radioSize / 2} />}
       {colors.indicator && (
         <View
           style={{

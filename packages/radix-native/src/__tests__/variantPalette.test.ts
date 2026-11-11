@@ -3,7 +3,7 @@
  * mirrors; expectations are paints (tokens), so no theme is needed.
  */
 import {
-  getVariantPaints, resolvePaint, c, g, f, layers, fade, byMode, blackA, whiteA, TRANSPARENT, WHITE, SHADOW_1_RING,
+  getVariantPaints, resolvePaint, c, g, f, raw, layers, fade, byMode, blackA, whiteA, TRANSPARENT, WHITE, SHADOW_1_RING,
 } from '../utils/variantPalette'
 import type { RecipeName, RecipeState } from '../utils/variantPalette'
 
@@ -156,16 +156,14 @@ describe('kbd (kbd.css)', () => {
   })
 
   it('.rt-variant-classic → gray-1 with the per-mode --kbd-box-shadow colors', () => {
-    expect(paints('kbd', { variant: 'classic' })).toEqual({
+    // the drop shadow is checked under 'shadows and bevel'
+    expect(paints('kbd', { variant: 'classic' })).toMatchObject({
       bg: g(1),
       text: g(12),
       ring: byMode(g('a5'), g('a7')),
       bottomEdge: byMode(g('a7'), blackA(11)),
       highlight: byMode(g('a3'), g('a11')),
-      shadow: byMode(g(12), { raw: '#000000' }),
-      shadowOpacity: 0.12,
     })
-    expect(getVariantPaints('kbd', { appearance: 'dark', variant: 'classic' }).shadowOpacity).toBe(0.95)
   })
 })
 
@@ -195,5 +193,59 @@ describe('focus ring (color.css --focus-*)', () => {
 
   it('accent-* paints still follow a gray color', () => {
     expect(resolve(c(8), 'gray')).toBe('gray-8')
+  })
+})
+
+describe('shadows and bevel (classic look)', () => {
+  // The drop shadow that stands in for the raised classic look (Radix draws Button's with insets).
+  const lift = (opacity: number) => ({ color: raw('#000000'), opacity, offsetY: 1, radius: 2, elevation: 2 })
+  const dark = { appearance: 'dark' as const }
+
+  it.each([
+    // .rt-variant-classic: bevel gradient (background-image + ::after) at rest and while pressed
+    ['button classic at rest → lift + bevel', 'button', { variant: 'classic' }, { shadow: lift(0.15), bevel: true }],
+    ['button classic :active → bevel, no lift', 'button', { variant: 'classic', pressed: true }, { shadow: undefined, bevel: true }],
+    // [data-disabled] (loading sets it too): background-image none
+    ['button classic [data-disabled] / loading → flat', 'button', { variant: 'classic', disabled: true }, { shadow: undefined, bevel: undefined }],
+    ['button solid → flat', 'button', { variant: 'solid' }, { shadow: undefined, bevel: undefined }],
+    // --base-card-classic-box-shadow-outer; :active keeps it (--base-card-classic-active-*)
+    ['card classic → lift', 'card', { variant: 'classic' }, { shadow: lift(0.15) }],
+    ['card classic :active → keeps the lift', 'card', { variant: 'classic', pressed: true }, { shadow: lift(0.15) }],
+    ['card surface → no shadow', 'card', { variant: 'surface' }, { shadow: undefined }],
+    // checkbox-cards / radio-cards classic: outer shadow kept on :disabled
+    ['checkbox card classic → lift', 'checkboxCard', { variant: 'classic' }, { shadow: lift(0.15) }],
+    ['checkbox card classic :disabled → keeps the lift', 'checkboxCard', { variant: 'classic', disabled: true }, { shadow: lift(0.15) }],
+    ['radio card classic :disabled → keeps the lift', 'radioCard', { variant: 'classic', disabled: true }, { shadow: lift(0.15) }],
+    ['checkbox card surface → no shadow', 'checkboxCard', { variant: 'surface' }, { shadow: undefined }],
+    // checkbox / radio classic [data-state=checked]: bevel gradient, inset only (no drop shadow)
+    ['checkbox classic checked → bevel', 'checkbox', { variant: 'classic', checked: true }, { bevel: true, shadow: undefined }],
+    ['checkbox classic unchecked → none', 'checkbox', { variant: 'classic' }, { bevel: undefined }],
+    ['checkbox classic checked :disabled → none', 'checkbox', { variant: 'classic', checked: true, disabled: true }, { bevel: undefined }],
+    ['checkbox surface checked → none', 'checkbox', { variant: 'surface', checked: true }, { bevel: undefined }],
+    ['radio classic checked → bevel', 'radio', { variant: 'classic', checked: true }, { bevel: true }],
+    ['radio classic checked :disabled → none', 'radio', { variant: 'classic', checked: true, disabled: true }, { bevel: undefined }],
+  ] as const)('%s', (_selector, name, state, expected) => {
+    const actual = new Map(Object.entries(paints(name, state)))
+    expect(Object.fromEntries(Object.keys(expected).map(key => [key, actual.get(key)]))).toEqual(expected)
+  })
+
+  it('the classic lift is darker in dark mode', () => {
+    expect(getVariantPaints('button', { ...dark, variant: 'classic' }).shadow).toEqual(lift(0.3))
+    expect(getVariantPaints('card', { ...dark, variant: 'classic' }).shadow).toEqual(lift(0.3))
+  })
+
+  // .rt-SwitchThumb: a drop shadow in every variant; [data-disabled] 0 1px 3px black-a1
+  it.each(['classic', 'surface', 'soft'] as const)('switch %s thumb shadow, lighter when disabled', variant => {
+    const thumb = { color: raw('#000000'), offsetY: 1, radius: 1.5 }
+    expect(paints('switch', { variant }).thumbShadow).toEqual({ ...thumb, opacity: 0.15, elevation: 1 })
+    expect(paints('switch', { variant, disabled: true }).thumbShadow).toEqual({ ...thumb, opacity: 0.05, elevation: 0 })
+  })
+
+  // --kbd-box-shadow outer drop shadow: 0 0.08em 0.17em gray-a7 (dark black-a12)
+  it('kbd classic drop shadow; soft has none', () => {
+    const shadow = { color: byMode(g(12), raw('#000000')), offsetY: 1, radius: 1, elevation: 1 }
+    expect(paints('kbd', { variant: 'classic' }).shadow).toEqual({ ...shadow, opacity: 0.12 })
+    expect(getVariantPaints('kbd', { ...dark, variant: 'classic' }).shadow).toEqual({ ...shadow, opacity: 0.95 })
+    expect(paints('kbd', { variant: 'soft' }).shadow).toBeUndefined()
   })
 })

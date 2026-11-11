@@ -59,7 +59,7 @@ A group of components that Radix colors with the same rules: buttons (Button, Ic
 _Avoid_: color family, component group
 
 **Variant recipe**:
-How a Variant family turns each Variant and state (high contrast, checked, disabled, pressed, focused) into the colors of its parts (background, text, border, indicator, track, thumb, placeholder), taken from Radix. Where Radix is inconsistent between families, each recipe keeps Radix's value rather than unifying.
+How a Variant family turns each Variant and state (high contrast, checked, disabled, pressed, focused) into the colors of its parts (background, text, border, indicator, track, thumb, placeholder), and into their drop shadows and classic bevel, taken from Radix. Where Radix is inconsistent between families, each recipe keeps Radix's value rather than unifying.
 _Avoid_: generic palette, color scheme, theme colors
 
 ## Controls
