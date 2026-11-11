@@ -5,6 +5,7 @@ import type { ViewStyle, StyleProp, DimensionValue } from 'react-native'
 import { useResolveColor } from '../../hooks/useResolveColor'
 import { useMargins } from '../../hooks/useMargins'
 import { useMetrics } from '../../hooks/useMetrics'
+import { useTextStyle } from '../../hooks/useTextStyle'
 import type { MarginProps } from '../../types/marginProps'
 import type { NativeViewProps } from '../../types/nativeProps'
 
@@ -51,6 +52,11 @@ export function Skeleton({
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
   // Radix .rt-Skeleton: border-radius: var(--radius-1)
   const borderRadius = useMetrics().radius(1)
+  // Plain text sizes the placeholder: it renders like a Text in the same spot
+  // (the surrounding text's size, Theme fonts and Font scaling cap). Inside a
+  // Text, this View breaks RN's style inheritance, so the size is set explicitly.
+  const text = useTextStyle({ inline: true })
+  const textStyle = text.isNested ? [text.style, { fontSize: text.contextFontSize }] : text.style
 
   // ─── Pulse animation (gray-a3 ↔ gray-a4, 1s infinite) ──────────────
   const pulseAnim = useSharedValue(0)
@@ -120,7 +126,7 @@ export function Skeleton({
       {hasChildren && (
         <View style={{ opacity: 0 }} pointerEvents="none">
           {typeof children === 'string' || typeof children === 'number'
-            ? <RNText>{children}</RNText>
+            ? text.provide(<RNText {...text.textProps} style={textStyle}>{children}</RNText>)
             : children}
         </View>
       )}
