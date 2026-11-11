@@ -55,7 +55,7 @@ The look a consumer asks a component for: `solid`, `soft`, `surface`, `outline`,
 _Avoid_: style, appearance (reserved for light/dark)
 
 **Variant family**:
-A group of components that Radix colors with the same rules: buttons (Button, IconButton), chips (Badge, Code, Avatar), selection controls (Checkbox, Radio), tracks (Switch, Progress), cards (Card, CheckboxCards, RadioCards), text inputs (TextField, TextArea) and text (Text, Heading, Link, Blockquote). Components in one family may still differ where Radix itself differs.
+A group of components that Radix colors with the same rules: buttons (Button, IconButton), chips (Badge, Code, Avatar), selection controls (Checkbox, Radio), tracks (Switch, Progress), cards (Card, CheckboxCards, RadioCards), text inputs (TextField, TextArea), callouts (Callout) and text (Text, Heading, Link, Blockquote). Components in one family may still differ where Radix itself differs.
 _Avoid_: color family, component group
 
 **Variant recipe**:

@@ -9,6 +9,7 @@ import { AvatarSection } from './playground/sections/AvatarSection'
 import { BadgeSection } from './playground/sections/BadgeSection'
 import { BlockquoteSection } from './playground/sections/BlockquoteSection'
 import { ButtonSection } from './playground/sections/ButtonSection'
+import { CalloutSection } from './playground/sections/CalloutSection'
 import { CardSection } from './playground/sections/CardSection'
 import { CheckboxSection } from './playground/sections/CheckboxSection'
 import { CheckboxGroupSection } from './playground/sections/CheckboxGroupSection'
@@ -99,6 +100,7 @@ export function Playground({ fontIndex, onFontChange }: PlaygroundProps) {
         <BadgeSection />
         <BlockquoteSection />
         <ButtonSection />
+        <CalloutSection />
         <CardSection />
         <CheckboxSection />
         <CheckboxCardsSection />

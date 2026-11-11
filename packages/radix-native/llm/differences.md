@@ -73,6 +73,8 @@ These are places where RN cannot replicate the exact Radix web visual, and we us
 | **AccessibleIcon** | Web: clones the icon with `aria-hidden` and appends a visually hidden label as a sibling | RN: wraps the icon in one View carrying the label (role `image` standalone; inside a button or pressable Card only the label, read as part of the control's name) |
 | **Skeleton** text | Web: one bar per line (line-height 0, `box-decoration-break: clone`) | RN: one block over all lines |
 | **Skeleton** element child | Web: the child itself becomes the skeleton (Slot); its own radius wins | RN: a wrapping View; the child reports its radius through context (outermost wins), and its margins sit inside the placeholder |
+| **Callout** layout | Web: a grid where the icon takes an implicit auto column | RN: two columns (icons, then the rest), built by sorting the children; same gaps |
+| **Callout** icons | Web: icons inherit `currentColor` | RN: Callout.Icon passes the callout's color to icons that set no `color` |
 | **Inset** | Web: reads the parent's `--inset-*` CSS variables | RN: reads an Inset context that Card provides with the same values; a padding the consumer sets on the Card through `style` is not seen by the Inset. No `asChild` |
 | **TextField/TextArea** focus | Web: 2px outline with offset | RN: 1px border color change + 1px inner ring |
 | **Code** inline sizing | Web: `0.95em` relative to parent | RN: 0.95 × parent size when nested in a text component (via `TextContext`); token size when standalone |

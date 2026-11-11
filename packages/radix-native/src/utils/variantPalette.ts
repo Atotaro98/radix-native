@@ -555,6 +555,32 @@ function kbd(s: WithVariant<KbdVariant>): KbdPaints {
   }
 }
 
+// ─── Family: callouts (Callout) — callout.css ─────────────────────────────────
+
+export type CalloutVariant = 'soft' | 'surface' | 'outline'
+
+export interface CalloutPaints {
+  bg: Paint
+  /** The inset 1px ring (surface, outline). */
+  border?: Paint
+  /** Text and icons: accent-a11, high contrast accent-12, in every variant. */
+  text: Paint
+}
+
+/**
+ * `.rt-CalloutRoot:where(.rt-variant-*)`: soft accent-a3; surface accent-a2 with an
+ * accent-a6 ring; outline no fill and an accent-a7 ring. Unlike chips, surface is a
+ * tint (accent-a2, not --color-surface) and high contrast changes only the text.
+ */
+function callout(s: WithVariant<CalloutVariant>): CalloutPaints {
+  const text = s.highContrast ? c(12) : c('a11')
+  switch (s.variant) {
+    case 'soft': return { bg: c('a3'), text }
+    case 'surface': return { bg: c('a2'), border: c('a6'), text }
+    case 'outline': return { bg: TRANSPARENT, border: c('a7'), text }
+  }
+}
+
 // ─── Control label (CheckboxGroup / RadioGroup item text) ─────────────────────
 
 export interface ControlLabelPaints {
@@ -597,6 +623,7 @@ export const VARIANT_RECIPES = {
   link,
   blockquote,
   kbd,
+  callout,
   controlLabel,
   focusRing,
 } as const
