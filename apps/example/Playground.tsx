@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar'
 import { Box, Flex, Text, useThemeContext, useColor, ThemeControls } from 'radix-native'
 import { FONT_PRESETS } from './fonts'
 import { AccessibleIconSection } from './playground/sections/AccessibleIconSection'
+import { AlertDialogSection } from './playground/sections/AlertDialogSection'
 import { AspectRatioSection } from './playground/sections/AspectRatioSection'
 import { AvatarSection } from './playground/sections/AvatarSection'
 import { BadgeSection } from './playground/sections/BadgeSection'
@@ -16,6 +17,7 @@ import { CheckboxGroupSection } from './playground/sections/CheckboxGroupSection
 import { CheckboxCardsSection } from './playground/sections/CheckboxCardsSection'
 import { CodeSection } from './playground/sections/CodeSection'
 import { DataListSection } from './playground/sections/DataListSection'
+import { DialogSection } from './playground/sections/DialogSection'
 import { EmSection } from './playground/sections/EmSection'
 import { ContainerSection } from './playground/sections/ContainerSection'
 import { GridSection } from './playground/sections/GridSection'
@@ -102,6 +104,7 @@ export function Playground({ fontIndex, onFontChange }: PlaygroundProps) {
 
         {/* Alphabetical order matching Radix playground */}
         <AccessibleIconSection />
+        <AlertDialogSection />
         <AspectRatioSection />
         <AvatarSection />
         <BadgeSection />
@@ -115,6 +118,7 @@ export function Playground({ fontIndex, onFontChange }: PlaygroundProps) {
         <CodeSection />
         <ContainerSection />
         <DataListSection />
+        <DialogSection />
         <EmSection />
         <GridSection />
         <HeadingSection />

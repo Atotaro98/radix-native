@@ -5,6 +5,7 @@ export { Theme } from './theme/Theme'
 export { createTheme } from './theme/createTheme'
 export { useThemeContext } from './hooks/useThemeContext'
 export { useColor } from './hooks/useColor'
+export type { SafeAreaInsets } from './theme/theme.types'
 export type { ColorName, ColorStep, SolidStep, AlphaStep } from './hooks/useResolveColor'
 export { useMetrics, type UseMetricsOptions } from './hooks/useMetrics'
 export type { Metrics, RadiusShape } from './utils/metrics'
@@ -105,6 +106,12 @@ export {
   TabNav, type TabNavRootProps, type TabNavLinkProps,
   type TabListSize, type TabListWrap, type TabListJustify,
 } from './components/navigation'
+
+// Components — Overlays
+export {
+  Dialog, type DialogRootProps, type DialogContentProps, type DialogSlotProps, type DialogSize,
+  AlertDialog,
+} from './components/overlays'
 
 // Components — Utilities
 export {

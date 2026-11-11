@@ -720,6 +720,28 @@ function table(s: WithVariant<TableVariant>): TablePaints {
   return { text: g(12), divider: g('a5'), bg: g('panel'), border: mix(g('a5'), g(6), 0.5), headerBg: g('a2') }
 }
 
+// ─── Dialog (Dialog, AlertDialog) — _internal/base-dialog.css ─────────────────
+
+export interface DialogPaints {
+  /** Backdrop: --color-overlay, black-a6 / dark black-a8. */
+  overlay: Paint
+  /** --color-panel-solid: white / dark gray-2 (Dialog ignores a translucent panel). */
+  panel: Paint
+  /** --shadow-6 ring: color-mix(gray-a3, gray-3 25%) / dark color-mix(gray-a6, gray-6 25%). */
+  ring: Paint
+  /** The rest of --shadow-6 as one drop shadow. */
+  shadow: ShadowPaint
+}
+
+function dialog(s: PaletteState): DialogPaints {
+  return {
+    overlay: byMode(blackA(6), blackA(8)),
+    panel: byMode(WHITE, g(2)),
+    ring: byMode(mix(g('a3'), g(3), 0.25), mix(g('a6'), g(6), 0.25)),
+    shadow: { color: BLACK, opacity: s.appearance === 'dark' ? 0.5 : 0.15, offsetY: 12, radius: 30, elevation: 12 },
+  }
+}
+
 // ─── Control label (CheckboxGroup / RadioGroup item text) ─────────────────────
 
 export interface ControlLabelPaints {
@@ -768,6 +790,7 @@ export const VARIANT_RECIPES = {
   segmented,
   tabList,
   table,
+  dialog,
   controlLabel,
   focusRing,
 } as const

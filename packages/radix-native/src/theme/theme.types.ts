@@ -92,6 +92,16 @@ export interface ThemeContextValue extends ThemeChangeHandlers {
   maxFontSizeMultiplier?: number
   /** Resolves a ThemeColor token (`'accent-9'`, `'gray-a3'`, `'blue-9'`, `'#fff'`) with this Theme's values. */
   resolveColor: (token: ThemeColor) => string
+  /** RN-only: the screen edges overlays keep clear of (notch, home indicator). */
+  safeAreaInsets: SafeAreaInsets
+}
+
+/** RN-only: insets in px, as your safe-area library reports them. */
+export interface SafeAreaInsets {
+  top: number
+  right: number
+  bottom: number
+  left: number
 }
 
 export interface ThemeProps {
@@ -112,5 +122,10 @@ export interface ThemeProps {
   colorOverrides?: ColorOverrides
   /** RN-only: global cap for font scaling. Applied to all text unless overridden per-component. */
   maxFontSizeMultiplier?: number
+  /**
+   * RN-only: the screen edges overlays (Dialog, Popover…) keep clear of. Pass
+   * them from your safe-area library; default 0 on every side. Inherited.
+   */
+  safeAreaInsets?: Partial<SafeAreaInsets>
   children: React.ReactNode
 }

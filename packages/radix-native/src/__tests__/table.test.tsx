@@ -109,3 +109,30 @@ describe('Table (table.css)', () => {
     expect(flat(screen.getByTestId('last', { includeHiddenElements: true })).borderBottomWidth).toBe(1)
   })
 })
+
+describe('Table inside an Inset', () => {
+  it("outer cells take the container's inset padding", () => {
+    const { Card } = jest.requireActual('../components/layout/Card') as typeof import('../components/layout/Card')
+    const { Inset } = jest.requireActual('../components/layout/Inset') as typeof import('../components/layout/Inset')
+    renderWithTheme(
+      <Card size={3}>
+        <Inset side="x">
+          <Table.Root>
+            <Table.Body>
+              <Table.Row>
+                <Table.Cell testID="a">A</Table.Cell>
+                <Table.Cell testID="b">B</Table.Cell>
+                <Table.Cell testID="c">C</Table.Cell>
+              </Table.Row>
+            </Table.Body>
+          </Table.Root>
+        </Inset>
+      </Card>,
+    )
+    const pad = (id: string) => flat((screen.getByTestId(id, { includeHiddenElements: true }) as unknown as Node).findAll((n) => typeof n.type === 'string' && n.props.style !== undefined)[1])
+    // Card size 3: padding 24, inset padding 24 − 1
+    expect(pad('a').paddingLeft).toBe(23)
+    expect(pad('b').paddingLeft).toBe(12)
+    expect(pad('c').paddingRight).toBe(23)
+  })
+})

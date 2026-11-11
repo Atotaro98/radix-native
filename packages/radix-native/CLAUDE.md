@@ -18,7 +18,7 @@ packages/radix-native/src/
   utils/          resolveColor, variantPalette, colorMath, metrics, shadow, classicEffect (deprecated), textStyle,
                   hitSlop, alpha, env, fonts
   components/
-    internal/     BaseButton, ToggleSurface, BaseToggle, BaseTextInput, ControlLabel, selectionGroup, controlGroup, SelectionCard, CardRing, BaseTabList, inlineText, ClassicOverlay, FocusRing, ColumnRows, accessibleControl (not exported)
+    internal/     BaseButton, ToggleSurface, BaseToggle, BaseTextInput, ControlLabel, selectionGroup, controlGroup, SelectionCard, CardRing, BaseTabList, BaseDialog, Portal, inlineText, ClassicOverlay, FocusRing, ColumnRows, accessibleControl (not exported)
     layout/       Box, Flex, Grid, Container, Section, AspectRatio, ScrollArea, Separator, Card, Inset, InsetContext (Radix --inset-* values; Card provides them)
     typography/   Text, Heading, Link, Blockquote, Code, Em, Strong, Quote, Kbd, TextContext, InlineText (factory, not exported)
     display/      Avatar, Badge, Callout, DataList, Table (column sizing in utils/tableLayout)
@@ -26,6 +26,7 @@ packages/radix-native/src/
                   Switch, Radio, RadioGroup, RadioCards, SegmentedControl
     feedback/     Spinner, Progress, Skeleton
     navigation/   Tabs, TabNav (both on internal/BaseTabList)
+    overlays/     Dialog, AlertDialog (both on internal/BaseDialog)
     utilities/    VisuallyHidden, AccessibleIcon
     forms/        TextField, TextArea, Slider (math in utils/slider)
     playground/   ThemeControls
@@ -162,6 +163,7 @@ const colors = useVariantColors('checkbox', { variant, color, highContrast, chec
 | Inside a Skeleton, keep the component's shape | `useSkeletonRadius(borderRadius)` (`feedback/SkeletonContext`) in any component with its own radius; layout primitives report through `useLayoutStyle` |
 | Cells as wide as the widest (CSS grid `auto` / `1fr` / subgrid) | `useWidest()` + `useWidestCell(cells)` (`hooks/useWidest`, internal): cells report their natural width, all take the widest; hide the parent until `ready` — DataList labels, SegmentedControl items |
 | Text inside a container that sets the font (DataList, Table) | `renderInlineText(children, { textStyle, textProps, provide }, color)` (`internal/inlineText`): merges strings and text components into one Text |
+| Draw above everything (overlays) | `<Portal>` (`internal/Portal`) renders into the nearest `PortalHost` — the root Theme's, or a Modal overlay's own — keeping the Theme where the Portal sits |
 | Equal-width columns | `<ColumnRows columns gap…>` (no `onLayout`, no `%` flexBasis) |
 | CheckboxGroup / RadioGroup (Root + Item, labelled or bare items, column layout) | `createControlGroup({ name, type, rootRole, itemRole, Control, kind })` in `internal/controlGroup.tsx` — both groups are one call each; a labelled item is a Toggle surface row (label style, 0.5em gap) |
 | A Selection group (one value or several, controlled or not, disabled propagation) | `createSelectionGroup({ name, type: 'single' \| 'multiple' })` → `{ Root, useItem(value, disabled) }` — one instance per family, like Radix's CheckboxGroup / RadioGroup primitives |

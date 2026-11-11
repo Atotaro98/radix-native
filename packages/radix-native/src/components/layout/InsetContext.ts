@@ -13,6 +13,8 @@ export interface InsetValues {
   borderWidth: number
   /** `--inset-border-radius`. */
   borderRadius: number
+  /** Set by Inset for its content: a Table inside aligns its outer cells with the container (`.rt-Inset .rt-TableCell`). */
+  insideInset?: boolean
 }
 
 export const NO_INSET: InsetValues = {

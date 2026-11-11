@@ -4,7 +4,7 @@ import type { ViewStyle, StyleProp } from 'react-native'
 import { useMargins } from '../../hooks/useMargins'
 import type { MarginProps } from '../../types/marginProps'
 import type { NativeViewProps } from '../../types/nativeProps'
-import { useInsetContext, type InsetValues } from './InsetContext'
+import { InsetContext, useInsetContext, type InsetValues } from './InsetContext'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -117,9 +117,11 @@ export function Inset({
     [side, clip, margins, top, right, bottom, left, inset],
   )
 
+  const inner = useMemo(() => ({ ...inset, insideInset: true }), [inset])
+
   return (
     <View style={[insetStyle, style]} {...rest}>
-      {children}
+      <InsetContext.Provider value={inner}>{children}</InsetContext.Provider>
     </View>
   )
 }
