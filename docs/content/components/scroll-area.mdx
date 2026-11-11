@@ -1,0 +1,33 @@
+---
+metaTitle: Scroll Area
+metaDescription: Custom-styled scrollable area — here on native scroll views.
+sourcePath: components/layout/ScrollArea
+---
+
+# Scroll Area
+
+```tsx
+<Box height={180}>
+  <ScrollArea type="always" scrollbars="vertical">
+    <Box p={2} pr={8}>
+      <Heading size={4} mb={2}>Three fundamental aspects of typography</Heading>
+      <Text>
+        Legibility describes how easily individual characters can be distinguished from one another.
+      </Text>
+    </Box>
+  </ScrollArea>
+</Box>
+```
+
+## API Reference
+
+Supports [margin props](/theme/spacing).
+
+| Prop | Type | Default |
+|------|------|---------|
+| `scrollbars` | `'vertical' \| 'horizontal' \| 'both'` | `'both'` |
+| `type` | `'auto' \| 'always' \| 'scroll' \| 'hover'` | `'hover'` |
+| `size` | `1 \| 2 \| 3` | `1` |
+| `radius` | `'none' \| 'small' \| 'medium' \| 'large' \| 'full'` | — |
+
+`size` and `radius` style Radix's drawn scrollbar; native indicators can't be styled, so they have no effect here.

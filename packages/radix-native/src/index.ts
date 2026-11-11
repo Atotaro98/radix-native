@@ -52,6 +52,7 @@ export { Inset, type InsetProps, type InsetSide, type InsetClip, type InsetPaddi
 export { Container, type ContainerProps, type ContainerSize, type ContainerAlign } from './components/layout'
 export { Section, type SectionProps, type SectionSize } from './components/layout'
 export { AspectRatio, type AspectRatioProps } from './components/layout'
+export { ScrollArea, type ScrollAreaProps, type ScrollAreaSize, type ScrollAreaScrollbars, type ScrollAreaType, type ScrollAreaRef } from './components/layout'
 
 // Components — Typography
 export {

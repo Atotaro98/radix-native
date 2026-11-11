@@ -20,6 +20,7 @@ import { EmSection } from './playground/sections/EmSection'
 import { ContainerSection } from './playground/sections/ContainerSection'
 import { GridSection } from './playground/sections/GridSection'
 import { SegmentedControlSection } from './playground/sections/SegmentedControlSection'
+import { ScrollAreaSection } from './playground/sections/ScrollAreaSection'
 import { SectionSection } from './playground/sections/SectionSection'
 import { VisuallyHiddenSection } from './playground/sections/VisuallyHiddenSection'
 import { InsetSection } from './playground/sections/InsetSection'
@@ -125,6 +126,7 @@ export function Playground({ fontIndex, onFontChange }: PlaygroundProps) {
         <RadioSection />
         <RadioCardsSection />
         <RadioGroupSection />
+        <ScrollAreaSection />
         <SectionSection />
         <SegmentedControlSection />
         <SeparatorSection />
