@@ -71,6 +71,8 @@ export {
   Badge, type BadgeProps, type BadgeSize, type BadgeVariant,
   Avatar, type AvatarProps, type AvatarSize, type AvatarVariant,
   Callout, type CalloutRootProps, type CalloutIconProps, type CalloutTextProps, type CalloutSize, type CalloutVariant,
+  DataList, type DataListRootProps, type DataListItemProps, type DataListLabelProps, type DataListValueProps,
+  type DataListSize, type DataListOrientation, type DataListTrim, type DataListItemAlign,
 } from './components/display'
 
 // Components — Actions

@@ -510,6 +510,15 @@ function link(s: PaletteState): TextPaints {
   }
 }
 
+/**
+ * DataList.Label (data-list.css): gray-a11, high contrast gray-12; with `color`
+ * accent-a11, high contrast accent-12.
+ */
+function dataListLabel(s: PaletteState): TextPaints {
+  if (s.hasColor) return { text: s.highContrast ? c(12) : c('a11') }
+  return { text: s.highContrast ? g(12) : g('a11') }
+}
+
 /** Blockquote: text like Text, border accent-a6. */
 function blockquote(s: PaletteState): TextPaints {
   return { ...text(s), decoration: c('a6') }
@@ -622,6 +631,7 @@ export const VARIANT_RECIPES = {
   text,
   link,
   blockquote,
+  dataListLabel,
   kbd,
   callout,
   controlLabel,

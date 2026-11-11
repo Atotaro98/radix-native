@@ -7,7 +7,7 @@ React Native components that match the [Radix Themes](https://www.radix-ui.com/t
 ## Features
 
 - **Identical API** to `@radix-ui/themes` — same component names, same props, same variants
-- **37 components** — layout, typography, actions, forms, display, feedback
+- **38 components** — layout, typography, actions, forms, display, feedback
 - **Full theme system** — 26 accent colors, 6 gray scales, radius, scaling, dark mode, nested themes
 - **31 color scales** from `@radix-ui/colors` with light/dark modes and alpha variants
 - **Minimal dependencies** — only `react`, `react-native`, and `react-native-reanimated` as peer deps
@@ -95,6 +95,7 @@ export default function App() {
 | `Avatar`  | Profile picture with image loading state, fallback text/icon |
 | `Badge`   | Annotation label with 4 variants                             |
 | `Callout` | Short message with an icon, in soft / surface / outline |
+| `DataList` | Key-value metadata list, horizontal or vertical |
 
 ### Actions
 

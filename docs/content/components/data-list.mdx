@@ -1,0 +1,91 @@
+---
+metaTitle: Data List
+metaDescription: Displays metadata as a list of key-value pairs.
+sourcePath: components/display/DataList
+---
+
+# Data List
+
+```tsx
+<DataList.Root>
+  <DataList.Item align="center">
+    <DataList.Label minWidth={88}>Status</DataList.Label>
+    <DataList.Value>
+      <Badge color="jade" variant="soft" radius="full">Authorized</Badge>
+    </DataList.Value>
+  </DataList.Item>
+  <DataList.Item>
+    <DataList.Label minWidth={88}>ID</DataList.Label>
+    <DataList.Value>
+      <Code variant="ghost">u_2J89JSA4GJ</Code>
+    </DataList.Value>
+  </DataList.Item>
+  <DataList.Item>
+    <DataList.Label minWidth={88}>Name</DataList.Label>
+    <DataList.Value>Vlad Moroz</DataList.Value>
+  </DataList.Item>
+  <DataList.Item>
+    <DataList.Label minWidth={88}>Company</DataList.Label>
+    <DataList.Value>
+      <Link onPress={openWorkOS}>WorkOS</Link>
+    </DataList.Value>
+  </DataList.Item>
+</DataList.Root>
+```
+
+## API Reference
+
+### Root
+
+Supports [margin props](/theme/spacing).
+
+| Prop | Type | Default |
+|------|------|---------|
+| `orientation` | `'horizontal' \| 'vertical'` | `'horizontal'` |
+| `size` | `1 \| 2 \| 3` | `2` |
+| `trim` | `'normal' \| 'start' \| 'end' \| 'both'` | — |
+
+### Item
+
+| Prop | Type | Default |
+|------|------|---------|
+| `align` | `'start' \| 'center' \| 'end' \| 'baseline' \| 'stretch'` | — |
+
+### Label
+
+| Prop | Type | Default |
+|------|------|---------|
+| `width` `minWidth` `maxWidth` | `DimensionValue` | — |
+| `color` | `AccentColor` | — |
+| `highContrast` | `boolean` | — |
+
+### Value
+
+Contains the value of the item.
+
+## Examples
+
+### Orientation
+
+```tsx
+<DataList.Root orientation="vertical">…</DataList.Root>
+```
+
+### Size
+
+```tsx
+<DataList.Root size={1}>…</DataList.Root>
+<DataList.Root size={3}>…</DataList.Root>
+```
+
+### Color
+
+```tsx
+<DataList.Label color="indigo">Name</DataList.Label>
+```
+
+### High-contrast
+
+```tsx
+<DataList.Label color="indigo" highContrast>Name</DataList.Label>
+```

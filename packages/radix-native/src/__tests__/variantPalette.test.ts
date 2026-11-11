@@ -263,3 +263,14 @@ describe('callouts (callout.css)', () => {
     expect(paints('callout', { variant: 'soft' })).not.toHaveProperty('border')
   })
 })
+
+describe('DataList label (data-list.css)', () => {
+  it.each([
+    ['.rt-DataListLabel', {}, { text: g('a11') }],
+    ['.rt-DataListLabel.rt-high-contrast', { highContrast: true }, { text: g(12) }],
+    ['.rt-DataListLabel[data-accent-color]', { hasColor: true }, { text: c('a11') }],
+    ['.rt-DataListLabel[data-accent-color].rt-high-contrast', { hasColor: true, highContrast: true }, { text: c(12) }],
+  ] as const)('%s', (_selector, state, expected) => {
+    expect(paints('dataListLabel', state)).toMatchObject(expected)
+  })
+})
