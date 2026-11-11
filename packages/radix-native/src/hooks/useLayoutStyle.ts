@@ -4,6 +4,7 @@ import { useMetrics } from './useMetrics'
 import { useResolveColor } from './useResolveColor'
 import type { LayoutProps } from '../types/layoutProps'
 import { LAYOUT_PROPS, resolveLayoutStyle, splitLayoutProps } from '../utils/layoutStyle'
+import { useSkeletonRadius } from '../components/feedback/SkeletonContext'
 
 /**
  * Internal: takes a layout primitive's props and returns the resolved Layout
@@ -21,5 +22,7 @@ export function useLayoutStyle<P extends LayoutProps>(props: P): { style: ViewSt
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [metrics, rc, ...values],
   )
+  // Inside a Skeleton: this primitive's own radius (or none → radius-1), like Radix's cascade
+  useSkeletonRadius(typeof style.borderRadius === 'number' ? style.borderRadius : null)
   return { style, rest }
 }

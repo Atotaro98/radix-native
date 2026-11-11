@@ -17,6 +17,7 @@ import { ClassicOverlay } from './ClassicOverlay'
 import { ControlLabel } from './ControlLabel'
 import { AccessibleControlContext } from './accessibleControl'
 import { FocusRing } from './FocusRing'
+import { useSkeletonRadius } from '../feedback/SkeletonContext'
 
 export type BaseButtonSize = 1 | 2 | 3 | 4
 export type BaseButtonVariant = 'classic' | 'solid' | 'soft' | 'surface' | 'outline' | 'ghost'
@@ -103,6 +104,7 @@ export function BaseButton({
   const height = metrics.px(SIZE_HEIGHT[size])
   const gap = metrics.px(SIZE_GAP[size])
   const borderRadius = metrics.radius(SIZE_RADIUS_LEVEL[size], 'pill')
+  useSkeletonRadius(borderRadius)
 
   const colors = useVariantColors('button', { variant, color, highContrast, disabled: isDisabled, pressed })
   const focusColor = useVariantColors('focusRing', { color }).ring

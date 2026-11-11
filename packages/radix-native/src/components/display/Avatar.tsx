@@ -10,6 +10,7 @@ import type { AccentColor } from '../../tokens/colors/types'
 import type { FontSizeToken } from '../../tokens/typography'
 import type { MarginProps } from '../../types/marginProps'
 import type { NativeViewProps } from '../../types/nativeProps'
+import { useSkeletonRadius } from '../feedback/SkeletonContext'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -92,6 +93,7 @@ export function Avatar({
 
   // ─── Radius ─────────────────────────────────────────────────────────────
   const borderRadius = metrics.radius(SIZE_RADIUS_LEVEL[size], 'pill')
+  useSkeletonRadius(borderRadius)
 
   // ─── Colors ─────────────────────────────────────────────────────────────
   const colors = useVariantColors('avatar', { variant, color, highContrast })

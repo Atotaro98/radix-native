@@ -14,6 +14,7 @@ import type { RadiusLevel } from '../../tokens/radius'
 import type { MarginProps } from '../../types/marginProps'
 import { shadowStyle } from '../../utils/shadow'
 import type { NativeViewProps } from '../../types/nativeProps'
+import { useSkeletonRadius } from '../feedback/SkeletonContext'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -77,6 +78,7 @@ export function Card({
   const metrics = useMetrics()
   const resolvedPadding = metrics.px(SIZE_PADDING[size])
   const borderRadius = metrics.radius(SIZE_RADIUS_LEVEL[size])
+  useSkeletonRadius(borderRadius)
 
   // ─── Colors ─────────────────────────────────────────────────────────────
   const colors = useVariantColors('card', { variant })

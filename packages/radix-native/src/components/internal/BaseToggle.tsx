@@ -3,7 +3,8 @@ import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native'
 import { useControllableState } from '../../hooks/useControllableState'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { NativePressableProps } from '../../types/nativeProps'
-import { ToggleSurface, type CheckedState, type ToggleKind, type ToggleRole } from './ToggleSurface'
+import { ToggleSurface, useToggleGeometry, type CheckedState, type ToggleKind, type ToggleRole } from './ToggleSurface'
+import { useSkeletonRadius } from '../feedback/SkeletonContext'
 
 export type { CheckedState, ToggleRole }
 
@@ -77,6 +78,9 @@ export function BaseToggle<P extends { checked: CheckedState }>(props: BaseToggl
 
   // A radio or switch never reaches 'indeterminate' (NEXT only yields booleans for them).
   const indicatorProps = { ...indicator, checked } as unknown as P
+
+  // switch.css / base-checkbox.css / base-radio.css: --skeleton-radius-override is the Indicator's radius
+  useSkeletonRadius(useToggleGeometry(kind.geometry, indicatorProps).borderRadius)
 
   return (
     <ToggleSurface
