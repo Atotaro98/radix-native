@@ -1,6 +1,6 @@
 # Inset
 
-> Bleeds content (an image, a table) to the edge of the surrounding Card.
+> Bleeds content (an image, a table) to the edge of the surrounding Card or CheckboxCards / RadioCards item.
 
 ## Import
 
@@ -32,6 +32,6 @@ Not Layout props: only these padding values, no size props (Radix `inset.props.t
 
 ## How it resolves
 
-Card publishes Radix's `--inset-*` values through context: padding = card padding − border width, border width (1, ghost 0), radius. A pulled side gets `margin − pull`, where pull = padding (border-box) or padding + border width (padding-box). Outside a Card every value is 0: Inset only clips (`overflow: 'hidden'`).
+Card and card items (CheckboxCards, RadioCards) publish Radix's `--inset-*` values through context: padding = card padding − border width, border width (1, ghost 0), radius. A pulled side gets `margin − pull`, where pull = padding (border-box) or padding + border width (padding-box). Outside a Card every value is 0: Inset only clips (`overflow: 'hidden'`).
 
 Dialog, Popover and HoverCard content will provide the same context when they land.

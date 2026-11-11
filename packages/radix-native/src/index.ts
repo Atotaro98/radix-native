@@ -92,6 +92,12 @@ export {
   Skeleton, type SkeletonProps,
 } from './components/feedback'
 
+// Components — Utilities
+export {
+  VisuallyHidden, type VisuallyHiddenProps,
+  AccessibleIcon, type AccessibleIconProps,
+} from './components/utilities'
+
 // Components — Forms
 export {
   TextField, type TextFieldProps, type TextFieldSize, type TextFieldVariant,

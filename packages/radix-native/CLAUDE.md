@@ -18,13 +18,14 @@ packages/radix-native/src/
   utils/          resolveColor, variantPalette, colorMath, metrics, shadow, classicEffect (deprecated), textStyle,
                   hitSlop, alpha, env, fonts
   components/
-    internal/     BaseButton, ToggleSurface, BaseToggle, BaseTextInput, ControlLabel, selectionGroup, controlGroup, SelectionCard, ClassicOverlay, FocusRing, ColumnRows (not exported)
+    internal/     BaseButton, ToggleSurface, BaseToggle, BaseTextInput, ControlLabel, selectionGroup, controlGroup, SelectionCard, CardRing, ClassicOverlay, FocusRing, ColumnRows, accessibleControl (not exported)
     layout/       Box, Flex, Grid, Container, Section, AspectRatio, Separator, Card, Inset, InsetContext (Radix --inset-* values; Card provides them)
     typography/   Text, Heading, Link, Blockquote, Code, Em, Strong, Quote, Kbd, TextContext, InlineText (factory, not exported)
     display/      Avatar, Badge
     actions/      Button, IconButton, Checkbox, CheckboxGroup, CheckboxCards,
                   Switch, Radio, RadioGroup, RadioCards
     feedback/     Spinner, Progress, Skeleton
+    utilities/    VisuallyHidden, AccessibleIcon
     forms/        TextField, TextArea
     playground/   ThemeControls
   __tests__/      Jest + @testing-library/react-native
@@ -155,6 +156,8 @@ const colors = useVariantColors('checkbox', { variant, color, highContrast, chec
 | A Toggle's look without its behaviour | `CheckboxIndicator`, `RadioIndicator`, `SwitchIndicator` (exported from each control's file, not from `index.ts`) — rows and cards show these, never a nested Toggle |
 | A row of text runs + icons inside a control (Control label) | `<ControlLabel size weight color maxFontSizeMultiplier>{children}</ControlLabel>` — merges adjacent text, one line, tints icons without `color` |
 | A Text input (sizes, recipe colors, focus, read-only look, prop order) | `<BaseTextInput {...props} multiline? />` — TextField and TextArea are thin wrappers over it |
+| Content inside a control announced as one element (button, pressable Card) | wrap it in `<AccessibleControlContext.Provider value>` (`internal/accessibleControl`); accessible content inside reads `useIsInsideAccessibleControl()` and contributes only its label (AccessibleIcon) |
+| A base card's border (Card, card items) | `<CardRing color borderRadius width? />` (`internal/CardRing`) drawn after the content — never a layout `borderWidth`; publish the Inset values with `InsetContext.Provider` (padding − border width) |
 | Equal-width columns | `<ColumnRows columns gap…>` (no `onLayout`, no `%` flexBasis) |
 | CheckboxGroup / RadioGroup (Root + Item, labelled or bare items, column layout) | `createControlGroup({ name, type, rootRole, itemRole, Control, kind })` in `internal/controlGroup.tsx` — both groups are one call each; a labelled item is a Toggle surface row (label style, 0.5em gap) |
 | A Selection group (one value or several, controlled or not, disabled propagation) | `createSelectionGroup({ name, type: 'single' \| 'multiple' })` → `{ Root, useItem(value, disabled) }` — one instance per family, like Radix's CheckboxGroup / RadioGroup primitives |
@@ -333,6 +336,16 @@ See `llm/differences.md` for the complete list of API changes, visual difference
 
 - **Never return early before a hook call** (e.g. `if (!loading) return children` must come after every hook). Enforced by `react-hooks/rules-of-hooks`.
 - Effect / memo dependency arrays must be complete (`react-hooks/exhaustive-deps` is an error). Cancel Reanimated loops in effect cleanups (`cancelAnimation`).
+
+## Example app (apps/example)
+
+Every component change gets its playground section checked in the iOS Simulator before it is called done:
+
+- Check it with **two accent colors**, in **light and dark** mode for each (four combinations), using ThemeControls.
+- Mirror Radix: the examples are the ones on the component's Radix docs page and in the Radix playground
+  (`apps/playground/app/(themeable)/sink/<component>/page.tsx` in `radix-ui/themes`), in the same order; sections
+  follow the playground's alphabetical navigation.
+- Look at every tab: nothing clipped, collapsed, overlapping or misaligned compared with Radix.
 
 ## Testing
 

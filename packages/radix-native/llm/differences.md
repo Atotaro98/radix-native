@@ -45,7 +45,7 @@ These are places where RN cannot replicate the exact Radix web visual, and we us
 | **Linear gradients** | `background-image: linear-gradient(...)` | Not available on Views | Classic variant bevel is approximated with overlay Views |
 | **Multi-layer shadows** | Complex `box-shadow` stacks | Platform-specific: iOS `shadow*`, Android `elevation` | Less depth in shadows |
 | **Color-mix** | `color-mix(in oklab, ...)` | Not available | Border colors are simpler approximations |
-| **Outline** | `outline: 2px solid color; outline-offset: -1px` | Absolutely positioned `FocusRing` view (`focus-8`) | Shown on keyboard / TV / web focus for every pressable; inputs use border color + 1px inner ring. The checked RadioCards item ring is an absolute 2px overlay too, so it never moves the content |
+| **Outline** | `outline: 2px solid color; outline-offset: -1px` | Absolutely positioned `FocusRing` view (`focus-8`) | Shown on keyboard / TV / web focus for every pressable; inputs use border color + 1px inner ring. The checked RadioCards item ring is an absolute 2px overlay too, so it never moves the content; like every base-card border (Card, card items) it is drawn over the content and takes no layout space |
 | **Separator thickness** | `height: 1px` (CSS pixel) | `StyleSheet.hairlineWidth` (1 physical pixel) | Separator may appear thinner on retina |
 
 ### Per component
@@ -69,6 +69,8 @@ These are places where RN cannot replicate the exact Radix web visual, and we us
 | **AspectRatio** | Web: an outer div with the padding-bottom trick, props on an inner absolutely-filled div | RN: one View with the `aspectRatio` style; `style` lands on it. No `asChild` |
 | **Container / Section** `display` | Web: `'initial'` = `flex` (Container) / `block` (Section) | RN: `'initial'` = `flex` for both (RN has no block) |
 | **Section** | Web: a `<section>` element | RN: a plain View — no landmark role on iOS / Android |
+| **VisuallyHidden** | Web: `clip: rect(0,0,0,0)` hides the 1px box | RN: no `clip`; `opacity: 0` instead. No `asChild` |
+| **AccessibleIcon** | Web: clones the icon with `aria-hidden` and appends a visually hidden label as a sibling | RN: wraps the icon in one View carrying the label (role `image` standalone; inside a button or pressable Card only the label, read as part of the control's name) |
 | **Inset** | Web: reads the parent's `--inset-*` CSS variables | RN: reads an Inset context that Card provides with the same values; a padding the consumer sets on the Card through `style` is not seen by the Inset. No `asChild` |
 | **TextField/TextArea** focus | Web: 2px outline with offset | RN: 1px border color change + 1px inner ring |
 | **Code** inline sizing | Web: `0.95em` relative to parent | RN: 0.95 × parent size when nested in a text component (via `TextContext`); token size when standalone |
