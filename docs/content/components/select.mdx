@@ -1,0 +1,92 @@
+---
+metaTitle: Select
+metaDescription: Displays a list of options for the user to pick from—triggered by a button.
+sourcePath: components/forms/Select
+---
+
+# Select
+
+```tsx
+<Select.Root defaultValue="apple">
+  <Select.Trigger />
+  <Select.Content>
+    <Select.Group>
+      <Select.Label>Fruits</Select.Label>
+      <Select.Item value="orange">Orange</Select.Item>
+      <Select.Item value="apple">Apple</Select.Item>
+      <Select.Item value="grape" disabled>Grape</Select.Item>
+    </Select.Group>
+    <Select.Separator />
+    <Select.Group>
+      <Select.Label>Vegetables</Select.Label>
+      <Select.Item value="carrot">Carrot</Select.Item>
+      <Select.Item value="potato">Potato</Select.Item>
+    </Select.Group>
+  </Select.Content>
+</Select.Root>
+```
+
+## API Reference
+
+### Root
+
+| Prop | Type | Default |
+|------|------|---------|
+| `size` | `1 \| 2 \| 3` | `2` |
+| `value` / `defaultValue` | `string` | — |
+| `onValueChange` | `(value: string) => void` | — |
+| `disabled` | `boolean` | — |
+
+### Trigger
+
+| Prop | Type | Default |
+|------|------|---------|
+| `variant` | `'surface' \| 'classic' \| 'soft' \| 'ghost'` | `'surface'` |
+| `color` | `AccentColor` | — |
+| `radius` | `'none' \| 'small' \| 'medium' \| 'large' \| 'full'` | — |
+| `placeholder` | `ReactNode` | — |
+
+### Content
+
+| Prop | Type | Default |
+|------|------|---------|
+| `variant` | `'solid' \| 'soft'` | `'solid'` |
+| `color` | `AccentColor` | — |
+| `highContrast` | `boolean` | — |
+| `position` | `'item-aligned' \| 'popper'` | `'item-aligned'` |
+
+### Item
+
+`value` (required), `disabled`, `textValue`.
+
+## Examples
+
+### Size
+
+```tsx
+<Select.Root size={1} defaultValue="apple">…</Select.Root>
+<Select.Root size={3} defaultValue="apple">…</Select.Root>
+```
+
+### Trigger variant
+
+```tsx
+<Select.Trigger variant="classic" />
+<Select.Trigger variant="soft" />
+<Select.Trigger variant="ghost" />
+```
+
+### Placeholder
+
+```tsx
+<Select.Root>
+  <Select.Trigger placeholder="Pick a fruit" />
+  …
+</Select.Root>
+```
+
+### Position
+
+```tsx
+<Select.Content position="popper">…</Select.Content>
+```

@@ -1,0 +1,61 @@
+---
+metaTitle: Dropdown Menu
+metaDescription: Menu representing a set of actions, triggered by a button.
+sourcePath: components/overlays/DropdownMenu
+---
+
+# Dropdown Menu
+
+```tsx
+<DropdownMenu.Root>
+  <DropdownMenu.Trigger><Button variant="soft">Options</Button></DropdownMenu.Trigger>
+  <DropdownMenu.Content>
+    <DropdownMenu.Item shortcut="⌘ E">Edit</DropdownMenu.Item>
+    <DropdownMenu.Item shortcut="⌘ D">Duplicate</DropdownMenu.Item>
+    <DropdownMenu.Separator />
+    <DropdownMenu.Item shortcut="⌘ ⌫" color="red">Delete</DropdownMenu.Item>
+  </DropdownMenu.Content>
+</DropdownMenu.Root>
+```
+
+## API Reference
+
+### Content
+
+| Prop | Type | Default |
+|------|------|---------|
+| `size` | `1 \| 2` | `2` |
+| `variant` | `'solid' \| 'soft'` | `'solid'` |
+| `color` | `AccentColor` | — |
+| `highContrast` | `boolean` | — |
+
+### Item
+
+| Prop | Type | Default |
+|------|------|---------|
+| `color` | `AccentColor` | — |
+| `shortcut` | `string` | — |
+| `disabled` | `boolean` | `false` |
+| `onSelect` | `(event) => void` | — |
+
+Also: CheckboxItem, RadioGroup / RadioItem, Label, Group, Separator, Sub / SubTrigger / SubContent.
+
+## Examples
+
+### Size
+
+```tsx
+<DropdownMenu.Content size={1}>…</DropdownMenu.Content>
+```
+
+### Variant
+
+```tsx
+<DropdownMenu.Content variant="soft">…</DropdownMenu.Content>
+```
+
+### High-contrast
+
+```tsx
+<DropdownMenu.Content highContrast>…</DropdownMenu.Content>
+```

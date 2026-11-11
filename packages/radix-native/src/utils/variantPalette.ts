@@ -742,6 +742,132 @@ function dialog(s: PaletteState): DialogPaints {
   }
 }
 
+// ─── Popper panel (Popover, HoverCard, menus, Select content) ────────────────
+
+export interface PanelPaints {
+  /** --color-panel-solid: white / dark gray-2. */
+  panel: Paint
+  /** The 1px ring of --shadow-4 / --shadow-5: color-mix(gray-a3 / dark gray-a6). */
+  ring: Paint
+  /** The rest of the shadow as one drop shadow. */
+  shadow: ShadowPaint
+}
+
+function popperPanel(s: PaletteState): PanelPaints {
+  return {
+    panel: byMode(WHITE, g(2)),
+    ring: byMode(mix(g('a3'), g(3), 0.25), mix(g('a6'), g(6), 0.25)),
+    shadow: { color: BLACK, opacity: s.appearance === 'dark' ? 0.4 : 0.12, offsetY: 8, radius: 20, elevation: 8 },
+  }
+}
+
+// ─── Tooltip — tooltip.css ────────────────────────────────────────────────────
+
+export interface TooltipPaints {
+  /** gray-12 (near-black in light, near-white in dark): the scale inverts it. */
+  bg: Paint
+  /** gray-1. */
+  text: Paint
+}
+
+function tooltip(_s: PaletteState): TooltipPaints {
+  return { bg: g(12), text: g(1) }
+}
+
+// ─── Family: menus (DropdownMenu, ContextMenu, Select content) — base-menu.css ──
+
+export type MenuVariant = 'solid' | 'soft'
+
+export interface MenuItemPaints {
+  /** Undefined = no background. */
+  bg?: Paint
+  /** Item text (and indicator / chevron). */
+  text: Paint
+  /** The shortcut: gray-a11, inherits the text color when highlighted or disabled. */
+  shortcut: Paint
+}
+
+export interface MenuItemState extends WithVariant<MenuVariant> {
+  /** Pressed on touch (Radix `[data-highlighted]`). */
+  highlighted?: boolean
+  /** An open SubTrigger. */
+  subOpen?: boolean
+}
+
+/**
+ * `.rt-BaseMenuItem`: gray-12 text (accent-a11 with its own `color`), disabled
+ * gray-a8 with no highlight. Highlighted: solid accent-9 / accent-contrast
+ * (high contrast accent-12 / accent-1, except items with their own color);
+ * soft accent-a4. An open SubTrigger: solid gray-a3, soft accent-a3.
+ */
+function menuItem(s: MenuItemState): MenuItemPaints {
+  const rest = s.hasColor ? c('a11') : g(12)
+  if (s.disabled) return { text: g('a8'), shortcut: g('a8') }
+  if (s.highlighted) {
+    if (s.variant === 'soft') return { bg: c('a4'), text: rest, shortcut: rest }
+    const hc = s.highContrast && !s.hasColor
+    const text = hc ? c(1) : c('contrast')
+    return { bg: hc ? c(12) : c(9), text, shortcut: text }
+  }
+  if (s.subOpen) return { bg: s.variant === 'soft' ? c('a3') : g('a3'), text: rest, shortcut: rest }
+  return { text: rest, shortcut: g('a11') }
+}
+
+export interface MenuChromePaints {
+  /** `.rt-BaseMenuLabel`. */
+  label: Paint
+  /** `.rt-BaseMenuSeparator`. */
+  separator: Paint
+}
+
+function menuChrome(_s: PaletteState): MenuChromePaints {
+  return { label: g('a10'), separator: g('a6') }
+}
+
+// ─── Select trigger — select.css ──────────────────────────────────────────────
+
+export type SelectTriggerVariant = 'classic' | 'surface' | 'soft' | 'ghost'
+
+export interface SelectTriggerPaints {
+  bg: Paint
+  /** The inset 1px ring (surface, classic). */
+  border?: Paint
+  text: Paint
+  /** The value text when showing the placeholder. */
+  placeholder: Paint
+  /** The chevron (0.9 opacity except ghost; gray-a9 when disabled). */
+  icon: Paint
+}
+
+/**
+ * `.rt-SelectTrigger:where(.rt-variant-*)`. Surface / classic are gray; soft /
+ * ghost take the accent (`color`). Open (`[data-state=open]`, also hover on the
+ * web): surface ring gray-a8, soft accent-a4, ghost accent-a3. Classic's
+ * gradients flatten to gray-2.
+ */
+function selectTrigger(s: WithVariant<SelectTriggerVariant> & { open?: boolean }): SelectTriggerPaints {
+  if (s.disabled) {
+    const icon = g('a9')
+    switch (s.variant) {
+      case 'surface': return { bg: g('a2'), border: g('a6'), text: g('a11'), placeholder: g('a11'), icon }
+      case 'classic': return { bg: g(2), border: byMode(g('a4'), g('a5')), text: g('a11'), placeholder: g('a11'), icon }
+      case 'soft': return { bg: g('a3'), text: g('a11'), placeholder: g('a11'), icon }
+      case 'ghost': return { bg: TRANSPARENT, text: g('a11'), placeholder: g('a11'), icon }
+    }
+  }
+  switch (s.variant) {
+    case 'surface':
+      return { bg: g('surface'), border: s.open ? g('a8') : g('a7'), text: g(12), placeholder: g('a10'), icon: fade(g(12), 0.9) }
+    case 'classic':
+      // the gray-2 → gray-1 gradient and its subtle inset highlights flatten to gray-2
+      return { bg: g(2), border: byMode(g('a5'), whiteA(4)), text: g(12), placeholder: g('a10'), icon: fade(g(12), 0.9) }
+    case 'soft':
+      return { bg: s.open ? c('a4') : c('a3'), text: c(12), placeholder: fade(c(12), 0.6), icon: fade(c(12), 0.9) }
+    case 'ghost':
+      return { bg: s.open ? c('a3') : TRANSPARENT, text: c(12), placeholder: fade(c(12), 0.6), icon: c(12) }
+  }
+}
+
 // ─── Control label (CheckboxGroup / RadioGroup item text) ─────────────────────
 
 export interface ControlLabelPaints {
@@ -791,6 +917,11 @@ export const VARIANT_RECIPES = {
   tabList,
   table,
   dialog,
+  popperPanel,
+  tooltip,
+  menuItem,
+  menuChrome,
+  selectTrigger,
   controlLabel,
   focusRing,
 } as const

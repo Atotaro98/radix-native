@@ -1,0 +1,25 @@
+---
+metaTitle: Tooltip
+metaDescription: Floating element that provides a control with contextual information.
+sourcePath: components/overlays/Tooltip
+---
+
+# Tooltip
+
+```tsx
+<Tooltip content="Add to library">
+  <IconButton radius="full" accessibilityLabel="Add"><PlusIcon /></IconButton>
+</Tooltip>
+```
+
+## API Reference
+
+| Prop | Type | Default |
+|------|------|---------|
+| `content` | `ReactNode` | required |
+| `side` | `'top' \| 'right' \| 'bottom' \| 'left'` | `'top'` |
+| `sideOffset` | `number` | `4` |
+| `align` | `'start' \| 'center' \| 'end'` | `'center'` |
+| `maxWidth` | `DimensionValue` | `360` |
+
+On touch a long-press shows the tooltip until the finger lifts (Radix: hover or focus). A string `content` is also the trigger's accessibility hint.

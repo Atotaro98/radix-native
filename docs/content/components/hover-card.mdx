@@ -1,0 +1,30 @@
+---
+metaTitle: Hover Card
+metaDescription: For sighted users to preview content available behind a link.
+sourcePath: components/overlays/HoverCard
+---
+
+# Hover Card
+
+```tsx
+<HoverCard.Root>
+  <HoverCard.Trigger><Link onPress={openProfile}>@radix_ui</Link></HoverCard.Trigger>
+  <HoverCard.Content maxWidth={300}>
+    <Text size={2}>React components, icons, and colors for building high-quality, accessible UI.</Text>
+  </HoverCard.Content>
+</HoverCard.Root>
+```
+
+## API Reference
+
+### Content
+
+| Prop | Type | Default |
+|------|------|---------|
+| `size` | `1 \| 2 \| 3` | `2` |
+| `width` `minWidth` `maxWidth` | `DimensionValue` | `maxWidth` 480 |
+| `side` | `'top' \| 'right' \| 'bottom' \| 'left'` | `'bottom'` |
+| `sideOffset` | `number` | `8` |
+| `align` | `'start' \| 'center' \| 'end'` | `'start'` |
+
+On touch a long-press on the trigger opens the card (Radix: hover).

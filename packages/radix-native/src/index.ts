@@ -111,6 +111,12 @@ export {
 export {
   Dialog, type DialogRootProps, type DialogContentProps, type DialogSlotProps, type DialogSize,
   AlertDialog,
+  Popover, type PopoverRootProps, type PopoverContentProps, type PopoverSlotProps, type PopoverSize,
+  HoverCard, type HoverCardRootProps, type HoverCardContentProps, type HoverCardSize,
+  Tooltip, type TooltipProps,
+  DropdownMenu, type DropdownMenuRootProps, type MenuContentProps, type MenuItemProps, type MenuCheckboxItemProps,
+  type MenuRadioGroupProps, type MenuRadioItemProps, type MenuSubProps, type MenuSelectEvent, type MenuSize, type MenuVariant,
+  ContextMenu, type ContextMenuRootProps, type ContextMenuTriggerProps,
 } from './components/overlays'
 
 // Components — Utilities
@@ -124,6 +130,8 @@ export {
   TextField, type TextFieldProps, type TextFieldSize, type TextFieldVariant,
   TextArea, type TextAreaProps, type TextAreaSize, type TextAreaVariant,
   Slider, type SliderProps, type SliderSize, type SliderVariant,
+  Select, type SelectRootProps, type SelectTriggerProps, type SelectContentProps, type SelectItemProps,
+  type SelectSize, type SelectTriggerVariant, type SelectContentVariant,
 } from './components/forms'
 
 // Playground

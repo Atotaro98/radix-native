@@ -113,7 +113,7 @@ export function ThemeImpl({
         ? (
           <View style={{ flex: 1, backgroundColor: hasBackground ? backgroundColor : undefined }}>
             {/* The root hosts Anchored overlays (Popover, menus…); Modal overlays mount their own host */}
-            {isRoot ? <PortalHost>{children}</PortalHost> : children}
+            {isRoot ? <PortalHost handlesBack>{children}</PortalHost> : children}
           </View>
         )
         : children}

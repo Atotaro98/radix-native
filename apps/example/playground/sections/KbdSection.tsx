@@ -10,7 +10,7 @@ function AllSizes() {
     <Flex direction="column" gapY={4}>
       {SIZES.map(size => (
         <LabeledRow key={size} label={`Size ${size}`} labelWidth={80}>
-          <Kbd size={size}>⌥ J</Kbd>
+          <Flex direction="row"><Kbd size={size}>⌥ J</Kbd></Flex>
         </LabeledRow>
       ))}
     </Flex>
