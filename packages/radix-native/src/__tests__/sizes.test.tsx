@@ -5,7 +5,7 @@
 import React from 'react'
 import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native'
 import { screen } from '@testing-library/react-native'
-import { Avatar, Card, CheckboxCards, RadioCards, Spinner, Text } from '../index'
+import { Avatar, Blockquote, Card, CheckboxCards, CheckboxGroup, Code, Kbd, RadioCards, Spinner, Text } from '../index'
 import { renderWithTheme } from './helpers/render'
 
 type Node = { type: unknown; props: { style?: unknown } }
@@ -129,5 +129,40 @@ describe('selection card auto-fit grid', () => {
       { scaling: '90%' },
     )
     expect(basis()).toEqual([160])
+  })
+})
+
+describe('lengths relative to the text size (em)', () => {
+  // .rt-Kbd: min-width 1.75em, line-height 1.7em, padding 0 0.5em 0.05em; em = 0.75 × size-2 or 0.8 × size-N
+  it.each<[string, () => React.ReactElement, number, number, number, number]>([
+    ['default (0.75 × 14 → 11px)', () => <Kbd testID="k">K</Kbd>, 19, 19, 6, 1],
+    ['size 3 (0.8 × 16 → 13px)', () => <Kbd size={3} testID="k">K</Kbd>, 23, 22, 7, 1],
+  ])('Kbd %s', (_, kbd, minWidth, minHeight, paddingHorizontal, paddingBottom) => {
+    renderWithTheme(kbd())
+    expect(flat(screen.getByTestId('k'))).toMatchObject({ minWidth, minHeight, paddingHorizontal, paddingBottom })
+  })
+
+  // .rt-Code: padding 0.1em 0.25em; size 6 = 0.95 × 24 → 23px
+  it('Code pads 0.1em / 0.25em, ghost not at all', () => {
+    renderWithTheme(<><Code size={6} testID="c">x</Code><Code size={6} variant="ghost" testID="g">x</Code></>)
+    expect(flat(screen.getByTestId('c'))).toMatchObject({ paddingVertical: 2, paddingHorizontal: 6 })
+    expect(flat(screen.getByTestId('g'))).toMatchObject({ paddingVertical: 0, paddingHorizontal: 0 })
+  })
+
+  // .rt-Blockquote: border-left max(space-1, 0.25em); padding-left min(space-5, max(space-3, 0.5em))
+  it.each<[string, number, number]>([['100%', 4, 12], ['90%', 4, 11]])(
+    'Blockquote at %s scaling uses the Theme’s space tokens',
+    (scaling, borderLeftWidth, paddingLeft) => {
+      renderWithTheme(<Blockquote testID="b">Quote</Blockquote>, { scaling: scaling as '100%' | '90%' })
+      expect(flat(screen.getByTestId('b'))).toMatchObject({ borderLeftWidth, paddingLeft })
+    },
+  )
+
+  // Radix CheckboxGroup: gap calc(var(--font-size) / 2) between the Indicator and its label
+  it.each<[1 | 2 | 3, number]>([[2, 7], [3, 8]])('a size %i group row has a 0.5em gap', (size, gap) => {
+    renderWithTheme(
+      <CheckboxGroup size={size}><CheckboxGroup.Item value="a">Apples</CheckboxGroup.Item></CheckboxGroup>,
+    )
+    expect(flat(screen.getByRole('checkbox')).gap).toBe(gap)
   })
 })

@@ -15,7 +15,7 @@ The settings every component reads: appearance, accent color, gray color, radius
 _Avoid_: provider, config, global theme
 
 **Metrics**:
-The pixel values a component derives from the Theme — spacing, sizes and radius — with the Theme's scaling and radius factor already applied the way Radix applies them. A radius takes one of Radix's shapes: a plain step, a pill, a thumb, or one relative to the text size.
+The pixel values a component derives from the Theme — spacing, sizes and radius — with the Theme's scaling and radius factor already applied the way Radix applies them. A radius takes one of Radix's shapes: a plain step, a pill or a thumb. A radius relative to the text size comes from the Text style instead.
 _Avoid_: sizes, dimensions, tokens (for resolved values)
 
 **Layout props**:
@@ -25,7 +25,7 @@ _Avoid_: style props, box props
 ## Typography
 
 **Text style**:
-Everything that decides how a piece of text renders: size, line height, letter spacing, font face, font style, font scaling cap, wrapping, and what it inherits from or passes on to nested text. Every text-rendering module, including controls with internal labels, gets its Text style from one place.
+Everything that decides how a piece of text renders: size, line height, letter spacing, font face, font style, font scaling cap, wrapping, and what it inherits from or passes on to nested text. It also gives the lengths and radius Radix writes relative to the text size (in em), measured on the text's own size. Every text-rendering module, including controls with internal labels, gets its Text style from one place.
 _Avoid_: typography (for the whole concept), font props, text config
 
 **Text role**:

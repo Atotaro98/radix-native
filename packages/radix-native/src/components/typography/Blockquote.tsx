@@ -5,7 +5,6 @@ import { useMetrics } from '../../hooks/useMetrics'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { useTextStyle } from '../../hooks/useTextStyle'
-import { space } from '../../tokens/spacing'
 import type { FontSizeToken } from '../../tokens/typography'
 import type { MarginProps } from '../../types/marginProps'
 import type { NativeViewProps } from '../../types/nativeProps'
@@ -57,18 +56,16 @@ export function Blockquote({
 
   // Block text: ignores any surrounding text. Margins go on the container.
   const text = useTextStyle({ size, weight, color: textColor, maxFontSizeMultiplier, truncate, wrap })
-  const resolvedSize = text.contextFontSize
-  const { scaling: scalingFactor } = useMetrics()
+  const { space } = useMetrics()
 
   // ─── Border & padding (match Radix CSS: dynamic based on font size) ────────
-  // Space tokens are scaled in Radix: --space-N: calc(Npx * var(--scaling))
-  const s1 = space[1] * scalingFactor
-  const s3 = space[3] * scalingFactor
-  const s5 = space[5] * scalingFactor
+  const s1 = space(1)
+  const s3 = space(3)
+  const s5 = space(5)
   // Radix: border-left: max(var(--space-1), 0.25em) solid var(--accent-a6)
-  const borderWidth = Math.max(s1, resolvedSize * 0.25)
+  const borderWidth = Math.max(s1, text.em(0.25))
   // Radix: padding-left: min(var(--space-5), max(var(--space-3), 0.5em))
-  const paddingLeft = Math.min(s5, Math.max(s3, resolvedSize * 0.5))
+  const paddingLeft = Math.min(s5, Math.max(s3, text.em(0.5)))
 
   // ─── Styles ─────────────────────────────────────────────────────────────────
   const containerStyle: ViewStyle = {

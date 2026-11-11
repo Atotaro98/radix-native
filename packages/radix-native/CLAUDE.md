@@ -101,7 +101,7 @@ metrics.radius(level, 'thumb')                        // max(var(--radius-N), va
 - `radius` = `Npx × scaling × radius-factor`, **not rounded** (Radix keeps the fractional value).
 - One-off Radix `calc()` formulas stay in the component, written with the raw variables
   `metrics.scaling`, `metrics.radiusFactor`, `metrics.radiusThumb`, citing the selector
-  (Kbd `factor × 0.35em`, Code `(0.5px + 0.2em) × factor`, Progress `max(factor × h/3, factor × thumb)`).
+  (Progress `max(factor × h/3, factor × thumb)`). Lengths and radius in `em` come from the Text style, not Metrics.
 - Size tables (`SIZE_HEIGHT`, …) stay in each component, in unscaled px; pass them through `px`.
 - Fonts are scaled by the Text style, not Metrics.
 - `getRadius`, `getFullRadius`, `getRadiusThumb`, `scalingMap`, `applyScaling`, `resolveSpace`,
@@ -155,7 +155,7 @@ const colors = useVariantColors('checkbox', { variant, color, highContrast, chec
 | CheckboxGroup / RadioGroup (Root + Item, labelled or bare items, column layout) | `createControlGroup({ name, type, rootRole, itemRole, Control, kind })` in `internal/controlGroup.tsx` — both groups are one call each; a labelled item is a Toggle surface row (label style, 0.5em gap) |
 | A Selection group (one value or several, controlled or not, disabled propagation) | `createSelectionGroup({ name, type: 'single' \| 'multiple' })` → `{ Root, useItem(value, disabled) }` — one instance per family, like Radix's CheckboxGroup / RadioGroup primitives |
 | CheckboxCards / RadioCards (Root + Item, grid, Selection cards) | `createSelectionCards({ name, type, rootRole, itemRole, recipe, kind? })` in `internal/SelectionCard.tsx` — both families are one call each. A Selection card (`<SelectionCard recipe role size … indicator? />`) owns the Radix size table (padding, font size, radius), the trailing Indicator (`kind`, placed from its geometry) and plain text via `useTextStyle`, on a Toggle surface |
-| Any rendered text (size, face, letter spacing, Font scaling cap, `truncate` / `wrap`, nesting) | `useTextStyle({ inline?, role?, size?, weight?, lineHeight?, color?, compact?, maxFontSizeMultiplier?, truncate?, wrap?, margins? })` → `{ style, textProps, contextFontSize }` — see Text style below |
+| Any rendered text (size, face, letter spacing, Font scaling cap, `truncate` / `wrap`, nesting) | `useTextStyle({ inline?, role?, size?, weight?, lineHeight?, color?, compact?, maxFontSizeMultiplier?, truncate?, wrap?, margins? })` → `{ style, textProps, contextFontSize, em, radius }` — see Text style below |
 | Minimum touch target | `hitSlop ?? getMinHitSlop(width, height)` (44pt) |
 | Colors of a component's parts for its variant and state | `useVariantColors(recipe, { variant?, color, highContrast?, checked?, disabled?, pressed?, focused? })` — see Variant colors above |
 | Translucent color | `fadeColor(color, opacity)` from `utils/colorMath` (or `fade(paint, opacity)` inside a recipe) — never concatenate `hex + '99'` |
@@ -197,6 +197,10 @@ Never assemble `fontSize` / `fontFamily` / `fontWeight` / `maxFontSizeMultiplier
   (size + role) so nested typography inherits. Never render `TextContext.Provider` by hand; use `text.isNested`
   instead of reading the context. Inline modules that only add a role (Em, Strong, Quote) come from
   `createInlineText(role, displayName, renderChildren?)` in `typography/InlineText.tsx`.
+- **Lengths in em**: `text.em(k)` is Radix `k em` on this text's own size, rounded (Kbd min-width / padding,
+  Code padding, Blockquote border, a group row's gap). `text.radius(k, offsetPx?)` is
+  `(offsetPx + k em) × radius-factor`, not rounded (Kbd `0.35em`, Code `0.5px + 0.2em`). Never multiply
+  `contextFontSize` by hand.
 - Color is resolved by the caller and passed in (`undefined` = inherit). `standaloneColor` applies only when
   the text is not nested and has no `color` (Text's gray-12, ghost Code's body color).
 - Test new rules in `__tests__/textStyle.test.ts` (pure tables), not through renders.

@@ -3,6 +3,7 @@ import { useThemeContext } from './useThemeContext'
 import { TextContext, useParentText } from '../components/typography/TextContext'
 import { resolveTextStyle, type ResolvedTextStyle, type TextStyleRequest } from '../utils/textStyle'
 import { isDev } from '../utils/env'
+import { RADIUS_FACTOR } from '../tokens/radius'
 
 export interface UseTextStyleOptions extends TextStyleRequest {
   /**
@@ -18,6 +19,13 @@ export interface TextStyleResult extends ResolvedTextStyle {
   isNested: boolean
   /** Wraps the rendered text so nested typography inherits from it (memoized `TextContext`). */
   provide: (children: ReactNode) => ReactNode
+  /** A length of `k` em (Radix `Nem`) on this text's own size, rounded to whole pixels. */
+  em: (k: number) => number
+  /**
+   * A radius relative to this text's size, Radix `calc((offsetPx + k·em) * var(--radius-factor))`
+   * with the Theme's radius factor. Not rounded, like every other radius.
+   */
+  radius: (k: number, offsetPx?: number) => number
 }
 
 const warnedMissingFaces = new Set<string>()
@@ -46,7 +54,7 @@ export function useTextStyle({
   wrap,
   margins,
 }: UseTextStyleOptions): TextStyleResult {
-  const { scaling, fonts, maxFontSizeMultiplier: globalMax } = useThemeContext()
+  const { scaling, fonts, radius: radiusToken, maxFontSizeMultiplier: globalMax } = useThemeContext()
   const contextParent = useParentText()
   const parent = inline ? contextParent : null
   const parentFontSize = parent?.fontSize
@@ -86,5 +94,13 @@ export function useTextStyle({
     [contextValue],
   )
 
-  return { ...resolved, isNested: parentFontSize !== undefined, provide }
+  const fontSize = resolved.contextFontSize
+  const radiusFactor = RADIUS_FACTOR[radiusToken]
+  const em = useCallback((k: number) => Math.round(k * fontSize), [fontSize])
+  const radius = useCallback(
+    (k: number, offsetPx = 0) => (offsetPx + k * fontSize) * radiusFactor,
+    [fontSize, radiusFactor],
+  )
+
+  return { ...resolved, isNested: parentFontSize !== undefined, provide, em, radius }
 }
