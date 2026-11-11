@@ -1,10 +1,11 @@
 import React, { useMemo } from 'react'
 import { View } from 'react-native'
 import type { ViewStyle, StyleProp } from 'react-native'
-import { useMetrics } from '../../hooks/useMetrics'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { BaseToggle } from '../internal/BaseToggle'
+import { useToggleGeometry, type ToggleKind } from '../internal/ToggleSurface'
+import { resolveMetrics, type MetricsInput } from '../../utils/metrics'
 import type { AccentColor } from '../../tokens/colors/types'
 import { ClassicOverlay } from '../internal/ClassicOverlay'
 import type { NativePressableProps } from '../../types/nativeProps'
@@ -43,6 +44,12 @@ export interface RadioProps extends NativePressableProps, MarginProps {
 const SIZE_PX: Record<RadioSize, number> = { 1: 14, 2: 16, 3: 20 }
 const DOT_SCALE = 0.4
 
+/** The ring of a Radio for a size. */
+function radioGeometry({ size }: { size: RadioSize }, theme: MetricsInput) {
+  const diameter = resolveMetrics(theme).px(SIZE_PX[size])
+  return { width: diameter, height: diameter, borderRadius: diameter / 2, focusOffset: 2 }
+}
+
 // ─── Indicator ────────────────────────────────────────────────────────────────
 
 export interface RadioIndicatorProps {
@@ -56,8 +63,7 @@ export interface RadioIndicatorProps {
 
 /** Internal: the ring and its dot, drawn from the checked state alone. */
 export function RadioIndicator({ size, variant, color, highContrast, checked, disabled }: RadioIndicatorProps) {
-  const { px } = useMetrics()
-  const radioSize = px(SIZE_PX[size])
+  const { width: radioSize } = useToggleGeometry(radioGeometry, { size })
   const dotSize = Math.round(radioSize * DOT_SCALE)
   const colors = useVariantColors('radio', { variant, color, highContrast, checked, disabled })
   // Radix: checked classic is a bevel (gradient + inset highlight), with no drop shadow.
@@ -91,6 +97,12 @@ export function RadioIndicator({ size, variant, color, highContrast, checked, di
   )
 }
 
+/** Internal: the Radio's Indicator and geometry, for the Toggle surface. */
+export const RadioToggle: ToggleKind<RadioIndicatorProps> = {
+  geometry: radioGeometry,
+  Indicator: RadioIndicator,
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function Radio({
@@ -104,8 +116,6 @@ export function Radio({
   ...rest
 }: RadioProps) {
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
-  const { px } = useMetrics()
-  const radioSize = px(SIZE_PX[size])
 
   return (
     <BaseToggle
@@ -114,23 +124,10 @@ export function Radio({
       defaultChecked={defaultChecked}
       disabled={disabled}
       color={color}
-      width={radioSize}
-      height={radioSize}
-      borderRadius={radioSize / 2}
-      focusOffset={2}
+      kind={RadioToggle}
+      indicator={{ size, variant, color, highContrast, disabled }}
       margins={margins}
-    >
-      {({ checked }) => (
-        <RadioIndicator
-          size={size}
-          variant={variant}
-          color={color}
-          highContrast={highContrast}
-          checked={checked}
-          disabled={disabled}
-        />
-      )}
-    </BaseToggle>
+    />
   )
 }
 Radio.displayName = 'Radio'

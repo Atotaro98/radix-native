@@ -76,6 +76,10 @@ _Avoid_: selection control (that is a Variant family), input
 The visual part of a Toggle — the box and check, the ring and dot, the track and thumb — drawn from the checked state alone, with no behaviour of its own. Rows and cards that act as a Toggle show an Indicator without containing a second Toggle.
 _Avoid_: control (for the visual part), icon
 
+**Toggle surface**:
+The pressable part shared by everything that acts as a Toggle: a Toggle itself, a labelled row of a Selection group, and a Selection card. It decides the role, how the checked state is announced, the disabled gate, the press scale, the minimum touch target and the focus ring. It holds no checked state of its own; it receives it from the Toggle or from the Selection group. The focus ring surrounds the Indicator, except on a card, where it follows the card's edge.
+_Avoid_: pressable, toggle shell, base toggle
+
 **Text input**:
 A field the user types into: TextField (one line) or TextArea (several lines). Both behave the same and differ only in line count, height and radius. A read-only Text input looks like a disabled one, but stays readable and copyable.
 _Avoid_: input, field (on their own)

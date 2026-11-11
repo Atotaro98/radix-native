@@ -117,7 +117,8 @@ These are the EXACT token mappings that intentionally differ between Radix web a
 
 | Area | Behavior |
 |------|----------|
-| Touch targets | Checkbox, Radio, Switch, IconButton and small Buttons get a default `hitSlop` that grows the touch area to 44×44pt (override with `hitSlop`). |
+| Touch targets | Checkbox, Radio, Switch, IconButton and small Buttons get a default `hitSlop` that grows the touch area to 44×44pt (override with `hitSlop`). Labelled `CheckboxGroup` / `RadioGroup` rows grow to 44pt vertically, from the taller of the Indicator and one line of the label; with Radix's `space-1` gap the touch areas of neighbouring rows may overlap, as they already do for bare Toggles in a group. |
+| Group rows | A labelled `CheckboxGroup` / `RadioGroup` row press-scales as a whole, and its focus ring surrounds the Indicator, not the row (Radix focuses the checkbox / radio button, not its label). |
 | Focus | Every pressable shows a 2px `focus-8` focus ring (the component's color; a gray component keeps the theme accent, as in Radix) on keyboard / switch-control / TV / web focus. |
 | Groups | `RadioGroup` / `RadioCards` roots expose `accessibilityRole="radiogroup"`; all group roots accept `accessibilityLabel`. Group items with a label are announced as one control named by the label. |
 | Consumer props | `onPressIn` / `onPressOut` / `onFocus` / `onBlur` / `accessibilityState` are composed with the internal ones (never override them). |

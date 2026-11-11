@@ -1,21 +1,25 @@
 /**
- * Behaviour every Toggle shares through BaseToggle: role, announced state,
- * what a press does, the disabled gate, the touch target and the focus ring.
+ * Behaviour every Toggle shares through BaseToggle, and that everything acting
+ * as a Toggle (rows, cards) shares through the Toggle surface: role, announced
+ * state, what a press does, the disabled gate, the press scale, the touch
+ * target and the focus ring.
  */
 import React from 'react'
-import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native'
+import { StyleSheet, type StyleProp, type TextStyle, type ViewStyle } from 'react-native'
 import { act, fireEvent, screen } from '@testing-library/react-native'
-import { Checkbox, CheckboxCards, CheckboxGroup, Radio, RadioGroup, Switch } from '../index'
+import { Checkbox, CheckboxCards, CheckboxGroup, Radio, RadioCards, RadioGroup, Switch } from '../index'
 import { renderWithTheme } from './helpers/render'
+import { FocusRing } from '../components/internal/FocusRing'
 
-type Node = { type: unknown; props: { style?: unknown } }
+type Node = { type: unknown; props: { style?: unknown; visible?: boolean; offset?: number; borderRadius?: number } }
 type Toggle = typeof Checkbox | typeof Radio | typeof Switch
 
 const flat = (n: Node): ViewStyle => StyleSheet.flatten(n.props.style as StyleProp<ViewStyle>) ?? {}
+const lineHeightOf = (n: Node) => StyleSheet.flatten(n.props.style as StyleProp<TextStyle>)?.lineHeight
 
-/** FocusRing is the only absolutely positioned 2px ring inside a Toggle. */
+/** The visible FocusRing instances inside a Toggle (found by type, never by style). */
 const focusRings = (el: { findAll: (p: (n: Node) => boolean) => Node[] }) =>
-  el.findAll((n) => typeof n.type === 'string' && flat(n).position === 'absolute' && flat(n).borderWidth === 2)
+  el.findAll((n) => n.type === FocusRing && n.props.visible === true)
 
 const TOGGLES: [string, Toggle, 'checkbox' | 'radio' | 'switch'][] = [
   ['Checkbox', Checkbox, 'checkbox'],
@@ -103,6 +107,98 @@ describe('what a press does, per role', () => {
     fireEvent.press(screen.getByRole('switch'))
     fireEvent.press(screen.getByRole('switch'))
     expect(onCheckedChange.mock.calls).toEqual([[false], [true]])
+  })
+})
+
+// ─── Toggle surface ─────────────────────────────────────────────────────────
+
+interface SurfaceProps { disabled?: boolean; onChange: jest.Mock }
+type Surface = {
+  role: 'checkbox' | 'radio' | 'switch'
+  /** Renders one unchecked item that reports a press through `onChange`. */
+  render: (p: SurfaceProps) => React.ReactElement
+  /** Where the touch target comes from: the Indicator, a row with a label, or the card itself. */
+  touch: 'indicator' | 'row' | 'card'
+}
+
+const SURFACES: [string, Surface][] = [
+  ['Checkbox', { role: 'checkbox', touch: 'indicator', render: ({ disabled, onChange }) => <Checkbox disabled={disabled} onCheckedChange={onChange} /> }],
+  ['Radio', { role: 'radio', touch: 'indicator', render: ({ disabled, onChange }) => <Radio disabled={disabled} onCheckedChange={onChange} /> }],
+  ['Switch', { role: 'switch', touch: 'indicator', render: ({ disabled, onChange }) => <Switch disabled={disabled} onCheckedChange={onChange} /> }],
+  ['CheckboxGroup row', { role: 'checkbox', touch: 'row', render: ({ disabled, onChange }) => (
+    <CheckboxGroup disabled={disabled} onValueChange={onChange}><CheckboxGroup.Item value="a">Apples</CheckboxGroup.Item></CheckboxGroup>
+  ) }],
+  ['RadioGroup row', { role: 'radio', touch: 'row', render: ({ disabled, onChange }) => (
+    <RadioGroup disabled={disabled} onValueChange={onChange}><RadioGroup.Item value="a">Apples</RadioGroup.Item></RadioGroup>
+  ) }],
+  ['CheckboxCards item', { role: 'checkbox', touch: 'card', render: ({ disabled, onChange }) => (
+    <CheckboxCards disabled={disabled} onValueChange={onChange}><CheckboxCards.Item value="a">Apples</CheckboxCards.Item></CheckboxCards>
+  ) }],
+  ['RadioCards item', { role: 'radio', touch: 'card', render: ({ disabled, onChange }) => (
+    <RadioCards disabled={disabled} onValueChange={onChange}><RadioCards.Item value="a">Apples</RadioCards.Item></RadioCards>
+  ) }],
+]
+
+describe.each(SURFACES)('Toggle surface: %s', (_name, { role, render, touch }) => {
+  const get = () => screen.getByRole(role)
+
+  it('announces its role and checked state, and checks on press', () => {
+    const onChange = jest.fn()
+    renderWithTheme(render({ onChange }))
+    expect(get().props.accessibilityState).toMatchObject({ checked: false, disabled: false })
+    fireEvent.press(get())
+    expect(onChange).toHaveBeenCalledTimes(1)
+    expect(get().props.accessibilityState).toMatchObject({ checked: true })
+  })
+
+  it('ignores presses and announces itself disabled when disabled', () => {
+    const onChange = jest.fn()
+    renderWithTheme(render({ disabled: true, onChange }))
+    fireEvent.press(get())
+    expect(onChange).not.toHaveBeenCalled()
+    expect(get().props.accessibilityState).toMatchObject({ checked: false, disabled: true })
+  })
+
+  it('press-scales', () => {
+    renderWithTheme(render({ onChange: jest.fn() }))
+    expect(flat(get()).transform).toEqual([{ scale: 1 }])
+  })
+
+  it('reaches the 44pt touch target', () => {
+    renderWithTheme(render({ onChange: jest.fn() }))
+    const el = get()
+    const slop = el.props.hitSlop ?? { top: 0, bottom: 0, left: 0, right: 0 }
+    if (touch === 'indicator') {
+      const { width, height } = flat(el) as { width: number; height: number }
+      expect(width + slop.left + slop.right).toBeGreaterThanOrEqual(44)
+      expect(height + slop.top + slop.bottom).toBeGreaterThanOrEqual(44)
+    } else if (touch === 'row') {
+      // One line of the label (taller than the Indicator at every size) plus the vertical slop.
+      const label = el.findAll((n: Node) => typeof n.type === 'string' && lineHeightOf(n) !== undefined)[0]
+      expect((lineHeightOf(label) ?? 0) + slop.top + slop.bottom).toBeGreaterThanOrEqual(44)
+    } else {
+      expect(el.props.hitSlop).toBeUndefined()
+    }
+  })
+
+  it('shows the focus ring only while focused, never when disabled', () => {
+    const { unmount } = renderWithTheme(render({ onChange: jest.fn() }))
+    expect(focusRings(get())).toHaveLength(0)
+    act(() => fireEvent(get(), 'focus'))
+    const [ring, ...others] = focusRings(get())
+    expect(others).toHaveLength(0)
+    // Inset along a card's edge; otherwise outside the Indicator — in a row it
+    // wraps the Indicator, not the whole row (Radix focuses the checkbox).
+    if (touch === 'card') expect(ring.props.offset ?? 0).toBe(0)
+    else expect(ring.props.offset).toBeGreaterThan(0)
+    if (touch === 'row') expect(get().children).not.toContain(ring)
+    act(() => fireEvent(get(), 'blur'))
+    expect(focusRings(get())).toHaveLength(0)
+    unmount()
+
+    renderWithTheme(render({ disabled: true, onChange: jest.fn() }))
+    act(() => fireEvent(get(), 'focus'))
+    expect(focusRings(get())).toHaveLength(0)
   })
 })
 

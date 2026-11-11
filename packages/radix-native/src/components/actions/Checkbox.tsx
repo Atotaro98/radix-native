@@ -1,11 +1,12 @@
 import React, { useMemo } from 'react'
 import { View } from 'react-native'
 import type { StyleProp, ViewStyle } from 'react-native'
-import { useMetrics } from '../../hooks/useMetrics'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { ClassicOverlay } from '../internal/ClassicOverlay'
 import { BaseToggle, type CheckedState } from '../internal/BaseToggle'
+import { useToggleGeometry, type ToggleKind } from '../internal/ToggleSurface'
+import { resolveMetrics, type MetricsInput } from '../../utils/metrics'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { NativePressableProps } from '../../types/nativeProps'
 import type { MarginProps } from '../../types/marginProps'
@@ -47,13 +48,17 @@ const RADIUS_MULT: Record<CheckboxSize, number> = { 1: 0.875, 2: 1, 3: 1.25 }
 
 // ─── Geometry ─────────────────────────────────────────────────────────────────
 
-function useCheckboxBox(size: CheckboxSize) {
-  const metrics = useMetrics()
+/** The box of a Checkbox for a size, plus the size of its check / dash. */
+function checkboxGeometry({ size }: { size: CheckboxSize }, theme: MetricsInput) {
+  const metrics = resolveMetrics(theme)
+  const box = metrics.px(CHECKBOX_SIZE[size])
   return {
-    boxSize: metrics.px(CHECKBOX_SIZE[size]),
-    indicatorSize: metrics.px(INDICATOR_SIZE[size]),
+    width: box,
+    height: box,
     // Radix: --checkbox-border-radius: calc(var(--radius-1) * 0.875 | 1 | 1.25)
     borderRadius: metrics.radius(1) * RADIUS_MULT[size],
+    focusOffset: 2,
+    indicatorSize: metrics.px(INDICATOR_SIZE[size]),
   }
 }
 
@@ -70,7 +75,7 @@ export interface CheckboxIndicatorProps {
 
 /** Internal: the box and its check / dash, drawn from the checked state alone. */
 export function CheckboxIndicator({ size, variant, color, highContrast, checked, disabled }: CheckboxIndicatorProps) {
-  const { boxSize, indicatorSize, borderRadius } = useCheckboxBox(size)
+  const { width: boxSize, indicatorSize, borderRadius } = useToggleGeometry(checkboxGeometry, { size })
   const isIndeterminate = checked === 'indeterminate'
   const isActive = checked !== false
   const colors = useVariantColors('checkbox', { variant, color, highContrast, checked: isActive, disabled })
@@ -120,6 +125,12 @@ export function CheckboxIndicator({ size, variant, color, highContrast, checked,
   )
 }
 
+/** Internal: the Checkbox's Indicator and geometry, for the Toggle surface. */
+export const CheckboxToggle: ToggleKind<CheckboxIndicatorProps> = {
+  geometry: checkboxGeometry,
+  Indicator: CheckboxIndicator,
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function Checkbox({
@@ -133,7 +144,6 @@ export function Checkbox({
   ...rest
 }: CheckboxProps) {
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
-  const { boxSize, borderRadius } = useCheckboxBox(size)
 
   return (
     <BaseToggle
@@ -142,23 +152,10 @@ export function Checkbox({
       defaultChecked={defaultChecked}
       disabled={disabled}
       color={color}
-      width={boxSize}
-      height={boxSize}
-      borderRadius={borderRadius}
-      focusOffset={2}
+      kind={CheckboxToggle}
+      indicator={{ size, variant, color, highContrast, disabled }}
       margins={margins}
-    >
-      {({ checked }) => (
-        <CheckboxIndicator
-          size={size}
-          variant={variant}
-          color={color}
-          highContrast={highContrast}
-          checked={checked}
-          disabled={disabled}
-        />
-      )}
-    </BaseToggle>
+    />
   )
 }
 Checkbox.displayName = 'Checkbox'

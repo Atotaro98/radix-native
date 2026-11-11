@@ -7,10 +7,11 @@ import Animated, {
   withTiming,
   Easing,
 } from 'react-native-reanimated'
-import { useMetrics } from '../../hooks/useMetrics'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { BaseToggle } from '../internal/BaseToggle'
+import { useToggleGeometry, type ToggleKind } from '../internal/ToggleSurface'
+import { resolveMetrics, type MetricsInput } from '../../utils/metrics'
 import type { RadiusToken, RadiusLevel } from '../../tokens/radius'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { NativePressableProps } from '../../types/nativeProps'
@@ -72,13 +73,14 @@ function thumbShadow(disabled: boolean): ViewStyle {
 
 // ─── Geometry ─────────────────────────────────────────────────────────────────
 
-function useSwitchTrack(size: SwitchSize, radius: RadiusToken | undefined) {
-  const metrics = useMetrics({ radius })
-  const trackRadius = metrics.radius(SIZE_RADIUS_LEVEL[size], 'thumb')
+/** The track of a Switch for a size (its `radius` prop overrides the Theme's), plus its thumb. */
+function switchGeometry({ size, radius }: { size: SwitchSize; radius?: RadiusToken }, theme: MetricsInput) {
+  const metrics = resolveMetrics({ scaling: theme.scaling, radius: radius ?? theme.radius })
   return {
-    trackWidth: metrics.px(TRACK_WIDTH[size]),
-    trackHeight: metrics.px(TRACK_HEIGHT[size]),
-    trackRadius,
+    width: metrics.px(TRACK_WIDTH[size]),
+    height: metrics.px(TRACK_HEIGHT[size]),
+    borderRadius: metrics.radius(SIZE_RADIUS_LEVEL[size], 'thumb'),
+    focusOffset: 3,
     thumbSize: metrics.px(THUMB_SIZE[size]),
     thumbMargin: metrics.px(THUMB_MARGIN),
   }
@@ -98,7 +100,13 @@ export interface SwitchIndicatorProps {
 
 /** Internal: the track and its sliding thumb, drawn from the checked state alone. */
 export function SwitchIndicator({ size, variant, color, highContrast, radius, checked, disabled }: SwitchIndicatorProps) {
-  const { trackWidth, trackHeight, trackRadius, thumbSize, thumbMargin } = useSwitchTrack(size, radius)
+  const {
+    width: trackWidth,
+    height: trackHeight,
+    borderRadius: trackRadius,
+    thumbSize,
+    thumbMargin,
+  } = useToggleGeometry(switchGeometry, { size, radius })
   const thumbRadius = Math.max(trackRadius - thumbMargin, 0)
 
   // ─── Thumb animation ─────────────────────────────────────────────────────────
@@ -158,6 +166,12 @@ export function SwitchIndicator({ size, variant, color, highContrast, radius, ch
   )
 }
 
+/** Internal: the Switch's Indicator and geometry, for the Toggle surface. */
+export const SwitchToggle: ToggleKind<SwitchIndicatorProps> = {
+  geometry: switchGeometry,
+  Indicator: SwitchIndicator,
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function Switch({
@@ -172,7 +186,6 @@ export function Switch({
   ...rest
 }: SwitchProps) {
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
-  const { trackWidth, trackHeight, trackRadius } = useSwitchTrack(size, radius)
 
   return (
     <BaseToggle
@@ -181,24 +194,10 @@ export function Switch({
       defaultChecked={defaultChecked}
       disabled={disabled}
       color={color}
-      width={trackWidth}
-      height={trackHeight}
-      borderRadius={trackRadius}
-      focusOffset={3}
+      kind={SwitchToggle}
+      indicator={{ size, variant, color, highContrast, radius, disabled }}
       margins={margins}
-    >
-      {({ checked }) => (
-        <SwitchIndicator
-          size={size}
-          variant={variant}
-          color={color}
-          highContrast={highContrast}
-          radius={radius}
-          checked={checked}
-          disabled={disabled}
-        />
-      )}
-    </BaseToggle>
+    />
   )
 }
 Switch.displayName = 'Switch'
