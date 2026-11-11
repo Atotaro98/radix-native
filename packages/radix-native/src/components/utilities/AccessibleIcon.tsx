@@ -40,3 +40,5 @@ export function AccessibleIcon({ label, children, color }: AccessibleIconProps) 
   )
 }
 AccessibleIcon.displayName = 'AccessibleIcon'
+/** Inside a control, the icon contributes its label to the control's name. */
+AccessibleIcon.accessibleName = (props: AccessibleIconProps) => props.label

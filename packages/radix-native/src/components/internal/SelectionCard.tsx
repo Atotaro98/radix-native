@@ -13,7 +13,7 @@ import { useTextStyle } from '../../hooks/useTextStyle'
 import type { TextSize } from '../typography/Text'
 import { ToggleSurface, type ToggleKind } from './ToggleSurface'
 import { CardRing } from './CardRing'
-import { AccessibleControlContext } from './accessibleControl'
+import { AccessibleControlContext, accessibleNameOf } from './accessibleControl'
 import { InsetContext, type InsetValues } from '../layout/InsetContext'
 import { ColumnRows, AutoFitRows } from './ColumnRows'
 import { createSelectionGroup, type SelectionValue } from './selectionGroup'
@@ -123,8 +123,12 @@ export function SelectionCard<P extends object>({
     borderRadius,
   }), [paddingX, paddingY, paddingRight, borderRadius])
 
+  // Hidden parts of the name (AccessibleIcon, VisuallyHidden) are passed explicitly, as in BaseButton
+  const contentName = useMemo(() => accessibleNameOf(children), [children])
+
   return (
     <ToggleSurface
+      accessibilityLabel={contentName.hidden ? contentName.name || undefined : undefined}
       role={role}
       checked={checked}
       disabled={disabled}

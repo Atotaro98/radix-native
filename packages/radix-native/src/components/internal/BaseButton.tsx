@@ -15,7 +15,7 @@ import type { MarginProps } from '../../types/marginProps'
 import { Spinner, type SpinnerSize } from '../feedback/Spinner'
 import { ClassicOverlay } from './ClassicOverlay'
 import { ControlLabel } from './ControlLabel'
-import { AccessibleControlContext } from './accessibleControl'
+import { AccessibleControlContext, accessibleNameOf } from './accessibleControl'
 import { FocusRing } from './FocusRing'
 import { useSkeletonRadius } from '../feedback/SkeletonContext'
 
@@ -137,6 +137,13 @@ export function BaseButton({
 
   const classicStyle = shadowStyle(colors.shadow)
 
+  // The name a browser reads from the content (text, AccessibleIcon labels, VisuallyHidden text).
+  // Passed explicitly when part of it is hidden or the label is invisible (loading): Android
+  // does not read hidden content into a button's name by itself.
+  const contentName = React.useMemo(() => accessibleNameOf(children), [children])
+  const accessibilityLabel = rest.accessibilityLabel
+    ?? (contentName.hidden || loading ? contentName.name || undefined : undefined)
+
   // Radix: Button text is medium, except ghost which is regular.
   const label = (
     <ControlLabel
@@ -157,6 +164,7 @@ export function BaseButton({
       {...handlers}
       onPress={handlePress}
       disabled={isDisabled}
+      accessibilityLabel={accessibilityLabel}
       accessibilityState={{ ...accessibilityState, disabled: isDisabled, busy: loading }}
       style={[scaleStyle, containerStyle, stateStyle, classicStyle, style]}
     >

@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, useWindowDimensions } from 'react-native'
+import { KeyboardAvoidingView, Modal, Pressable, ScrollView, StyleSheet, useWindowDimensions } from 'react-native'
 import type { DimensionValue, GestureResponderEvent, StyleProp, ViewStyle } from 'react-native'
 import Animated, { Easing, runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated'
 import { useControllableState } from '../../hooks/useControllableState'
@@ -216,13 +216,15 @@ export function createDialog({ alert, name }: { alert: boolean; name: string }) 
         visible={present}
         transparent
         animationType="none"
+        // Draw under both system bars (edge-to-edge apps), so the overlay covers them as on the web
         statusBarTranslucent
+        navigationBarTranslucent
         onRequestClose={requestClose}
       >
         <PortalHost ref={host}>
           {/* ::before backdrop, --color-overlay */}
           <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: colors.overlay }, backdropStyle]} />
-          <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
             {/* .rt-BaseDialogScroll: the whole layer scrolls when the dialog is taller than the screen */}
             <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
               <Pressable testID={testID ? `${testID}-backdrop` : undefined} style={scrollPadding} onPress={onBackdropPress} accessible={false}>

@@ -6,6 +6,7 @@ import { renderWithTheme } from './helpers/render'
 import { VisuallyHidden } from '../components/utilities/VisuallyHidden'
 import { AccessibleIcon } from '../components/utilities/AccessibleIcon'
 import { IconButton } from '../components/actions/IconButton'
+import { Button } from '../components/actions/Button'
 import { Card } from '../components/layout/Card'
 
 const flat = (node: { props: { style?: unknown } }): ViewStyle =>
@@ -44,7 +45,9 @@ describe('AccessibleIcon', () => {
     renderWithTheme(
       <IconButton testID="b"><AccessibleIcon label="Close"><Icon /></AccessibleIcon></IconButton>,
     )
-    const label = screen.getByLabelText('Close', { includeHiddenElements: true })
+    // The button is named by the label (Android does not read it in from a non-accessible child)
+    expect(screen.getByTestId('b').props.accessibilityLabel).toBe('Close')
+    const label = screen.getAllByLabelText('Close', { includeHiddenElements: true }).find((n) => n.props.testID !== 'b')!
     expect(label.props.accessible).toBe(false)
     expect(label.props.accessibilityRole).toBeUndefined()
     const icon = screen.getByTestId('icon', { includeHiddenElements: true })
@@ -52,8 +55,30 @@ describe('AccessibleIcon', () => {
   })
 
   it('inside a pressable Card: not a separate element', () => {
-    renderWithTheme(<Card onPress={() => {}}><AccessibleIcon label="Open"><Icon /></AccessibleIcon></Card>)
-    expect(screen.getByLabelText('Open', { includeHiddenElements: true }).props.accessible).toBe(false)
+    renderWithTheme(<Card testID="c" onPress={() => {}}><AccessibleIcon label="Open"><Icon /></AccessibleIcon></Card>)
+    expect(screen.getByTestId('c').props.accessibilityLabel).toBe('Open')
+    const inner = screen.getAllByLabelText('Open', { includeHiddenElements: true }).find((n) => n.props.testID !== 'c')!
+    expect(inner.props.accessible).toBe(false)
+  })
+
+  it('a control is named by its text, AccessibleIcon labels and VisuallyHidden text, in order', () => {
+    renderWithTheme(
+      <>
+        <IconButton testID="v">
+          <Icon />
+          <VisuallyHidden>Settings</VisuallyHidden>
+        </IconButton>
+        <Button testID="m">Save <AccessibleIcon label="draft"><Icon /></AccessibleIcon></Button>
+        <Button testID="plain">Plain</Button>
+        <Button testID="busy" loading>Saving</Button>
+      </>,
+    )
+    expect(screen.getByTestId('v').props.accessibilityLabel).toBe('Settings')
+    expect(screen.getByTestId('m').props.accessibilityLabel).toBe('Save draft')
+    // Visible text only: the platform reads it in by itself
+    expect(screen.getByTestId('plain').props.accessibilityLabel).toBeUndefined()
+    // Loading hides the label on screen; the name stays
+    expect(screen.getByTestId('busy').props.accessibilityLabel).toBe('Saving')
   })
 
   it('keeps an icon color the icon sets itself', () => {

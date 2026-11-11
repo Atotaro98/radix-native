@@ -3,7 +3,7 @@
  * Not part of radix-native — only used in the example app.
  */
 import React from 'react'
-import { Pressable, ScrollView, View } from 'react-native'
+import { Image, Pressable, ScrollView, View } from 'react-native'
 import { Box, Flex, Text, Heading, Separator, useColor } from 'radix-native'
 
 // ─── Tab system ───────────────────────────────────────────────────────────────
@@ -124,21 +124,26 @@ export function LabeledRow({
 }
 
 /**
- * Stand-in for the photo Radix's docs and playground use (a house in a forest):
- * a tinted panel that fills its parent, so ratios and insets read clearly in
- * every accent color and appearance without loading a remote image.
+ * The Unsplash photos Radix's docs and playground use, bundled in assets/photos so the
+ * examples work offline: `house` (sink/aspect-ratio, sink/scroll-area), `book` (the Inset
+ * docs example) and `inset` (playground test/inset). Fills its parent, `object-fit: cover`.
  */
-export function PhotoPlaceholder({ height, radius }: { height?: number; radius?: number }) {
-  const bg = useColor('accent-a5')
-  const fg = useColor('accent-a9')
+const PHOTOS = {
+  house: { source: require('../assets/photos/house-forest.jpg'), label: 'A house in a forest' },
+  book: { source: require('../assets/photos/inset-docs.jpg'), label: 'Bold typography' },
+  inset: { source: require('../assets/photos/inset-test.jpg'), label: 'A sandstone canyon' },
+} as const
+
+export type PhotoName = keyof typeof PHOTOS
+
+export function Photo({ name = 'house', height, radius }: { name?: PhotoName; height?: number; radius?: number }) {
+  const photo = PHOTOS[name]
   return (
-    <View
-      accessible
-      accessibilityRole="image"
-      accessibilityLabel="A house in a forest"
-      style={{ width: '100%', height: height ?? '100%', backgroundColor: bg, borderRadius: radius, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}
-    >
-      <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: fg, opacity: 0.6 }} />
-    </View>
+    <Image
+      source={photo.source}
+      accessibilityLabel={photo.label}
+      resizeMode="cover"
+      style={{ width: '100%', height: height ?? '100%', borderRadius: radius }}
+    />
   )
 }

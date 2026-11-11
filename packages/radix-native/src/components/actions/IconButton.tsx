@@ -1,7 +1,6 @@
 import React from 'react'
 import { isDev } from '../../utils/env'
-import { AccessibleIcon } from '../utilities/AccessibleIcon'
-import { VisuallyHidden } from '../utilities/VisuallyHidden'
+import { accessibleNameOf } from '../internal/accessibleControl'
 import { BaseButton } from '../internal/BaseButton'
 import type { BaseButtonProps, BaseButtonSize, BaseButtonVariant } from '../internal/BaseButton'
 
@@ -17,21 +16,8 @@ export interface IconButtonProps extends Omit<BaseButtonProps, 'maxFontSizeMulti
   children?: React.ReactNode
 }
 
-/** True when the content gives the button a name: text, an AccessibleIcon or VisuallyHidden content. */
-function hasLabelledContent(node: React.ReactNode): boolean {
-  let found = false
-  React.Children.forEach(node, (child) => {
-    if (found) return
-    if (typeof child === 'string' || typeof child === 'number') found = String(child).trim() !== ''
-    else if (React.isValidElement<{ children?: React.ReactNode }>(child)) {
-      found = child.type === AccessibleIcon || child.type === VisuallyHidden || hasLabelledContent(child.props.children)
-    }
-  })
-  return found
-}
-
 export function IconButton(props: IconButtonProps) {
-  const hasLabel = !!props.accessibilityLabel || hasLabelledContent(props.children)
+  const hasLabel = !!props.accessibilityLabel || accessibleNameOf(props.children).name !== ''
   React.useEffect(() => {
     if (isDev && !hasLabel) {
       console.warn('[radix-native] IconButton has no `accessibilityLabel`; screen readers will announce it as an unlabeled button.')

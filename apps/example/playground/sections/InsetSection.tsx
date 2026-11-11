@@ -2,11 +2,7 @@ import React from 'react'
 import {
   AspectRatio, Box, Button, Card, CheckboxCards, Flex, Inset, RadioCards, Separator, Strong, Text, useColor,
 } from 'radix-native'
-import { ComponentSection, PhotoPlaceholder } from '../ui'
-
-function Photo({ height }: { height?: number }) {
-  return <PhotoPlaceholder height={height} />
-}
+import { ComponentSection, Photo } from '../ui'
 
 /** Radix docs: the main Inset example. */
 function Docs() {
@@ -14,7 +10,7 @@ function Docs() {
     <Box maxWidth={240}>
       <Card size={2}>
         <Inset clip="padding-box" side="top" pb="current">
-          <Photo height={140} />
+          <Photo name="book" height={140} />
         </Inset>
         <Text size={3}>
           <Strong>Typography</Strong> is the art and technique of arranging type to make written language legible,
@@ -46,7 +42,7 @@ function Cards() {
       <Card size={3}>
         <CardHeader />
         <Inset side="bottom" clip="padding-box" pt="current">
-          <AspectRatio ratio={16 / 9}><Photo /></AspectRatio>
+          <AspectRatio ratio={16 / 9}><Photo name="inset" /></AspectRatio>
         </Inset>
       </Card>
       <Card size={3}>
@@ -71,7 +67,7 @@ function SelectionCards() {
         {['1', '2'].map(v => (
           <CheckboxCards.Item key={v} value={v}>
             <Inset clip="padding-box" side="left" style={{ width: 64 }}>
-              <AspectRatio ratio={1}><Photo /></AspectRatio>
+              <AspectRatio ratio={1}><Photo name="inset" /></AspectRatio>
             </Inset>
             <Text size={4}>Checkbox Card {v}</Text>
           </CheckboxCards.Item>
@@ -82,7 +78,7 @@ function SelectionCards() {
           <RadioCards.Item key={v} value={v}>
             <Box flexGrow={1}><Text size={4}>Radio Card {v}</Text></Box>
             <Inset clip="padding-box" side="right" style={{ width: 64 }}>
-              <AspectRatio ratio={1}><Photo /></AspectRatio>
+              <AspectRatio ratio={1}><Photo name="inset" /></AspectRatio>
             </Inset>
           </RadioCards.Item>
         ))}
