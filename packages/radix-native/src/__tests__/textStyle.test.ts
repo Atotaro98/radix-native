@@ -125,3 +125,25 @@ describe('resolveTextStyle — nesting and layout', () => {
     expect(resolve({}).textProps.numberOfLines).toBeUndefined()
   })
 })
+
+describe('resolveTextStyle — lengths and radius in em', () => {
+  it('em(k) is k em of the text\'s own size, rounded', () => {
+    const kbd = resolve({ sizeAdjust: 0.75, defaultSize: 2 }) // 11px
+    expect(kbd.em(1.75)).toBe(19)
+    expect(kbd.em(0.05)).toBe(1)
+    // nested: measured on its own size, not the parent's
+    expect(resolve({ role: 'code' }, 20).em(1)).toBe(19)
+  })
+
+  it('radius(k, offset) applies the Theme radius factor and is not rounded', () => {
+    expect(resolve({ size: 3 }).radius(0.2, 0.5)).toBeCloseTo(3.7)
+    expect(resolve({ size: 3 }, null, theme({}, { radiusFactor: 1.5 })).radius(0.35)).toBeCloseTo(8.4)
+  })
+})
+
+describe('resolveTextStyle — letter spacing override', () => {
+  it('letterSpacingEm replaces the size\'s letter spacing (tab labels)', () => {
+    expect(resolve({ size: 5, letterSpacingEm: -0.01 }).style.letterSpacing).toBeCloseTo(-0.2)
+    expect(resolve({ size: 5, letterSpacingEm: 0 }).style.letterSpacing).toBe(0)
+  })
+})

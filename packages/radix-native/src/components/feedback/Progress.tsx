@@ -9,11 +9,13 @@ import type { RadiusToken } from '../../tokens/radius'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { MarginProps } from '../../types/marginProps'
 import type { NativeViewProps } from '../../types/nativeProps'
+import type { SelectionVariant } from '../../utils/variantPalette'
+import { paintSurface } from '../internal/surface'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type ProgressSize = 1 | 2 | 3
-export type ProgressVariant = 'classic' | 'surface' | 'soft'
+export type ProgressVariant = SelectionVariant
 
 export interface ProgressProps extends NativeViewProps, MarginProps {
   /** Progress size (1–3). Default: 2. */
@@ -97,10 +99,7 @@ export function Progress({
   // ─── Styles ─────────────────────────────────────────────────────────────
   const trackStyle = useMemo<ViewStyle>(() => ({
     height: resolvedHeight,
-    borderRadius,
-    backgroundColor: colors.track,
-    borderWidth: colors.border ? 1 : undefined,
-    borderColor: colors.border,
+    ...paintSurface(colors, borderRadius).style,
     overflow: 'hidden',
     ...margins,
   }), [resolvedHeight, borderRadius, colors, margins])

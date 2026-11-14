@@ -1,11 +1,10 @@
 import React, { useMemo } from 'react'
 import { Pressable, Text as RNText, View } from 'react-native'
 import type { AccessibilityRole, AccessibilityState, GestureResponderEvent } from 'react-native'
-import { useInteraction } from '../../hooks/useInteraction'
 import { useMetrics } from '../../hooks/useMetrics'
 import { useTextStyle } from '../../hooks/useTextStyle'
 import { useVariantColors } from '../../hooks/useVariantColors'
-import { useAccessibleControl } from './accessibleControl'
+import { useControl } from './control'
 import { ControlLabel } from './ControlLabel'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { MenuVariant } from '../../utils/variantPalette'
@@ -127,7 +126,16 @@ export function ListRow({
   onPress, rowRef, trailing, testID, children,
 }: ListRowProps) {
   const metrics = useMetrics()
-  const { pressed, handlers } = useInteraction({ enabled: !disabled })
+  // No press scale and no focus ring (menus take no keyboard focus here); the highlight follows the press
+  const control = useControl({
+    props: { testID, accessibilityState },
+    children,
+    role: accessibilityRole,
+    onPress,
+    disabled: !!disabled,
+    focusRing: { borderRadius: list.itemRadius },
+  })
+  const { pressed } = control
   const colors = useVariantColors('menuItem', {
     variant: look.variant,
     color: color ?? look.color,
@@ -136,19 +144,11 @@ export function ListRow({
     highlighted: pressed,
     subOpen,
   })
-  const a11y = useAccessibleControl(children, undefined)
 
   return (
     <Pressable
+      {...control.pressableProps}
       ref={rowRef as React.Ref<React.ComponentRef<typeof Pressable>> | undefined}
-      testID={testID}
-      accessibilityRole={accessibilityRole}
-      accessibilityLabel={a11y.accessibilityLabel}
-      accessibilityState={{ ...accessibilityState, disabled: !!disabled }}
-      disabled={disabled}
-      onPressIn={handlers.onPressIn}
-      onPressOut={handlers.onPressOut}
-      onPress={onPress}
       style={{
         flexDirection: 'row',
         alignItems: 'center',
@@ -167,7 +167,7 @@ export function ListRow({
           <Check size={list.icon} color={colors.text} />
         </View>
       ) : null}
-      {a11y.wrap(
+      {control.wrap(
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: metrics.space(2), flexShrink: 1 }}>
           <ControlLabel size={list.font} weight="regular" color={colors.text}>{children}</ControlLabel>
         </View>,

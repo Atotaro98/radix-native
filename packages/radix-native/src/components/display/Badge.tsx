@@ -10,11 +10,13 @@ import type { MarginProps } from '../../types/marginProps'
 import type { NativeViewProps } from '../../types/nativeProps'
 import { ControlLabel } from '../internal/ControlLabel'
 import { useSkeletonRadius } from '../feedback/SkeletonContext'
+import type { BadgeVariant } from '../../utils/variantPalette'
+import { paintSurface } from '../internal/surface'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type BadgeSize = 1 | 2 | 3
-export type BadgeVariant = 'solid' | 'soft' | 'surface' | 'outline'
+export type { BadgeVariant }
 
 export interface BadgeProps extends NativeViewProps, MarginProps {
   /** Badge size (1–3). Default: 1. */
@@ -79,10 +81,7 @@ export function Badge({
     minHeight: resolvedHeight,
     paddingHorizontal: resolvedPaddingX,
     gap: resolvedGap,
-    backgroundColor: colors.bg,
-    borderRadius,
-    borderWidth: colors.border ? 1 : undefined,
-    borderColor: colors.border,
+    ...paintSurface(colors, borderRadius).style,
     ...margins,
   }), [resolvedHeight, resolvedPaddingX, resolvedGap, colors, borderRadius, margins])
 

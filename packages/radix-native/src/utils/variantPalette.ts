@@ -90,37 +90,58 @@ const BLACK = raw('#000000')
  * outer shadow (--base-card-classic-box-shadow-outer); Button draws its raised look
  * with inset shadows only, which this stands in for (see llm/differences.md).
  */
-const classicLift = (s: PaletteState): ShadowPaint =>
+const classicLift = (s: BaseState): ShadowPaint =>
   ({ color: BLACK, opacity: s.appearance === 'dark' ? 0.3 : 0.15, offsetY: 1, radius: 2, elevation: 2 })
 
 // ─── State ────────────────────────────────────────────────────────────────────
 
-export interface PaletteState {
+/**
+ * What every recipe receives. Each recipe adds exactly the state it decides
+ * (`Disabled`, `Checked`, `Pressed`, `Focused`…), so passing a flag a recipe
+ * ignores is a type error, and the recipe returns its parts for that state
+ * already chosen: components never pick between a resting and a pressed paint.
+ */
+export interface BaseState {
   appearance: 'light' | 'dark'
   highContrast?: boolean
   /** Whether the consumer set `color` (Radix `data-accent-color`). */
   hasColor?: boolean
-  checked?: boolean
-  disabled?: boolean
-  pressed?: boolean
-  focused?: boolean
 }
 
-interface WithVariant<V extends string> extends PaletteState {
+interface WithVariant<V extends string> extends BaseState {
   variant: V
+}
+interface Disabled { disabled?: boolean }
+interface Checked { checked?: boolean }
+interface Pressed { pressed?: boolean }
+interface Focused { focused?: boolean }
+
+/**
+ * The parts of a drawn surface, as `paintSurface` (internal/surface) draws them:
+ * `border` is a 1px layout border, `ring` a ring drawn over the content (Radix
+ * inset box-shadow, `ringWidth` default 1), `bevel` the classic gradient.
+ */
+interface SurfacePaints {
+  bg?: Paint
+  border?: Paint
+  ring?: Paint
+  ringWidth?: number
+  shadow?: ShadowPaint
+  bevel?: true
+  opacity?: number
 }
 
 // ─── Family: buttons (Button, IconButton) — base-button.css ───────────────────
 
 export type ButtonVariant = 'classic' | 'solid' | 'soft' | 'surface' | 'outline' | 'ghost'
 
-export interface ButtonPaints {
+export interface ButtonPaints extends SurfacePaints {
+  /** The background for the state, pressed included. */
   bg: Paint
   text: Paint
   border?: Paint
-  pressedBg: Paint
   /** Extra press feedback when the pressed bg cannot change (high-contrast solid). */
-  pressedOpacity?: number
+  opacity?: number
   /** Classic only: the raised look's drop shadow, gone while pressed. */
   shadow?: ShadowPaint
   /** Classic only: the bevel gradient (`ClassicOverlay`). */
@@ -129,7 +150,13 @@ export interface ButtonPaints {
 
 const CLASSIC_DISABLED_RING = byMode(g('a4'), layers(g('a5'), g('a2')))
 
-function button(s: WithVariant<ButtonVariant>): ButtonPaints {
+function button(s: WithVariant<ButtonVariant> & Disabled & Pressed): ButtonPaints {
+  const { pressedBg, pressedOpacity, ...rest } = buttonArms(s)
+  return s.pressed ? { ...rest, bg: pressedBg, opacity: pressedOpacity } : rest
+}
+
+/** The resting and pressed backgrounds of a button; `button` picks one. */
+function buttonArms(s: WithVariant<ButtonVariant> & Disabled & Pressed): Omit<ButtonPaints, 'opacity'> & { pressedBg: Paint; pressedOpacity?: number } {
   const hc = !!s.highContrast
   if (s.disabled) {
     // .rt-BaseButton[data-disabled]
@@ -179,7 +206,7 @@ export type BadgeVariant = 'solid' | 'soft' | 'surface' | 'outline'
 export type AvatarVariant = 'solid' | 'soft'
 export type CodeVariant = 'solid' | 'soft' | 'outline' | 'ghost'
 
-export interface ChipPaints {
+export interface ChipPaints extends SurfacePaints {
   bg?: Paint
   /** `undefined` = inherit the surrounding text color. */
   text?: Paint
@@ -217,7 +244,7 @@ const code = (s: WithVariant<CodeVariant>): ChipPaints => {
 
 export type SelectionVariant = 'classic' | 'surface' | 'soft'
 
-export interface SelectionPaints {
+export interface SelectionPaints extends SurfacePaints {
   bg: Paint
   border?: Paint
   /** Check mark / dot. Undefined when unchecked. */
@@ -237,7 +264,7 @@ function disabledSelectionBorder(variant: SelectionVariant): Paint | undefined {
 const classicBevel = (variant: SelectionVariant): { bevel?: true } =>
   variant === 'classic' ? { bevel: true } : {}
 
-function checkbox(s: WithVariant<SelectionVariant>): SelectionPaints {
+function checkbox(s: WithVariant<SelectionVariant> & Checked & Disabled): SelectionPaints {
   const hc = !!s.highContrast
   if (s.disabled) {
     // checkbox.css :disabled → gray-a3 for every variant; indicator gray-a8
@@ -263,7 +290,7 @@ function checkbox(s: WithVariant<SelectionVariant>): SelectionPaints {
   }
 }
 
-function radio(s: WithVariant<SelectionVariant>): SelectionPaints {
+function radio(s: WithVariant<SelectionVariant> & Checked & Disabled): SelectionPaints {
   const hc = !!s.highContrast
   if (s.disabled) {
     return {
@@ -288,10 +315,11 @@ function radio(s: WithVariant<SelectionVariant>): SelectionPaints {
 
 // ─── Family: tracks (Switch, Progress, Slider) — switch.css, progress.css, slider.css
 
-export interface SwitchPaints {
-  track: Paint
+export interface SwitchPaints extends SurfacePaints {
+  /** The track. */
+  bg: Paint
   /** Ring drawn over the track (Radix inset box-shadow). */
-  border?: Paint
+  ring?: Paint
   thumb: Paint
   /** The thumb's drop shadow (every variant). */
   thumbShadow: ShadowPaint
@@ -312,11 +340,11 @@ const SWITCH_HC_OVERLAY = byMode(blackA(8), TRANSPARENT)
  * switch.css paints the track as stacked gradients (checked half / unchecked
  * half) over a background color; each state flattens its half of the stack.
  */
-function switchRecipe(s: WithVariant<SelectionVariant>): SwitchPaints {
+function switchRecipe(s: WithVariant<SelectionVariant> & Checked & Disabled): SwitchPaints {
   return { ...switchColors(s), thumbShadow: switchThumbShadow(!!s.disabled) }
 }
 
-function switchColors(s: WithVariant<SelectionVariant>): Omit<SwitchPaints, 'thumbShadow'> {
+function switchColors(s: WithVariant<SelectionVariant> & Checked & Disabled): Omit<SwitchPaints, 'thumbShadow'> {
   const hc = !!s.highContrast
   // .rt-SwitchThumb → white in every variant (soft only desaturates it); disabled gray-2
   const thumb = s.disabled ? g(2) : WHITE
@@ -324,26 +352,26 @@ function switchColors(s: WithVariant<SelectionVariant>): Omit<SwitchPaints, 'thu
 
   switch (s.variant) {
     case 'surface':
-      if (s.disabled) return { track: g('a3'), border: g('a3'), thumb }
-      return { track: s.checked ? solidChecked : g('a3'), border: g('a5'), thumb }
+      if (s.disabled) return { bg: g('a3'), ring: g('a3'), thumb }
+      return { bg: s.checked ? solidChecked : g('a3'), ring: g('a5'), thumb }
 
     case 'classic':
       if (s.disabled) {
         // [data-disabled]::before → gray-a5 + shadow-1 at opacity 0.5
-        return { track: fade(g('a5'), 0.5), border: fade(SHADOW_1_RING, 0.5), thumb }
+        return { bg: fade(g('a5'), 0.5), ring: fade(SHADOW_1_RING, 0.5), thumb }
       }
-      if (!s.checked) return { track: g('a4'), border: SHADOW_1_RING, thumb }
+      if (!s.checked) return { bg: g('a4'), ring: SHADOW_1_RING, thumb }
       return {
-        track: solidChecked,
-        border: hc ? layers(g('a3'), blackA(2)) : layers(g('a3'), c('a4'), blackA(1)),
+        bg: solidChecked,
+        ring: hc ? layers(g('a3'), blackA(2)) : layers(g('a3'), c('a4'), blackA(1)),
         thumb,
       }
 
     case 'soft':
-      if (s.disabled) return { track: g('a4'), thumb }
-      if (!s.checked) return { track: layers(whiteA(1), g('a3'), g('a3')), thumb }
+      if (s.disabled) return { bg: g('a4'), thumb }
+      if (!s.checked) return { bg: layers(whiteA(1), g('a3'), g('a3')), thumb }
       return {
-        track: hc
+        bg: hc
           ? layers(SWITCH_HC_OVERLAY, c('a6'), c('a6'), c('a6'), c('a3'))
           : layers(c('a4'), c('a4'), c('a4'), g('a2')),
         thumb,
@@ -351,8 +379,9 @@ function switchColors(s: WithVariant<SelectionVariant>): Omit<SwitchPaints, 'thu
   }
 }
 
-export interface ProgressPaints {
-  track: Paint
+export interface ProgressPaints extends SurfacePaints {
+  /** The track as a surface: its fill and ring. */
+  bg: Paint
   /** Ring drawn over the track (Radix inset box-shadow). */
   border?: Paint
   indicator: Paint
@@ -362,13 +391,13 @@ function progress(s: WithVariant<SelectionVariant>): ProgressPaints {
   const hc = !!s.highContrast
   switch (s.variant) {
     case 'surface':
-      return { track: g('a3'), border: g('a4'), indicator: hc ? c(12) : c('track') }
+      return { bg: g('a3'), border: g('a4'), indicator: hc ? c(12) : c('track') }
     case 'classic':
-      return { track: g('a3'), border: SHADOW_1_RING, indicator: hc ? c(12) : c('track') }
+      return { bg: g('a3'), border: SHADOW_1_RING, indicator: hc ? c(12) : c('track') }
     case 'soft':
       // track gray-a4 + white-a1; indicator accent-8 (hc accent-12) under accent-a5
       return {
-        track: layers(whiteA(1), g('a4')),
+        bg: layers(whiteA(1), g('a4')),
         indicator: layers(c('a5'), hc ? c(12) : c(8)),
       }
   }
@@ -397,7 +426,7 @@ const sliderThumbShadow: ShadowPaint = { color: BLACK, opacity: 0.1, offsetY: 1,
  * gray-6 ring (soft gray-5); Radix also blends the root (mix-blend-mode), which
  * RN cannot.
  */
-function slider(s: WithVariant<SelectionVariant>): SliderPaints {
+function slider(s: WithVariant<SelectionVariant> & Disabled): SliderPaints {
   const hc = (paint: Paint) => (s.highContrast ? layers(SWITCH_HC_OVERLAY, paint) : paint)
   const thumb = s.disabled ? g(1) : WHITE
   switch (s.variant) {
@@ -432,13 +461,10 @@ function slider(s: WithVariant<SelectionVariant>): SliderPaints {
 export type CardVariant = 'surface' | 'classic' | 'ghost'
 export type CardItemVariant = 'surface' | 'classic'
 
-export interface CardPaints {
+export interface CardPaints extends SurfacePaints {
   bg?: Paint
-  border?: Paint
-  /** Ring while pressed (Radix :active box-shadow). */
-  pressedBorder?: Paint
-  /** Pressed background (ghost). */
-  pressedBg?: Paint
+  /** The ring for the state (Radix box-shadow ring; :active changes it). */
+  ring?: Paint
   /** Classic: the outer drop shadow, kept while pressed. */
   shadow?: ShadowPaint
 }
@@ -446,24 +472,26 @@ export interface CardPaints {
 /** `--base-card-classic-border-color`: gray-a3 in light mode, gray-a6 in dark mode. */
 const CARD_CLASSIC_BORDER = byMode(g('a3'), g('a6'))
 
-function card(s: WithVariant<CardVariant>): CardPaints {
+function card(s: WithVariant<CardVariant> & Pressed): CardPaints {
+  const pressed = !!s.pressed
   switch (s.variant) {
     // card.css: background --color-panel; ring --base-card-surface-box-shadow (gray-a5, :active gray-a6)
-    case 'surface': return { bg: g('panel'), border: g('a5'), pressedBorder: g('a6') }
+    case 'surface': return { bg: g('panel'), ring: pressed ? g('a6') : g('a5') }
     // ring --base-card-classic-border-color (:active gray-a4 light / gray-a6 dark)
     // shadow --base-card-classic-box-shadow-outer; :active (--base-card-classic-active-*) keeps it
-    case 'classic': return { bg: g('panel'), border: CARD_CLASSIC_BORDER, pressedBorder: byMode(g('a4'), g('a6')), shadow: classicLift(s) }
-    case 'ghost': return { pressedBg: g('a4') }
+    case 'classic': return { bg: g('panel'), ring: pressed ? byMode(g('a4'), g('a6')) : CARD_CLASSIC_BORDER, shadow: classicLift(s) }
+    // ghost: no fill or ring; :active fills with gray-a4
+    case 'ghost': return pressed ? { bg: g('a4') } : {}
   }
 }
 
-export interface CardItemPaints {
+export interface CardItemPaints extends SurfacePaints {
   bg: Paint
-  border: Paint
-  /** Thicker ring drawn when the item is checked (RadioCards). */
-  checkedBorder?: Paint
-  /** Label color for plain-string children. Undefined = default text color. */
-  text?: Paint
+  /** The ring over the content; a checked radio card's is its 2px outline. */
+  ring: Paint
+  ringWidth?: number
+  /** Label color for plain-string children: gray-12, gray-a9 when disabled. */
+  text: Paint
   /** Classic: the outer drop shadow, kept when disabled. */
   shadow?: ShadowPaint
 }
@@ -476,23 +504,24 @@ export interface CardItemPaints {
 const OPAQUE_SURFACE = layers(g('surface'), byMode(WHITE, g(1)))
 
 /** checkbox-cards.css / radio-cards.css: items fill with --color-surface. */
-function cardItem(s: WithVariant<CardItemVariant>): CardItemPaints {
-  const border = s.variant === 'classic' ? CARD_CLASSIC_BORDER : g('a5')
+function cardItem(s: WithVariant<CardItemVariant> & Disabled): CardItemPaints {
+  const ring = s.variant === 'classic' ? CARD_CLASSIC_BORDER : g('a5')
   // classic: the card's outer shadow, which :has(:disabled) / :disabled keeps
   const shadow = s.variant === 'classic' ? classicLift(s) : undefined
   if (s.disabled) {
     // :has(:disabled) → text gray-a9, gray-a2 over the background
-    return { bg: layers(g('a2'), OPAQUE_SURFACE), border, text: g('a9'), shadow }
+    return { bg: layers(g('a2'), OPAQUE_SURFACE), ring, text: g('a9'), shadow }
   }
-  return { bg: OPAQUE_SURFACE, border, shadow }
+  return { bg: OPAQUE_SURFACE, ring, text: g(12), shadow }
 }
 
-const checkboxCard = (s: WithVariant<CardItemVariant>): CardItemPaints => cardItem(s)
+/** A checkbox card marks its checked state with its Indicator, not its ring. */
+const checkboxCard = (s: WithVariant<CardItemVariant> & Checked & Disabled): CardItemPaints => cardItem(s)
 
-function radioCard(s: WithVariant<CardItemVariant>): CardItemPaints {
+function radioCard(s: WithVariant<CardItemVariant> & Checked & Disabled): CardItemPaints {
+  if (!s.checked) return cardItem(s)
   // [data-state='checked'] → 2px outline accent-indicator (hc accent-12, disabled gray-8)
-  const checkedBorder = s.disabled ? g(8) : s.highContrast ? c(12) : c('indicator')
-  return { ...cardItem(s), checkedBorder }
+  return { ...cardItem(s), ring: s.disabled ? g(8) : s.highContrast ? c(12) : c('indicator'), ringWidth: 2 }
 }
 
 // ─── Family: text inputs (TextField, TextArea) — text-field.css, text-area.css ─
@@ -511,7 +540,7 @@ export interface TextInputPaints {
  * TextArea 0.65. Disabled inputs keep their variant's placeholder at half
  * opacity and turn their text gray-a11.
  */
-function textInput(s: WithVariant<TextInputVariant>, softPlaceholderOpacity: number): TextInputPaints {
+function textInput(s: WithVariant<TextInputVariant> & Disabled & Focused, softPlaceholderOpacity: number): TextInputPaints {
   // Disabled and read-only look the same (Radix `:disabled, :read-only`). Only a
   // read-only input can still take focus; its ring is then gray-8. Soft uses
   // accent-8 instead of focus-8 ("use gray outline when component color is gray").
@@ -542,25 +571,33 @@ function textInput(s: WithVariant<TextInputVariant>, softPlaceholderOpacity: num
   }
 }
 
-const textField = (s: WithVariant<TextInputVariant>) => textInput(s, 0.6)
-const textArea = (s: WithVariant<TextInputVariant>) => textInput(s, 0.65)
+const textField = (s: WithVariant<TextInputVariant> & Disabled & Focused) => textInput(s, 0.6)
+const textArea = (s: WithVariant<TextInputVariant> & Disabled & Focused) => textInput(s, 0.65)
 
 // ─── Family: text (Text, Heading, Link, Blockquote) — text.css, link.css… ─────
 
 export interface TextPaints {
-  /** `undefined` only when the text has no color of its own (see `text`). */
-  text: Paint
+  /** `undefined` = the text has no color of its own: nested it inherits, standalone it is body text. */
+  text?: Paint
   /** Link underline / Blockquote border. */
   decoration?: Paint
 }
 
-/** Text and Heading: colored with `color`, else gray-12. */
-function text(s: PaletteState): TextPaints {
-  return { text: s.hasColor ? (s.highContrast ? c(12) : c('a11')) : g(12) }
+/**
+ * Text, Heading, Blockquote: colored with `color`; without one they have no color of
+ * their own (nested text inherits, standalone text is body text: see `body`).
+ */
+function text(s: BaseState): TextPaints {
+  return { text: s.hasColor ? (s.highContrast ? c(12) : c('a11')) : undefined }
+}
+
+/** Radix body text: `--gray-12`, what text without a color of its own renders in when not nested. */
+function body(_s: BaseState): { text: Paint } {
+  return { text: g(12) }
 }
 
 /** Link: always colored (accent by default); underline a5, a6 in high contrast. */
-function link(s: PaletteState): TextPaints {
+function link(s: BaseState): TextPaints {
   return {
     text: s.highContrast ? c(12) : c('a11'),
     decoration: s.highContrast ? c('a6') : c('a5'),
@@ -571,13 +608,13 @@ function link(s: PaletteState): TextPaints {
  * DataList.Label (data-list.css): gray-a11, high contrast gray-12; with `color`
  * accent-a11, high contrast accent-12.
  */
-function dataListLabel(s: PaletteState): TextPaints {
+function dataListLabel(s: BaseState): TextPaints {
   if (s.hasColor) return { text: s.highContrast ? c(12) : c('a11') }
   return { text: s.highContrast ? g(12) : g('a11') }
 }
 
 /** Blockquote: text like Text, border accent-a6. */
-function blockquote(s: PaletteState): TextPaints {
+function blockquote(s: BaseState): TextPaints {
   return { ...text(s), decoration: c('a6') }
 }
 
@@ -625,10 +662,10 @@ function kbd(s: WithVariant<KbdVariant>): KbdPaints {
 
 export type CalloutVariant = 'soft' | 'surface' | 'outline'
 
-export interface CalloutPaints {
+export interface CalloutPaints extends SurfacePaints {
   bg: Paint
   /** The inset 1px ring (surface, outline). */
-  border?: Paint
+  ring?: Paint
   /** Text and icons: accent-a11, high contrast accent-12, in every variant. */
   text: Paint
 }
@@ -642,8 +679,8 @@ function callout(s: WithVariant<CalloutVariant>): CalloutPaints {
   const text = s.highContrast ? c(12) : c('a11')
   switch (s.variant) {
     case 'soft': return { bg: c('a3'), text }
-    case 'surface': return { bg: c('a2'), border: c('a6'), text }
-    case 'outline': return { bg: TRANSPARENT, border: c('a7'), text }
+    case 'surface': return { bg: c('a2'), ring: c('a6'), text }
+    case 'outline': return { bg: TRANSPARENT, ring: c('a7'), text }
   }
 }
 
@@ -668,7 +705,7 @@ export interface SegmentedPaints {
  * Gray-only, like Radix (no `color` prop). Disabled: text gray-a8, root over
  * gray-3, the indicator a flat gray-a3 with no ring or shadow.
  */
-function segmented(s: WithVariant<SegmentedVariant>): SegmentedPaints {
+function segmented(s: WithVariant<SegmentedVariant> & Disabled): SegmentedPaints {
   if (s.disabled) return { bg: layers(g('a3'), g(3)), text: g('a8'), indicator: g('a3'), separator: g('a4') }
   return {
     bg: layers(g('a3'), g('surface')),
@@ -691,9 +728,9 @@ export interface TabListPaints {
   rule: Paint
 }
 
-function tabList(s: PaletteState): TabListPaints {
+function tabList(s: BaseState & { active?: boolean }): TabListPaints {
   return {
-    text: s.checked ? g(12) : g('a11'),
+    text: s.active ? g(12) : g('a11'),
     indicator: s.highContrast ? c(12) : c('indicator'),
     rule: g('a5'),
   }
@@ -722,21 +759,21 @@ function table(s: WithVariant<TableVariant>): TablePaints {
 
 // ─── Dialog (Dialog, AlertDialog) — _internal/base-dialog.css ─────────────────
 
-export interface DialogPaints {
+export interface DialogPaints extends SurfacePaints {
   /** Backdrop: --color-overlay, black-a6 / dark black-a8. */
   overlay: Paint
-  /** --color-panel-solid: white / dark gray-2 (Dialog ignores a translucent panel). */
-  panel: Paint
+  /** The panel: --color-panel-solid, white / dark gray-2 (Dialog ignores a translucent panel). */
+  bg: Paint
   /** --shadow-6 ring: color-mix(gray-a3, gray-3 25%) / dark color-mix(gray-a6, gray-6 25%). */
   ring: Paint
   /** The rest of --shadow-6 as one drop shadow. */
   shadow: ShadowPaint
 }
 
-function dialog(s: PaletteState): DialogPaints {
+function dialog(s: BaseState): DialogPaints {
   return {
     overlay: byMode(blackA(6), blackA(8)),
-    panel: byMode(WHITE, g(2)),
+    bg: byMode(WHITE, g(2)),
     ring: byMode(mix(g('a3'), g(3), 0.25), mix(g('a6'), g(6), 0.25)),
     shadow: { color: BLACK, opacity: s.appearance === 'dark' ? 0.5 : 0.15, offsetY: 12, radius: 30, elevation: 12 },
   }
@@ -744,18 +781,18 @@ function dialog(s: PaletteState): DialogPaints {
 
 // ─── Popper panel (Popover, HoverCard, menus, Select content) ────────────────
 
-export interface PanelPaints {
+export interface PanelPaints extends SurfacePaints {
   /** --color-panel-solid: white / dark gray-2. */
-  panel: Paint
+  bg: Paint
   /** The 1px ring of --shadow-4 / --shadow-5: color-mix(gray-a3 / dark gray-a6). */
   ring: Paint
   /** The rest of the shadow as one drop shadow. */
   shadow: ShadowPaint
 }
 
-function popperPanel(s: PaletteState): PanelPaints {
+function popperPanel(s: BaseState): PanelPaints {
   return {
-    panel: byMode(WHITE, g(2)),
+    bg: byMode(WHITE, g(2)),
     ring: byMode(mix(g('a3'), g(3), 0.25), mix(g('a6'), g(6), 0.25)),
     shadow: { color: BLACK, opacity: s.appearance === 'dark' ? 0.4 : 0.12, offsetY: 8, radius: 20, elevation: 8 },
   }
@@ -770,7 +807,7 @@ export interface TooltipPaints {
   text: Paint
 }
 
-function tooltip(_s: PaletteState): TooltipPaints {
+function tooltip(_s: BaseState): TooltipPaints {
   return { bg: g(12), text: g(1) }
 }
 
@@ -787,7 +824,7 @@ export interface MenuItemPaints {
   shortcut: Paint
 }
 
-export interface MenuItemState extends WithVariant<MenuVariant> {
+export interface MenuItemState extends WithVariant<MenuVariant>, Disabled {
   /** Pressed on touch (Radix `[data-highlighted]`). */
   highlighted?: boolean
   /** An open SubTrigger. */
@@ -820,7 +857,7 @@ export interface MenuChromePaints {
   separator: Paint
 }
 
-function menuChrome(_s: PaletteState): MenuChromePaints {
+function menuChrome(_s: BaseState): MenuChromePaints {
   return { label: g('a10'), separator: g('a6') }
 }
 
@@ -828,10 +865,10 @@ function menuChrome(_s: PaletteState): MenuChromePaints {
 
 export type SelectTriggerVariant = 'classic' | 'surface' | 'soft' | 'ghost'
 
-export interface SelectTriggerPaints {
+export interface SelectTriggerPaints extends SurfacePaints {
   bg: Paint
   /** The inset 1px ring (surface, classic). */
-  border?: Paint
+  ring?: Paint
   text: Paint
   /** The value text when showing the placeholder. */
   placeholder: Paint
@@ -845,22 +882,22 @@ export interface SelectTriggerPaints {
  * web): surface ring gray-a8, soft accent-a4, ghost accent-a3. Classic's
  * gradients flatten to gray-2.
  */
-function selectTrigger(s: WithVariant<SelectTriggerVariant> & { open?: boolean }): SelectTriggerPaints {
+function selectTrigger(s: WithVariant<SelectTriggerVariant> & Disabled & { open?: boolean }): SelectTriggerPaints {
   if (s.disabled) {
     const icon = g('a9')
     switch (s.variant) {
-      case 'surface': return { bg: g('a2'), border: g('a6'), text: g('a11'), placeholder: g('a11'), icon }
-      case 'classic': return { bg: g(2), border: byMode(g('a4'), g('a5')), text: g('a11'), placeholder: g('a11'), icon }
+      case 'surface': return { bg: g('a2'), ring: g('a6'), text: g('a11'), placeholder: g('a11'), icon }
+      case 'classic': return { bg: g(2), ring: byMode(g('a4'), g('a5')), text: g('a11'), placeholder: g('a11'), icon }
       case 'soft': return { bg: g('a3'), text: g('a11'), placeholder: g('a11'), icon }
       case 'ghost': return { bg: TRANSPARENT, text: g('a11'), placeholder: g('a11'), icon }
     }
   }
   switch (s.variant) {
     case 'surface':
-      return { bg: g('surface'), border: s.open ? g('a8') : g('a7'), text: g(12), placeholder: g('a10'), icon: fade(g(12), 0.9) }
+      return { bg: g('surface'), ring: s.open ? g('a8') : g('a7'), text: g(12), placeholder: g('a10'), icon: fade(g(12), 0.9) }
     case 'classic':
       // the gray-2 → gray-1 gradient and its subtle inset highlights flatten to gray-2
-      return { bg: g(2), border: byMode(g('a5'), whiteA(4)), text: g(12), placeholder: g('a10'), icon: fade(g(12), 0.9) }
+      return { bg: g(2), ring: byMode(g('a5'), whiteA(4)), text: g(12), placeholder: g('a10'), icon: fade(g(12), 0.9) }
     case 'soft':
       return { bg: s.open ? c('a4') : c('a3'), text: c(12), placeholder: fade(c(12), 0.6), icon: fade(c(12), 0.9) }
     case 'ghost':
@@ -875,7 +912,7 @@ export interface ControlLabelPaints {
 }
 
 /** `.rt-BaseCheckboxRoot ~ label` text: gray-12, gray-a8 when disabled. */
-function controlLabel(s: PaletteState): ControlLabelPaints {
+function controlLabel(s: BaseState & Disabled): ControlLabelPaints {
   return { text: s.disabled ? g('a8') : g(12) }
 }
 
@@ -886,7 +923,7 @@ export interface FocusRingPaints {
 }
 
 /** `:focus-visible { outline: 2px solid var(--focus-8) }` (base-button, base-checkbox, base-card…). */
-function focusRing(_s: PaletteState): FocusRingPaints {
+function focusRing(_s: BaseState): FocusRingPaints {
   return { ring: f(8) }
 }
 
@@ -908,6 +945,7 @@ export const VARIANT_RECIPES = {
   textField,
   textArea,
   text,
+  body,
   link,
   blockquote,
   dataListLabel,

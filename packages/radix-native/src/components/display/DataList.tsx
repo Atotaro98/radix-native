@@ -201,7 +201,7 @@ DataListLabel.displayName = 'DataList.Label'
 function DataListValue({ style, children, ...rest }: DataListValueProps) {
   const root = useRoot('Value')
   const { align, first, last } = useContext(ItemContext)
-  const body = useVariantColors('text', {})
+  const body = useVariantColors('body', {})
   const horizontal = root.orientation === 'horizontal'
   const [start, end, firstStart, lastEnd] = VALUE_TRIM[align]
   const valueStyle: ViewStyle = {

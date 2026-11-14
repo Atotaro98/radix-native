@@ -1,25 +1,29 @@
 import React, { useMemo } from 'react'
-import { Text as RNText, View } from 'react-native'
+import { View } from 'react-native'
 import type { StyleProp, ViewStyle } from 'react-native'
-import { useThemeContext } from '../../hooks/useThemeContext'
 import { useMetrics } from '../../hooks/useMetrics'
 import { useVariantColors } from '../../hooks/useVariantColors'
-import { useMargins } from '../../hooks/useMargins'
-import { shadowStyle } from '../../utils/shadow'
 import type { SpaceToken } from '../../tokens/spacing'
 import type { RadiusLevel } from '../../tokens/radius'
 import type { AccentColor } from '../../tokens/colors/types'
 import { useTextStyle } from '../../hooks/useTextStyle'
 import type { TextSize } from '../typography/Text'
-import { ToggleSurface, type ToggleKind } from './ToggleSurface'
-import { CardRing } from './CardRing'
+import { ToggleSurface, useToggleGeometry, type ToggleKind } from './ToggleSurface'
+import { paintSurface } from './surface'
 import { InsetContext, type InsetValues } from '../layout/InsetContext'
 import { ColumnRows, AutoFitRows } from './ColumnRows'
-import { createSelectionGroup, type SelectionValue } from './selectionGroup'
-import type { MarginProps } from '../../types/marginProps'
+import {
+  createSelectionFamily,
+  renderItemLabel,
+  type SelectionFamilyRootProps,
+  type SelectionItem,
+  type SelectionLayoutProps,
+  type SelectionShared,
+} from './selectionGroup'
+import type { CardItemVariant } from '../../utils/variantPalette'
 
 export type SelectionCardSize = 1 | 2 | 3
-export type SelectionCardVariant = 'surface' | 'classic'
+export type SelectionCardVariant = CardItemVariant
 
 /**
  * Radix .rt-CheckboxCardsRoot / .rt-RadioCardsRoot :where(.rt-r-size-1/2/3), the
@@ -79,19 +83,20 @@ export function SelectionCard<P extends object>({
   children,
   style,
 }: SelectionCardProps<P>) {
-  const { scaling, radius } = useThemeContext()
   const metrics = useMetrics()
   const colors = useVariantColors(recipe, { variant, color, highContrast, checked, disabled })
 
   const cfg = CARD_SIZE[size]
   const paddingX = metrics.px(cfg.paddingX)
   const paddingY = metrics.px(cfg.paddingY)
-  const indicatorWidth = indicator ? indicator.kind.geometry(indicator.props, { scaling, radius }).width : 0
-  const checkedBorder = checked && 'checkedBorder' in colors ? colors.checkedBorder : undefined
+  const geometry = useToggleGeometry(indicator)
+  const indicatorWidth = geometry?.width ?? 0
   const borderRadius = metrics.radius(cfg.radiusLevel)
-  // Plain-text children: Radix item font size, body text gray-12 unless the recipe sets one (disabled).
-  const body = useVariantColors('text', {})
-  const label = useTextStyle({ size: cfg.fontSize, color: colors.text ?? body.text })
+  // The ring is drawn over the content (Radix ::after): checking a radio card swaps it for a
+  // 2px outline (the recipe decides) without moving the content
+  const surface = paintSurface(colors, borderRadius)
+  // Plain-text children: Radix item font size, gray-12 (disabled gray-a9)
+  const label = useTextStyle({ size: cfg.fontSize, color: colors.text })
 
   const cardStyle: ViewStyle = {
     flexGrow: 1,
@@ -105,8 +110,6 @@ export function SelectionCard<P extends object>({
     paddingRight: indicator ? paddingX * 2 + indicatorWidth : paddingX,
     paddingBottom: paddingY,
     paddingLeft: paddingX,
-    borderRadius,
-    backgroundColor: colors.bg,
   }
 
   // base-card.css: --inset-padding-* = item padding − border width
@@ -130,50 +133,35 @@ export function SelectionCard<P extends object>({
       onPress={onPress}
       color={color}
       borderRadius={borderRadius}
-      style={[
-        cardStyle,
-        shadowStyle(colors.shadow),
-        style,
-      ]}
+      style={[cardStyle, surface.style, style]}
     >
       <InsetContext.Provider value={inset}>
           {/* Plain strings must live inside <Text> in RN */}
-          {typeof children === 'string' || typeof children === 'number'
-            ? <RNText style={[label.style, { flexShrink: 1 }]} {...label.textProps}>{children}</RNText>
-            : children}
+          {renderItemLabel(children, label, { flexShrink: 1 })}
       </InsetContext.Provider>
-      {indicator ? (
+      {indicator && geometry ? (
         // Trailing edge, vertically centered (Radix CSS)
         <View
           pointerEvents="none"
           style={{ position: 'absolute', right: paddingX, top: 0, bottom: 0, justifyContent: 'center' }}
         >
-          <indicator.kind.Indicator {...indicator.props} />
+          <indicator.kind.Indicator {...indicator.props} geometry={geometry} />
         </View>
       ) : null}
-      {/* The ring is drawn over the content (Radix ::after); checked RadioCards draw a 2px outline instead */}
-      {checkedBorder
-        ? <CardRing color={checkedBorder} borderRadius={borderRadius} width={CHECKED_RING_WIDTH} />
-        : <CardRing color={colors.border} borderRadius={borderRadius} />}
+      {surface.over}
     </ToggleSurface>
   )
 }
 
 /** `--radio-cards-item-border-width` / `--checkbox-cards-item-border-width`: 1px in both variants. */
 const CARD_BORDER_WIDTH = 1
-/** `.rt-RadioCardsItem[data-state='checked']::after { outline: 2px }`. */
-const CHECKED_RING_WIDTH = 2
 
-interface SelectionCardGridProps {
-  /** Number of equal-width columns; omitted = auto-fit (cards ≥ 160px, like Radix). */
+/** The Root props CheckboxCards and RadioCards add to a Selection group's. */
+export interface CardGridProps {
+  /** Number of equal-width columns. Default: auto-fit (cards ≥ 160px, like Radix). */
   columns?: number
-  gap: SpaceToken
-  /** Radix: `group` for CheckboxCards, `radiogroup` for RadioCards. */
-  role: 'group' | 'radiogroup'
-  accessibilityLabel?: string
-  testID?: string
-  style?: StyleProp<ViewStyle>
-  children?: React.ReactNode
+  /** Gap between cards as space token. Default: 4. */
+  gap?: SpaceToken
 }
 
 // Radix radioCardsRootPropDefs / checkboxCardsRootPropDefs default
@@ -182,7 +170,7 @@ const AUTO_FIT_MIN_ITEM_WIDTH = 160
 
 /** Internal: the grid of CheckboxCards / RadioCards (Radix `repeat(auto-fit, minmax(160px, 1fr))`). */
 
-export function SelectionCardGrid({ columns, gap, role, accessibilityLabel, testID, style, children }: SelectionCardGridProps) {
+export function SelectionCardGrid({ role, accessibilityLabel, testID, style, extra: { columns, gap = 4 }, children }: SelectionLayoutProps<CardGridProps>) {
   const { space } = useMetrics()
   const resolvedGap = space(gap)
   return (
@@ -204,34 +192,9 @@ export function SelectionCardGrid({ columns, gap, role, accessibilityLabel, test
 
 type SelectionType = 'single' | 'multiple'
 
-export interface SelectionCardsProps<T extends SelectionType> extends MarginProps {
-  /** Card size (1–3). Default: 2. */
-  size?: SelectionCardSize
-  /** Visual variant. Default: 'surface'. */
-  variant?: SelectionCardVariant
-  /** Accent color. Default: theme accent. */
-  color?: AccentColor
-  /** Increases color contrast with the background. */
-  highContrast?: boolean
-  /** Number of equal-width columns. Default: auto-fit (cards ≥ 160px, like Radix). */
-  columns?: number
-  /** Gap between cards as space token. Default: 4. */
-  gap?: SpaceToken
-  /** Controlled selection: one value (RadioCards) or several (CheckboxCards). */
-  value?: SelectionValue<T>
-  /** Uncontrolled default selection. */
-  defaultValue?: SelectionValue<T>
-  /** Called when the selection changes. */
-  onValueChange?: (value: SelectionValue<T>) => void
-  /** Disables every card. */
-  disabled?: boolean
-  /** Card items. */
-  children?: React.ReactNode
-  /** Accessible name for the whole group. */
-  accessibilityLabel?: string
-  testID?: string
-  style?: StyleProp<ViewStyle>
-}
+/** CheckboxCards / RadioCards Root props (sizes 1–3, default 2; default variant 'surface'). */
+export type SelectionCardsProps<T extends SelectionType> =
+  SelectionFamilyRootProps<T, SelectionCardSize, SelectionCardVariant> & CardGridProps
 
 export interface SelectionCardsItemProps {
   /** Unique value identifying this card. */
@@ -241,13 +204,6 @@ export interface SelectionCardsItemProps {
   /** Card content. */
   children?: React.ReactNode
   style?: StyleProp<ViewStyle>
-}
-
-interface Shared {
-  size: SelectionCardSize
-  variant: SelectionCardVariant
-  color?: AccentColor
-  highContrast?: boolean
 }
 
 /** Props of a card's trailing Indicator. Radix checkbox-cards.tsx always renders a surface Checkbox. */
@@ -284,49 +240,8 @@ export function createSelectionCards<T extends SelectionType>({
   recipe,
   kind,
 }: SelectionCardsConfig<T>) {
-  const Selection = createSelectionGroup<T, Shared>({ name, type })
-
-  function Root({
-    size = 2,
-    variant = 'surface',
-    color,
-    highContrast,
-    columns,
-    gap = 4,
-    value,
-    defaultValue,
-    onValueChange,
-    disabled,
-    children,
-    accessibilityLabel,
-    testID,
-    m, mx, my, mt, mr, mb, ml,
-    style,
-  }: SelectionCardsProps<T>) {
-    const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
-    const shared = useMemo<Shared>(() => ({ size, variant, color, highContrast }), [size, variant, color, highContrast])
-
-    return (
-      <Selection.Root value={value} defaultValue={defaultValue} onValueChange={onValueChange} disabled={disabled} shared={shared}>
-        <SelectionCardGrid
-          role={rootRole}
-          columns={columns}
-          gap={gap}
-          accessibilityLabel={accessibilityLabel}
-          testID={testID}
-          style={[margins, style]}
-        >
-          {children}
-        </SelectionCardGrid>
-      </Selection.Root>
-    )
-  }
-  Root.displayName = `${name}.Root`
-
-  function Item({ value, disabled, children, style }: SelectionCardsItemProps) {
-    const item = Selection.useItem(value, disabled)
+  function ItemView({ item, children, style }: SelectionCardsItemProps & { item: SelectionItem<SelectionShared<SelectionCardSize, SelectionCardVariant>> }) {
     const { size, variant, color, highContrast } = item.shared
-
     return (
       <SelectionCard
         recipe={recipe}
@@ -348,7 +263,13 @@ export function createSelectionCards<T extends SelectionType>({
       </SelectionCard>
     )
   }
-  Item.displayName = `${name}.Item`
 
-  return Object.assign(Root, { Root, Item })
+  return createSelectionFamily<T, SelectionCardSize, SelectionCardVariant, CardGridProps, SelectionCardsItemProps>({
+    name,
+    type,
+    rootRole,
+    size: 2,
+    Layout: SelectionCardGrid,
+    Item: ItemView,
+  })
 }

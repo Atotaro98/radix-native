@@ -5,8 +5,7 @@ import Animated, { Easing, runOnJS, useAnimatedStyle, useReducedMotion, useShare
 import { useMetrics } from '../../hooks/useMetrics'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useVariantColors } from '../../hooks/useVariantColors'
-import { shadowStyle } from '../../utils/shadow'
-import { CardRing } from './CardRing'
+import { paintSurface } from './surface'
 import { createOverlayContext, slot, useOverlayState, type OverlayState, type OverlayStateProps, type SlotChild } from './overlayRoot'
 import { PortalHost, type PortalHostHandle } from './Portal'
 import { InsetContext, type InsetValues } from '../layout/InsetContext'
@@ -115,6 +114,7 @@ export function createDialog({ alert, name }: { alert: boolean; name: string }) 
     const cfg = SIZES[size]
     const padding = metrics.space(cfg.padding)
     const borderRadius = metrics.radius(cfg.radius)
+    const panel = paintSurface(colors, borderRadius)
 
     // Presence: stay mounted until the exit animation ends (Radix unmountSuspended)
     const [present, setPresent] = useState(ctx.open)
@@ -214,11 +214,9 @@ export function createDialog({ alert, name }: { alert: boolean; name: string }) 
                       minHeight,
                       maxHeight,
                       padding,
-                      borderRadius,
-                      backgroundColor: colors.panel,
                       overflow: height !== undefined || maxHeight !== undefined ? 'hidden' : undefined,
                     },
-                    shadowStyle(colors.shadow),
+                    panel.style,
                     contentStyle,
                     style,
                   ]}
@@ -229,7 +227,7 @@ export function createDialog({ alert, name }: { alert: boolean; name: string }) 
                       ? <ScrollView style={{ margin: -padding }} contentContainerStyle={{ padding }}>{children}</ScrollView>
                       : children}
                   </InsetContext.Provider>
-                  <CardRing color={colors.ring} borderRadius={borderRadius} />
+                  {panel.over}
                 </Animated.View>
               </Pressable>
             </ScrollView>
