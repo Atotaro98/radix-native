@@ -1,14 +1,11 @@
 import React from 'react'
-import { StyleSheet, Text } from 'react-native'
-import type { StyleProp, ViewStyle, TextStyle } from 'react-native'
+import { Text } from 'react-native'
 import { act, fireEvent, screen } from '@testing-library/react-native'
 import { renderWithTheme } from './helpers/render'
+import { flat } from './helpers/queries'
 import { Select } from '../components/forms/Select'
 import { placeItemAligned } from '../utils/selectLayout'
 import { AccessibleIcon } from '../components/utilities/AccessibleIcon'
-
-const flat = (node: { props: { style?: unknown } }): ViewStyle & TextStyle =>
-  StyleSheet.flatten(node.props.style as StyleProp<ViewStyle>) ?? {}
 
 describe('item-aligned placement (Radix SelectItemAlignedPosition)', () => {
   const base = {

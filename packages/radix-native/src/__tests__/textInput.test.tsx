@@ -1,22 +1,16 @@
 import React from 'react'
-import { StyleSheet } from 'react-native'
-import type { StyleProp, ViewStyle } from 'react-native'
 import { screen, fireEvent } from '@testing-library/react-native'
 import { Theme, TextField, TextArea } from '../index'
 import { renderWithTheme } from './helpers/render'
+import { focusRings } from './helpers/queries'
 import { indigo, slate } from '../tokens/colors'
 
 const borderOf = (input: { parent: unknown }) =>
   // The input's parent is the View that draws the border.
   ((input.parent as { parent: { props: { style: unknown[] } } }).parent.props.style[0] as { borderColor: string }).borderColor
 
-/** Whether a FocusRing overlay (absolutely positioned ring) is drawn. */
-const focusRingVisible = () =>
-  screen.UNSAFE_root.findAll(
-    (node: { type: unknown; props: { style?: unknown } }) => typeof node.type === 'string'
-      && StyleSheet.flatten(node.props.style as StyleProp<ViewStyle>)?.position === 'absolute'
-      && StyleSheet.flatten(node.props.style as StyleProp<ViewStyle>)?.borderWidth === 1,
-  ).length > 0
+/** Whether the input's focus ring is visible. */
+const focusRingVisible = () => focusRings(screen.UNSAFE_root).length > 0
 
 describe.each([
   ['TextField', TextField],

@@ -1,14 +1,11 @@
 import React from 'react'
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native'
-import type { StyleProp, ViewStyle } from 'react-native'
+import { Modal, Pressable, Text, View } from 'react-native'
 import { act, fireEvent, screen } from '@testing-library/react-native'
 import { renderWithTheme } from './helpers/render'
+import { flat } from './helpers/queries'
 import { Dialog } from '../components/overlays/Dialog'
 import { AlertDialog } from '../components/overlays/AlertDialog'
 import { Inset } from '../components/layout/Inset'
-
-const flat = (node: { props: { style?: unknown } }): ViewStyle =>
-  StyleSheet.flatten(node.props.style as StyleProp<ViewStyle>) ?? {}
 
 function Example(props: Partial<React.ComponentProps<typeof Dialog.Root>> & { size?: 1 | 2 | 3 | 4; onEscapeKeyDown?: (e: { preventDefault: () => void }) => void }) {
   const { size, onEscapeKeyDown, ...root } = props

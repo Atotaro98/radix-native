@@ -1,15 +1,11 @@
 import React from 'react'
-import { StyleSheet } from 'react-native'
-import type { StyleProp, ViewStyle } from 'react-native'
 import { act, fireEvent, screen } from '@testing-library/react-native'
 import { renderWithTheme } from './helpers/render'
+import { flat } from './helpers/queries'
 import { Slider } from '../components/forms/Slider'
 import {
   getClosestValueIndex, snapToStep, thumbCenter, thumbLabel, updateValues, valueFromPosition,
 } from '../utils/slider'
-
-const flat = (node: { props: { style?: unknown } }): ViewStyle =>
-  StyleSheet.flatten(node.props.style as StyleProp<ViewStyle>) ?? {}
 
 describe('slider math (Radix primitives slider.tsx)', () => {
   it('snaps to the step without float drift and clamps', () => {

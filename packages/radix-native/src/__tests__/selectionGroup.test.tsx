@@ -10,7 +10,7 @@ import { fireEvent, screen } from '@testing-library/react-native'
 import { CheckboxGroup, RadioGroup, CheckboxCards, RadioCards } from '../index'
 import { renderWithTheme } from './helpers/render'
 import { crimson, indigo } from '../tokens/colors'
-import { cardRings } from './helpers/queries'
+import { cardRings, focusRings } from './helpers/queries'
 
 const families = [
   { name: 'CheckboxGroup', Group: CheckboxGroup, role: 'checkbox', multiple: true },
@@ -38,13 +38,7 @@ describe.each(families)('$name', ({ name, Group: G, role, multiple }) => {
   ] as const)('focus ring (Radix --focus-8): %s', (_label, color, expected) => {
     renderWithTheme(<Group color={color}>{options}</Group>)
     fireEvent(item('Alpha'), 'focus')
-    const styleOf = (node: { props: { style?: unknown } }) =>
-      StyleSheet.flatten(node.props.style as StyleProp<ViewStyle>)
-    const rings = screen.UNSAFE_root.findAll(
-      (node: { type: unknown; props: { style?: unknown } }) => typeof node.type === 'string'
-        && styleOf(node)?.position === 'absolute' && styleOf(node)?.borderWidth === 2,
-    )
-    expect(rings.map((node: { props: { style?: unknown } }) => styleOf(node)?.borderColor)).toEqual([expected])
+    expect(focusRings(screen.UNSAFE_root).map((ring) => ring.props.color)).toEqual([expected])
   })
   const checked = (label: string) => item(label).props.accessibilityState.checked
 

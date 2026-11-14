@@ -370,7 +370,7 @@ Every component change gets its playground section checked in the iOS Simulator 
 
 ## Testing
 
-`yarn test` (Jest + `@testing-library/react-native`, Reanimated 4 via `setUpTests()` and the worklets Babel plugin). Tests live in `src/__tests__/`; render inside a theme with `renderWithTheme` from `__tests__/helpers/render`. `contrast.test.ts` checks WCAG ratios of every text-on-fill pair the Variant recipes produce.
+`yarn test` (Jest + `@testing-library/react-native`, Reanimated 4 via `setUpTests()` and the worklets Babel plugin). Tests live in `src/__tests__/`; render inside a theme with `renderWithTheme` from `__tests__/helpers/render`. Read what a component drew through `__tests__/helpers/queries` (`flat`, `focusRings`, `cardRings`, `hasBevel`), not by guessing parts from their style (`borderWidth === 2`). `contrast.test.ts` checks WCAG ratios of every text-on-fill pair the Variant recipes produce.
 
 ## TypeScript rules
 

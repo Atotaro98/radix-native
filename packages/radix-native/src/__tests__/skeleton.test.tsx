@@ -1,8 +1,8 @@
 import React from 'react'
-import { StyleSheet, View } from 'react-native'
-import type { StyleProp, ViewStyle, TextStyle } from 'react-native'
+import { View } from 'react-native'
 import { screen } from '@testing-library/react-native'
 import { renderWithTheme } from './helpers/render'
+import { flat } from './helpers/queries'
 import { Skeleton } from '../components/feedback/Skeleton'
 import { Button } from '../components/actions/Button'
 import { Checkbox } from '../components/actions/Checkbox'
@@ -11,8 +11,6 @@ import { Box } from '../components/layout/Box'
 import { Text } from '../components/typography/Text'
 
 type Node = { type: unknown; props: { style?: unknown; children?: unknown }; children: unknown[] }
-const flat = (node: { props: { style?: unknown } }): ViewStyle & TextStyle =>
-  StyleSheet.flatten(node.props.style as StyleProp<ViewStyle>) ?? {}
 const root = () => screen.getByTestId('s', { includeHiddenElements: true }) as unknown as Node
 /** The pulsing background: the first child of the skeleton. */
 const pulse = () => flat(root().children[0] as Node)

@@ -9,12 +9,11 @@ import { StyleSheet, type StyleProp, type TextStyle, type ViewStyle } from 'reac
 import { act, fireEvent, screen } from '@testing-library/react-native'
 import { Checkbox, CheckboxCards, CheckboxGroup, Radio, RadioCards, RadioGroup, Switch } from '../index'
 import { renderWithTheme } from './helpers/render'
-import { focusRings, hasBevel } from './helpers/queries'
+import { flat, focusRings, hasBevel } from './helpers/queries'
 
 type Node = { type: unknown; props: { style?: unknown; visible?: boolean; offset?: number; borderRadius?: number } }
 type Toggle = typeof Checkbox | typeof Radio | typeof Switch
 
-const flat = (n: Node): ViewStyle => StyleSheet.flatten(n.props.style as StyleProp<ViewStyle>) ?? {}
 const lineHeightOf = (n: Node) => StyleSheet.flatten(n.props.style as StyleProp<TextStyle>)?.lineHeight
 
 const TOGGLES: [string, Toggle, 'checkbox' | 'radio' | 'switch'][] = [
