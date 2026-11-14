@@ -55,3 +55,37 @@ export function accessibleNameOf(node: React.ReactNode): { name: string; hidden:
 export function textOf(node: React.ReactNode): string {
   return accessibleNameOf(node).name
 }
+
+export interface AccessibleControl {
+  /** The control's `accessibilityLabel`: the consumer's, else the content's name when the platform cannot read it by itself. */
+  accessibilityLabel: string | undefined
+  /** The name the content gives (empty when it gives none). */
+  name: string
+  /** Wraps the control's content so accessible parts inside contribute only their label. */
+  wrap: (content: React.ReactNode) => React.ReactNode
+}
+
+/**
+ * Internal: what every control announced as one element does with its content
+ * (BaseButton, a pressable Card, the Toggle surface, tab and segmented items,
+ * menu and Select items). It reads the content's name like a browser
+ * (`accessibleNameOf`), passes it as the label when part of it is hidden — or
+ * always with `forceName` (a loading button, whose label is invisible) — unless
+ * the consumer set one, and marks the content as inside an accessible control.
+ */
+export function useAccessibleControl(
+  children: React.ReactNode,
+  consumerLabel: string | undefined,
+  { forceName = false }: { forceName?: boolean } = {},
+): AccessibleControl {
+  const content = React.useMemo(() => accessibleNameOf(children), [children])
+  return {
+    accessibilityLabel: consumerLabel ?? (content.hidden || forceName ? content.name || undefined : undefined),
+    name: content.name,
+    wrap: wrapInAccessibleControl,
+  }
+}
+
+function wrapInAccessibleControl(content: React.ReactNode): React.ReactNode {
+  return React.createElement(AccessibleControlContext.Provider, { value: true }, content)
+}

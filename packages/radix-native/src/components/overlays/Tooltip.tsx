@@ -1,12 +1,11 @@
-import React, { useCallback, useRef } from 'react'
+import React, { useCallback } from 'react'
 import { Text as RNText, View } from 'react-native'
 import type { DimensionValue, StyleProp, ViewStyle } from 'react-native'
-import { useControllableState } from '../../hooks/useControllableState'
 import { useMetrics } from '../../hooks/useMetrics'
 import { useTextStyle } from '../../hooks/useTextStyle'
 import { useVariantColors } from '../../hooks/useVariantColors'
-import { AnchoredContent, type AnchoredPlacementProps, type Measurable } from '../internal/AnchoredContent'
-import { anchorSlot, type SlotChild } from '../internal/anchorSlot'
+import { AnchoredContent, type AnchoredPlacementProps } from '../internal/AnchoredContent'
+import { slot, useOverlayState, type SlotChild } from '../internal/overlayRoot'
 
 export interface TooltipProps extends AnchoredPlacementProps {
   /** What the tooltip says. */
@@ -44,17 +43,16 @@ export function Tooltip({
   side = 'top', sideOffset = 4, align = 'center', alignOffset, avoidCollisions, collisionPadding = 10, sticky,
   width, minWidth, maxWidth = 360, style, testID,
 }: TooltipProps) {
-  const [open, setOpen] = useControllableState<boolean>({ prop: openProp, defaultProp: defaultOpen, onChange: onOpenChange })
-  const anchor = useRef<Measurable | null>(null)
+  const { open, setOpen, anchor } = useOverlayState({ open: openProp, defaultOpen, onOpenChange })
   const metrics = useMetrics()
   const colors = useVariantColors('tooltip', {})
   const text = useTextStyle({ size: 1, color: colors.text })
   const close = useCallback(() => setOpen(false), [setOpen])
 
-  const trigger = anchorSlot(children, anchor, {
+  const trigger = slot(children, {
     onLongPress: () => setOpen(true),
     onPressOut: () => setOpen(false),
-  })
+  }, anchor)
   const hint = typeof content === 'string' ? content : undefined
 
   return (

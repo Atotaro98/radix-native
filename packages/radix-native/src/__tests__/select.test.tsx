@@ -1,10 +1,11 @@
 import React from 'react'
-import { StyleSheet } from 'react-native'
+import { StyleSheet, Text } from 'react-native'
 import type { StyleProp, ViewStyle, TextStyle } from 'react-native'
 import { act, fireEvent, screen } from '@testing-library/react-native'
 import { renderWithTheme } from './helpers/render'
 import { Select } from '../components/forms/Select'
 import { placeItemAligned } from '../utils/selectLayout'
+import { AccessibleIcon } from '../components/utilities/AccessibleIcon'
 
 const flat = (node: { props: { style?: unknown } }): ViewStyle & TextStyle =>
   StyleSheet.flatten(node.props.style as StyleProp<ViewStyle>) ?? {}
@@ -103,4 +104,67 @@ describe('Select (select.css)', () => {
     })
     expect(flat(screen.getByTestId('content', { includeHiddenElements: true })).opacity).toBe(0)
   })
+
+  it('item-aligned: the selected item sits over the trigger, counting the label and separator above it', () => {
+    renderWithTheme(
+      <Select.Root defaultValue="b">
+        <Select.Trigger testID="trigger" />
+        <Select.Content testID="content">
+          <Select.Label>Group</Select.Label>
+          <Select.Item value="a">A</Select.Item>
+          <Select.Separator />
+          <Select.Item value="b">B</Select.Item>
+        </Select.Content>
+      </Select.Root>,
+    )
+    measureTrigger()
+    fireEvent.press(screen.getByTestId('trigger'))
+    layoutContent(200, 200)
+    // y: trigger centre (416) − (padding 8 + label 32 + separator 1 + 2 × 8 + item 32 + half an item 16)
+    expect(flat(screen.getByTestId('content'))).toMatchObject({ top: 416 - (8 + 32 + 17 + 32 + 16) })
+    // x: trigger x + its padding-x − content padding − gutter
+    expect(flat(screen.getByTestId('content')).left).toBe(40 + 12 - 8 - 24)
+  })
+
+  it('item-aligned keeps a per-side collisionPadding', () => {
+    renderWithTheme(
+      <Select.Root defaultValue="a">
+        <Select.Trigger testID="trigger" />
+        <Select.Content testID="content" collisionPadding={{ left: 60 }}>
+          <Select.Item value="a">A</Select.Item>
+        </Select.Content>
+      </Select.Root>,
+    )
+    measureTrigger()
+    fireEvent.press(screen.getByTestId('trigger'))
+    layoutContent(200, 100)
+    expect(flat(screen.getByTestId('content')).left).toBe(60)
+  })
+
+  it('an item is named by its AccessibleIcon label', () => {
+    renderWithTheme(
+      <Select.Root defaultOpen>
+        <Select.Trigger testID="trigger" />
+        <Select.Content testID="content">
+          <Select.Item value="a" testID="a"><AccessibleIcon label="Apple"><Text>🍎</Text></AccessibleIcon></Select.Item>
+        </Select.Content>
+      </Select.Root>,
+    )
+    expect(screen.getByTestId('a', { includeHiddenElements: true }).props.accessibilityLabel).toBe('Apple')
+  })
+})
+
+/** Stands in for the trigger's host instance: it reports a fixed window rect (x 40, y 400, 160 × 32). */
+function measureTrigger() {
+  type Measure = (cb: (x: number, y: number, w: number, h: number) => void) => void
+  type Up = { instance: { measureInWindow?: Measure } | null; parent: Up | null }
+  // The mocked native View (a class instance) behind the trigger's host element
+  let node: Up | null = screen.getByTestId('trigger') as unknown as Up
+  while (node && typeof node.instance?.measureInWindow !== 'function') node = node.parent
+  if (!node?.instance) throw new Error('no native View behind the trigger')
+  node.instance.measureInWindow = (cb) => cb(40, 400, 160, 32)
+}
+
+const layoutContent = (width: number, height: number) => act(() => {
+  fireEvent(screen.getByTestId('content', { includeHiddenElements: true }), 'layout', { nativeEvent: { layout: { x: 0, y: 0, width, height } } })
 })

@@ -1,16 +1,12 @@
-import React, { createContext, useCallback, useContext, useMemo, useRef } from 'react'
+import React, { useCallback } from 'react'
 import type { DimensionValue, StyleProp, ViewStyle } from 'react-native'
-import { useControllableState } from '../../hooks/useControllableState'
-import { AnchoredContent, type AnchoredPlacementProps, type Measurable } from '../internal/AnchoredContent'
-import { anchorSlot, type SlotChild } from '../internal/anchorSlot'
-import { PopperPanel } from '../internal/PopperPanel'
+import type { AnchoredPlacementProps } from '../internal/AnchoredContent'
+import { createOverlayContext, slot, useOverlayState, type OverlayState, type OverlayStateProps, type SlotChild } from '../internal/overlayRoot'
+import { PopperContent, usePanelSize } from '../internal/PopperContent'
 
 export type HoverCardSize = 1 | 2 | 3
 
-export interface HoverCardRootProps {
-  open?: boolean
-  defaultOpen?: boolean
-  onOpenChange?: (open: boolean) => void
+export interface HoverCardRootProps extends OverlayStateProps {
   /** Radix's hover delays have no touch meaning; accepted for API parity. */
   openDelay?: number
   closeDelay?: number
@@ -32,32 +28,17 @@ export interface HoverCardContentProps extends AnchoredPlacementProps {
   children?: React.ReactNode
 }
 
-interface HoverCardContextValue {
-  open: boolean
-  setOpen: (open: boolean) => void
-  anchor: React.MutableRefObject<Measurable | null>
-}
+const HoverCard_ = createOverlayContext<OverlayState>('HoverCard')
 
-const HoverCardContext = createContext<HoverCardContextValue | null>(null)
-
-function useHoverCard(part: string) {
-  const ctx = useContext(HoverCardContext)
-  if (!ctx) throw new Error(`HoverCard.${part} must be used within HoverCard.Root`)
-  return ctx
-}
-
-function HoverCardRoot({ open: openProp, defaultOpen = false, onOpenChange, children }: HoverCardRootProps) {
-  const [open, setOpen] = useControllableState<boolean>({ prop: openProp, defaultProp: defaultOpen, onChange: onOpenChange })
-  const anchor = useRef<Measurable | null>(null)
-  const value = useMemo(() => ({ open, setOpen: (o: boolean) => setOpen(o), anchor }), [open, setOpen])
-  return <HoverCardContext.Provider value={value}>{children}</HoverCardContext.Provider>
+function HoverCardRoot({ openDelay: _open, closeDelay: _close, children, ...state }: HoverCardRootProps) {
+  return <HoverCard_.Provider value={useOverlayState(state)}>{children}</HoverCard_.Provider>
 }
 HoverCardRoot.displayName = 'HoverCard.Root'
 
 /** One element. On touch a long-press opens the card (Radix opens on hover); a tap still does what the child does. */
 function HoverCardTrigger({ children }: { children: SlotChild }) {
-  const ctx = useHoverCard('Trigger')
-  return anchorSlot(children, ctx.anchor, { onLongPress: () => ctx.setOpen(true) })
+  const ctx = HoverCard_.use('Trigger')
+  return slot(children, { onLongPress: () => ctx.setOpen(true) }, ctx.anchor)
 }
 HoverCardTrigger.displayName = 'HoverCard.Trigger'
 
@@ -67,34 +48,20 @@ HoverCardTrigger.displayName = 'HoverCard.Trigger'
  * Closes on an outside touch or the Android back button.
  */
 function HoverCardContent({
-  size = 2,
-  side = 'bottom', sideOffset = 8, align = 'start', alignOffset = 0,
-  avoidCollisions, collisionPadding = 10, sticky,
-  width, minWidth, maxWidth = 480, height, minHeight, maxHeight,
-  style, testID, children,
+  size = 2, side = 'bottom', sideOffset = 8, align = 'start', maxWidth = 480, ...props
 }: HoverCardContentProps) {
-  const ctx = useHoverCard('Content')
+  const ctx = HoverCard_.use('Content')
   const close = useCallback(() => ctx.setOpen(false), [ctx])
   return (
-    <AnchoredContent
+    <PopperContent
+      {...usePanelSize(size)}
+      inset
       open={ctx.open}
       onDismiss={close}
       anchor={ctx.anchor}
-      side={side} sideOffset={sideOffset} align={align} alignOffset={alignOffset}
-      avoidCollisions={avoidCollisions} collisionPadding={collisionPadding} sticky={sticky}
-      testID={testID}
-    >
-      {(placement) => (
-        <PopperPanel
-          size={size}
-          width={width} minWidth={minWidth} maxWidth={maxWidth} height={height} minHeight={minHeight} maxHeight={maxHeight}
-          availableHeight={placement?.availableHeight}
-          style={style}
-        >
-          <HoverCardContext.Provider value={ctx}>{children}</HoverCardContext.Provider>
-        </PopperPanel>
-      )}
-    </AnchoredContent>
+      side={side} sideOffset={sideOffset} align={align} maxWidth={maxWidth}
+      {...props}
+    />
   )
 }
 HoverCardContent.displayName = 'HoverCard.Content'

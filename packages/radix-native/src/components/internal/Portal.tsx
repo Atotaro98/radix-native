@@ -1,8 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { BackHandler, StyleSheet, View } from 'react-native'
 import type { GestureResponderEvent } from 'react-native'
-import { ThemeContext } from '../../theme/ThemeContext'
-import type { ThemeContextValue } from '../../theme/theme.types'
+import { useBridgedContexts } from './portalContext'
 
 /** An open Anchored overlay, for outside-touch and back-button dismissal (Radix DismissableLayer). */
 export interface Layer {
@@ -109,25 +108,23 @@ export function usePortalHost(): PortalHostValue | null {
 let nextKey = 0
 
 /**
- * Internal: renders `children` in the nearest PortalHost. Like Radix Themes'
- * `Portal → Theme asChild`, the content keeps the Theme where the Portal sits
- * in the tree, not the host's.
+ * Internal: renders `children` in the nearest PortalHost. The content keeps
+ * the bridged contexts where the Portal sits in the tree, not the host's: the
+ * Theme (Radix Themes' `Portal → Theme asChild`) and the state of the
+ * components around it (see `portalContext`), as `createPortal` does on the web.
  */
 export function Portal({ children }: { children?: React.ReactNode }) {
   const host = useContext(PortalHostContext)
-  const theme = useContext(ThemeContext)
+  const bridge = useBridgedContexts()
   const key = useRef(nextKey++).current
+  const node = bridge(children)
 
   useLayoutEffect(() => {
     if (!host) return
-    host.mount(key, <PortalTheme theme={theme}>{children}</PortalTheme>)
-  }, [host, key, theme, children])
+    host.mount(key, node)
+  }, [host, key, node])
   useLayoutEffect(() => () => host?.unmount(key), [host, key])
 
   // No host (outside a Theme): render in place
   return host ? null : <>{children}</>
-}
-
-function PortalTheme({ theme, children }: { theme: ThemeContextValue | undefined; children: React.ReactNode }) {
-  return theme ? <ThemeContext.Provider value={theme}>{children}</ThemeContext.Provider> : <>{children}</>
 }

@@ -1,14 +1,12 @@
-import React, { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react'
-import { Pressable, ScrollView, Text as RNText, View } from 'react-native'
-import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native'
-import { useControllableState } from '../../hooks/useControllableState'
+import React, { useCallback, useContext, useMemo } from 'react'
+import { View } from 'react-native'
+import type { StyleProp, ViewStyle } from 'react-native'
 import { useMetrics } from '../../hooks/useMetrics'
-import { useTextStyle } from '../../hooks/useTextStyle'
-import { useVariantColors } from '../../hooks/useVariantColors'
-import { shadowStyle } from '../../utils/shadow'
-import { AnchoredContent, type AnchoredPlacementProps, type Measurable } from './AnchoredContent'
-import { CardRing } from './CardRing'
-import type { Rect } from '../../utils/popper'
+import type { AnchoredPlacementProps } from './AnchoredContent'
+import { ListLabel, ListRow, ListSeparator, ListShortcut, useListMetrics, type ListLook, type ListMetrics } from './ListRows'
+import { anchorRef, createOverlayContext, useOverlayState, type OverlayState } from './overlayRoot'
+import { createPortalContext } from './portalContext'
+import { PopperContent } from './PopperContent'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { MenuVariant } from '../../utils/variantPalette'
 
@@ -71,44 +69,23 @@ export interface MenuSubProps {
   children?: React.ReactNode
 }
 
-// ─── Size mappings (base-menu.css) ────────────────────────────────────────────
-
-const SIZES: Record<MenuSize, {
-  padding: number; radius: 3 | 4; itemHeight: number; itemRadius: 1 | 2
-  padX: number; padLeftIndicator: number; fontSize: 1 | 2; icon: number
-}> = {
-  // content padding space-1 / space-2; item height space-5 / space-6; gutter calc(space-5 / 1.2) / space-5
-  1: { padding: 4, radius: 3, itemHeight: 24, itemRadius: 1, padX: 8, padLeftIndicator: 20, fontSize: 1, icon: 8 },
-  2: { padding: 8, radius: 4, itemHeight: 32, itemRadius: 2, padX: 12, padLeftIndicator: 24, fontSize: 2, icon: 10 },
-}
-
 // ─── Contexts ─────────────────────────────────────────────────────────────────
+// All bridged across the portal: a part reads them wherever its content renders
 
-interface MenuRootValue {
-  open: boolean
-  setOpen: (open: boolean) => void
-  anchor: React.MutableRefObject<Measurable | Rect | null>
-}
-
-interface MenuContentValue {
+interface MenuContentValue extends ListLook {
   size: MenuSize
-  variant: MenuVariant
-  color?: AccentColor
-  highContrast?: boolean
+  list: ListMetrics
   /** Some item in this content shows an indicator: every row reserves the wide left gutter. */
   gutter: boolean
   /** Closes the whole menu (root and subs). */
   closeAll: () => void
 }
 
-export const MenuRootContext = createContext<MenuRootValue | null>(null)
-const MenuContentContext = createContext<MenuContentValue | null>(null)
-const RadioGroupContext = createContext<{ value?: string; onValueChange?: (v: string) => void } | null>(null)
-const SubContext = createContext<{
-  open: boolean
-  setOpen: (open: boolean) => void
-  anchor: React.MutableRefObject<Measurable | null>
-} | null>(null)
+/** The root of a DropdownMenu or ContextMenu: open state and anchor. */
+export const MenuRoot = createOverlayContext<OverlayState>('Menu', 'its Root')
+const MenuContentContext = createPortalContext<MenuContentValue | null>('Menu content', null)
+const RadioGroupContext = createPortalContext<{ value?: string; onValueChange?: (v: string) => void } | null>('Menu radio group', null)
+const Sub = createOverlayContext<OverlayState>('Menu', 'Menu.Sub')
 
 function useContent(part: string): MenuContentValue {
   const ctx = useContext(MenuContentContext)
@@ -116,13 +93,8 @@ function useContent(part: string): MenuContentValue {
   return ctx
 }
 
-// ─── Root ─────────────────────────────────────────────────────────────────────
-
-export function useMenuRoot({ open: openProp, defaultOpen = false, onOpenChange }: { open?: boolean; defaultOpen?: boolean; onOpenChange?: (o: boolean) => void }) {
-  const [open, setOpen] = useControllableState<boolean>({ prop: openProp, defaultProp: defaultOpen, onChange: onOpenChange })
-  const anchor = useRef<Measurable | Rect | null>(null)
-  return useMemo<MenuRootValue>(() => ({ open, setOpen: (o: boolean) => setOpen(o), anchor }), [open, setOpen])
-}
+/** A row's padding-left: the wide gutter when some row in its content shows an indicator. */
+const rowStart = (content: MenuContentValue) => (content.gutter ? content.list.gutter : content.list.padX)
 
 // ─── Content ──────────────────────────────────────────────────────────────────
 
@@ -137,23 +109,12 @@ function hasIndicatorItems(children: React.ReactNode): boolean {
   return found
 }
 
-function MenuPanel({ size, children, availableHeight, style }: { size: MenuSize; children: React.ReactNode; availableHeight?: number; style?: StyleProp<ViewStyle> }) {
-  const metrics = useMetrics()
-  const colors = useVariantColors('popperPanel', {})
-  const cfg = SIZES[size]
-  const borderRadius = metrics.radius(cfg.radius)
-  return (
-    <View
-      accessibilityRole="menu"
-      style={[{ maxHeight: availableHeight, borderRadius, backgroundColor: colors.panel }, shadowStyle(colors.shadow), style]}
-    >
-      {/* flexGrow 0: a ScrollView grows to its parent's max-height otherwise, inflating the measured size */}
-      <ScrollView bounces={false} style={{ borderRadius, flexGrow: 0 }} contentContainerStyle={{ padding: metrics.px(cfg.padding) }}>
-        {children}
-      </ScrollView>
-      <CardRing color={colors.ring} borderRadius={borderRadius} />
-    </View>
-  )
+function useContentValue(size: MenuSize, look: ListLook, children: React.ReactNode, closeAll: () => void) {
+  const list = useListMetrics(size)
+  const { variant, color, highContrast } = look
+  return useMemo<MenuContentValue>(() => ({
+    size, list, variant, color, highContrast, gutter: hasIndicatorItems(children), closeAll,
+  }), [size, list, variant, color, highContrast, children, closeAll])
 }
 
 /**
@@ -161,54 +122,29 @@ function MenuPanel({ size, children, availableHeight, style }: { size: MenuSize;
  * overlay: its backdrop swallows outside touches, as Radix menus are modal.
  */
 export function MenuContent({
-  size = 2, variant = 'solid', color, highContrast,
-  side = 'bottom', sideOffset = 4, align = 'start', alignOffset = 0,
-  avoidCollisions, collisionPadding = 10, sticky,
-  style, testID, children,
+  size = 2, variant = 'solid', color, highContrast, side = 'bottom', sideOffset = 4, align = 'start', ...props
 }: MenuContentProps) {
-  const root = useContext(MenuRootContext)
-  if (!root) throw new Error('Menu Content must be used within its Root')
+  const root = MenuRoot.use('Content')
   const close = useCallback(() => root.setOpen(false), [root])
-  const value = useMemo<MenuContentValue>(() => ({
-    size, variant, color, highContrast, gutter: hasIndicatorItems(children), closeAll: close,
-  }), [size, variant, color, highContrast, children, close])
-
+  const value = useContentValue(size, { variant, color, highContrast }, props.children, close)
   return (
-    <AnchoredContent
-      open={root.open}
-      onDismiss={close}
-      anchor={root.anchor}
-      modal
-      side={side} sideOffset={sideOffset} align={align} alignOffset={alignOffset}
-      avoidCollisions={avoidCollisions} collisionPadding={collisionPadding} sticky={sticky}
-      testID={testID}
-    >
-      {(placement) => (
-        <MenuPanel size={size} availableHeight={placement?.availableHeight} style={style}>
-          {/* The portal host is elsewhere in the tree: re-provide the menu contexts */}
-          <MenuRootContext.Provider value={root}>
-            <MenuContentContext.Provider value={value}>{children}</MenuContentContext.Provider>
-          </MenuRootContext.Provider>
-        </MenuPanel>
-      )}
-    </AnchoredContent>
+    <MenuContentContext.Provider value={value}>
+      <PopperContent
+        padding={value.list.padding}
+        borderRadius={value.list.borderRadius}
+        accessibilityRole="menu"
+        open={root.open}
+        onDismiss={close}
+        anchor={root.anchor}
+        modal
+        side={side} sideOffset={sideOffset} align={align}
+        {...props}
+      />
+    </MenuContentContext.Provider>
   )
 }
 
 // ─── Rows ─────────────────────────────────────────────────────────────────────
-
-/** A ThickCheckIcon stand-in: a rotated L drawn with borders. */
-function Check({ size, color }: { size: number; color: string }) {
-  return (
-    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-      <View style={{
-        width: size * 0.45, height: size * 0.8, marginTop: -size * 0.15,
-        borderRightWidth: size * 0.2, borderBottomWidth: size * 0.2, borderColor: color,
-        transform: [{ rotate: '45deg' }],
-      }} />
-    </View>
-  )
-}
 
 /** A ThickChevronRightIcon stand-in. */
 function Chevron({ size, color }: { size: number; color: string }) {
@@ -226,40 +162,14 @@ function Chevron({ size, color }: { size: number; color: string }) {
 interface RowProps extends MenuItemProps {
   role: 'menuitem' | 'menuitemcheckbox' | 'menuitemradio'
   checked?: boolean | 'indeterminate'
-  subOpen?: boolean
-  chevron?: boolean
   /** Runs before the close (checkbox toggle, radio change). */
   onActivate?: () => void
-  /** SubTrigger: opens its sub instead of closing the menu. */
-  keepOpen?: boolean
-  onPressRow?: (e: GestureResponderEvent) => void
-  /** The row's host instance (a SubTrigger anchors its sub to it). */
-  rowRef?: (node: Measurable | null) => void
 }
 
-function MenuRow({
-  role, checked, subOpen, chevron, color, shortcut, disabled, onSelect, onActivate, keepOpen, onPressRow, rowRef, testID, children,
-}: RowProps) {
+/** An item: `onSelect` gets an event whose `preventDefault()` keeps the whole menu open. */
+function MenuRow({ role, checked, color, shortcut, disabled, onSelect, onActivate, testID, children }: RowProps) {
   const content = useContent('Menu item')
-  const metrics = useMetrics()
-  const cfg = SIZES[content.size]
-  const [pressed, setPressed] = useState(false)
-  const colors = useVariantColors('menuItem', {
-    variant: content.variant,
-    color: color ?? content.color,
-    highContrast: content.highContrast,
-    disabled,
-    highlighted: pressed,
-    subOpen,
-  })
-  const text = useTextStyle({ size: cfg.fontSize, color: colors.text, compact: true })
-  const shortcutText = useTextStyle({ size: cfg.fontSize, color: colors.shortcut, compact: true })
-  const icon = metrics.px(cfg.icon)
-  const padLeft = metrics.px(content.gutter ? cfg.padLeftIndicator : cfg.padX)
-
-  const onPress = useCallback((e: GestureResponderEvent) => {
-    onPressRow?.(e)
-    if (keepOpen) return
+  const onPress = useCallback(() => {
     let prevented = false
     const event: MenuSelectEvent = {
       preventDefault: () => { prevented = true },
@@ -268,53 +178,25 @@ function MenuRow({
     onSelect?.(event)
     onActivate?.()
     if (!prevented) content.closeAll()
-  }, [onPressRow, keepOpen, onSelect, onActivate, content])
+  }, [onSelect, onActivate, content])
 
   return (
-    <Pressable
-      ref={rowRef as unknown as React.Ref<React.ComponentRef<typeof Pressable>>}
-      testID={testID}
+    <ListRow
+      list={content.list}
+      look={content}
+      color={color}
+      paddingLeft={rowStart(content)}
+      paddingRight={content.list.padX}
       accessibilityRole={role === 'menuitem' ? 'menuitem' : role === 'menuitemcheckbox' ? 'checkbox' : 'radio'}
-      accessibilityState={{ disabled: !!disabled, checked: role === 'menuitem' ? undefined : checked === 'indeterminate' ? 'mixed' : !!checked, expanded: chevron ? !!subOpen : undefined }}
+      accessibilityState={role === 'menuitem' ? undefined : { checked: checked === 'indeterminate' ? 'mixed' : !!checked }}
       disabled={disabled}
-      onPressIn={() => setPressed(true)}
-      onPressOut={() => setPressed(false)}
+      checked={!!checked}
       onPress={onPress}
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: metrics.space(2),
-        height: metrics.px(cfg.itemHeight),
-        paddingLeft: padLeft,
-        paddingRight: metrics.px(cfg.padX),
-        borderRadius: metrics.radius(cfg.itemRadius),
-        backgroundColor: colors.bg,
-      }}
+      trailing={shortcut ? (c) => <ListShortcut list={content.list} color={c.shortcut}>{shortcut}</ListShortcut> : undefined}
+      testID={testID}
     >
-      {checked ? (
-        // .rt-BaseMenuItemIndicator: centred in the left gutter
-        <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: padLeft, alignItems: 'center', justifyContent: 'center' }}>
-          <Check size={icon} color={colors.text} />
-        </View>
-      ) : null}
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: metrics.space(2), flexShrink: 1 }}>
-        {React.Children.map(children, (child) =>
-          typeof child === 'string' || typeof child === 'number'
-            ? <RNText {...text.textProps} style={text.style}>{child}</RNText>
-            : React.isValidElement<{ color?: string }>(child) && child.props.color === undefined
-              ? React.cloneElement(child, { color: colors.text })
-              : child,
-        )}
-      </View>
-      {shortcut || chevron ? (
-        // .rt-BaseMenuShortcut: margin-left auto, padding-left space-4
-        <View style={{ marginLeft: 'auto', paddingLeft: metrics.space(4), flexDirection: 'row', alignItems: 'center' }}>
-          {chevron
-            ? <View style={{ marginRight: -2 * metrics.scaling }}><Chevron size={icon} color={colors.text} /></View>
-            : <RNText {...shortcutText.textProps} style={shortcutText.style}>{shortcut}</RNText>}
-        </View>
-      ) : null}
-    </Pressable>
+      {children}
+    </ListRow>
   )
 }
 
@@ -361,18 +243,7 @@ MenuRadioItem.displayName = 'Menu.RadioItem'
 
 export function MenuLabel({ children }: { children?: React.ReactNode }) {
   const content = useContent('Menu.Label')
-  const metrics = useMetrics()
-  const chrome = useVariantColors('menuChrome', {})
-  const cfg = SIZES[content.size]
-  const text = useTextStyle({ size: cfg.fontSize, color: chrome.label, compact: true })
-  return (
-    <View style={{
-      flexDirection: 'row', alignItems: 'center', height: metrics.px(cfg.itemHeight),
-      paddingLeft: metrics.px(content.gutter ? cfg.padLeftIndicator : cfg.padX), paddingRight: metrics.px(cfg.padX),
-    }}>
-      {typeof children === 'string' ? <RNText {...text.textProps} style={text.style}>{children}</RNText> : children}
-    </View>
-  )
+  return <ListLabel list={content.list} paddingLeft={rowStart(content)} paddingRight={content.list.padX}>{children}</ListLabel>
 }
 MenuLabel.displayName = 'Menu.Label'
 
@@ -383,45 +254,41 @@ MenuGroup.displayName = 'Menu.Group'
 
 export function MenuSeparator() {
   const content = useContent('Menu.Separator')
-  const metrics = useMetrics()
-  const chrome = useVariantColors('menuChrome', {})
-  const cfg = SIZES[content.size]
-  return (
-    <View style={{
-      height: 1, backgroundColor: chrome.separator, marginVertical: metrics.space(2),
-      marginLeft: metrics.px(content.gutter ? cfg.padLeftIndicator : cfg.padX), marginRight: metrics.px(cfg.padX),
-    }} />
-  )
+  return <ListSeparator list={content.list} marginLeft={rowStart(content)} marginRight={content.list.padX} />
 }
 MenuSeparator.displayName = 'Menu.Separator'
 
 // ─── Sub-menus ────────────────────────────────────────────────────────────────
 
-export function MenuSub({ open: openProp, defaultOpen = false, onOpenChange, children }: MenuSubProps) {
-  const [open, setOpen] = useControllableState<boolean>({ prop: openProp, defaultProp: defaultOpen, onChange: onOpenChange })
-  const anchor = useRef<Measurable | null>(null)
-  const ctx = useMemo(() => ({ open, setOpen: (o: boolean) => setOpen(o), anchor }), [open, setOpen])
-  return <SubContext.Provider value={ctx}>{children}</SubContext.Provider>
+export function MenuSub({ children, ...state }: MenuSubProps) {
+  return <Sub.Provider value={useOverlayState(state)}>{children}</Sub.Provider>
 }
 MenuSub.displayName = 'Menu.Sub'
 
 /** Opens its sub on press (Radix also on hover); the parent menu stays open. */
 export function MenuSubTrigger({ disabled, testID, children }: { disabled?: boolean; testID?: string; children?: React.ReactNode }) {
-  const sub = useContext(SubContext)
-  if (!sub) throw new Error('Menu.SubTrigger must be used within Menu.Sub')
+  const sub = Sub.use('SubTrigger')
+  const content = useContent('Menu.SubTrigger')
+  const metrics = useMetrics()
   return (
-    <MenuRow
-      role="menuitem"
-      chevron
+    <ListRow
+      list={content.list}
+      look={content}
+      paddingLeft={rowStart(content)}
+      paddingRight={content.list.padX}
+      accessibilityRole="menuitem"
+      accessibilityState={{ expanded: sub.open }}
       subOpen={sub.open}
       disabled={disabled}
-      keepOpen
       testID={testID}
-      rowRef={(node) => { if (node) sub.anchor.current = node }}
-      onPressRow={() => sub.setOpen(!sub.open)}
+      rowRef={anchorRef(sub.anchor)}
+      onPress={() => sub.setOpen(!sub.open)}
+      trailing={(c) => (
+        <View style={{ marginRight: -2 * metrics.scaling }}><Chevron size={content.list.icon} color={c.text} /></View>
+      )}
     >
       {children}
-    </MenuRow>
+    </ListRow>
   )
 }
 MenuSubTrigger.displayName = 'Menu.SubTrigger'
@@ -433,43 +300,32 @@ MenuSubTrigger.displayName = 'Menu.SubTrigger'
  * Inherits size, variant, color and high contrast from the parent content.
  */
 export function MenuSubContent({
-  size, variant, color, highContrast, sideOffset = 1, align = 'start', alignOffset, avoidCollisions, collisionPadding = 10, sticky, style, testID, children,
+  size, variant, color, highContrast, sideOffset = 1, align = 'start', alignOffset, ...props
 }: Omit<MenuContentProps, 'side'>) {
-  const sub = useContext(SubContext)
+  const sub = Sub.use('SubContent')
   const parent = useContent('Menu.SubContent')
-  const root = useContext(MenuRootContext)
-  if (!sub) throw new Error('Menu.SubContent must be used within Menu.Sub')
-  const resolvedSize = size ?? parent.size
+  const root = useContext(MenuRoot.Context)
   const close = useCallback(() => sub.setOpen(false), [sub])
-  const value = useMemo<MenuContentValue>(() => ({
-    size: resolvedSize,
-    variant: variant ?? parent.variant,
-    color: color ?? parent.color,
-    highContrast: highContrast ?? parent.highContrast,
-    gutter: hasIndicatorItems(children),
-    closeAll: parent.closeAll,
-  }), [resolvedSize, variant, color, highContrast, parent, children])
-
+  const value = useContentValue(
+    size ?? parent.size,
+    { variant: variant ?? parent.variant, color: color ?? parent.color, highContrast: highContrast ?? parent.highContrast },
+    props.children,
+    parent.closeAll,
+  )
   return (
-    <AnchoredContent
-      open={sub.open && (root?.open ?? true)}
-      onDismiss={close}
-      anchor={sub.anchor}
-      side="right" sideOffset={sideOffset} align={align}
-      alignOffset={alignOffset ?? -SIZES[resolvedSize].padding}
-      avoidCollisions={avoidCollisions} collisionPadding={collisionPadding} sticky={sticky}
-      testID={testID}
-    >
-      {(placement) => (
-        <MenuPanel size={resolvedSize} availableHeight={placement?.availableHeight} style={style}>
-          <MenuRootContext.Provider value={root}>
-            <SubContext.Provider value={sub}>
-              <MenuContentContext.Provider value={value}>{children}</MenuContentContext.Provider>
-            </SubContext.Provider>
-          </MenuRootContext.Provider>
-        </MenuPanel>
-      )}
-    </AnchoredContent>
+    <MenuContentContext.Provider value={value}>
+      <PopperContent
+        padding={value.list.padding}
+        borderRadius={value.list.borderRadius}
+        accessibilityRole="menu"
+        open={sub.open && (root?.open ?? true)}
+        onDismiss={close}
+        anchor={sub.anchor}
+        side="right" sideOffset={sideOffset} align={align}
+        alignOffset={alignOffset ?? -value.list.padding}
+        {...props}
+      />
+    </MenuContentContext.Provider>
   )
 }
 MenuSubContent.displayName = 'Menu.SubContent'

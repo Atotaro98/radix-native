@@ -1,6 +1,4 @@
 import React from 'react'
-import { isDev } from '../../utils/env'
-import { accessibleNameOf } from '../internal/accessibleControl'
 import { BaseButton } from '../internal/BaseButton'
 import type { BaseButtonProps, BaseButtonSize, BaseButtonVariant } from '../internal/BaseButton'
 
@@ -17,13 +15,6 @@ export interface IconButtonProps extends Omit<BaseButtonProps, 'maxFontSizeMulti
 }
 
 export function IconButton(props: IconButtonProps) {
-  const hasLabel = !!props.accessibilityLabel || accessibleNameOf(props.children).name !== ''
-  React.useEffect(() => {
-    if (isDev && !hasLabel) {
-      console.warn('[radix-native] IconButton has no `accessibilityLabel`; screen readers will announce it as an unlabeled button.')
-    }
-  }, [hasLabel])
-
   return <BaseButton {...props} iconOnly />
 }
 IconButton.displayName = 'IconButton'

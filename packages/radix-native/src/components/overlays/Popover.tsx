@@ -1,25 +1,21 @@
-import React, { createContext, useCallback, useContext, useMemo, useRef } from 'react'
-import type { DimensionValue, GestureResponderEvent, StyleProp, ViewStyle } from 'react-native'
-import { useControllableState } from '../../hooks/useControllableState'
-import { AnchoredContent, type AnchoredPlacementProps, type Measurable } from '../internal/AnchoredContent'
-import { anchorSlot } from '../internal/anchorSlot'
-import { PopperPanel, type PanelSize } from '../internal/PopperPanel'
+import React, { useCallback, useMemo } from 'react'
+import type { DimensionValue, StyleProp, ViewStyle } from 'react-native'
+import type { AnchoredPlacementProps } from '../internal/AnchoredContent'
+import { createOverlayContext, slot, useOverlayState, type OverlayState, type OverlayStateProps, type SlotChild } from '../internal/overlayRoot'
+import { PopperContent, usePanelSize, type PanelSize } from '../internal/PopperContent'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type PopoverSize = PanelSize
 
-export interface PopoverRootProps {
-  open?: boolean
-  defaultOpen?: boolean
-  onOpenChange?: (open: boolean) => void
+export interface PopoverRootProps extends OverlayStateProps {
   /** Default: false — an outside touch closes the popover and still reaches what is underneath. */
   modal?: boolean
   children?: React.ReactNode
 }
 
 export interface PopoverSlotProps {
-  children: React.ReactElement<{ onPress?: (e: GestureResponderEvent) => void }>
+  children: SlotChild
 }
 
 export interface PopoverContentProps extends AnchoredPlacementProps {
@@ -38,57 +34,34 @@ export interface PopoverContentProps extends AnchoredPlacementProps {
   children?: React.ReactNode
 }
 
-// ─── Context ──────────────────────────────────────────────────────────────────
-
-interface PopoverContextValue {
-  open: boolean
-  setOpen: (open: boolean) => void
-  modal: boolean
-  /** The trigger's (or Anchor's) host instance. */
-  anchor: React.MutableRefObject<Measurable | null>
-}
-
-const PopoverContext = createContext<PopoverContextValue | null>(null)
-
-function usePopover(part: string): PopoverContextValue {
-  const ctx = useContext(PopoverContext)
-  if (!ctx) throw new Error(`Popover.${part} must be used within Popover.Root`)
-  return ctx
-}
+const Popover_ = createOverlayContext<OverlayState & { modal: boolean }>('Popover')
 
 // ─── Parts ────────────────────────────────────────────────────────────────────
 
-function PopoverRoot({ open: openProp, defaultOpen = false, onOpenChange, modal = false, children }: PopoverRootProps) {
-  const [open, setOpen] = useControllableState<boolean>({ prop: openProp, defaultProp: defaultOpen, onChange: onOpenChange })
-  const anchor = useRef<Measurable | null>(null)
-  const value = useMemo(() => ({ open, setOpen: (o: boolean) => setOpen(o), modal, anchor }), [open, setOpen, modal])
-  return <PopoverContext.Provider value={value}>{children}</PopoverContext.Provider>
+function PopoverRoot({ modal = false, children, ...state }: PopoverRootProps) {
+  const overlay = useOverlayState(state)
+  const value = useMemo(() => ({ ...overlay, modal }), [overlay, modal])
+  return <Popover_.Provider value={value}>{children}</Popover_.Provider>
 }
 PopoverRoot.displayName = 'Popover.Root'
 
 /** One element; its `onPress` toggles the popover, and it is the anchor. */
 function PopoverTrigger({ children }: PopoverSlotProps) {
-  const ctx = usePopover('Trigger')
-  return anchorSlot(children, ctx.anchor, { onPress: () => ctx.setOpen(!ctx.open) })
+  const ctx = Popover_.use('Trigger')
+  return slot(children, { onPress: () => ctx.setOpen(!ctx.open) }, ctx.anchor)
 }
 PopoverTrigger.displayName = 'Popover.Trigger'
 
 /** Positions the content against this element instead of the Trigger. */
 function PopoverAnchor({ children }: PopoverSlotProps) {
-  const ctx = usePopover('Anchor')
-  return anchorSlot(children, ctx.anchor, {})
+  const ctx = Popover_.use('Anchor')
+  return slot(children, {}, ctx.anchor)
 }
 PopoverAnchor.displayName = 'Popover.Anchor'
 
 function PopoverClose({ children }: PopoverSlotProps) {
-  const ctx = usePopover('Close')
-  const child = React.Children.only(children)
-  return React.cloneElement(child, {
-    onPress: (e: GestureResponderEvent) => {
-      child.props.onPress?.(e)
-      ctx.setOpen(false)
-    },
-  })
+  const ctx = Popover_.use('Close')
+  return slot(children, { onPress: () => ctx.setOpen(false) })
 }
 PopoverClose.displayName = 'Popover.Close'
 
@@ -98,39 +71,22 @@ PopoverClose.displayName = 'Popover.Close'
  * from the screen edges.
  */
 function PopoverContent({
-  size = 2,
-  side = 'bottom', sideOffset = 8, align = 'start', alignOffset = 0,
-  avoidCollisions, collisionPadding = 10, sticky,
-  width, minWidth, maxWidth = 480, height, minHeight, maxHeight,
-  style, testID, accessibilityLabel, children,
+  size = 2, side = 'bottom', sideOffset = 8, align = 'start', maxWidth = 480, ...props
 }: PopoverContentProps) {
-  const ctx = usePopover('Content')
+  const ctx = Popover_.use('Content')
   const close = useCallback(() => ctx.setOpen(false), [ctx])
-
   return (
-    <AnchoredContent
+    <PopperContent
+      {...usePanelSize(size)}
+      inset
       open={ctx.open}
       onDismiss={close}
       anchor={ctx.anchor}
       modal={ctx.modal}
       matchAnchorWidth
-      side={side} sideOffset={sideOffset} align={align} alignOffset={alignOffset}
-      avoidCollisions={avoidCollisions} collisionPadding={collisionPadding} sticky={sticky}
-      testID={testID}
-    >
-      {(placement) => (
-        <PopperPanel
-          size={size}
-          width={width} minWidth={minWidth} maxWidth={maxWidth} height={height} minHeight={minHeight} maxHeight={maxHeight}
-          availableHeight={placement?.availableHeight}
-          style={style}
-          accessibilityLabel={accessibilityLabel}
-        >
-          {/* The portal host is elsewhere in the tree: re-provide the Popover context to Close */}
-          <PopoverContext.Provider value={ctx}>{children}</PopoverContext.Provider>
-        </PopperPanel>
-      )}
-    </AnchoredContent>
+      side={side} sideOffset={sideOffset} align={align} maxWidth={maxWidth}
+      {...props}
+    />
   )
 }
 PopoverContent.displayName = 'Popover.Content'

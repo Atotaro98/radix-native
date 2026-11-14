@@ -3,13 +3,9 @@ import { Dimensions, Pressable, StyleSheet, View, useWindowDimensions } from 're
 import type { LayoutChangeEvent, StyleProp, ViewStyle } from 'react-native'
 import Animated, { Easing, runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated'
 import { useThemeContext } from '../../hooks/useThemeContext'
-import { place, type Align, type Padding, type Placement, type Rect, type Side } from '../../utils/popper'
+import { place, resolvePadding, type Align, type Padding, type Placement, type Rect, type Side } from '../../utils/popper'
+import type { Anchor, Measurable } from './overlayRoot'
 import { Portal, usePortalHost } from './Portal'
-
-/** Something that can report where it is on screen (a host component instance). */
-export interface Measurable {
-  measureInWindow: (cb: (x: number, y: number, width: number, height: number) => void) => void
-}
 
 export interface AnchoredPlacementProps {
   side?: Side
@@ -28,7 +24,7 @@ export interface AnchoredContentProps extends AnchoredPlacementProps {
   open: boolean
   onDismiss: () => void
   /** The anchor (read on open): a host instance to measure, or a fixed window rect (ContextMenu's touch point). */
-  anchor: React.RefObject<Measurable | Rect | null>
+  anchor: Anchor
   /** A full-screen transparent backdrop swallows outside touches (menus, Select, Popover modal). */
   modal?: boolean
   /** Opening / closing animation (Radix `.rt-PopperContent`); Tooltip opens faster and closes instantly. */
@@ -97,27 +93,27 @@ function Placed({
     return () => sub.remove()
   }, [measure])
 
+  // Window minus safe area; the content stays `collisionPadding` inside it
+  const boundary = useMemo<Rect>(() => ({
+    x: insets.left, y: insets.top,
+    width: window.width - insets.left - insets.right,
+    height: window.height - insets.top - insets.bottom,
+  }), [insets, window.width, window.height])
+
   const placement = useMemo<Placement | null>(() => {
     if (!anchorRect || !size) return null
     if (placeOverride) {
-      const pad = typeof collisionPadding === 'number' ? collisionPadding : 10
+      const pad = resolvePadding(collisionPadding)
       const inner = {
-        x: insets.left + pad, y: insets.top + pad,
-        width: window.width - insets.left - insets.right - 2 * pad,
-        height: window.height - insets.top - insets.bottom - 2 * pad,
+        x: boundary.x + pad.left, y: boundary.y + pad.top,
+        width: boundary.width - pad.left - pad.right,
+        height: boundary.height - pad.top - pad.bottom,
       }
       const { x, y } = placeOverride(anchorRect, size, inner)
       return { x, y, side: 'bottom', align: 'start', availableWidth: inner.width, availableHeight: inner.height, originX: size.width / 2, originY: size.height / 2 }
     }
-    return place(anchorRect, size, {
-      side, align, sideOffset, alignOffset, avoidCollisions, collisionPadding, sticky,
-      boundary: {
-        x: insets.left, y: insets.top,
-        width: window.width - insets.left - insets.right,
-        height: window.height - insets.top - insets.bottom,
-      },
-    })
-  }, [anchorRect, size, side, align, sideOffset, alignOffset, avoidCollisions, collisionPadding, sticky, insets, window, placeOverride])
+    return place(anchorRect, size, { side, align, sideOffset, alignOffset, avoidCollisions, collisionPadding, sticky, boundary })
+  }, [anchorRect, size, side, align, sideOffset, alignOffset, avoidCollisions, collisionPadding, sticky, boundary, placeOverride])
 
   // Layer: outside touch (non-modal) and back button dismiss it
   const placementRef = useRef(placement)
@@ -190,7 +186,7 @@ function Placed({
             // Hidden until placed, like Radix's off-screen pre-measure
             opacity: placed ? undefined : 0,
             minWidth: matchAnchorWidth ? anchorRect?.width : undefined,
-            maxWidth: window.width - insets.left - insets.right - 20,
+            maxWidth: boundary.width - 20,
           },
           placement ? { transformOrigin: [placement.originX, placement.originY, 0] } : undefined,
           animated,

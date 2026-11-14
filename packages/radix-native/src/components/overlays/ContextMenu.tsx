@@ -2,9 +2,10 @@ import React, { useContext } from 'react'
 import { Pressable } from 'react-native'
 import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native'
 import {
-  MenuCheckboxItem, MenuContent, MenuGroup, MenuItem, MenuLabel, MenuRadioGroup, MenuRadioItem, MenuRootContext,
-  MenuSeparator, MenuSub, MenuSubContent, MenuSubTrigger, useMenuRoot, type MenuContentProps,
+  MenuCheckboxItem, MenuContent, MenuGroup, MenuItem, MenuLabel, MenuRadioGroup, MenuRadioItem, MenuRoot,
+  MenuSeparator, MenuSub, MenuSubContent, MenuSubTrigger, type MenuContentProps,
 } from '../internal/BaseMenu'
+import { useOverlayState } from '../internal/overlayRoot'
 
 export interface ContextMenuRootProps {
   open?: boolean
@@ -23,8 +24,7 @@ export interface ContextMenuTriggerProps {
 const LONG_PRESS_MS = 700
 
 function ContextMenuRoot({ children, ...state }: ContextMenuRootProps) {
-  const root = useMenuRoot(state)
-  return <MenuRootContext.Provider value={root}>{children}</MenuRootContext.Provider>
+  return <MenuRoot.Provider value={useOverlayState(state)}>{children}</MenuRoot.Provider>
 }
 ContextMenuRoot.displayName = 'ContextMenu.Root'
 
@@ -34,7 +34,7 @@ ContextMenuRoot.displayName = 'ContextMenu.Root'
  * the finger is. Screen readers get an "Open menu" action.
  */
 function ContextMenuTrigger({ disabled, style, testID, children }: ContextMenuTriggerProps) {
-  const root = useContext(MenuRootContext)
+  const root = useContext(MenuRoot.Context)
   if (!root) throw new Error('ContextMenu.Trigger must be used within ContextMenu.Root')
   const openAt = (x: number, y: number) => {
     root.anchor.current = { x, y, width: 0, height: 0 }

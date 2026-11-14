@@ -1,36 +1,31 @@
 import React, { useContext } from 'react'
 import {
-  MenuCheckboxItem, MenuContent, MenuGroup, MenuItem, MenuLabel, MenuRadioGroup, MenuRadioItem, MenuRootContext,
-  MenuSeparator, MenuSub, MenuSubContent, MenuSubTrigger, useMenuRoot,
+  MenuCheckboxItem, MenuContent, MenuGroup, MenuItem, MenuLabel, MenuRadioGroup, MenuRadioItem, MenuRoot,
+  MenuSeparator, MenuSub, MenuSubContent, MenuSubTrigger,
   type MenuCheckboxItemProps, type MenuContentProps, type MenuItemProps, type MenuRadioGroupProps,
   type MenuRadioItemProps, type MenuSelectEvent, type MenuSize, type MenuSubProps, type MenuVariant,
 } from '../internal/BaseMenu'
-import { anchorSlot, type SlotChild } from '../internal/anchorSlot'
-import type { Measurable } from '../internal/AnchoredContent'
+import { slot, useOverlayState, type OverlayStateProps, type SlotChild } from '../internal/overlayRoot'
 
 export type {
   MenuCheckboxItemProps, MenuContentProps, MenuItemProps, MenuRadioGroupProps, MenuRadioItemProps, MenuSelectEvent,
   MenuSize, MenuSubProps, MenuVariant,
 }
 
-export interface DropdownMenuRootProps {
-  open?: boolean
-  defaultOpen?: boolean
-  onOpenChange?: (open: boolean) => void
+export interface DropdownMenuRootProps extends OverlayStateProps {
   children?: React.ReactNode
 }
 
 function DropdownMenuRoot({ children, ...state }: DropdownMenuRootProps) {
-  const root = useMenuRoot(state)
-  return <MenuRootContext.Provider value={root}>{children}</MenuRootContext.Provider>
+  return <MenuRoot.Provider value={useOverlayState(state)}>{children}</MenuRoot.Provider>
 }
 DropdownMenuRoot.displayName = 'DropdownMenu.Root'
 
 /** One element; its `onPress` toggles the menu, and it is the anchor. */
 function DropdownMenuTrigger({ children }: { children: SlotChild }) {
-  const root = useContext(MenuRootContext)
+  const root = useContext(MenuRoot.Context)
   if (!root) throw new Error('DropdownMenu.Trigger must be used within DropdownMenu.Root')
-  return anchorSlot(children, root.anchor as React.MutableRefObject<Measurable | null>, { onPress: () => root.setOpen(!root.open) })
+  return slot(children, { onPress: () => root.setOpen(!root.open) }, root.anchor)
 }
 DropdownMenuTrigger.displayName = 'DropdownMenu.Trigger'
 

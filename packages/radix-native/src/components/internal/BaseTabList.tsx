@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useMemo } from 'react'
-import { Pressable, ScrollView, Text as RNText, View } from 'react-native'
+import { Pressable, ScrollView, View } from 'react-native'
 import type { AccessibilityRole, GestureResponderEvent, StyleProp, ViewStyle } from 'react-native'
 import { useInteraction } from '../../hooks/useInteraction'
 import { useMargins } from '../../hooks/useMargins'
 import { useMetrics } from '../../hooks/useMetrics'
-import { useTextStyle } from '../../hooks/useTextStyle'
 import { useVariantColors } from '../../hooks/useVariantColors'
+import { useAccessibleControl } from './accessibleControl'
+import { ControlLabel, WeightReserve } from './ControlLabel'
 import { FocusRing } from './FocusRing'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { RadiusLevel } from '../../tokens/radius'
@@ -104,7 +105,7 @@ interface BaseTabTriggerProps extends Omit<NativeViewProps, 'children'> {
 /**
  * Internal: Radix's BaseTabListTrigger. The active trigger is gray-12 with a
  * medium label and a 2px bar along its bottom edge (no animation, as in Radix);
- * a hidden medium copy of the label keeps the width from changing.
+ * the label reserves the width of both weights, so it never changes.
  */
 export function BaseTabTrigger({ active, disabled, onPress, role, style, children, ...rest }: BaseTabTriggerProps) {
   const list = useContext(TabListContext)
@@ -112,24 +113,16 @@ export function BaseTabTrigger({ active, disabled, onPress, role, style, childre
   const cfg = SIZES[list.size]
   const colors = useVariantColors('tabList', { color: list.color, highContrast: list.highContrast, checked: active })
   const focus = useVariantColors('focusRing', { color: list.color })
-  const medium = useTextStyle({ size: cfg.fontSize, weight: 'medium', color: colors.text, compact: true })
-  const regular = useTextStyle({ size: cfg.fontSize, weight: 'regular', color: colors.text, compact: true })
+  const a11y = useAccessibleControl(children, rest.accessibilityLabel)
   const { focused, handlers } = useInteraction({ enabled: false })
   const innerRadius = metrics.radius(cfg.innerRadius)
 
-  const label = (weight: 'medium' | 'regular') => {
-    const t = weight === 'medium' ? medium : regular
-    return React.Children.map(children, (child) =>
-      typeof child === 'string' || typeof child === 'number' ? (
-        // --tab-active-letter-spacing −0.01em / --tab-inactive-letter-spacing 0
-        <RNText {...t.textProps} style={[t.style, { letterSpacing: weight === 'medium' ? -0.01 * t.contextFontSize : 0 }]}>
-          {child}
-        </RNText>
-      ) : React.isValidElement<{ color?: string }>(child) && child.props.color === undefined
-        ? React.cloneElement(child, { color: colors.text })
-        : child,
-    )
-  }
+  // --tab-active-letter-spacing −0.01em / --tab-inactive-letter-spacing 0
+  const label = (weight: 'medium' | 'regular') => (
+    <ControlLabel size={cfg.fontSize} weight={weight} letterSpacingEm={weight === 'medium' ? -0.01 : 0} truncate={false} color={colors.text}>
+      {children}
+    </ControlLabel>
+  )
   const inner: ViewStyle = {
     flexDirection: 'row',
     alignItems: 'center',
@@ -146,6 +139,7 @@ export function BaseTabTrigger({ active, disabled, onPress, role, style, childre
       {...handlers}
       onPress={onPress}
       disabled={disabled}
+      accessibilityLabel={a11y.accessibilityLabel}
       accessibilityState={{ selected: active, disabled: !!disabled }}
       style={[{
         height: metrics.space(cfg.height),
@@ -155,22 +149,14 @@ export function BaseTabTrigger({ active, disabled, onPress, role, style, childre
         flexShrink: 0,
       }, style as StyleProp<ViewStyle>]}
     >
-      <View>
-        {/* .rt-BaseTabListTriggerInnerHidden: medium weight, invisible, reserves the width */}
-        <View style={[inner, { opacity: 0 }]} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
-          {label('medium')}
-        </View>
-        {/* The regular label too, with no height: a face whose medium is not wider (Roboto with the
-            active −0.01em letter spacing) would otherwise clip the inactive label */}
-        <View style={[inner, { height: 0, paddingVertical: 0, overflow: 'hidden', opacity: 0 }]} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
-          {label('regular')}
-        </View>
-        <View style={[inner, { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center' }]}>
+      {/* .rt-BaseTabListTriggerInnerHidden: the hidden copies reserve the width */}
+      {a11y.wrap(
+        <WeightReserve label={label} style={inner}>
           {label(active ? 'medium' : 'regular')}
           {/* focus-visible outline on the inner, offset −2px */}
           <FocusRing visible={focused} color={focus.ring} borderRadius={innerRadius} />
-        </View>
-      </View>
+        </WeightReserve>,
+      )}
       {active ? (
         <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 2, backgroundColor: colors.indicator }} />
       ) : null}

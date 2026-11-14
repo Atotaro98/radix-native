@@ -7,7 +7,7 @@ import { useMargins } from '../../hooks/useMargins'
 import { useInteraction } from '../../hooks/useInteraction'
 import { AnimatedPressable } from '../../hooks/usePressScale'
 import { FocusRing } from '../internal/FocusRing'
-import { AccessibleControlContext, accessibleNameOf } from '../internal/accessibleControl'
+import { useAccessibleControl } from '../internal/accessibleControl'
 import { CardRing } from '../internal/CardRing'
 import { InsetContext, type InsetValues } from './InsetContext'
 import type { RadiusLevel } from '../../tokens/radius'
@@ -113,8 +113,7 @@ export function Card({
   }, [resolvedPadding, borderWidth, borderRadius])
 
   const content = <InsetContext.Provider value={inset}>{children}</InsetContext.Provider>
-  // Hidden parts of the name (AccessibleIcon, VisuallyHidden) are passed explicitly, as in BaseButton
-  const contentName = useMemo(() => accessibleNameOf(children), [children])
+  const a11y = useAccessibleControl(children, rest.accessibilityLabel)
 
   if (onPress) {
     // Radix :active: surface/classic change the ring, ghost fills with gray-a4
@@ -128,10 +127,10 @@ export function Card({
         {...handlers}
         onPress={onPress}
         onLongPress={onLongPress}
-        accessibilityLabel={rest.accessibilityLabel ?? (contentName.hidden ? contentName.name || undefined : undefined)}
+        accessibilityLabel={a11y.accessibilityLabel}
         style={[scaleStyle, cardStyle, shadow, pressedBg, style]}
       >
-        <AccessibleControlContext.Provider value>{content}</AccessibleControlContext.Provider>
+        {a11y.wrap(content)}
         {ringColor ? <CardRing color={ringColor} borderRadius={borderRadius} /> : null}
         <FocusRing visible={focused} color={focus.ring} borderRadius={borderRadius} />
       </AnimatedPressable>
