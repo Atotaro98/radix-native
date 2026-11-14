@@ -1,13 +1,13 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { KeyboardAvoidingView, Modal, Pressable, ScrollView, StyleSheet, useWindowDimensions } from 'react-native'
-import type { DimensionValue, GestureResponderEvent, StyleProp, ViewStyle } from 'react-native'
+import type { DimensionValue, StyleProp, ViewStyle } from 'react-native'
 import Animated, { Easing, runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated'
-import { useControllableState } from '../../hooks/useControllableState'
 import { useMetrics } from '../../hooks/useMetrics'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { shadowStyle } from '../../utils/shadow'
 import { CardRing } from './CardRing'
+import { createOverlayContext, slot, useOverlayState, type OverlayState, type OverlayStateProps, type SlotChild } from './overlayRoot'
 import { PortalHost, type PortalHostHandle } from './Portal'
 import { InsetContext, type InsetValues } from '../layout/InsetContext'
 import { Heading, type HeadingProps } from '../typography/Heading'
@@ -19,17 +19,13 @@ import type { SpaceToken } from '../../tokens/spacing'
 
 export type DialogSize = 1 | 2 | 3 | 4
 
-export interface DialogRootProps {
-  open?: boolean
-  /** Default: false. */
-  defaultOpen?: boolean
-  onOpenChange?: (open: boolean) => void
+export interface DialogRootProps extends OverlayStateProps {
   children?: React.ReactNode
 }
 
 /** A single element whose `onPress` opens / closes the dialog (Radix: always `asChild`). */
 export interface DialogSlotProps {
-  children: React.ReactElement<{ onPress?: (e: GestureResponderEvent) => void }>
+  children: SlotChild
 }
 
 export interface DialogContentProps {
@@ -72,26 +68,6 @@ const CONTENT_CLOSE_MS = 100
 
 // ─── Context ──────────────────────────────────────────────────────────────────
 
-interface DialogContextValue {
-  open: boolean
-  setOpen: (open: boolean) => void
-  alert: boolean
-}
-
-function createDialogContext() {
-  return createContext<DialogContextValue | null>(null)
-}
-
-/** Composes a slot child's `onPress` with an action, like Radix's `asChild` triggers. */
-function slot(children: DialogSlotProps['children'], action: () => void) {
-  const child = React.Children.only(children)
-  return React.cloneElement(child, {
-    onPress: (e: GestureResponderEvent) => {
-      child.props.onPress?.(e)
-      action()
-    },
-  })
-}
 
 /**
  * Internal: Radix's base-dialog, shared by Dialog and AlertDialog. A Modal
@@ -100,29 +76,23 @@ function slot(children: DialogSlotProps['children'], action: () => void) {
  * Radix. AlertDialog ignores backdrop presses.
  */
 export function createDialog({ alert, name }: { alert: boolean; name: string }) {
-  const Context = createDialogContext()
-  const useDialog = (part: string) => {
-    const ctx = useContext(Context)
-    if (!ctx) throw new Error(`${name}.${part} must be used within ${name}.Root`)
-    return ctx
-  }
+  const Dialog_ = createOverlayContext<OverlayState>(name)
+  const useDialog = Dialog_.use
 
-  function Root({ open: openProp, defaultOpen = false, onOpenChange, children }: DialogRootProps) {
-    const [open, setOpen] = useControllableState<boolean>({ prop: openProp, defaultProp: defaultOpen, onChange: onOpenChange })
-    const value = useMemo(() => ({ open, setOpen: (o: boolean) => setOpen(o), alert }), [open, setOpen])
-    return <Context.Provider value={value}>{children}</Context.Provider>
+  function Root({ children, ...state }: DialogRootProps) {
+    return <Dialog_.Provider value={useOverlayState(state)}>{children}</Dialog_.Provider>
   }
   Root.displayName = `${name}.Root`
 
   function Trigger({ children }: DialogSlotProps) {
     const ctx = useDialog('Trigger')
-    return slot(children, () => ctx.setOpen(!ctx.open))
+    return slot(children, { onPress: () => ctx.setOpen(!ctx.open) })
   }
   Trigger.displayName = `${name}.Trigger`
 
   function Close({ children }: DialogSlotProps) {
     const ctx = useDialog('Close')
-    return slot(children, () => ctx.setOpen(false))
+    return slot(children, { onPress: () => ctx.setOpen(false) })
   }
   Close.displayName = `${name}.Close`
 

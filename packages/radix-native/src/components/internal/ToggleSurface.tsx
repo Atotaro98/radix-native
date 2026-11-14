@@ -9,6 +9,7 @@ import { getMinHitSlop, MIN_TOUCH_TARGET } from '../../utils/hitSlop'
 import type { MetricsInput } from '../../utils/metrics'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { NativePressableProps } from '../../types/nativeProps'
+import { useAccessibleControl } from './accessibleControl'
 import { FocusRing } from './FocusRing'
 
 export type CheckedState = boolean | 'indeterminate'
@@ -98,9 +99,13 @@ export function ToggleSurface<P extends object>(props: ToggleSurfaceProps<P>) {
     onFocus,
     onBlur,
     accessibilityState,
+    accessibilityLabel,
     hitSlop,
     ...rest
   } = props
+
+  // A row's label or a card's content names the Toggle (hidden parts passed explicitly)
+  const a11y = useAccessibleControl(children, accessibilityLabel)
 
   const theme = useThemeContext()
   const { focused, scaleStyle, handlers } = useInteraction({
@@ -165,6 +170,7 @@ export function ToggleSurface<P extends object>(props: ToggleSurfaceProps<P>) {
       {...handlers}
       onPress={handlePress}
       disabled={disabled}
+      accessibilityLabel={a11y.accessibilityLabel}
       accessibilityState={{
         ...accessibilityState,
         checked: checked === 'indeterminate' ? 'mixed' : checked,
@@ -176,7 +182,7 @@ export function ToggleSurface<P extends object>(props: ToggleSurfaceProps<P>) {
         style,
       ]}
     >
-      {content}
+      {a11y.wrap(content)}
     </AnimatedPressable>
   )
 }

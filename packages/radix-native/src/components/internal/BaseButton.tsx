@@ -15,7 +15,8 @@ import type { MarginProps } from '../../types/marginProps'
 import { Spinner, type SpinnerSize } from '../feedback/Spinner'
 import { ClassicOverlay } from './ClassicOverlay'
 import { ControlLabel } from './ControlLabel'
-import { AccessibleControlContext, accessibleNameOf } from './accessibleControl'
+import { useAccessibleControl } from './accessibleControl'
+import { isDev } from '../../utils/env'
 import { FocusRing } from './FocusRing'
 import { useSkeletonRadius } from '../feedback/SkeletonContext'
 
@@ -140,9 +141,13 @@ export function BaseButton({
   // The name a browser reads from the content (text, AccessibleIcon labels, VisuallyHidden text).
   // Passed explicitly when part of it is hidden or the label is invisible (loading): Android
   // does not read hidden content into a button's name by itself.
-  const contentName = React.useMemo(() => accessibleNameOf(children), [children])
-  const accessibilityLabel = rest.accessibilityLabel
-    ?? (contentName.hidden || loading ? contentName.name || undefined : undefined)
+  const a11y = useAccessibleControl(children, rest.accessibilityLabel, { forceName: loading })
+  const unlabeled = iconOnly && !a11y.accessibilityLabel && a11y.name === ''
+  React.useEffect(() => {
+    if (isDev && unlabeled) {
+      console.warn('[radix-native] IconButton has no `accessibilityLabel`; screen readers will announce it as an unlabeled button.')
+    }
+  }, [unlabeled])
 
   // Radix: Button text is medium, except ghost which is regular.
   const label = (
@@ -164,13 +169,12 @@ export function BaseButton({
       {...handlers}
       onPress={handlePress}
       disabled={isDisabled}
-      accessibilityLabel={accessibilityLabel}
+      accessibilityLabel={a11y.accessibilityLabel}
       accessibilityState={{ ...accessibilityState, disabled: isDisabled, busy: loading }}
       style={[scaleStyle, containerStyle, stateStyle, classicStyle, style]}
     >
       {colors.bevel && <ClassicOverlay />}
-      <AccessibleControlContext.Provider value>
-        {loading ? (
+      {a11y.wrap(loading ? (
           <>
             {/* Radix: the label stays in place (keeping the size) and readable by
                 screen readers, but invisible; the spinner sits on top. */}
@@ -181,8 +185,7 @@ export function BaseButton({
           </>
         ) : (
           label
-        )}
-      </AccessibleControlContext.Provider>
+        ))}
       <FocusRing visible={focused} color={focusColor} borderRadius={borderRadius} />
     </AnimatedPressable>
   )

@@ -13,7 +13,6 @@ import { useTextStyle } from '../../hooks/useTextStyle'
 import type { TextSize } from '../typography/Text'
 import { ToggleSurface, type ToggleKind } from './ToggleSurface'
 import { CardRing } from './CardRing'
-import { AccessibleControlContext, accessibleNameOf } from './accessibleControl'
 import { InsetContext, type InsetValues } from '../layout/InsetContext'
 import { ColumnRows, AutoFitRows } from './ColumnRows'
 import { createSelectionGroup, type SelectionValue } from './selectionGroup'
@@ -123,12 +122,8 @@ export function SelectionCard<P extends object>({
     borderRadius,
   }), [paddingX, paddingY, paddingRight, borderRadius])
 
-  // Hidden parts of the name (AccessibleIcon, VisuallyHidden) are passed explicitly, as in BaseButton
-  const contentName = useMemo(() => accessibleNameOf(children), [children])
-
   return (
     <ToggleSurface
-      accessibilityLabel={contentName.hidden ? contentName.name || undefined : undefined}
       role={role}
       checked={checked}
       disabled={disabled}
@@ -141,14 +136,12 @@ export function SelectionCard<P extends object>({
         style,
       ]}
     >
-      <AccessibleControlContext.Provider value>
-        <InsetContext.Provider value={inset}>
+      <InsetContext.Provider value={inset}>
           {/* Plain strings must live inside <Text> in RN */}
           {typeof children === 'string' || typeof children === 'number'
             ? <RNText style={[label.style, { flexShrink: 1 }]} {...label.textProps}>{children}</RNText>
             : children}
-        </InsetContext.Provider>
-      </AccessibleControlContext.Provider>
+      </InsetContext.Provider>
       {indicator ? (
         // Trailing edge, vertically centered (Radix CSS)
         <View

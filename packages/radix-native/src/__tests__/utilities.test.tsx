@@ -8,6 +8,9 @@ import { AccessibleIcon } from '../components/utilities/AccessibleIcon'
 import { IconButton } from '../components/actions/IconButton'
 import { Button } from '../components/actions/Button'
 import { Card } from '../components/layout/Card'
+import { Tabs } from '../components/navigation/Tabs'
+import { SegmentedControl } from '../components/actions/SegmentedControl'
+import { CheckboxGroup } from '../components/actions/CheckboxGroup'
 
 const flat = (node: { props: { style?: unknown } }): ViewStyle =>
   StyleSheet.flatten(node.props.style as StyleProp<ViewStyle>) ?? {}
@@ -79,6 +82,27 @@ describe('AccessibleIcon', () => {
     expect(screen.getByTestId('plain').props.accessibilityLabel).toBeUndefined()
     // Loading hides the label on screen; the name stays
     expect(screen.getByTestId('busy').props.accessibilityLabel).toBe('Saving')
+  })
+
+  it.each([
+    ['a tab trigger', (label: React.ReactNode) => (
+      <Tabs.Root defaultValue="a"><Tabs.List><Tabs.Trigger value="a">{label}</Tabs.Trigger></Tabs.List></Tabs.Root>
+    )],
+    ['a SegmentedControl item', (label: React.ReactNode) => (
+      <SegmentedControl.Root defaultValue="a"><SegmentedControl.Item value="a">{label}</SegmentedControl.Item></SegmentedControl.Root>
+    )],
+    // A row renders non-string labels as they are: the text goes in a Text
+    ['a labelled CheckboxGroup row', () => (
+      <CheckboxGroup.Root>
+        <CheckboxGroup.Item value="a"><Text>Inbox</Text><AccessibleIcon label="unread"><Icon /></AccessibleIcon></CheckboxGroup.Item>
+      </CheckboxGroup.Root>
+    )],
+  ])('%s is named by its hidden content, which is not a separate element', (_, render) => {
+    renderWithTheme(render(<>Inbox <AccessibleIcon label="unread"><Icon /></AccessibleIcon></>))
+    // one element carries the whole name: the control
+    expect(screen.getAllByLabelText('Inbox unread', { includeHiddenElements: true })).toHaveLength(1)
+    const icons = screen.getAllByLabelText('unread', { includeHiddenElements: true })
+    expect(icons.every((n) => n.props.accessible !== true)).toBe(true)
   })
 
   it('keeps an icon color the icon sets itself', () => {

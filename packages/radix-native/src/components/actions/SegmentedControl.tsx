@@ -1,14 +1,15 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo } from 'react'
-import { Pressable, Text as RNText, View } from 'react-native'
+import { Pressable, View } from 'react-native'
 import type { StyleProp, ViewStyle } from 'react-native'
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated'
 import { useControllableState } from '../../hooks/useControllableState'
 import { useInteraction } from '../../hooks/useInteraction'
 import { useMargins } from '../../hooks/useMargins'
 import { useMetrics } from '../../hooks/useMetrics'
-import { useTextStyle } from '../../hooks/useTextStyle'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useWidest, useWidestCell, type WidestCells } from '../../hooks/useWidest'
+import { useAccessibleControl } from '../internal/accessibleControl'
+import { ControlLabel } from '../internal/ControlLabel'
 import { FocusRing } from '../internal/FocusRing'
 import { shadowStyle } from '../../utils/shadow'
 import type { RadiusToken } from '../../theme/theme.types'
@@ -182,8 +183,7 @@ function SegmentedControlItem({ value, children, style, ...rest }: SegmentedCont
   const metrics = useMetrics()
   const cfg = SIZES[ctx.size]
   // Active label: medium weight; inactive: regular (segmented-control.css ItemLabelActive / Inactive)
-  const medium = useTextStyle({ size: cfg.fontSize, weight: 'medium', color: ctx.text, compact: true })
-  const regular = useTextStyle({ size: cfg.fontSize, weight: 'regular', color: ctx.text, compact: true })
+  const a11y = useAccessibleControl(children, rest.accessibilityLabel)
   const focus = useVariantColors('focusRing', {})
   const { focused, handlers } = useInteraction({ enabled: false })
   const onLayout = useWidestCell(ctx.cells)
@@ -208,24 +208,13 @@ function SegmentedControlItem({ value, children, style, ...rest }: SegmentedCont
   const inactiveStyle = useAnimatedStyle(() => ({ opacity: 1 - active.value }))
   const sepStyle = useAnimatedStyle(() => ({ opacity: sep.value }))
 
+  // --tab-active-letter-spacing −0.01em / --tab-inactive-letter-spacing 0 replace the size's spacing
+  const row: ViewStyle = { flexDirection: 'row', alignItems: 'center', gap: metrics.space(cfg.gap) }
   const label = (weight: 'medium' | 'regular') => (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: metrics.space(cfg.gap) }}>
-      {React.Children.map(children, (child) =>
-        typeof child === 'string' || typeof child === 'number' ? (
-          <RNText
-            {...(weight === 'medium' ? medium : regular).textProps}
-            style={[
-              (weight === 'medium' ? medium : regular).style,
-              // --tab-active-letter-spacing −0.01em / --tab-inactive-letter-spacing 0 replace the size's spacing
-              { letterSpacing: weight === 'medium' ? -0.01 * medium.contextFontSize : 0 },
-            ]}
-          >
-            {child}
-          </RNText>
-        ) : React.isValidElement<{ color?: string }>(child) && child.props.color === undefined
-          ? React.cloneElement(child, { color: ctx.text })
-          : child,
-      )}
+    <View style={row}>
+      <ControlLabel size={cfg.fontSize} weight={weight} letterSpacingEm={weight === 'medium' ? -0.01 : 0} truncate={false} color={ctx.text}>
+        {children}
+      </ControlLabel>
     </View>
   )
 
@@ -243,6 +232,7 @@ function SegmentedControlItem({ value, children, style, ...rest }: SegmentedCont
       {...handlers}
       onPress={() => ctx.select(value)}
       disabled={ctx.disabled}
+      accessibilityLabel={a11y.accessibilityLabel}
       accessibilityState={{ checked, disabled: ctx.disabled }}
       style={[{ justifyContent: 'center', alignItems: 'center', width: ctx.cells.widest ?? undefined }, corner, style as StyleProp<ViewStyle>]}
     >
@@ -252,21 +242,25 @@ function SegmentedControlItem({ value, children, style, ...rest }: SegmentedCont
       />
       {/* Natural width, measured for the shared column; padding-x per size */}
       <View onLayout={onLayout} style={{ paddingHorizontal: metrics.space(cfg.paddingX), alignSelf: 'center' }}>
-        {/* Rendered twice (medium + regular stacked) so the width never changes, like Radix */}
-        <Animated.View style={activeStyle}>{label('medium')}</Animated.View>
-        <Animated.View
-          style={[{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, alignItems: 'center', justifyContent: 'center' }, inactiveStyle]}
-          importantForAccessibility="no-hide-descendants"
-          accessibilityElementsHidden
-        >
-          {label('regular')}
-        </Animated.View>
+        {/* Rendered twice (medium in flow, regular over it) so the width never changes, like Radix.
+            Not WeightReserve: on Android a zero-height reserving copy of the regular label made
+            the visible one lose its last letter (React Native caches text layouts by string and style) */}
+        {a11y.wrap(
+          <>
+            <Animated.View style={activeStyle}>{label('medium')}</Animated.View>
+            <Animated.View style={[CENTERED, inactiveStyle]} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
+              {label('regular')}
+            </Animated.View>
+          </>,
+        )}
       </View>
       <FocusRing visible={focused} color={focus.ring} borderRadius={first || last ? ctx.borderRadius : 0} />
     </Pressable>
   )
 }
 SegmentedControlItem.displayName = 'SegmentedControl.Item'
+
+const CENTERED: ViewStyle = { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center' }
 
 export const SegmentedControl = Object.assign(SegmentedControlRoot, {
   Root: SegmentedControlRoot,

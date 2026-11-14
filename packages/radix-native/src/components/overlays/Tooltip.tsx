@@ -1,12 +1,11 @@
-import React, { useCallback, useRef } from 'react'
+import React, { useCallback } from 'react'
 import { Text as RNText, View } from 'react-native'
 import type { DimensionValue, StyleProp, ViewStyle } from 'react-native'
-import { useControllableState } from '../../hooks/useControllableState'
 import { useMetrics } from '../../hooks/useMetrics'
 import { useTextStyle } from '../../hooks/useTextStyle'
 import { useVariantColors } from '../../hooks/useVariantColors'
-import { AnchoredContent, type AnchoredPlacementProps, type Measurable } from '../internal/AnchoredContent'
-import { anchorSlot, type SlotChild } from '../internal/anchorSlot'
+import { AnchoredContent, type AnchoredPlacementProps } from '../internal/AnchoredContent'
+import { slot, useOverlayState, type SlotChild } from '../internal/overlayRoot'
 
 export interface TooltipProps extends AnchoredPlacementProps {
   /** What the tooltip says. */
@@ -44,17 +43,16 @@ export function Tooltip({
   side = 'top', sideOffset = 4, align = 'center', alignOffset, avoidCollisions, collisionPadding = 10, sticky,
   width, minWidth, maxWidth = 360, style, testID,
 }: TooltipProps) {
-  const [open, setOpen] = useControllableState<boolean>({ prop: openProp, defaultProp: defaultOpen, onChange: onOpenChange })
-  const anchor = useRef<Measurable | null>(null)
+  const { open, setOpen, anchor } = useOverlayState({ open: openProp, defaultOpen, onOpenChange })
   const metrics = useMetrics()
   const colors = useVariantColors('tooltip', {})
   const text = useTextStyle({ size: 1, color: colors.text })
   const close = useCallback(() => setOpen(false), [setOpen])
 
-  const trigger = anchorSlot(children, anchor, {
+  const trigger = slot(children, {
     onLongPress: () => setOpen(true),
     onPressOut: () => setOpen(false),
-  })
+  }, anchor)
   const hint = typeof content === 'string' ? content : undefined
 
   return (
@@ -71,14 +69,19 @@ export function Tooltip({
         avoidCollisions={avoidCollisions} collisionPadding={collisionPadding} sticky={sticky}
         testID={testID}
       >
-        {(placement, anchorRect) => {
+        {(placement, anchorRect, size) => {
           const placedSide = placement?.side ?? side
           const vertical = placedSide === 'top' || placedSide === 'bottom'
-          // The arrow points at the anchor's centre, kept within the content
-          const arrowAt = placement && anchorRect
-            ? vertical
-              ? anchorRect.x + anchorRect.width / 2 - placement.x
-              : anchorRect.y + anchorRect.height / 2 - placement.y
+          // The arrow points at the anchor's centre, kept within the content's straight edge
+          // (clear of its rounded corners, like the Popper arrow's padding)
+          const arrowAt = placement && anchorRect && size
+            ? clampArrow(
+              vertical
+                ? anchorRect.x + anchorRect.width / 2 - placement.x
+                : anchorRect.y + anchorRect.height / 2 - placement.y,
+              vertical ? size.width : size.height,
+              metrics.radius(2),
+            )
             : 0
           return (
             <View
@@ -104,6 +107,13 @@ export function Tooltip({
   )
 }
 Tooltip.displayName = 'Tooltip'
+
+/** Keeps the arrow's centre on the edge, `radius` + half its width from either end. */
+export function clampArrow(at: number, edge: number, radius: number): number {
+  const min = radius + ARROW_W / 2
+  const max = edge - radius - ARROW_W / 2
+  return max < min ? edge / 2 : Math.min(Math.max(at, min), max)
+}
 
 /** A 10 × 5 triangle on the content edge that faces the anchor, drawn with borders. */
 function Arrow({ side, at, color }: { side: 'top' | 'right' | 'bottom' | 'left'; at: number; color: string }) {

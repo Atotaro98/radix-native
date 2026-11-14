@@ -65,7 +65,7 @@ _Avoid_: generic palette, color scheme, theme colors
 ## Controls
 
 **Control label**:
-The single row of content inside a Button, IconButton or Badge: runs of text and icons. Adjacent text reads as one piece of Compact text in the control's Text style, kept to one line; icons take the control's text color unless they set their own. While a button is loading, its Control label stays readable by screen readers even though it is hidden on screen.
+The single row of content inside a Button, IconButton, Badge, tab trigger, SegmentedControl item or menu / Select item: runs of text and icons. Adjacent text reads as one piece of Compact text in the control's Text style, kept to one line; icons take the control's text color unless they set their own. While a button is loading, its Control label stays readable by screen readers even though it is hidden on screen.
 _Avoid_: content, children, button text
 
 **Toggle**:
@@ -95,7 +95,7 @@ _Avoid_: card item, option card
 ## Overlays
 
 **Overlay**:
-Content shown above the rest of the screen, outside the layout flow, that the user can dismiss. It takes its Theme from where its content is placed among the components, not from where it ends up drawn on screen.
+Content shown above the rest of the screen, outside the layout flow, that the user can dismiss. It takes its Theme, and the state of the radix-native components around it (its own root, a menu's radio group), from where its content is placed among the components, not from where it ends up drawn on screen.
 _Avoid_: popup, modal (on its own), sheet
 
 **Modal overlay**:

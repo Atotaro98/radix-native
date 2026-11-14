@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { Pressable, ScrollView, Text as RNText, View } from 'react-native'
+import { Pressable, Text as RNText, View } from 'react-native'
 import type { StyleProp, ViewStyle } from 'react-native'
 import { useControllableState } from '../../hooks/useControllableState'
 import { useInteraction } from '../../hooks/useInteraction'
@@ -7,11 +7,15 @@ import { useMargins } from '../../hooks/useMargins'
 import { useMetrics } from '../../hooks/useMetrics'
 import { useTextStyle } from '../../hooks/useTextStyle'
 import { useVariantColors } from '../../hooks/useVariantColors'
-import { shadowStyle } from '../../utils/shadow'
 import { placeItemAligned } from '../../utils/selectLayout'
-import { AnchoredContent, type AnchoredPlacementProps, type Measurable } from '../internal/AnchoredContent'
+import type { Rect } from '../../utils/popper'
+import type { AnchoredPlacementProps } from '../internal/AnchoredContent'
 import { CardRing } from '../internal/CardRing'
 import { FocusRing } from '../internal/FocusRing'
+import { ListLabel, ListRow, ListSeparator, rowHeight, useListMetrics, type ListLook } from '../internal/ListRows'
+import { anchorRef, createOverlayContext, useOverlayState, type OverlayState } from '../internal/overlayRoot'
+import { createPortalContext } from '../internal/portalContext'
+import { PopperContent } from '../internal/PopperContent'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { RadiusToken } from '../../theme/theme.types'
 import type { MarginProps } from '../../types/marginProps'
@@ -80,22 +84,13 @@ const TRIGGER: Record<SelectSize, { height: number; padX: number; ghostPadY: num
   3: { height: 40, padX: 16, ghostPadY: 6, ghostPadX: 12, gap: 8, font: 3, radius: 3, icon: 11 },
 }
 
-const CONTENT: Record<SelectSize, { padding: number; radius: 3 | 4; itemHeight: number; gutter: number; itemFont: 1 | 2 | 3; labelFont: 1 | 2; itemRadius: 1 | 2; check: number }> = {
-  1: { padding: 4, radius: 3, itemHeight: 24, gutter: 20, itemFont: 1, labelFont: 1, itemRadius: 1, check: 8 },
-  2: { padding: 8, radius: 4, itemHeight: 32, gutter: 24, itemFont: 2, labelFont: 2, itemRadius: 2, check: 10 },
-  3: { padding: 8, radius: 4, itemHeight: 32, gutter: 24, itemFont: 3, labelFont: 2, itemRadius: 2, check: 10 },
-}
-
 // ─── Context ──────────────────────────────────────────────────────────────────
 
-interface SelectContextValue {
+interface SelectContextValue extends OverlayState {
   size: SelectSize
   value: string | undefined
   setValue: (v: string) => void
-  open: boolean
-  setOpen: (o: boolean) => void
   disabled: boolean
-  anchor: React.MutableRefObject<Measurable | null>
   /** The content's rows in order, known before it ever opens (see ItemRegistry). */
   entries: Entry[]
   register: (key: object, entry: Entry) => () => void
@@ -108,7 +103,7 @@ type Entry = { kind: 'item'; value: string; label: React.ReactNode } | { kind: '
 const RegistryContext = createContext(false)
 
 function useRegister(entry: Entry) {
-  const ctx = useContext(SelectContext)
+  const ctx = useContext(Select_.Context)
   const registering = useContext(RegistryContext)
   const key = useRef({}).current
   const label = entry.kind === 'item' ? entry.label : undefined
@@ -121,14 +116,10 @@ function useRegister(entry: Entry) {
   return registering
 }
 
-const SelectContext = createContext<SelectContextValue | null>(null)
-const ContentContext = createContext<{ variant: MenuVariant; color?: AccentColor; highContrast?: boolean } | null>(null)
-
-function useSelect(part: string): SelectContextValue {
-  const ctx = useContext(SelectContext)
-  if (!ctx) throw new Error(`Select.${part} must be used within Select.Root`)
-  return ctx
-}
+const Select_ = createOverlayContext<SelectContextValue>('Select')
+const useSelect = Select_.use
+/** The list's item colors (Content's variant, color, high contrast); bridged to the rows in the portal. */
+const ContentContext = createPortalContext<ListLook | null>('Select content', null)
 
 // ─── Root ─────────────────────────────────────────────────────────────────────
 
@@ -136,8 +127,7 @@ function SelectRoot({
   size = 2, value: valueProp, defaultValue, onValueChange, open: openProp, defaultOpen = false, onOpenChange, disabled = false, children,
 }: SelectRootProps) {
   const [value, setValue] = useControllableState<string | undefined>({ prop: valueProp, defaultProp: defaultValue, onChange: onValueChange as (v: string | undefined) => void })
-  const [open, setOpen] = useControllableState<boolean>({ prop: openProp, defaultProp: defaultOpen, onChange: onOpenChange })
-  const anchor = useRef<Measurable | null>(null)
+  const overlay = useOverlayState({ open: openProp, defaultOpen, onOpenChange })
   const triggerPadX = useRef(0)
   // Rows register in tree order (layout effects run in order), like Radix's collection
   const registry = useRef(new Map<object, Entry>())
@@ -151,9 +141,9 @@ function SelectRoot({
     }
   }, [])
   const ctx = useMemo<SelectContextValue>(() => ({
-    size, value, setValue: (v: string) => setValue(v), open, setOpen: (o: boolean) => setOpen(o), disabled, anchor, entries, register, triggerPadX,
-  }), [size, value, setValue, open, setOpen, disabled, entries, register])
-  return <SelectContext.Provider value={ctx}>{children}</SelectContext.Provider>
+    ...overlay, size, value, setValue: (v: string) => setValue(v), disabled, entries, register, triggerPadX,
+  }), [overlay, size, value, setValue, disabled, entries, register])
+  return <Select_.Provider value={ctx}>{children}</Select_.Provider>
 }
 SelectRoot.displayName = 'Select.Root'
 
@@ -186,7 +176,8 @@ function SelectTrigger({
   const ghost = variant === 'ghost'
   const borderRadius = metrics.radius(cfg.radius, 'pill')
   const padX = metrics.px(ghost ? cfg.ghostPadX : cfg.padX)
-  ctx.triggerPadX.current = padX
+  // Where the value text starts, for item-aligned placement (read when the list opens)
+  useLayoutEffect(() => { ctx.triggerPadX.current = padX }, [ctx.triggerPadX, padX])
 
   const selectedEntry = ctx.entries.find((e) => e.kind === 'item' && e.value === ctx.value)
   const label = children ?? (showPlaceholder ? placeholder : selectedEntry?.kind === 'item' ? selectedEntry.label : undefined)
@@ -213,7 +204,7 @@ function SelectTrigger({
 
   return (
     <Pressable
-      ref={(node) => { if (node) ctx.anchor.current = node as unknown as Measurable }}
+      ref={anchorRef(ctx.anchor)}
       testID={testID}
       accessibilityRole="combobox"
       accessibilityLabel={accessibilityLabel}
@@ -236,21 +227,14 @@ SelectTrigger.displayName = 'Select.Trigger'
 // ─── Content ──────────────────────────────────────────────────────────────────
 
 function SelectContent({
-  variant = 'solid', color, highContrast, position = 'item-aligned',
-  side = 'bottom', sideOffset = 4, align = 'start', alignOffset, avoidCollisions, collisionPadding = 10, sticky,
-  style, testID, children,
+  variant = 'solid', color, highContrast, position = 'item-aligned', side = 'bottom', sideOffset = 4, align = 'start', children, ...props
 }: SelectContentProps) {
   const ctx = useSelect('Content')
-  const metrics = useMetrics()
-  const panel = useVariantColors('popperPanel', {})
-  const cfg = CONTENT[ctx.size]
-  const borderRadius = metrics.radius(cfg.radius)
+  const list = useListMetrics(ctx.size)
   const close = useCallback(() => ctx.setOpen(false), [ctx])
-  const content = useMemo(() => ({ variant, color, highContrast }), [variant, color, highContrast])
+  const look = useMemo(() => ({ variant, color, highContrast }), [variant, color, highContrast])
 
-  const itemHeight = metrics.px(cfg.itemHeight)
-  const separatorHeight = 1 + 2 * metrics.space(2)
-  // The selected item (else the first) and the px of rows above it
+  // The selected item (else the first) and the px of the rows above it, from the heights the rows render with
   const items = ctx.entries.filter((e): e is Extract<Entry, { kind: 'item' }> => e.kind === 'item')
   const target = items.find((e) => e.value === ctx.value) ?? items[0]
   let selectedIndex = 0
@@ -258,53 +242,44 @@ function SelectContent({
   for (const e of ctx.entries) {
     if (e === target) break
     if (e.kind === 'item') selectedIndex++
-    else if (e.kind === 'label') offsetBefore += itemHeight
-    else offsetBefore += separatorHeight
+    else offsetBefore += rowHeight(list, e.kind)
   }
   const placeOverride = useMemo(() => position === 'item-aligned'
-    ? (anchor: { x: number; y: number; width: number; height: number }, size: { width: number; height: number }, boundary: { x: number; y: number; width: number; height: number }) =>
+    ? (anchor: Rect, size: { width: number; height: number }, boundary: Rect) =>
       placeItemAligned({
         trigger: anchor,
         triggerPaddingX: ctx.triggerPadX.current,
         content: size,
         boundary,
-        contentPadding: metrics.px(cfg.padding),
-        itemPaddingLeft: metrics.px(cfg.gutter),
-        itemHeight,
+        contentPadding: list.padding,
+        itemPaddingLeft: list.gutter,
+        itemHeight: rowHeight(list, 'item'),
         selectedIndex,
         offsetBefore,
       })
-    : undefined, [position, ctx.triggerPadX, metrics, cfg, itemHeight, selectedIndex, offsetBefore])
+    : undefined, [position, ctx.triggerPadX, list, selectedIndex, offsetBefore])
 
   return (
     <>
-    {/* Always mounted, renders nothing: lets the trigger show the selected text before the list opens */}
-    <RegistryContext.Provider value>{children}</RegistryContext.Provider>
-    <AnchoredContent
-      open={ctx.open}
-      onDismiss={close}
-      anchor={ctx.anchor}
-      modal
-      matchAnchorWidth
-      placeOverride={placeOverride}
-      side={side} sideOffset={sideOffset} align={align} alignOffset={alignOffset}
-      avoidCollisions={avoidCollisions} collisionPadding={collisionPadding} sticky={sticky}
-      testID={testID}
-    >
-      {(placement) => (
-        <View
+      {/* Always mounted, renders nothing: lets the trigger show the selected text before the list opens */}
+      <RegistryContext.Provider value>{children}</RegistryContext.Provider>
+      <ContentContext.Provider value={look}>
+        <PopperContent
+          padding={list.padding}
+          borderRadius={list.borderRadius}
           accessibilityRole="list"
-          style={[{ maxHeight: placement?.availableHeight, borderRadius, backgroundColor: panel.panel }, shadowStyle(panel.shadow), style]}
+          open={ctx.open}
+          onDismiss={close}
+          anchor={ctx.anchor}
+          modal
+          matchAnchorWidth
+          placeOverride={placeOverride}
+          side={side} sideOffset={sideOffset} align={align}
+          {...props}
         >
-          <ScrollView bounces={false} style={{ borderRadius, flexGrow: 0 }} contentContainerStyle={{ padding: metrics.px(cfg.padding) }}>
-            <SelectContext.Provider value={ctx}>
-              <ContentContext.Provider value={content}>{children}</ContentContext.Provider>
-            </SelectContext.Provider>
-          </ScrollView>
-          <CardRing color={panel.ring} borderRadius={borderRadius} />
-        </View>
-      )}
-    </AnchoredContent>
+          {children}
+        </PopperContent>
+      </ContentContext.Provider>
     </>
   )
 }
@@ -312,70 +287,40 @@ SelectContent.displayName = 'Select.Content'
 
 // ─── Items ────────────────────────────────────────────────────────────────────
 
-function Check({ size, color }: { size: number; color: string }) {
-  return (
-    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-      <View style={{
-        width: size * 0.45, height: size * 0.8, marginTop: -size * 0.15,
-        borderRightWidth: size * 0.2, borderBottomWidth: size * 0.2, borderColor: color, transform: [{ rotate: '45deg' }],
-      }} />
-    </View>
-  )
-}
-
 function SelectItem(props: SelectItemProps) {
   const registering = useRegister({ kind: 'item', value: props.value, label: props.textValue ?? props.children })
   return registering ? null : <SelectItemRow {...props} />
 }
 SelectItem.displayName = 'Select.Item'
 
+/** `.rt-SelectItem`: the left gutter is always reserved, and the right padding equals it. */
 function SelectItemRow({ value, disabled, testID, children }: SelectItemProps) {
   const ctx = useSelect('Item')
   const look = useContext(ContentContext)
-  const metrics = useMetrics()
-  const cfg = CONTENT[ctx.size]
-  const [pressed, setPressed] = useState(false)
-  const colors = useVariantColors('menuItem', {
-    variant: look?.variant ?? 'solid', color: look?.color, highContrast: look?.highContrast, disabled, highlighted: pressed,
-  })
-  const text = useTextStyle({ size: cfg.itemFont, color: colors.text, compact: true, truncate: true })
+  const list = useListMetrics(ctx.size)
   const checked = ctx.value === value
-  const gutter = metrics.px(cfg.gutter)
-
   return (
-    <Pressable
-      testID={testID}
+    <ListRow
+      list={list}
+      look={look ?? DEFAULT_LOOK}
+      paddingLeft={list.gutter}
+      paddingRight={list.gutter}
       accessibilityRole="menuitem"
-      accessibilityState={{ selected: checked, disabled: !!disabled }}
+      accessibilityState={{ selected: checked }}
       disabled={disabled}
-      onPressIn={() => setPressed(true)}
-      onPressOut={() => setPressed(false)}
+      checked={checked}
       onPress={() => {
         ctx.setValue(value)
         ctx.setOpen(false)
       }}
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        height: metrics.px(cfg.itemHeight),
-        // the left gutter is always reserved; the right padding equals it
-        paddingLeft: gutter,
-        paddingRight: gutter,
-        borderRadius: metrics.radius(cfg.itemRadius),
-        backgroundColor: colors.bg,
-      }}
+      testID={testID}
     >
-      {checked ? (
-        <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: gutter, alignItems: 'center', justifyContent: 'center' }}>
-          <Check size={metrics.px(cfg.check)} color={colors.text} />
-        </View>
-      ) : null}
-      {typeof children === 'string' || typeof children === 'number'
-        ? <RNText {...text.textProps} style={text.style}>{children}</RNText>
-        : children}
-    </Pressable>
+      {children}
+    </ListRow>
   )
 }
+
+const DEFAULT_LOOK: ListLook = { variant: 'solid' }
 
 function SelectGroup({ children }: { children?: React.ReactNode }) {
   const registering = useContext(RegistryContext)
@@ -385,42 +330,19 @@ SelectGroup.displayName = 'Select.Group'
 
 function SelectLabel({ children }: { children?: React.ReactNode }) {
   const registering = useRegister({ kind: 'label' })
-  return registering ? null : <SelectLabelRow>{children}</SelectLabelRow>
+  const ctx = useSelect('Label')
+  const list = useListMetrics(ctx.size)
+  return registering ? null : <ListLabel list={list} paddingLeft={list.gutter} paddingRight={list.gutter}>{children}</ListLabel>
 }
 SelectLabel.displayName = 'Select.Label'
 
-function SelectLabelRow({ children }: { children?: React.ReactNode }) {
-  const ctx = useSelect('Label')
-  const metrics = useMetrics()
-  const chrome = useVariantColors('menuChrome', {})
-  const cfg = CONTENT[ctx.size]
-  const text = useTextStyle({ size: cfg.labelFont, color: chrome.label, compact: true })
-  const gutter = metrics.px(cfg.gutter)
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', height: metrics.px(cfg.itemHeight), paddingHorizontal: gutter }}>
-      {typeof children === 'string' ? <RNText {...text.textProps} style={text.style}>{children}</RNText> : children}
-    </View>
-  )
-}
-
 function SelectSeparator() {
   const registering = useRegister({ kind: 'separator' })
-  return registering ? null : <SelectSeparatorRow />
+  const ctx = useSelect('Separator')
+  const list = useListMetrics(ctx.size)
+  return registering ? null : <ListSeparator list={list} marginLeft={list.gutter} marginRight={list.padX} />
 }
 SelectSeparator.displayName = 'Select.Separator'
-
-function SelectSeparatorRow() {
-  const ctx = useSelect('Separator')
-  const metrics = useMetrics()
-  const chrome = useVariantColors('menuChrome', {})
-  const cfg = CONTENT[ctx.size]
-  return (
-    <View style={{
-      height: 1, backgroundColor: chrome.separator, marginVertical: metrics.space(2),
-      marginLeft: metrics.px(cfg.gutter), marginRight: metrics.space(ctx.size === 1 ? 2 : 3),
-    }} />
-  )
-}
 
 /**
  * Picks one value from a list, like Radix Themes `Select`: a trigger in

@@ -1,10 +1,11 @@
 import React, { useImperativeHandle, useState } from 'react'
-import { Pressable, StyleSheet, Text } from 'react-native'
+import { Pressable, StyleSheet, Text, View } from 'react-native'
 import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native'
 import { act, fireEvent, screen } from '@testing-library/react-native'
 import { renderWithTheme } from './helpers/render'
 import { DropdownMenu } from '../components/overlays/DropdownMenu'
 import { ContextMenu } from '../components/overlays/ContextMenu'
+import { AccessibleIcon } from '../components/utilities/AccessibleIcon'
 
 const flat = (node: { props: { style?: unknown } }): ViewStyle =>
   StyleSheet.flatten(node.props.style as StyleProp<ViewStyle>) ?? {}
@@ -110,6 +111,71 @@ describe('DropdownMenu (base-menu.css)', () => {
     expect(onOpenChange).toHaveBeenLastCalledWith(true)
     expect(row('archive')).toBeTruthy()
     expect(row('more').props.accessibilityState).toMatchObject({ expanded: true })
+  })
+
+  it('radio items in a sub-menu keep their RadioGroup: its context crosses the portal', () => {
+    function Nested() {
+      const [person, setPerson] = useState('pedro')
+      return (
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger><FakeAnchor /></DropdownMenu.Trigger>
+          <DropdownMenu.Content testID="content">
+            <DropdownMenu.RadioGroup value={person} onValueChange={setPerson}>
+              <DropdownMenu.Sub defaultOpen>
+                <DropdownMenu.SubTrigger testID="more">People</DropdownMenu.SubTrigger>
+                <DropdownMenu.SubContent testID="sub">
+                  <DropdownMenu.RadioItem value="pedro" testID="pedro">Pedro</DropdownMenu.RadioItem>
+                  <DropdownMenu.RadioItem value="colm" testID="colm">Colm</DropdownMenu.RadioItem>
+                </DropdownMenu.SubContent>
+              </DropdownMenu.Sub>
+            </DropdownMenu.RadioGroup>
+          </DropdownMenu.Content>
+        </DropdownMenu.Root>
+      )
+    }
+    renderWithTheme(<Nested />)
+    open()
+    expect(row('pedro').props.accessibilityState).toMatchObject({ checked: true })
+    fireEvent.press(row('colm'))
+    open()
+    expect(row('colm').props.accessibilityState).toMatchObject({ checked: true })
+    expect(row('pedro').props.accessibilityState).toMatchObject({ checked: false })
+  })
+
+  it('a row is named by its AccessibleIcon label and reads adjacent text as one label', () => {
+    renderWithTheme(
+      <DropdownMenu.Root defaultOpen>
+        <DropdownMenu.Trigger><FakeAnchor /></DropdownMenu.Trigger>
+        <DropdownMenu.Content testID="content">
+          <DropdownMenu.Item testID="share">Share <AccessibleIcon label="by email"><View /></AccessibleIcon></DropdownMenu.Item>
+          <DropdownMenu.Item testID="greet">Hello {'Ana'}</DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu.Root>,
+    )
+    expect(row('share').props.accessibilityLabel).toBe('Share by email')
+    expect(screen.getByText('Hello Ana', { includeHiddenElements: true })).toBeTruthy()
+  })
+
+  it('a Trigger outside its Root names its own component', () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {})
+    expect(() => renderWithTheme(<DropdownMenu.Trigger><FakeAnchor /></DropdownMenu.Trigger>))
+      .toThrow('DropdownMenu.Trigger must be used within DropdownMenu.Root')
+    expect(() => renderWithTheme(<ContextMenu.Trigger><Text>Area</Text></ContextMenu.Trigger>))
+      .toThrow('ContextMenu.Trigger must be used within ContextMenu.Root')
+    jest.restoreAllMocks()
+  })
+
+  it('while closing, the menu no longer takes touches (no backdrop, pointerEvents none)', () => {
+    renderWithTheme(<Example />)
+    open()
+    fireEvent.press(row('edit'))
+    const content = screen.queryByTestId('content', { includeHiddenElements: true })
+    expect(screen.queryByTestId('content-backdrop', { includeHiddenElements: true })).toBeNull()
+    // still mounted for its exit animation
+    expect(content).not.toBeNull()
+    let layer = content!.parent
+    while (layer && layer.props.pointerEvents === undefined) layer = layer.parent
+    expect(layer?.props.pointerEvents).toBe('none')
   })
 
   it('a disabled item does nothing', () => {
