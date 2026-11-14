@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text } from 'react-native'
 import type { GestureResponderEvent, StyleProp, ViewStyle, TextStyle } from 'react-native'
 import { act, fireEvent, screen } from '@testing-library/react-native'
 import { renderWithTheme } from './helpers/render'
-import { Tooltip } from '../components/overlays/Tooltip'
+import { Tooltip, clampArrow } from '../components/overlays/Tooltip'
 import { HoverCard } from '../components/overlays/HoverCard'
 
 const flat = (node: { props: { style?: unknown } }): ViewStyle & TextStyle =>
@@ -62,5 +62,15 @@ describe('HoverCard', () => {
     fireEvent(screen.getByTestId('trigger'), 'longPress')
     layout('card', 200, 100)
     expect(flat(screen.getByTestId('card'))).toMatchObject({ left: 150, top: 340 })
+  })
+})
+
+describe('Tooltip arrow', () => {
+  // edge 120, radius 4: the arrow's centre stays within [4 + 5, 120 − 4 − 5]
+  it.each([[60, 60], [-30, 9], [200, 111]])('points at %p → drawn at %p', (at, expected) => {
+    expect(clampArrow(at, 120, 4)).toBe(expected)
+  })
+  it('sits in the middle of an edge too short for it', () => {
+    expect(clampArrow(3, 12, 4)).toBe(6)
   })
 })

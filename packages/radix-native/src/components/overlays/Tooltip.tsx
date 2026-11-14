@@ -69,14 +69,19 @@ export function Tooltip({
         avoidCollisions={avoidCollisions} collisionPadding={collisionPadding} sticky={sticky}
         testID={testID}
       >
-        {(placement, anchorRect) => {
+        {(placement, anchorRect, size) => {
           const placedSide = placement?.side ?? side
           const vertical = placedSide === 'top' || placedSide === 'bottom'
-          // The arrow points at the anchor's centre, kept within the content
-          const arrowAt = placement && anchorRect
-            ? vertical
-              ? anchorRect.x + anchorRect.width / 2 - placement.x
-              : anchorRect.y + anchorRect.height / 2 - placement.y
+          // The arrow points at the anchor's centre, kept within the content's straight edge
+          // (clear of its rounded corners, like the Popper arrow's padding)
+          const arrowAt = placement && anchorRect && size
+            ? clampArrow(
+              vertical
+                ? anchorRect.x + anchorRect.width / 2 - placement.x
+                : anchorRect.y + anchorRect.height / 2 - placement.y,
+              vertical ? size.width : size.height,
+              metrics.radius(2),
+            )
             : 0
           return (
             <View
@@ -102,6 +107,13 @@ export function Tooltip({
   )
 }
 Tooltip.displayName = 'Tooltip'
+
+/** Keeps the arrow's centre on the edge, `radius` + half its width from either end. */
+export function clampArrow(at: number, edge: number, radius: number): number {
+  const min = radius + ARROW_W / 2
+  const max = edge - radius - ARROW_W / 2
+  return max < min ? edge / 2 : Math.min(Math.max(at, min), max)
+}
 
 /** A 10 × 5 triangle on the content edge that faces the anchor, drawn with borders. */
 function Arrow({ side, at, color }: { side: 'top' | 'right' | 'bottom' | 'left'; at: number; color: string }) {

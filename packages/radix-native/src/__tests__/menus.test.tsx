@@ -165,6 +165,19 @@ describe('DropdownMenu (base-menu.css)', () => {
     jest.restoreAllMocks()
   })
 
+  it('while closing, the menu no longer takes touches (no backdrop, pointerEvents none)', () => {
+    renderWithTheme(<Example />)
+    open()
+    fireEvent.press(row('edit'))
+    const content = screen.queryByTestId('content', { includeHiddenElements: true })
+    expect(screen.queryByTestId('content-backdrop', { includeHiddenElements: true })).toBeNull()
+    // still mounted for its exit animation
+    expect(content).not.toBeNull()
+    let layer = content!.parent
+    while (layer && layer.props.pointerEvents === undefined) layer = layer.parent
+    expect(layer?.props.pointerEvents).toBe('none')
+  })
+
   it('a disabled item does nothing', () => {
     const onOpenChange = jest.fn()
     renderWithTheme(<Example onOpenChange={onOpenChange} />)

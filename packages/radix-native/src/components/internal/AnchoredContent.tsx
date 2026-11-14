@@ -37,8 +37,8 @@ export interface AnchoredContentProps extends AnchoredPlacementProps {
    */
   placeOverride?: (anchor: Rect, content: { width: number; height: number }, boundary: Rect) => { x: number; y: number }
   style?: StyleProp<ViewStyle>
-  /** Gets the placement (max-height from the available space) and the anchor's window rect (Tooltip's arrow). */
-  children: (placement: Placement | null, anchor: Rect | null) => React.ReactNode
+  /** Gets the placement (max-height from the available space), the anchor's window rect and the content's size (Tooltip's arrow). */
+  children: (placement: Placement | null, anchor: Rect | null, size: { width: number; height: number } | null) => React.ReactNode
   testID?: string
 }
 
@@ -172,8 +172,10 @@ function Placed({
   }, [])
 
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
-      {modal ? <Pressable style={StyleSheet.absoluteFill} onPress={onDismiss} accessible={false} testID={testID ? `${testID}-backdrop` : undefined} /> : null}
+    // While closing (the exit animation), touches go through to what is underneath, like Radix's
+    // closed content: a tap right after dismissing reaches the page instead of the fading layer
+    <View style={StyleSheet.absoluteFill} pointerEvents={open ? 'box-none' : 'none'}>
+      {modal && open ? <Pressable style={StyleSheet.absoluteFill} onPress={onDismiss} accessible={false} testID={testID ? `${testID}-backdrop` : undefined} /> : null}
       <Animated.View
         testID={testID}
         onLayout={onLayout}
@@ -193,7 +195,7 @@ function Placed({
           style,
         ]}
       >
-        {children(placement, anchorRect)}
+        {children(placement, anchorRect, size)}
       </Animated.View>
     </View>
   )
