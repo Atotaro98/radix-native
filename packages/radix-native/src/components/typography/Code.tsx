@@ -9,10 +9,12 @@ import type { AccentColor } from '../../tokens/colors/types'
 import type { TextWeight, TextWrap } from './Text'
 import type { NativeTextProps } from '../../types/nativeProps'
 import type { MarginProps } from '../../types/marginProps'
+import type { CodeVariant } from '../../utils/variantPalette'
+import { paintSurface } from '../internal/surface'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type CodeVariant = 'solid' | 'soft' | 'outline' | 'ghost'
+export type { CodeVariant }
 
 export interface CodeProps extends NativeTextProps, MarginProps {
   /** Text size token (1–9). Default: inherits context — set to 3 (16px) if no parent. */
@@ -63,10 +65,7 @@ export function Code({
 
   // ─── Colors ─────────────────────────────────────────────────────────────────
   const colors = useVariantColors('code', { variant, color, highContrast })
-  // Ghost without a color inherits: from the parent text, else body text gray-12.
-  const bodyColor = useVariantColors('text', {}).text
-  const backgroundColor = colors.bg
-  const borderColor = colors.border
+  // Ghost without a color has none of its own: it inherits from the parent text, else body text.
 
   // ─── Text style ──────────────────────────────────────────────────────────────
   // Radix `--code-*`: 0.95em of the surrounding text (or of the size token when
@@ -78,7 +77,6 @@ export function Code({
     weight,
     lineHeight: 'none',
     color: colors.text,
-    standaloneColor: bodyColor,
     maxFontSizeMultiplier,
     truncate,
     wrap,
@@ -92,11 +90,8 @@ export function Code({
   // ─── Style ──────────────────────────────────────────────────────────────────
   const codeStyle: TextStyle = {
     ...text.style,
-    backgroundColor,
     // Radix .rt-Code: border-radius: calc((0.5px + 0.2em) * var(--radius-factor))
-    borderRadius:     text.radius(0.2, 0.5),
-    borderWidth:      borderColor ? 1 : undefined,
-    borderColor,
+    ...paintSurface(colors, text.radius(0.2, 0.5)).style,
     paddingVertical,
     paddingHorizontal,
   }

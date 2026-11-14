@@ -1,16 +1,14 @@
-import React, { useCallback } from 'react'
+import React from 'react'
 import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native'
 import { View } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
-import { useVariantColors } from '../../hooks/useVariantColors'
-import { useInteraction } from '../../hooks/useInteraction'
 import { AnimatedPressable } from '../../hooks/usePressScale'
-import { getMinHitSlop, MIN_TOUCH_TARGET } from '../../utils/hitSlop'
+import { MIN_TOUCH_TARGET } from '../../utils/hitSlop'
 import type { MetricsInput } from '../../utils/metrics'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { NativePressableProps } from '../../types/nativeProps'
-import { useAccessibleControl } from './accessibleControl'
-import { FocusRing } from './FocusRing'
+import { useControl } from './control'
+import { useSkeletonRadius } from '../feedback/SkeletonContext'
 
 export type CheckedState = boolean | 'indeterminate'
 export type ToggleRole = 'checkbox' | 'radio' | 'switch'
@@ -28,17 +26,31 @@ export interface ToggleGeometry {
  * What a Toggle (Checkbox, Radio, Switch) looks like: its Indicator and the
  * pure geometry of that Indicator for the Theme's scaling and radius. The one
  * source of the Indicator's size, shared by the Indicator itself, the Toggle,
- * and the rows of a Selection group.
+ * and the rows and cards of a Selection group. Whoever draws the Indicator
+ * computes the geometry once (`useToggleGeometry`) and hands it over.
  */
 export interface ToggleKind<P extends object> {
   geometry: (props: P, theme: MetricsInput) => ToggleGeometry
-  Indicator: (props: P) => React.ReactElement | null
+  /** Draws the Indicator; `geometry` is what this kind's `geometry` returned for these props. */
+  Indicator: (props: P & { geometry: ToggleGeometry }) => React.ReactElement | null
 }
 
-/** Binds a Toggle's pure geometry to the current Theme (for its Indicator). */
-export function useToggleGeometry<P, G>(geometry: (props: P, theme: MetricsInput) => G, props: P): G {
+/**
+ * Builds a ToggleKind whose Indicator reads the whole geometry it computes
+ * (a Checkbox's check size, a Switch's thumb), not only the outer box.
+ */
+export function defineToggle<P extends object, G extends ToggleGeometry>(
+  geometry: (props: P, theme: MetricsInput) => G,
+  Indicator: (props: P & { geometry: G }) => React.ReactElement | null,
+): ToggleKind<P> {
+  // Safe: every caller passes the geometry this kind's `geometry` returned for the same props.
+  return { geometry, Indicator: Indicator as ToggleKind<P>['Indicator'] }
+}
+
+/** A Toggle's geometry for the current Theme; undefined without an Indicator. */
+export function useToggleGeometry<P extends object>(indicator: { kind: ToggleKind<P>; props: P } | undefined) {
   const { scaling, radius } = useThemeContext()
-  return geometry(props, { scaling, radius })
+  return indicator ? indicator.kind.geometry(indicator.props, { scaling, radius }) : undefined
 }
 
 interface SurfaceBase extends Omit<NativePressableProps, 'children' | 'disabled' | 'onPress'> {
@@ -47,14 +59,12 @@ interface SurfaceBase extends Omit<NativePressableProps, 'children' | 'disabled'
   disabled: boolean
   /** Not called while disabled. */
   onPress: (event: GestureResponderEvent) => void
-  /** Accent color of the focus ring. */
-  color?: AccentColor
   style?: StyleProp<ViewStyle>
   children?: React.ReactNode
 }
 
 type WithIndicator<P extends object> = SurfaceBase & {
-  /** The Indicator to draw; the focus ring and the touch target surround it. */
+  /** The Indicator to draw; the focus ring and the touch target surround it, in the Indicator's `color`. */
   indicator: { kind: ToggleKind<P>; props: P }
   /**
    * Set when a label sits next to the Indicator (a Selection group row): the
@@ -63,6 +73,7 @@ type WithIndicator<P extends object> = SurfaceBase & {
    */
   labelLineHeight?: number
   borderRadius?: never
+  color?: never
 }
 
 type WithoutIndicator = SurfaceBase & {
@@ -70,6 +81,8 @@ type WithoutIndicator = SurfaceBase & {
   labelLineHeight?: never
   /** The surface draws itself (a Selection card): the focus ring follows its edge, inset. */
   borderRadius: number
+  /** Accent color of the focus ring. */
+  color?: AccentColor
 }
 
 export type ToggleSurfaceProps<P extends object> = WithIndicator<P> | WithoutIndicator
@@ -94,54 +107,41 @@ export function ToggleSurface<P extends object>(props: ToggleSurfaceProps<P>) {
     indicator,
     labelLineHeight,
     borderRadius,
-    onPressIn,
-    onPressOut,
-    onFocus,
-    onBlur,
-    accessibilityState,
-    accessibilityLabel,
-    hitSlop,
     ...rest
   } = props
 
-  // A row's label or a card's content names the Toggle (hidden parts passed explicitly)
-  const a11y = useAccessibleControl(children, accessibilityLabel)
-
-  const theme = useThemeContext()
-  const { focused, scaleStyle, handlers } = useInteraction({
-    enabled: !disabled,
-    onPressIn,
-    onPressOut,
-    onFocus,
-    onBlur,
-  })
-  const focus = useVariantColors('focusRing', { color })
-
-  const handlePress = useCallback((e: GestureResponderEvent) => {
-    if (disabled) return
-    onPress(e)
-  }, [disabled, onPress])
-
-  const geometry = indicator
-    ? indicator.kind.geometry(indicator.props, { scaling: theme.scaling, radius: theme.radius })
-    : undefined
+  const geometry = useToggleGeometry(indicator)
   const isRow = geometry !== undefined && labelLineHeight !== undefined
+  // switch.css / base-checkbox.css / base-radio.css: a bare Toggle sets --skeleton-radius-override
+  // to its Indicator's radius; rows and cards report nothing.
+  useSkeletonRadius(geometry && !isRow ? geometry.borderRadius : undefined)
 
-  let minHitSlop
-  if (geometry && isRow) minHitSlop = getMinHitSlop(MIN_TOUCH_TARGET, Math.max(geometry.height, labelLineHeight))
-  else if (geometry) minHitSlop = getMinHitSlop(geometry.width, geometry.height)
-
-  const ring = (radius: number, offset: number) => (
-    <FocusRing visible={focused} color={focus.ring} borderRadius={radius} offset={offset} />
-  )
+  // A row's label or a card's content names the Toggle (hidden parts passed explicitly)
+  const control = useControl({
+    props: rest,
+    children,
+    role,
+    onPress,
+    disabled,
+    state: { checked: checked === 'indeterminate' ? 'mixed' : checked },
+    touchTarget: geometry
+      ? isRow
+        ? { width: MIN_TOUCH_TARGET, height: Math.max(geometry.height, labelLineHeight) }
+        : { width: geometry.width, height: geometry.height }
+      : undefined,
+    // The focus ring surrounds the Indicator (in its color), or follows a card's edge (inset)
+    focusRing: geometry
+      ? { color: (indicator?.props as { color?: AccentColor }).color, borderRadius: geometry.borderRadius, offset: geometry.focusOffset }
+      : { color, borderRadius: borderRadius ?? 0 },
+  })
 
   let content: React.ReactNode
   if (indicator && geometry && isRow) {
     content = (
       <>
         <View>
-          <indicator.kind.Indicator {...indicator.props} />
-          {ring(geometry.borderRadius, geometry.focusOffset)}
+          <indicator.kind.Indicator {...indicator.props} geometry={geometry} />
+          {control.focusRing}
         </View>
         {children}
       </>
@@ -149,40 +149,29 @@ export function ToggleSurface<P extends object>(props: ToggleSurfaceProps<P>) {
   } else if (indicator && geometry) {
     content = (
       <>
-        <indicator.kind.Indicator {...indicator.props} />
-        {ring(geometry.borderRadius, geometry.focusOffset)}
+        <indicator.kind.Indicator {...indicator.props} geometry={geometry} />
+        {control.focusRing}
       </>
     )
   } else {
     content = (
       <>
         {children}
-        {ring(borderRadius ?? 0, 0)}
+        {control.focusRing}
       </>
     )
   }
 
   return (
     <AnimatedPressable
-      accessibilityRole={role}
-      hitSlop={hitSlop ?? minHitSlop}
-      {...rest}
-      {...handlers}
-      onPress={handlePress}
-      disabled={disabled}
-      accessibilityLabel={a11y.accessibilityLabel}
-      accessibilityState={{
-        ...accessibilityState,
-        checked: checked === 'indeterminate' ? 'mixed' : checked,
-        disabled,
-      }}
+      {...control.pressableProps}
       style={[
-        scaleStyle,
+        control.scaleStyle,
         geometry && !isRow ? { width: geometry.width, height: geometry.height } : undefined,
         style,
       ]}
     >
-      {a11y.wrap(content)}
+      {control.wrap(content)}
     </AnimatedPressable>
   )
 }

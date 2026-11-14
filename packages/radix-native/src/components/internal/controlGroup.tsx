@@ -1,54 +1,31 @@
-import React, { useMemo } from 'react'
-import { Text as RNText, View } from 'react-native'
+import React from 'react'
+import { View } from 'react-native'
 import type { StyleProp, ViewStyle } from 'react-native'
 import { useMetrics } from '../../hooks/useMetrics'
 import { useMargins } from '../../hooks/useMargins'
 import { useTextStyle } from '../../hooks/useTextStyle'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { ToggleSurface, type ToggleKind } from './ToggleSurface'
-import { createSelectionGroup, type SelectionValue } from './selectionGroup'
+import {
+  createSelectionFamily,
+  renderItemLabel,
+  type SelectionFamilyRootProps,
+  type SelectionItem,
+  type SelectionLayoutProps,
+  type SelectionShared,
+} from './selectionGroup'
 import type { MarginProps } from '../../types/marginProps'
-import type { AccentColor } from '../../tokens/colors/types'
 
 type SelectionType = 'single' | 'multiple'
 
-interface Shared<S, V> {
-  size: S
-  variant: V
-  color?: AccentColor
-  highContrast?: boolean
-}
-
-type IndicatorProps<S, V> = Shared<S, V> & { checked: boolean; disabled: boolean }
+type IndicatorProps<S, V> = SelectionShared<S, V> & { checked: boolean; disabled: boolean }
 type ControlProps<S, V> = IndicatorProps<S, V> & MarginProps & {
   onPress: () => void
   style?: StyleProp<ViewStyle>
 }
 
-export interface ControlGroupProps<T extends SelectionType, S, V> extends MarginProps {
-  /** Control size (1–3). Default: 2. */
-  size?: S
-  /** Visual variant. Default: 'surface'. */
-  variant?: V
-  /** Accent color. Default: theme accent. */
-  color?: AccentColor
-  /** Increases color contrast with the background. */
-  highContrast?: boolean
-  /** Controlled selection: one value (RadioGroup) or several (CheckboxGroup). */
-  value?: SelectionValue<T>
-  /** Uncontrolled default selection. */
-  defaultValue?: SelectionValue<T>
-  /** Called when the selection changes. */
-  onValueChange?: (value: SelectionValue<T>) => void
-  /** Disables every item in the group. */
-  disabled?: boolean
-  /** Group children (`.Item`). */
-  children?: React.ReactNode
-  /** Accessible name for the whole group. */
-  accessibilityLabel?: string
-  testID?: string
-  style?: StyleProp<ViewStyle>
-}
+/** CheckboxGroup / RadioGroup Root props (sizes 1–3, default 2; default variant 'surface'). */
+export type ControlGroupProps<T extends SelectionType, S, V> = SelectionFamilyRootProps<T, S, V>
 
 export interface ControlGroupItemProps extends MarginProps {
   /** Unique value identifying this item. */
@@ -75,6 +52,16 @@ interface ControlGroupConfig<T extends SelectionType, S, V> {
   kind: ToggleKind<IndicatorProps<S, V>>
 }
 
+/** Radix: the items stack in a column, gap space-1. */
+function ColumnLayout({ role, accessibilityLabel, testID, style, children }: SelectionLayoutProps<object>) {
+  const { space } = useMetrics()
+  return (
+    <View role={role} accessibilityLabel={accessibilityLabel} testID={testID} style={[{ flexDirection: 'column', gap: space(1) }, style]}>
+      {children}
+    </View>
+  )
+}
+
 /**
  * Internal: CheckboxGroup and RadioGroup — a Selection group of Toggles laid
  * out in a column (Radix: gap space-1). An item with a label is a single
@@ -89,77 +76,26 @@ export function createControlGroup<T extends SelectionType, S extends 1 | 2 | 3,
   Control,
   kind,
 }: ControlGroupConfig<T, S, V>) {
-  const Selection = createSelectionGroup<T, Shared<S, V>>({ name, type })
-
-  function Root({
-    size = 2 as S,
-    variant = 'surface' as V,
-    color,
-    highContrast,
-    value,
-    defaultValue,
-    onValueChange,
-    disabled,
-    children,
-    accessibilityLabel,
-    testID,
-    m, mx, my, mt, mr, mb, ml,
-    style,
-  }: ControlGroupProps<T, S, V>) {
-    const { space } = useMetrics()
-    const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
-    const shared = useMemo<Shared<S, V>>(() => ({ size, variant, color, highContrast }), [size, variant, color, highContrast])
-
-    return (
-      <Selection.Root value={value} defaultValue={defaultValue} onValueChange={onValueChange} disabled={disabled} shared={shared}>
-        <View
-          role={rootRole}
-          accessibilityLabel={accessibilityLabel}
-          testID={testID}
-          // Radix: column, gap space-1
-          style={[{ flexDirection: 'column', gap: space(1) }, margins, style]}
-        >
-          {children}
-        </View>
-      </Selection.Root>
-    )
-  }
-  Root.displayName = `${name}.Root`
-
-  function Item({
-    value,
-    disabled,
+  function ItemView({
+    item,
     maxFontSizeMultiplier,
     children,
     m, mx, my, mt, mr, mb, ml,
     style,
-  }: ControlGroupItemProps) {
-    const item = Selection.useItem(value, disabled)
+  }: ControlGroupItemProps & { item: SelectionItem<SelectionShared<S, V>> }) {
     const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
-    const { size, variant, color, highContrast } = item.shared
+    const indicator = { ...item.shared, checked: item.checked, disabled: item.disabled }
 
     // No label: the control itself is the item.
     if (children == null) {
-      return (
-        <Control
-          size={size}
-          variant={variant}
-          color={color}
-          highContrast={highContrast}
-          checked={item.checked}
-          disabled={item.disabled}
-          onPress={item.select}
-          m={m} mx={mx} my={my} mt={mt} mr={mr} mb={mb} ml={ml}
-          style={style}
-        />
-      )
+      return <Control {...indicator} onPress={item.select} m={m} mx={mx} my={my} mt={mt} mr={mr} mb={mb} ml={ml} style={style} />
     }
 
     return (
       <LabeledRow
         role={itemRole}
         kind={kind}
-        indicator={{ size, variant, color, highContrast, checked: item.checked, disabled: item.disabled }}
+        indicator={indicator}
         onPress={item.select}
         maxFontSizeMultiplier={maxFontSizeMultiplier}
         margins={margins}
@@ -169,9 +105,15 @@ export function createControlGroup<T extends SelectionType, S extends 1 | 2 | 3,
       </LabeledRow>
     )
   }
-  Item.displayName = `${name}.Item`
 
-  return Object.assign(Root, { Root, Item })
+  return createSelectionFamily<T, S, V, object, ControlGroupItemProps>({
+    name,
+    type,
+    rootRole,
+    size: 2 as S,
+    Layout: ColumnLayout,
+    Item: ItemView,
+  })
 }
 
 interface LabeledRowProps<S extends 1 | 2 | 3, V> {
@@ -201,7 +143,7 @@ function LabeledRow<S extends 1 | 2 | 3, V>({
   style,
   children,
 }: LabeledRowProps<S, V>) {
-  const { size, color, checked, disabled } = indicator
+  const { size, checked, disabled } = indicator
   const labelColors = useVariantColors('controlLabel', { disabled })
   const label = useTextStyle({ size, color: labelColors.text, maxFontSizeMultiplier })
   const fontSize = label.style.fontSize ?? 0
@@ -214,18 +156,11 @@ function LabeledRow<S extends 1 | 2 | 3, V>({
       checked={checked}
       disabled={disabled}
       onPress={onPress}
-      color={color}
       indicator={{ kind, props: indicator }}
       labelLineHeight={label.style.lineHeight ?? fontSize}
       style={[{ flexDirection: 'row', alignItems: 'center', gap }, margins, style]}
     >
-      {typeof children === 'string' || typeof children === 'number' ? (
-        <RNText style={label.style} {...label.textProps}>
-          {children}
-        </RNText>
-      ) : (
-        children
-      )}
+      {renderItemLabel(children, label)}
     </ToggleSurface>
   )
 }

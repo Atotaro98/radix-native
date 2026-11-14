@@ -82,6 +82,12 @@ describe('Heading', () => {
 })
 
 describe('Radix parity — Strong / Em / Quote', () => {
+  it('standalone Strong / Em take body text gray-12; nested they inherit', () => {
+    renderWithTheme(<><Strong>alone</Strong><Text color="blue">In <Em>blue</Em></Text></>)
+    expect(styleOf('alone').color).toBe(slate.light[12])
+    expect(styleOf('blue').color).toBeUndefined()
+  })
+
   it('nested Strong is bold and takes no layout props', () => {
     renderWithTheme(
       <Text>

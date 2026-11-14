@@ -11,10 +11,13 @@ import { createContext, useContext, useEffect } from 'react'
  */
 export const SkeletonContext = createContext<((radius: number | null) => void) | null>(null)
 
-/** Reports this component's radius to an enclosing Skeleton (no-op outside one). */
-export function useSkeletonRadius(radius: number | null): void {
+/**
+ * Reports this component's radius to an enclosing Skeleton (no-op outside one).
+ * `undefined` reports nothing, for a part Radix never styles as the skeleton.
+ */
+export function useSkeletonRadius(radius: number | null | undefined): void {
   const report = useContext(SkeletonContext)
   useEffect(() => {
-    report?.(radius)
+    if (radius !== undefined) report?.(radius)
   }, [report, radius])
 }

@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
-import { StyleSheet, Text as RNText } from 'react-native'
-import type { StyleProp, ViewStyle } from 'react-native'
+import { Text as RNText } from 'react-native'
 import { fireEvent, screen } from '@testing-library/react-native'
 import { AccessibleIcon, Button, IconButton, VisuallyHidden } from '../index'
 import { renderWithTheme } from './helpers/render'
+import { focusRings } from './helpers/queries'
 import { crimson, indigo } from '../tokens/colors'
 
 function Icon(props: { color?: string }) {
@@ -120,13 +120,7 @@ describe('Button', () => {
   ] as const)('focus ring (Radix --focus-8): %s', (_label, color, expected) => {
     renderWithTheme(<Button color={color}>Save</Button>)
     fireEvent(screen.getByRole('button'), 'focus')
-    const styleOf = (node: { props: { style?: unknown } }) =>
-      StyleSheet.flatten(node.props.style as StyleProp<ViewStyle>)
-    const rings = screen.UNSAFE_root.findAll(
-      (node: { type: unknown; props: { style?: unknown } }) => typeof node.type === 'string'
-        && styleOf(node)?.position === 'absolute' && styleOf(node)?.borderWidth === 2,
-    )
-    expect(rings.map((node: { props: { style?: unknown } }) => styleOf(node)?.borderColor)).toEqual([expected])
+    expect(focusRings(screen.UNSAFE_root).map((ring) => ring.props.color)).toEqual([expected])
   })
 })
 

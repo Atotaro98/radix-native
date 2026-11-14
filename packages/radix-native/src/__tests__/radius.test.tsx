@@ -3,15 +3,12 @@
  * with `--scaling`; Kbd and Code are relative to their own font size).
  */
 import React from 'react'
-import { StyleSheet, type StyleProp, type TextStyle } from 'react-native'
 import { screen } from '@testing-library/react-native'
 import { Badge, Button, Kbd, Code, Skeleton, Spinner, Progress, RadioCards } from '../index'
 import { renderWithTheme } from './helpers/render'
+import { flat } from './helpers/queries'
 
 type Node = { type: unknown; props: { style?: unknown } }
-
-const flat = (node: { props: { style?: unknown } }): TextStyle =>
-  StyleSheet.flatten(node.props.style as StyleProp<TextStyle>) ?? {}
 
 const radii = (): number[] =>
   screen.UNSAFE_root.findAll((n: Node) => typeof n.type === 'string' && flat(n).borderRadius !== undefined)

@@ -1,14 +1,12 @@
 import React, { useImperativeHandle, useState } from 'react'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
-import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native'
+import { Pressable, Text, View } from 'react-native'
+import type { GestureResponderEvent } from 'react-native'
 import { act, fireEvent, screen } from '@testing-library/react-native'
 import { renderWithTheme } from './helpers/render'
+import { flat } from './helpers/queries'
 import { DropdownMenu } from '../components/overlays/DropdownMenu'
 import { ContextMenu } from '../components/overlays/ContextMenu'
 import { AccessibleIcon } from '../components/utilities/AccessibleIcon'
-
-const flat = (node: { props: { style?: unknown } }): ViewStyle =>
-  StyleSheet.flatten(node.props.style as StyleProp<ViewStyle>) ?? {}
 
 function FakeAnchor({ onPress, ref }: { onPress?: (e: GestureResponderEvent) => void; ref?: React.Ref<unknown> }) {
   useImperativeHandle(ref, () => ({ measureInWindow: (cb: (x: number, y: number, w: number, h: number) => void) => cb(20, 100, 80, 32) }))

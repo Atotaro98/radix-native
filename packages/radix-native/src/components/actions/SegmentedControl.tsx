@@ -3,14 +3,12 @@ import { Pressable, View } from 'react-native'
 import type { StyleProp, ViewStyle } from 'react-native'
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated'
 import { useControllableState } from '../../hooks/useControllableState'
-import { useInteraction } from '../../hooks/useInteraction'
 import { useMargins } from '../../hooks/useMargins'
 import { useMetrics } from '../../hooks/useMetrics'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useWidest, useWidestCell, type WidestCells } from '../../hooks/useWidest'
-import { useAccessibleControl } from '../internal/accessibleControl'
+import { useControl } from '../internal/control'
 import { ControlLabel } from '../internal/ControlLabel'
-import { FocusRing } from '../internal/FocusRing'
 import { shadowStyle } from '../../utils/shadow'
 import type { RadiusToken } from '../../theme/theme.types'
 import type { SpaceToken } from '../../tokens/spacing'
@@ -183,9 +181,6 @@ function SegmentedControlItem({ value, children, style, ...rest }: SegmentedCont
   const metrics = useMetrics()
   const cfg = SIZES[ctx.size]
   // Active label: medium weight; inactive: regular (segmented-control.css ItemLabelActive / Inactive)
-  const a11y = useAccessibleControl(children, rest.accessibilityLabel)
-  const focus = useVariantColors('focusRing', {})
-  const { focused, handlers } = useInteraction({ enabled: false })
   const onLayout = useWidestCell(ctx.cells)
 
   const index = ctx.values.indexOf(value)
@@ -218,6 +213,18 @@ function SegmentedControlItem({ value, children, style, ...rest }: SegmentedCont
     </View>
   )
 
+  const select = useCallback(() => ctx.select(value), [ctx, value])
+  // No press scale (plain Pressable); the focus ring follows the root's corners on the ends
+  const control = useControl({
+    props: rest,
+    children,
+    role: 'radio',
+    onPress: select,
+    disabled: ctx.disabled,
+    state: { checked },
+    focusRing: { borderRadius: first || last ? ctx.borderRadius : 0 },
+  })
+
   const corner = {
     borderTopLeftRadius: first ? ctx.borderRadius : 0,
     borderBottomLeftRadius: first ? ctx.borderRadius : 0,
@@ -227,13 +234,7 @@ function SegmentedControlItem({ value, children, style, ...rest }: SegmentedCont
 
   return (
     <Pressable
-      accessibilityRole="radio"
-      {...rest}
-      {...handlers}
-      onPress={() => ctx.select(value)}
-      disabled={ctx.disabled}
-      accessibilityLabel={a11y.accessibilityLabel}
-      accessibilityState={{ checked, disabled: ctx.disabled }}
+      {...control.pressableProps}
       style={[{ justifyContent: 'center', alignItems: 'center', width: ctx.cells.widest ?? undefined }, corner, style as StyleProp<ViewStyle>]}
     >
       <Animated.View
@@ -245,7 +246,7 @@ function SegmentedControlItem({ value, children, style, ...rest }: SegmentedCont
         {/* Rendered twice (medium in flow, regular over it) so the width never changes, like Radix.
             Not WeightReserve: on Android a zero-height reserving copy of the regular label made
             the visible one lose its last letter (React Native caches text layouts by string and style) */}
-        {a11y.wrap(
+        {control.wrap(
           <>
             <Animated.View style={activeStyle}>{label('medium')}</Animated.View>
             <Animated.View style={[CENTERED, inactiveStyle]} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
@@ -254,7 +255,7 @@ function SegmentedControlItem({ value, children, style, ...rest }: SegmentedCont
           </>,
         )}
       </View>
-      <FocusRing visible={focused} color={focus.ring} borderRadius={first || last ? ctx.borderRadius : 0} />
+      {control.focusRing}
     </Pressable>
   )
 }

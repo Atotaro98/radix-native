@@ -1,14 +1,12 @@
 import React from 'react'
-import { StyleSheet, Text } from 'react-native'
-import type { StyleProp, ViewStyle, TextStyle } from 'react-native'
+import { Text } from 'react-native'
 import { fireEvent, screen } from '@testing-library/react-native'
 import { renderWithTheme } from './helpers/render'
+import { flat } from './helpers/queries'
 import { Tabs } from '../components/navigation/Tabs'
 import { TabNav } from '../components/navigation/TabNav'
 
 type Node = { type: unknown; props: { style?: unknown }; findAll: (m: (n: Node) => boolean) => Node[] }
-const flat = (node: { props: { style?: unknown } }): ViewStyle & TextStyle =>
-  StyleSheet.flatten(node.props.style as StyleProp<ViewStyle>) ?? {}
 const bars = (n: Node) => n.findAll((c) => typeof c.type === 'string' && flat(c).height === 2 && flat(c).position === 'absolute')
 
 function Example(props: React.ComponentProps<typeof Tabs.Root> & { size?: 1 | 2 }) {

@@ -9,17 +9,12 @@ import { StyleSheet, type StyleProp, type TextStyle, type ViewStyle } from 'reac
 import { act, fireEvent, screen } from '@testing-library/react-native'
 import { Checkbox, CheckboxCards, CheckboxGroup, Radio, RadioCards, RadioGroup, Switch } from '../index'
 import { renderWithTheme } from './helpers/render'
-import { FocusRing } from '../components/internal/FocusRing'
+import { flat, focusRings, hasBevel } from './helpers/queries'
 
 type Node = { type: unknown; props: { style?: unknown; visible?: boolean; offset?: number; borderRadius?: number } }
 type Toggle = typeof Checkbox | typeof Radio | typeof Switch
 
-const flat = (n: Node): ViewStyle => StyleSheet.flatten(n.props.style as StyleProp<ViewStyle>) ?? {}
 const lineHeightOf = (n: Node) => StyleSheet.flatten(n.props.style as StyleProp<TextStyle>)?.lineHeight
-
-/** The visible FocusRing instances inside a Toggle (found by type, never by style). */
-const focusRings = (el: { findAll: (p: (n: Node) => boolean) => Node[] }) =>
-  el.findAll((n) => n.type === FocusRing && n.props.visible === true)
 
 const TOGGLES: [string, Toggle, 'checkbox' | 'radio' | 'switch'][] = [
   ['Checkbox', Checkbox, 'checkbox'],
@@ -245,11 +240,7 @@ describe('classic look, as in Radix', () => {
   ] as const)('checked classic %s is a bevel without a drop shadow', (_name, Component, role) => {
     renderWithTheme(<Component variant="classic" defaultChecked />)
     expect(shadowed(role)).toHaveLength(0)
-    // ClassicOverlay: two translucent halves
-    const halves = screen.getByRole(role).findAll(
-      (n: Node) => typeof n.type === 'string' && flat(n).height === '50%',
-    )
-    expect(halves).toHaveLength(2)
+    expect(hasBevel(screen.getByRole(role))).toBe(true)
   })
 
   it.each(['surface', 'classic', 'soft'] as const)('%s Switch: the thumb has the drop shadow, the track has none', (variant) => {

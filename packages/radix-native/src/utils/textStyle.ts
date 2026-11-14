@@ -88,6 +88,8 @@ export interface TextStyleTheme {
   fonts: ThemeFonts
   /** Global Font scaling cap from `<Theme maxFontSizeMultiplier>`. */
   maxFontSizeMultiplier?: number
+  /** The Theme's radius factor (`--radius-factor`), for radii relative to the text size. Default: 1. */
+  radiusFactor?: number
 }
 
 export interface TextStyleRequest {
@@ -102,6 +104,8 @@ export interface TextStyleRequest {
   defaultSize?: FontSizeToken
   /** Overrides the role's size adjustment (e.g. Kbd renders at 0.75em). */
   sizeAdjust?: number
+  /** Replaces the size's and role's letter spacing, in em (tab and segmented labels). */
+  letterSpacingEm?: number
   /** Weight intent. When omitted the role's weight applies, else the text inherits / stays regular. */
   weight?: WeightIntent
   /** Line-height scale. Default: `'body'`. */
@@ -141,6 +145,13 @@ export interface ResolvedTextStyle {
   baseFontSize: number
   /** Set when a weight was requested but no face is configured for it. */
   missingFace?: WeightIntent
+  /** A length of `k` em (Radix `Nem`) on this text's own size, rounded to whole pixels. */
+  em: (k: number) => number
+  /**
+   * A radius relative to this text's size, Radix `calc((offsetPx + k·em) * var(--radius-factor))`
+   * with the Theme's radius factor. Not rounded, like every other radius.
+   */
+  radius: (k: number, offsetPx?: number) => number
 }
 
 // ─── Resolver ─────────────────────────────────────────────────────────────────
@@ -179,11 +190,11 @@ export function resolveTextStyle(
     metrics = {
       fontSize: resolvedSize,
       lineHeight: resolveLineHeight(request.lineHeight ?? 'body', token, factor, resolvedSize),
-      letterSpacing: (letterSpacingEm[token] + role.letterSpacingEm) * resolvedSize,
+      letterSpacing: (request.letterSpacingEm ?? letterSpacingEm[token] + role.letterSpacingEm) * resolvedSize,
     }
   } else if (parent && adjust !== 1) {
     resolvedSize = Math.round(parent.fontSize * adjust)
-    metrics = { fontSize: resolvedSize, letterSpacing: role.letterSpacingEm * resolvedSize }
+    metrics = { fontSize: resolvedSize, letterSpacing: (request.letterSpacingEm ?? role.letterSpacingEm) * resolvedSize }
   }
   if (metrics.lineHeight === undefined) delete metrics.lineHeight
 
@@ -207,10 +218,14 @@ export function resolveTextStyle(
     theme.maxFontSizeMultiplier ??
     (request.compact ? COMPACT_FONT_SCALING_CAP : undefined)
 
+  const ownSize = resolvedSize ?? parent?.fontSize ?? 0
+  const radiusFactor = theme.radiusFactor ?? 1
   return {
     style,
     textProps: { maxFontSizeMultiplier: cap, ...getTextWrapProps(request.truncate, request.wrap) },
-    contextFontSize: resolvedSize ?? parent?.fontSize ?? 0,
+    contextFontSize: ownSize,
+    em: (k) => Math.round(k * ownSize),
+    radius: (k, offsetPx = 0) => (offsetPx + k * ownSize) * radiusFactor,
     baseFontSize: token !== undefined ? fontSizeScale[token] * factor : parent?.fontSize ?? 0,
     missingFace: face.missing,
   }

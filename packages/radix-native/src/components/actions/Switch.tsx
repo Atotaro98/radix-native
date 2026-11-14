@@ -11,17 +11,19 @@ import { useVariantColors } from '../../hooks/useVariantColors'
 import { shadowStyle } from '../../utils/shadow'
 import { useMargins } from '../../hooks/useMargins'
 import { BaseToggle } from '../internal/BaseToggle'
-import { useToggleGeometry, type ToggleKind } from '../internal/ToggleSurface'
+import { defineToggle } from '../internal/ToggleSurface'
 import { resolveMetrics, type MetricsInput } from '../../utils/metrics'
 import type { RadiusToken, RadiusLevel } from '../../tokens/radius'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { NativePressableProps } from '../../types/nativeProps'
 import type { MarginProps } from '../../types/marginProps'
+import type { SelectionVariant } from '../../utils/variantPalette'
+import { paintSurface } from '../internal/surface'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type SwitchSize = 1 | 2 | 3
-export type SwitchVariant = 'classic' | 'surface' | 'soft'
+export type SwitchVariant = SelectionVariant
 
 export interface SwitchProps extends NativePressableProps, MarginProps {
   /** Switch size (1–3). Default: 2. */
@@ -68,6 +70,8 @@ function switchGeometry({ size, radius }: { size: SwitchSize; radius?: RadiusTok
   }
 }
 
+type SwitchGeometry = ReturnType<typeof switchGeometry>
+
 // ─── Indicator ────────────────────────────────────────────────────────────────
 
 export interface SwitchIndicatorProps {
@@ -81,14 +85,14 @@ export interface SwitchIndicatorProps {
 }
 
 /** Internal: the track and its sliding thumb, drawn from the checked state alone. */
-export function SwitchIndicator({ size, variant, color, highContrast, radius, checked, disabled }: SwitchIndicatorProps) {
+function SwitchIndicator({ variant, color, highContrast, checked, disabled, geometry }: SwitchIndicatorProps & { geometry: SwitchGeometry }) {
   const {
     width: trackWidth,
     height: trackHeight,
     borderRadius: trackRadius,
     thumbSize,
     thumbMargin,
-  } = useToggleGeometry(switchGeometry, { size, radius })
+  } = geometry
   const thumbRadius = Math.max(trackRadius - thumbMargin, 0)
 
   // ─── Thumb animation ─────────────────────────────────────────────────────────
@@ -110,11 +114,12 @@ export function SwitchIndicator({ size, variant, color, highContrast, radius, ch
 
   const colors = useVariantColors('switch', { variant, color, highContrast, checked, disabled })
 
+  // The track's fill and its ring over it (Radix inset box-shadow)
+  const track = paintSurface(colors, trackRadius)
+
   const trackStyle: ViewStyle = {
     width: trackWidth,
     height: trackHeight,
-    borderRadius: trackRadius,
-    backgroundColor: colors.track,
     justifyContent: 'center',
     paddingHorizontal: thumbMargin,
   }
@@ -127,32 +132,15 @@ export function SwitchIndicator({ size, variant, color, highContrast, radius, ch
   }
 
   return (
-    <View style={trackStyle}>
-      {colors.border && (
-        <View
-          pointerEvents="none"
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            borderRadius: trackRadius,
-            borderWidth: 1,
-            borderColor: colors.border,
-          }}
-        />
-      )}
+    <View style={[trackStyle, track.style]}>
+      {track.over}
       <Animated.View style={[thumbStyle, shadowStyle(colors.thumbShadow), thumbAnimatedStyle]} />
     </View>
   )
 }
 
 /** Internal: the Switch's Indicator and geometry, for the Toggle surface. */
-export const SwitchToggle: ToggleKind<SwitchIndicatorProps> = {
-  geometry: switchGeometry,
-  Indicator: SwitchIndicator,
-}
+export const SwitchToggle = defineToggle<SwitchIndicatorProps, SwitchGeometry>(switchGeometry, SwitchIndicator)
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -175,7 +163,6 @@ export function Switch({
       {...rest}
       defaultChecked={defaultChecked}
       disabled={disabled}
-      color={color}
       kind={SwitchToggle}
       indicator={{ size, variant, color, highContrast, radius, disabled }}
       margins={margins}

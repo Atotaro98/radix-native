@@ -15,14 +15,19 @@ function paints<R extends RecipeName>(name: R, state: Omit<RecipeState<R>, 'appe
 
 describe('buttons (base-button.css)', () => {
   it.each([
-    ['.rt-variant-solid', { variant: 'solid' }, { bg: c(9), text: c('contrast'), pressedBg: c(10) }],
+    ['.rt-variant-solid', { variant: 'solid' }, { bg: c(9), text: c('contrast') }],
+    ['.rt-variant-solid:active ≈ hover step 10', { variant: 'solid', pressed: true }, { bg: c(10) }],
+    ['.rt-variant-solid.rt-high-contrast:active → opacity (no darker step)', { variant: 'solid', highContrast: true, pressed: true }, { bg: c(12), opacity: 0.88 }],
     ['.rt-variant-solid.rt-high-contrast', { variant: 'solid', highContrast: true }, { bg: c(12), text: g(1) }],
-    ['.rt-variant-classic:active', { variant: 'classic' }, { bg: c(9), pressedBg: c(9) }],
-    ['.rt-variant-soft', { variant: 'soft' }, { bg: c('a3'), text: c('a11'), pressedBg: c('a5') }],
+    ['.rt-variant-classic:active stays accent-9', { variant: 'classic', pressed: true }, { bg: c(9) }],
+    ['.rt-variant-soft', { variant: 'soft' }, { bg: c('a3'), text: c('a11') }],
+    ['.rt-variant-soft:active', { variant: 'soft', pressed: true }, { bg: c('a5') }],
     ['.rt-variant-surface', { variant: 'surface' }, { bg: c('surface'), border: c('a7') }],
     ['.rt-variant-outline', { variant: 'outline' }, { bg: TRANSPARENT, border: c('a8') }],
     ['.rt-variant-outline.rt-high-contrast', { variant: 'outline', highContrast: true }, { border: g('a11'), text: c(12) }],
-    ['.rt-variant-ghost', { variant: 'ghost' }, { bg: TRANSPARENT, pressedBg: c('a4') }],
+    ['.rt-variant-ghost', { variant: 'ghost' }, { bg: TRANSPARENT }],
+    ['.rt-variant-ghost:active', { variant: 'ghost', pressed: true }, { bg: c('a4') }],
+    ['[data-disabled] ignores the press', { variant: 'ghost', disabled: true, pressed: true }, { bg: TRANSPARENT }],
     ['[data-disabled] solid', { variant: 'solid', disabled: true }, { bg: g('a3'), text: g('a8') }],
     // --base-button-classic-disabled-box-shadow: gray-a4 ring (light); gray-a5 over gray-a2 rings (dark)
     ['.rt-variant-classic[data-disabled]', { variant: 'classic', disabled: true },
@@ -74,20 +79,20 @@ describe('selection controls (base-checkbox.css, base-radio.css)', () => {
 
 describe('tracks (switch.css, progress.css)', () => {
   it.each([
-    ['switch surface unchecked', 'switch', { variant: 'surface' }, { track: g('a3'), border: g('a5'), thumb: WHITE }],
-    ['switch surface checked → accent-track', 'switch', { variant: 'surface', checked: true }, { track: c('track'), border: g('a5') }],
+    ['switch surface unchecked', 'switch', { variant: 'surface' }, { bg: g('a3'), ring: g('a5'), thumb: WHITE }],
+    ['switch surface checked → accent-track', 'switch', { variant: 'surface', checked: true }, { bg: c('track'), ring: g('a5') }],
     ['switch high contrast → black-a8 overlay (light only)', 'switch', { variant: 'surface', checked: true, highContrast: true },
-      { track: layers(byMode(blackA(8), TRANSPARENT), c('track')) }],
-    ['switch surface [data-disabled]', 'switch', { variant: 'surface', disabled: true }, { track: g('a3'), border: g('a3'), thumb: g(2) }],
-    ['switch classic unchecked → gray-a4 + shadow-1', 'switch', { variant: 'classic' }, { track: g('a4'), border: SHADOW_1_RING }],
+      { bg: layers(byMode(blackA(8), TRANSPARENT), c('track')) }],
+    ['switch surface [data-disabled]', 'switch', { variant: 'surface', disabled: true }, { bg: g('a3'), ring: g('a3'), thumb: g(2) }],
+    ['switch classic unchecked → gray-a4 + shadow-1', 'switch', { variant: 'classic' }, { bg: g('a4'), ring: SHADOW_1_RING }],
     ['switch classic [data-disabled] at 0.5', 'switch', { variant: 'classic', disabled: true },
-      { track: fade(g('a5'), 0.5), border: fade(SHADOW_1_RING, 0.5) }],
+      { bg: fade(g('a5'), 0.5), ring: fade(SHADOW_1_RING, 0.5) }],
     ['switch soft thumb stays white', 'switch', { variant: 'soft', checked: true },
-      { track: layers(c('a4'), c('a4'), c('a4'), g('a2')), thumb: WHITE }],
-    ['switch soft unchecked', 'switch', { variant: 'soft' }, { track: layers(whiteA(1), g('a3'), g('a3')) }],
-    ['progress surface', 'progress', { variant: 'surface' }, { track: g('a3'), border: g('a4'), indicator: c('track') }],
+      { bg: layers(c('a4'), c('a4'), c('a4'), g('a2')), thumb: WHITE }],
+    ['switch soft unchecked', 'switch', { variant: 'soft' }, { bg: layers(whiteA(1), g('a3'), g('a3')) }],
+    ['progress surface', 'progress', { variant: 'surface' }, { bg: g('a3'), border: g('a4'), indicator: c('track') }],
     ['progress classic → shadow-1', 'progress', { variant: 'classic' }, { border: SHADOW_1_RING }],
-    ['progress soft', 'progress', { variant: 'soft' }, { track: layers(whiteA(1), g('a4')), indicator: layers(c('a5'), c(8)) }],
+    ['progress soft', 'progress', { variant: 'soft' }, { bg: layers(whiteA(1), g('a4')), indicator: layers(c('a5'), c(8)) }],
     ['progress high contrast', 'progress', { variant: 'surface', highContrast: true }, { indicator: c(12) }],
   ] as const)('%s', (_selector, name, state, expected) => {
     expect(paints(name, state)).toMatchObject(expected)
@@ -98,17 +103,28 @@ describe('cards (base-card.css, card.css, checkbox-cards.css, radio-cards.css)',
   const classicBorder = byMode(g('a3'), g('a6'))
   const surface = layers(g('surface'), byMode(WHITE, g(1)))
   it.each([
-    ['card surface → color-panel + gray-a5', 'card', { variant: 'surface' }, { bg: g('panel'), border: g('a5'), pressedBorder: g('a6') }],
-    ['card classic → color-panel + classic border', 'card', { variant: 'classic' }, { bg: g('panel'), border: classicBorder }],
-    ['card ghost :active', 'card', { variant: 'ghost' }, { pressedBg: g('a4') }],
-    ['checkbox card surface → color-surface', 'checkboxCard', { variant: 'surface' }, { bg: surface, border: g('a5') }],
-    ['checkbox card classic', 'checkboxCard', { variant: 'classic' }, { bg: surface, border: classicBorder }],
+    ['card surface → color-panel + gray-a5', 'card', { variant: 'surface' }, { bg: g('panel'), ring: g('a5') }],
+    ['card surface :active → gray-a6 ring', 'card', { variant: 'surface', pressed: true }, { bg: g('panel'), ring: g('a6') }],
+    ['card classic → color-panel + classic border', 'card', { variant: 'classic' }, { bg: g('panel'), ring: classicBorder }],
+    ['card classic :active', 'card', { variant: 'classic', pressed: true }, { ring: byMode(g('a4'), g('a6')) }],
+    ['card ghost :active', 'card', { variant: 'ghost', pressed: true }, { bg: g('a4') }],
+    ['checkbox card surface → color-surface', 'checkboxCard', { variant: 'surface' }, { bg: surface, ring: g('a5'), text: g(12) }],
+    ['checkbox card classic', 'checkboxCard', { variant: 'classic' }, { bg: surface, ring: classicBorder }],
+    ['checkbox card checked keeps its 1px ring', 'checkboxCard', { variant: 'surface', checked: true }, { ring: g('a5') }],
+    ['radio card unchecked → 1px ring', 'radioCard', { variant: 'surface' }, { ring: g('a5') }],
     ['card item :disabled', 'checkboxCard', { variant: 'surface', disabled: true }, { bg: layers(g('a2'), surface), text: g('a9') }],
-    ['radio card checked → accent-indicator outline', 'radioCard', { variant: 'surface', checked: true }, { checkedBorder: c('indicator') }],
-    ['radio card checked high contrast', 'radioCard', { variant: 'surface', checked: true, highContrast: true }, { checkedBorder: c(12) }],
-    ['radio card checked :disabled → gray-8', 'radioCard', { variant: 'classic', checked: true, disabled: true }, { checkedBorder: g(8) }],
+    ['radio card checked → accent-indicator outline', 'radioCard', { variant: 'surface', checked: true }, { ring: c('indicator'), ringWidth: 2 }],
+    ['radio card checked high contrast', 'radioCard', { variant: 'surface', checked: true, highContrast: true }, { ring: c(12), ringWidth: 2 }],
+    ['radio card checked :disabled → gray-8', 'radioCard', { variant: 'classic', checked: true, disabled: true }, { ring: g(8), ringWidth: 2 }],
   ] as const)('%s', (_selector, name, state, expected) => {
     expect(paints(name, state)).toMatchObject(expected)
+  })
+  it('only a checked radio card thickens its ring', () => {
+    expect(paints('checkboxCard', { variant: 'surface', checked: true })).not.toHaveProperty('ringWidth')
+    expect(paints('radioCard', { variant: 'surface' })).not.toHaveProperty('ringWidth')
+  })
+  it('card ghost at rest has no fill or ring', () => {
+    expect(paints('card', { variant: 'ghost' })).toEqual({})
   })
 })
 
@@ -134,8 +150,9 @@ describe('text inputs (text-field.css, text-area.css)', () => {
 })
 
 describe('text (text.css, heading.css, link.css, blockquote.css)', () => {
-  it('no color → gray-12; [data-accent-color] → accent-a11; high contrast → accent-12', () => {
-    expect(paints('text', {}).text).toEqual(g(12))
+  it('no color → none of its own (inherits / body text); [data-accent-color] → accent-a11; high contrast → accent-12', () => {
+    expect(paints('text', {}).text).toBeUndefined()
+    expect(paints('body', {}).text).toEqual(g(12))
     expect(paints('text', { hasColor: true }).text).toEqual(c('a11'))
     expect(paints('text', { hasColor: true, highContrast: true }).text).toEqual(c(12))
   })
@@ -253,14 +270,14 @@ describe('shadows and bevel (classic look)', () => {
 describe('callouts (callout.css)', () => {
   it.each([
     ['.rt-variant-soft', { variant: 'soft' }, { bg: c('a3'), text: c('a11') }],
-    ['.rt-variant-surface', { variant: 'surface' }, { bg: c('a2'), border: c('a6'), text: c('a11') }],
-    ['.rt-variant-outline', { variant: 'outline' }, { bg: TRANSPARENT, border: c('a7'), text: c('a11') }],
-    ['.rt-high-contrast (text only)', { variant: 'surface', highContrast: true }, { bg: c('a2'), border: c('a6'), text: c(12) }],
+    ['.rt-variant-surface', { variant: 'surface' }, { bg: c('a2'), ring: c('a6'), text: c('a11') }],
+    ['.rt-variant-outline', { variant: 'outline' }, { bg: TRANSPARENT, ring: c('a7'), text: c('a11') }],
+    ['.rt-high-contrast (text only)', { variant: 'surface', highContrast: true }, { bg: c('a2'), ring: c('a6'), text: c(12) }],
   ] as const)('%s', (_selector, state, expected) => {
     expect(paints('callout', state)).toMatchObject(expected)
   })
   it('soft has no ring', () => {
-    expect(paints('callout', { variant: 'soft' })).not.toHaveProperty('border')
+    expect(paints('callout', { variant: 'soft' })).not.toHaveProperty('ring')
   })
 })
 
@@ -293,7 +310,7 @@ describe('segmented (segmented-control.css)', () => {
 describe('tab list (base-tab-list.css)', () => {
   it.each([
     ['.rt-BaseTabListTrigger', {}, { text: g('a11'), indicator: c('indicator'), rule: g('a5') }],
-    ["[data-state='active']", { checked: true }, { text: g(12) }],
+    ["[data-state='active']", { active: true }, { text: g(12) }],
     ['.rt-high-contrast ::before', { highContrast: true }, { indicator: c(12) }],
   ] as const)('%s', (_selector, state, expected) => {
     expect(paints('tabList', state)).toMatchObject(expected)
@@ -329,7 +346,7 @@ describe('dialog (base-dialog.css)', () => {
   it('backdrop --color-overlay, solid panel, --shadow-6 ring', () => {
     expect(paints('dialog', {})).toMatchObject({
       overlay: byMode(blackA(6), blackA(8)),
-      panel: byMode(WHITE, g(2)),
+      bg: byMode(WHITE, g(2)),
       ring: byMode(mix(g('a3'), g(3), 0.25), mix(g('a6'), g(6), 0.25)),
     })
   })
@@ -365,12 +382,12 @@ describe('menus (base-menu.css)', () => {
 
 describe('select trigger (select.css)', () => {
   it.each([
-    ['.rt-variant-surface', { variant: 'surface' }, { bg: g('surface'), border: g('a7'), text: g(12), placeholder: g('a10') }],
-    ["surface [data-state='open']", { variant: 'surface', open: true }, { border: g('a8') }],
+    ['.rt-variant-surface', { variant: 'surface' }, { bg: g('surface'), ring: g('a7'), text: g(12), placeholder: g('a10') }],
+    ["surface [data-state='open']", { variant: 'surface', open: true }, { ring: g('a8') }],
     ['.rt-variant-soft', { variant: 'soft' }, { bg: c('a3'), text: c(12), placeholder: fade(c(12), 0.6) }],
     ["soft [data-state='open']", { variant: 'soft', open: true }, { bg: c('a4') }],
     ["ghost [data-state='open']", { variant: 'ghost', open: true }, { bg: c('a3') }],
-    ['surface :disabled', { variant: 'surface', disabled: true }, { bg: g('a2'), border: g('a6'), text: g('a11'), icon: g('a9') }],
+    ['surface :disabled', { variant: 'surface', disabled: true }, { bg: g('a2'), ring: g('a6'), text: g('a11'), icon: g('a9') }],
     ['soft :disabled', { variant: 'soft', disabled: true }, { bg: g('a3'), text: g('a11') }],
   ] as const)('%s', (_selector, state, expected) => {
     expect(paints('selectTrigger', state)).toMatchObject(expected)
