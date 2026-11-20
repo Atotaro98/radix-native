@@ -1,7 +1,7 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef } from 'react'
 import type { DimensionValue, StyleProp, ViewStyle } from 'react-native'
 import type { AnchoredPlacementProps } from '../internal/AnchoredContent'
-import { createOverlayContext, slot, useOverlayState, type OverlayState, type OverlayStateProps, type SlotChild } from '../internal/overlayRoot'
+import { createOverlayContext, slot, useOverlayState, type Anchor, type OverlayState, type OverlayStateProps, type SlotChild } from '../internal/overlayRoot'
 import { PopperContent, usePanelSize, type PanelSize } from '../internal/PopperContent'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -34,13 +34,30 @@ export interface PopoverContentProps extends AnchoredPlacementProps {
   children?: React.ReactNode
 }
 
-const Popover_ = createOverlayContext<OverlayState & { modal: boolean }>('Popover')
+interface PopoverContext extends OverlayState {
+  modal: boolean
+  /** The Trigger's own element. */
+  triggerAnchor: Anchor
+  /** A `Popover.Anchor`'s element; while one is mounted it wins over the Trigger. */
+  customAnchor: Anchor
+}
+
+const Popover_ = createOverlayContext<PopoverContext>('Popover')
 
 // ─── Parts ────────────────────────────────────────────────────────────────────
 
 function PopoverRoot({ modal = false, children, ...state }: PopoverRootProps) {
   const overlay = useOverlayState(state)
-  const value = useMemo(() => ({ ...overlay, modal }), [overlay, modal])
+  const customAnchor: Anchor = useRef(null)
+  const value = useMemo<PopoverContext>(() => {
+    const triggerAnchor = overlay.anchor
+    // What the content is placed from: the Anchor part when there is one, else the Trigger
+    const anchor: Anchor = {
+      get current() { return customAnchor.current ?? triggerAnchor.current },
+      set current(node) { triggerAnchor.current = node },
+    }
+    return { ...overlay, anchor, triggerAnchor, customAnchor, modal }
+  }, [overlay, modal])
   return <Popover_.Provider value={value}>{children}</Popover_.Provider>
 }
 PopoverRoot.displayName = 'Popover.Root'
@@ -48,14 +65,15 @@ PopoverRoot.displayName = 'Popover.Root'
 /** One element; its `onPress` toggles the popover, and it is the anchor. */
 function PopoverTrigger({ children }: PopoverSlotProps) {
   const ctx = Popover_.use('Trigger')
-  return slot(children, { onPress: () => ctx.setOpen(!ctx.open) }, ctx.anchor)
+  return slot(children, { onPress: () => ctx.setOpen(!ctx.open) }, ctx.triggerAnchor)
 }
 PopoverTrigger.displayName = 'Popover.Trigger'
 
 /** Positions the content against this element instead of the Trigger. */
 function PopoverAnchor({ children }: PopoverSlotProps) {
-  const ctx = Popover_.use('Anchor')
-  return slot(children, {}, ctx.anchor)
+  const { customAnchor } = Popover_.use('Anchor')
+  useEffect(() => () => { customAnchor.current = null }, [customAnchor])
+  return slot(children, {}, customAnchor)
 }
 PopoverAnchor.displayName = 'Popover.Anchor'
 

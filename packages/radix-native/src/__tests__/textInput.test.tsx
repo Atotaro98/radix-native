@@ -89,6 +89,11 @@ describe.each([
     expect(screen.getByPlaceholderText('Email').props.value).toBe('fixed')
   })
 
+  it('disabled stays not editable when readOnly={false} is passed', () => {
+    renderWithTheme(<Input placeholder="Email" disabled readOnly={false} />)
+    expect(screen.getByPlaceholderText('Email').props).toMatchObject({ readOnly: true, editable: false })
+  })
+
   it('read-only focus ring is gray-8', () => {
     renderWithTheme(<Input placeholder="Email" readOnly />)
     const input = screen.getByPlaceholderText('Email')

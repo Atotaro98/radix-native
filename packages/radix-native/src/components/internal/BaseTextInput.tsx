@@ -149,7 +149,8 @@ export function BaseTextInput({
         multiline={multiline}
         style={inputStyle}
         placeholderTextColor={colors.placeholder}
-        readOnly={readOnly}
+        // React Native: a defined `readOnly` wins over `editable`, so both carry the disabled gate
+        readOnly={disabled ? true : readOnly}
         editable={!disabled && editable !== false}
         accessibilityState={{ ...accessibilityState, disabled }}
       />

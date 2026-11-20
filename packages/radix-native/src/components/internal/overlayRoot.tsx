@@ -57,6 +57,14 @@ export function anchorRef(anchor: Anchor) {
   }
 }
 
+const REACT_MAJOR = parseInt(React.version, 10)
+
+/** The ref a consumer put on an element: a prop in React 19, `element.ref` before (reading it there warns in 19). */
+function elementRef(child: React.ReactElement<{ ref?: React.Ref<unknown> }>): React.Ref<unknown> | undefined {
+  if (child.props.ref !== undefined) return child.props.ref
+  return REACT_MAJOR < 19 ? (child as unknown as { ref?: React.Ref<unknown> }).ref : undefined
+}
+
 type Handler = (e: GestureResponderEvent) => void
 type HandlerName = 'onPress' | 'onLongPress' | 'onPressOut'
 
@@ -71,7 +79,7 @@ export type SlotChild = React.ReactElement<Partial<Record<HandlerName, Handler>>
  */
 export function slot(children: SlotChild, handlers: Partial<Record<HandlerName, Handler>>, anchor?: Anchor) {
   const child = React.Children.only(children)
-  const childRef = child.props.ref
+  const childRef = elementRef(child)
   const capture = (e: GestureResponderEvent) => {
     if (anchor && measurable(e?.currentTarget)) anchor.current = e.currentTarget
   }

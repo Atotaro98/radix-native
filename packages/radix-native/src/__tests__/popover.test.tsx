@@ -29,6 +29,23 @@ const layoutContent = (width = 200, height = 120) => act(() => {
 })
 
 describe('Popover', () => {
+  it('is placed from Popover.Anchor when there is one, also after the Trigger is pressed', () => {
+    function Anchor({ ref }: { ref?: React.Ref<unknown> }) {
+      useImperativeHandle(ref, () => ({ measureInWindow: (cb: (x: number, y: number, w: number, h: number) => void) => cb(10, 300, 200, 40) }))
+      return <View />
+    }
+    renderWithTheme(
+      <Popover.Root>
+        <Popover.Anchor><Anchor /></Popover.Anchor>
+        <Popover.Trigger><FakeAnchor /></Popover.Trigger>
+        <Popover.Content testID="content"><Text>Body</Text></Popover.Content>
+      </Popover.Root>,
+    )
+    fireEvent.press(screen.getByTestId('trigger'))
+    layoutContent()
+    expect(flat(screen.getByTestId('content'))).toMatchObject({ left: 10, top: 300 + 40 + 8 })
+  })
+
   it('opens from the trigger and places itself below it, aligned to its start, 8px away', () => {
     renderWithTheme(<Example />)
     expect(screen.queryByText('Popover body')).toBeNull()
