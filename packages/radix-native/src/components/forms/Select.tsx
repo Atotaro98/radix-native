@@ -93,6 +93,8 @@ interface SelectContextValue extends OverlayState {
   /** The content's rows in order, known before it ever opens (see ItemRegistry). */
   entries: Entry[]
   register: (key: object, entry: Entry) => () => void
+  /** Replaces a registered row, keeping its place in the order. */
+  update: (key: object, entry: Entry) => void
   triggerPadX: React.MutableRefObject<number>
 }
 
@@ -107,11 +109,18 @@ function useRegister(entry: Entry) {
   const key = useRef({}).current
   const label = entry.kind === 'item' ? entry.label : undefined
   const value = entry.kind === 'item' ? entry.value : undefined
+  const latest = useRef(entry)
+  latest.current = entry
+  // Registers once, in tree order; a changed label or value updates the row where it is
   useLayoutEffect(() => {
     if (!registering || !ctx) return
-    return ctx.register(key, entry)
+    return ctx.register(key, latest.current)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [registering, ctx?.register, key, entry.kind, value, label])
+  }, [registering, ctx?.register, key])
+  useLayoutEffect(() => {
+    if (registering && ctx) ctx.update(key, latest.current)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [registering, ctx?.update, key, entry.kind, value, label])
   return registering
 }
 
@@ -139,9 +148,17 @@ function SelectRoot({
       setEntries(Array.from(registry.current.values()))
     }
   }, [])
+  const update = useCallback((key: object, entry: Entry) => {
+    const prev = registry.current.get(key)
+    if (!prev || prev === entry) return
+    const same = prev.kind === entry.kind && (prev.kind !== 'item' || (entry.kind === 'item' && prev.value === entry.value && prev.label === entry.label))
+    if (same) return
+    registry.current.set(key, entry)
+    setEntries(Array.from(registry.current.values()))
+  }, [])
   const ctx = useMemo<SelectContextValue>(() => ({
-    ...overlay, size, value, setValue: (v: string) => setValue(v), disabled, entries, register, triggerPadX,
-  }), [overlay, size, value, setValue, disabled, entries, register])
+    ...overlay, size, value, setValue: (v: string) => setValue(v), disabled, entries, register, update, triggerPadX,
+  }), [overlay, size, value, setValue, disabled, entries, register, update])
   return <Select_.Provider value={ctx}>{children}</Select_.Provider>
 }
 SelectRoot.displayName = 'Select.Root'
@@ -276,6 +293,8 @@ function SelectContent({
           modal
           matchAnchorWidth
           placeOverride={placeOverride}
+          // A list taller than the screen opens scrolled to the selected item
+          scrollToY={list.padding + offsetBefore + selectedIndex * rowHeight(list, 'item') + rowHeight(list, 'item') / 2}
           side={side} sideOffset={sideOffset} align={align}
           {...props}
         >

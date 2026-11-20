@@ -5,6 +5,7 @@ import { act, fireEvent, screen } from '@testing-library/react-native'
 import { renderWithTheme } from './helpers/render'
 import { flat } from './helpers/queries'
 import { Popover } from '../components/overlays/Popover'
+import { Theme } from '../theme/Theme'
 
 /** A trigger that reports a fixed window rect, as a host component would. */
 function FakeAnchor({ onPress, ref }: { onPress?: (e: GestureResponderEvent) => void; ref?: React.Ref<unknown> }) {
@@ -52,6 +53,24 @@ describe('Popover', () => {
     fireEvent.press(screen.getByTestId('trigger'))
     layoutContent()
     expect(flat(screen.getByTestId('content'))).toMatchObject({ left: 40, top: 100 + 32 + 8, minWidth: 90 })
+  })
+
+  it("the screen reader's escape gesture closes it", () => {
+    const onOpenChange = jest.fn()
+    renderWithTheme(<Example defaultOpen onOpenChange={onOpenChange} />)
+    fireEvent(screen.getByTestId('content', { includeHiddenElements: true }), 'accessibilityEscape')
+    expect(onOpenChange).toHaveBeenLastCalledWith(false)
+  })
+
+  it('a new onOpenChange on every render keeps the open popover dismissable and in place', () => {
+    const calls: boolean[] = []
+    function Inline({ n }: { n: number }) {
+      return <Example open onOpenChange={(o) => calls.push(o && n > 0)} modal />
+    }
+    const { rerender } = renderWithTheme(<Inline n={1} />)
+    rerender(<Theme appearance="light"><Inline n={2} /></Theme>)
+    fireEvent.press(screen.getByTestId('content-backdrop', { includeHiddenElements: true }))
+    expect(calls).toEqual([false])
   })
 
   it('stays hidden until measured', () => {

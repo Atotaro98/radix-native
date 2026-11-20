@@ -291,7 +291,9 @@ function makeCell(kind: 'cell' | 'column' | 'row', name: string) {
         {/* The cell's natural (max-content) width, padding included */}
         <View
           onLayout={table.layout === 'auto' ? onLayout : undefined}
-          style={[padding, { flexDirection: 'row', maxWidth: '100%' }]}
+          // Only a cell that sets its own width wraps inside it; the others report their
+          // natural width even when it outgrows the column, so the column can widen
+          style={[padding, { flexDirection: 'row', maxWidth: width !== undefined || maxWidth !== undefined ? '100%' : undefined }]}
         >
           {renderInlineText(children, { textStyle: [text.style, { textAlign: justify === 'start' ? 'left' : justify === 'end' ? 'right' : 'center' }], textProps: text.textProps, provide: text.provide }, table.colors.text)}
         </View>

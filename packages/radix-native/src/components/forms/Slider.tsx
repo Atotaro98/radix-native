@@ -192,7 +192,8 @@ export function Slider({
       onStartShouldSetResponder={() => !disabled}
       onMoveShouldSetResponder={() => !disabled}
       onResponderTerminationRequest={() => false}
-      onResponderGrant={onGrant}
+      // Returning true keeps native parents (a ScrollView, a pager) from taking the drag
+      onResponderGrant={(e) => { onGrant(e); return true }}
       onResponderMove={onMove}
       onResponderRelease={onEnd}
       onResponderTerminate={onEnd}

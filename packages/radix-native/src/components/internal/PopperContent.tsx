@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useRef } from 'react'
 import { ScrollView, View } from 'react-native'
 import type { AccessibilityRole, DimensionValue, StyleProp, ViewStyle } from 'react-native'
 import { useMetrics } from '../../hooks/useMetrics'
@@ -40,9 +40,38 @@ export interface PopperContentProps extends Omit<AnchoredContentProps, 'children
   minHeight?: DimensionValue
   /** Default: the space left on the placed side. */
   maxHeight?: DimensionValue
+  /** A content y (px from the top of the scrolling content) to centre in view when the content scrolls: Select's selected item. */
+  scrollToY?: number
   /** The panel's style. */
   style?: StyleProp<ViewStyle>
   children?: React.ReactNode
+}
+
+/** The panel's scrolling area; mounted on every open, so `scrollToY` applies once per open. */
+function PanelScroll({ borderRadius, padding, scrollToY, children }: { borderRadius: number; padding: number; scrollToY?: number; children?: React.ReactNode }) {
+  const scroll = useRef<React.ComponentRef<typeof ScrollView>>(null)
+  const sizes = useRef<{ viewport?: number; content?: number; done: boolean }>({ done: false })
+  const sync = () => {
+    const { viewport, content, done } = sizes.current
+    if (done || scrollToY === undefined || viewport === undefined || content === undefined) return
+    const max = content - viewport
+    if (max <= 0) return
+    sizes.current.done = true
+    scroll.current?.scrollTo({ y: Math.min(Math.max(scrollToY - viewport / 2, 0), max), animated: false })
+  }
+  return (
+    // flexGrow 0: a ScrollView grows to its parent's max-height otherwise, inflating the measured size
+    <ScrollView
+      ref={scroll}
+      bounces={false}
+      style={{ borderRadius, flexGrow: 0 }}
+      contentContainerStyle={{ padding }}
+      onLayout={(e) => { sizes.current.viewport = e.nativeEvent.layout.height; sync() }}
+      onContentSizeChange={(_w, h) => { sizes.current.content = h; sync() }}
+    >
+      {children}
+    </ScrollView>
+  )
 }
 
 /**
@@ -54,7 +83,7 @@ export interface PopperContentProps extends Omit<AnchoredContentProps, 'children
  */
 export function PopperContent({
   padding, borderRadius, accessibilityRole, accessibilityLabel, inset = false,
-  width, minWidth, maxWidth, height, minHeight, maxHeight, style, children, ...anchored
+  width, minWidth, maxWidth, height, minHeight, maxHeight, scrollToY, style, children, ...anchored
 }: PopperContentProps) {
   const colors = useVariantColors('popperPanel', {})
   const panel = paintSurface(colors, borderRadius)
@@ -77,10 +106,9 @@ export function PopperContent({
             style,
           ]}
         >
-          {/* flexGrow 0: a ScrollView grows to its parent's max-height otherwise, inflating the measured size */}
-          <ScrollView bounces={false} style={{ borderRadius, flexGrow: 0 }} contentContainerStyle={{ padding }}>
+          <PanelScroll borderRadius={borderRadius} padding={padding} scrollToY={scrollToY}>
             {inset ? <InsetContext.Provider value={insetValues}>{children}</InsetContext.Provider> : children}
-          </ScrollView>
+          </PanelScroll>
           {panel.over}
         </View>
       )}
