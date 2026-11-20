@@ -15,7 +15,7 @@ These are intentional changes to adapt the Radix API to React Native.
 | `asChild` + Slot composition | Not yet supported | RN has no DOM Slot semantics |
 | Responsive props (`{ initial: '1', md: '3' }`) | Fixed values only | RN has no media queries |
 | `<Avatar.Root>` + `<Avatar.Image>` + `<Avatar.Fallback>` | `<Avatar src={} fallback={} />` | Single-component API for RN |
-| `<TextField.Root>` + `<TextField.Slot>` | `<TextField />` | No slot system |
+| `<TextField.Root>` + `<TextField.Slot>` | `<TextField>` (also `TextField.Root`) + `<TextField.Slot>` | Same parts; icons in a slot without a `color` are tinted (no `currentColor`), and a press on a slot focuses the input |
 | `extractProps(props, marginPropDefs)` | `useMargins({ m, mx, my, ... })` hook | JS-based prop extraction |
 | `extractProps(props, layoutPropDefs, marginPropDefs)` (Box / Flex / Grid) | internal `useLayoutStyle(props)` → `{ style, rest }` | Space tokens only for padding; no `inset` / grid-child props |
 | `data-accent-color`, `data-radius` attributes | Props resolved via hooks | No HTML data attributes in RN |
@@ -133,7 +133,6 @@ These are the EXACT token mappings that intentionally differ between Radix web a
 | Progress shine overlay | Indeterminate gradient sweep effect | Not implemented (requires LinearGradient) |
 | Spinner `currentColor` | Inherits CSS text color | Uses `gray-a11`, or the RN-only `color` prop (no CSS cascade in RN) |
 | `asChild` / Slot composition | Supported | Planned |
-| `TextField.Slot` | Icons / buttons inside the field | Not implemented |
 | Haptic feedback | N/A (web) | Planned |
 | Responsive props | `{ initial, sm, md, lg, xl }` | Not planned (use `useWindowDimensions`) |
 

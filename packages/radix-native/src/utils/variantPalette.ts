@@ -574,6 +574,15 @@ function textInput(s: WithVariant<TextInputVariant> & Disabled & Focused, softPl
 const textField = (s: WithVariant<TextInputVariant> & Disabled & Focused) => textInput(s, 0.6)
 const textArea = (s: WithVariant<TextInputVariant> & Disabled & Focused) => textInput(s, 0.65)
 
+/**
+ * .rt-TextFieldSlot: gray-a11 (soft: accent-12, the field's color); a slot with
+ * its own color (`[data-accent-color]`, `own`) is accent-a11 of that color.
+ */
+function textFieldSlot(s: WithVariant<TextInputVariant> & { own?: boolean }): { text: Paint } {
+  if (s.own) return { text: c('a11') }
+  return { text: s.variant === 'soft' ? c(12) : g('a11') }
+}
+
 // ─── Family: text (Text, Heading, Link, Blockquote) — text.css, link.css… ─────
 
 export interface TextPaints {
@@ -944,6 +953,7 @@ export const VARIANT_RECIPES = {
   radioCard,
   textField,
   textArea,
+  textFieldSlot,
   text,
   body,
   link,

@@ -152,7 +152,7 @@ export default function App() {
 
 | Component   | Description                                               |
 | ----------- | --------------------------------------------------------- |
-| `TextField` | Single-line text input with 3 variants and disabled state |
+| `TextField` | Single-line text input with 3 variants and `TextField.Slot` icons  |
 | `TextArea`  | Multi-line text input                                     |
 | `Slider`    | Value or range picker with drag, step and vertical mode   |
 | `Select`    | Pick one value from a list (item-aligned or popper)       |

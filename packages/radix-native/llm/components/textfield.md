@@ -38,6 +38,30 @@ Extends `TextInputProps` (from React Native) minus `style` and `multiline` (use 
 <TextField variant="classic" color="blue" placeholder="Classic blue" />
 ```
 
+## Slots
+
+`TextField.Slot` puts icons or buttons inside the field, like Radix. The first slot goes on the left and a second one on the right; `side="left" | "right"` sets it explicitly. `TextField.Root` is an alias of `TextField`.
+
+```tsx
+<TextField placeholder="Search the docs…">
+  <TextField.Slot>
+    <MagnifyingGlassIcon size={16} />
+  </TextField.Slot>
+  <TextField.Slot>
+    <IconButton size={1} variant="ghost" accessibilityLabel="More"><DotsIcon size={14} /></IconButton>
+  </TextField.Slot>
+</TextField>
+```
+
+| Slot prop | Type | Default | Description |
+|-----------|------|---------|-------------|
+| side | `'left' \| 'right'` | first left, next right | Side of the input |
+| color | `AccentColor` | — | Tints the slot's icons `accent-a11` (default `gray-a11`; soft: the field's `accent-12`) |
+| gap | `SpaceToken` | `2` (size 3: `3`) | Space between the slot's children |
+| px, pl, pr | `SpaceToken` | `1` / `2` / `3` by size | Slot padding |
+
+Icons without a `color` prop get the slot's color (RN has no `currentColor`); radix-native components inside a slot keep their own. Pressing a slot outside a control focuses the input.
+
 ## Focus behavior
 
 Border color changes to `accent-8` on focus, plus a 1px inner ring (1px border + 1px ring = Radix's 2px outline). The `soft` variant uses a transparent border when unfocused (always reserves 1px space to prevent layout shift). `disabled` is exposed on the `TextInput` itself (`editable={false}` + `accessibilityState.disabled`); disabling a focused field drops the focus ring. `readOnly` / `editable={false}` look disabled, as Radix's `:read-only` (gray text, gray-a2 tint, gray-8 focus ring), but are not reported as disabled.
