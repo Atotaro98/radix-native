@@ -9,33 +9,42 @@ import { AspectRatioSection } from './playground/sections/AspectRatioSection'
 import { AvatarSection } from './playground/sections/AvatarSection'
 import { BadgeSection } from './playground/sections/BadgeSection'
 import { BlockquoteSection } from './playground/sections/BlockquoteSection'
+import { BoxSection } from './playground/sections/BoxSection'
 import { ButtonSection } from './playground/sections/ButtonSection'
 import { CalloutSection } from './playground/sections/CalloutSection'
 import { CardSection } from './playground/sections/CardSection'
 import { CheckboxSection } from './playground/sections/CheckboxSection'
-import { CheckboxGroupSection } from './playground/sections/CheckboxGroupSection'
 import { CheckboxCardsSection } from './playground/sections/CheckboxCardsSection'
+import { CheckboxGroupSection } from './playground/sections/CheckboxGroupSection'
 import { CodeSection } from './playground/sections/CodeSection'
+import { ContainerSection } from './playground/sections/ContainerSection'
+import { ContextMenuSection } from './playground/sections/ContextMenuSection'
 import { DataListSection } from './playground/sections/DataListSection'
 import { DialogSection } from './playground/sections/DialogSection'
 import { DropdownMenuSection } from './playground/sections/DropdownMenuSection'
 import { EmSection } from './playground/sections/EmSection'
-import { ContainerSection } from './playground/sections/ContainerSection'
+import { FlexSection } from './playground/sections/FlexSection'
 import { GridSection } from './playground/sections/GridSection'
-import { SegmentedControlSection } from './playground/sections/SegmentedControlSection'
-import { ScrollAreaSection } from './playground/sections/ScrollAreaSection'
-import { SectionSection } from './playground/sections/SectionSection'
-import { TooltipSection } from './playground/sections/TooltipSection'
-import { VisuallyHiddenSection } from './playground/sections/VisuallyHiddenSection'
-import { InsetSection } from './playground/sections/InsetSection'
 import { HeadingSection } from './playground/sections/HeadingSection'
 import { HoverCardSection } from './playground/sections/HoverCardSection'
 import { IconButtonSection } from './playground/sections/IconButtonSection'
+import { InsetSection } from './playground/sections/InsetSection'
 import { KbdSection } from './playground/sections/KbdSection'
 import { LinkSection } from './playground/sections/LinkSection'
+import { PopoverSection } from './playground/sections/PopoverSection'
+import { ProgressSection } from './playground/sections/ProgressSection'
 import { QuoteSection } from './playground/sections/QuoteSection'
+import { RadioSection } from './playground/sections/RadioSection'
+import { RadioCardsSection } from './playground/sections/RadioCardsSection'
+import { RadioGroupSection } from './playground/sections/RadioGroupSection'
+import { ScrollAreaSection } from './playground/sections/ScrollAreaSection'
+import { SectionSection } from './playground/sections/SectionSection'
+import { SegmentedControlSection } from './playground/sections/SegmentedControlSection'
 import { SelectSection } from './playground/sections/SelectSection'
 import { SeparatorSection } from './playground/sections/SeparatorSection'
+import { SkeletonSection } from './playground/sections/SkeletonSection'
+import { SliderSection } from './playground/sections/SliderSection'
+import { SpinnerSection } from './playground/sections/SpinnerSection'
 import { StrongSection } from './playground/sections/StrongSection'
 import { SwitchSection } from './playground/sections/SwitchSection'
 import { TabNavSection } from './playground/sections/TabNavSection'
@@ -44,14 +53,8 @@ import { TabsSection } from './playground/sections/TabsSection'
 import { TextSection } from './playground/sections/TextSection'
 import { TextAreaSection } from './playground/sections/TextAreaSection'
 import { TextFieldSection } from './playground/sections/TextFieldSection'
-import { SkeletonSection } from './playground/sections/SkeletonSection'
-import { SliderSection } from './playground/sections/SliderSection'
-import { SpinnerSection } from './playground/sections/SpinnerSection'
-import { PopoverSection } from './playground/sections/PopoverSection'
-import { ProgressSection } from './playground/sections/ProgressSection'
-import { RadioSection } from './playground/sections/RadioSection'
-import { RadioGroupSection } from './playground/sections/RadioGroupSection'
-import { RadioCardsSection } from './playground/sections/RadioCardsSection'
+import { TooltipSection } from './playground/sections/TooltipSection'
+import { VisuallyHiddenSection } from './playground/sections/VisuallyHiddenSection'
 
 interface PlaygroundProps {
   fontIndex: number
@@ -114,6 +117,7 @@ export function Playground({ fontIndex, onFontChange }: PlaygroundProps) {
         <AvatarSection />
         <BadgeSection />
         <BlockquoteSection />
+        <BoxSection />
         <ButtonSection />
         <CalloutSection />
         <CardSection />
@@ -122,10 +126,12 @@ export function Playground({ fontIndex, onFontChange }: PlaygroundProps) {
         <CheckboxGroupSection />
         <CodeSection />
         <ContainerSection />
+        <ContextMenuSection />
         <DataListSection />
         <DialogSection />
         <DropdownMenuSection />
         <EmSection />
+        <FlexSection />
         <GridSection />
         <HeadingSection />
         <HoverCardSection />

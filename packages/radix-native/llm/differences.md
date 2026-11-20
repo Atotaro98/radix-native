@@ -136,13 +136,6 @@ These are the EXACT token mappings that intentionally differ between Radix web a
 | `TextField.Slot` | Icons / buttons inside the field | Not implemented |
 | Haptic feedback | N/A (web) | Planned |
 | Responsive props | `{ initial, sm, md, lg, xl }` | Not planned (use `useWindowDimensions`) |
-| `Container` component | Centering container | Not implemented |
-| `Section` component | Semantic sections | Not implemented |
-| Dialog, Popover, Tooltip, etc. | Overlay components | Not implemented |
-| Select, Tabs, SegmentedControl | Selection components | Not implemented |
-| Slider | Range input | Not implemented |
-| Table, DataList | Data display | Not implemented |
-| ScrollArea | Custom scroll container | Not implemented |
 
 ## Accessibility additions (RN-only)
 
