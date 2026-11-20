@@ -1,5 +1,6 @@
 import { createElement, useCallback, useEffect, useMemo, type ReactNode } from 'react'
 import { useThemeContext } from './useThemeContext'
+import { useVariantColors } from './useVariantColors'
 import { TextContext, useParentText } from '../components/typography/TextContext'
 import { resolveTextStyle, type ResolvedTextStyle, type TextStyleRequest } from '../utils/textStyle'
 import { isDev } from '../utils/env'
@@ -19,13 +20,6 @@ export interface TextStyleResult extends ResolvedTextStyle {
   isNested: boolean
   /** Wraps the rendered text so nested typography inherits from it (memoized `TextContext`). */
   provide: (children: ReactNode) => ReactNode
-  /** A length of `k` em (Radix `Nem`) on this text's own size, rounded to whole pixels. */
-  em: (k: number) => number
-  /**
-   * A radius relative to this text's size, Radix `calc((offsetPx + k·em) * var(--radius-factor))`
-   * with the Theme's radius factor. Not rounded, like every other radius.
-   */
-  radius: (k: number, offsetPx?: number) => number
 }
 
 const warnedMissingFaces = new Set<string>()
@@ -34,7 +28,8 @@ const warnedMissingFaces = new Set<string>()
  * Text style for one piece of text — the single entry point every
  * text-rendering module uses. Reads the theme and `TextContext`, delegates to
  * `resolveTextStyle`, and warns once (dev only) when a requested weight has no
- * configured face.
+ * configured face. Color: `color` when set; else nested text inherits and
+ * standalone text takes `standaloneColor`, by default Radix body text (gray-12).
  *
  * Internal: not exported from the package.
  */
@@ -44,10 +39,11 @@ export function useTextStyle({
   size,
   defaultSize,
   sizeAdjust,
+  letterSpacingEm,
   weight,
   lineHeight,
   color,
-  standaloneColor,
+  standaloneColor: standaloneColorProp,
   compact,
   maxFontSizeMultiplier,
   truncate,
@@ -55,6 +51,9 @@ export function useTextStyle({
   margins,
 }: UseTextStyleOptions): TextStyleResult {
   const { scaling, fonts, radius: radiusToken, maxFontSizeMultiplier: globalMax } = useThemeContext()
+  const body = useVariantColors('body', {}).text
+  const standaloneColor = standaloneColorProp ?? body
+  const radiusFactor = RADIUS_FACTOR[radiusToken]
   const contextParent = useParentText()
   const parent = inline ? contextParent : null
   const parentFontSize = parent?.fontSize
@@ -63,11 +62,11 @@ export function useTextStyle({
   const resolved = useMemo(
     () =>
       resolveTextStyle(
-        { scaling, fonts, maxFontSizeMultiplier: globalMax },
-        { role, size, defaultSize, sizeAdjust, weight, lineHeight, color, standaloneColor, compact, maxFontSizeMultiplier, truncate, wrap, margins },
+        { scaling, fonts, maxFontSizeMultiplier: globalMax, radiusFactor },
+        { role, size, defaultSize, sizeAdjust, letterSpacingEm, weight, lineHeight, color, standaloneColor, compact, maxFontSizeMultiplier, truncate, wrap, margins },
         parentFontSize === undefined ? null : { fontSize: parentFontSize, role: parentRole },
       ),
-    [scaling, fonts, globalMax, role, size, defaultSize, sizeAdjust, weight, lineHeight, color, standaloneColor, compact,
+    [scaling, fonts, globalMax, radiusFactor, role, size, defaultSize, sizeAdjust, letterSpacingEm, weight, lineHeight, color, standaloneColor, compact,
       maxFontSizeMultiplier, truncate, wrap, margins, parentFontSize, parentRole],
   )
 
@@ -94,13 +93,5 @@ export function useTextStyle({
     [contextValue],
   )
 
-  const fontSize = resolved.contextFontSize
-  const radiusFactor = RADIUS_FACTOR[radiusToken]
-  const em = useCallback((k: number) => Math.round(k * fontSize), [fontSize])
-  const radius = useCallback(
-    (k: number, offsetPx = 0) => (offsetPx + k * fontSize) * radiusFactor,
-    [fontSize, radiusFactor],
-  )
-
-  return { ...resolved, isNested: parentFontSize !== undefined, provide, em, radius }
+  return { ...resolved, isNested: parentFontSize !== undefined, provide }
 }

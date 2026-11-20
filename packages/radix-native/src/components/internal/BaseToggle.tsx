@@ -1,10 +1,8 @@
 import React, { useCallback } from 'react'
 import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native'
 import { useControllableState } from '../../hooks/useControllableState'
-import type { AccentColor } from '../../tokens/colors/types'
 import type { NativePressableProps } from '../../types/nativeProps'
-import { ToggleSurface, useToggleGeometry, type CheckedState, type ToggleKind, type ToggleRole } from './ToggleSurface'
-import { useSkeletonRadius } from '../feedback/SkeletonContext'
+import { ToggleSurface, type CheckedState, type ToggleKind, type ToggleRole } from './ToggleSurface'
 
 export type { CheckedState, ToggleRole }
 
@@ -33,8 +31,6 @@ type RoleProps =
 export type BaseToggleProps<P extends { checked: CheckedState }> =
   RoleProps & Omit<NativePressableProps, 'children' | 'disabled'> & {
     disabled: boolean
-    /** Accent color of the focus ring. */
-    color?: AccentColor
     /** The Toggle's Indicator and its geometry. */
     kind: ToggleKind<P>
     /** Indicator props; the checked state is filled in here. */
@@ -47,7 +43,7 @@ export type BaseToggleProps<P extends { checked: CheckedState }> =
  * Internal: a standalone Toggle (Checkbox, Radio, Switch). Owns the checked
  * state (controlled or not) and what a press does for the role; everything
  * else — role, announced state, disabled gate, touch target, press scale,
- * focus ring — is the Toggle surface.
+ * focus ring, Skeleton radius — is the Toggle surface.
  */
 export function BaseToggle<P extends { checked: CheckedState }>(props: BaseToggleProps<P>) {
   const {
@@ -56,7 +52,6 @@ export function BaseToggle<P extends { checked: CheckedState }>(props: BaseToggl
     defaultChecked,
     onCheckedChange,
     disabled,
-    color,
     kind,
     indicator,
     margins,
@@ -79,9 +74,6 @@ export function BaseToggle<P extends { checked: CheckedState }>(props: BaseToggl
   // A radio or switch never reaches 'indeterminate' (NEXT only yields booleans for them).
   const indicatorProps = { ...indicator, checked } as unknown as P
 
-  // switch.css / base-checkbox.css / base-radio.css: --skeleton-radius-override is the Indicator's radius
-  useSkeletonRadius(useToggleGeometry(kind.geometry, indicatorProps).borderRadius)
-
   return (
     <ToggleSurface
       role={role}
@@ -89,7 +81,6 @@ export function BaseToggle<P extends { checked: CheckedState }>(props: BaseToggl
       checked={checked}
       disabled={disabled}
       onPress={handlePress}
-      color={color}
       indicator={{ kind, props: indicatorProps }}
       style={[margins, style]}
     />

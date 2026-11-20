@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react'
+import { physical } from '../../utils/rtl'
 import { Text as RNText, View } from 'react-native'
 import type { DimensionValue, StyleProp, ViewStyle } from 'react-native'
 import { useMetrics } from '../../hooks/useMetrics'
@@ -121,12 +122,12 @@ function Arrow({ side, at, color }: { side: 'top' | 'right' | 'bottom' | 'left';
   const base: ViewStyle = { position: 'absolute', width: 0, height: 0, borderStyle: 'solid', borderColor: 'transparent' }
   switch (side) {
     case 'top': // content above the anchor: the arrow hangs below, pointing down
-      return <View style={[base, { bottom: -ARROW_H, left: at - half, borderTopWidth: ARROW_H, borderLeftWidth: half, borderRightWidth: half, borderTopColor: color }]} />
+      return <View style={[base, physical({ bottom: -ARROW_H, left: at - half, borderTopWidth: ARROW_H, borderLeftWidth: half, borderRightWidth: half, borderTopColor: color })]} />
     case 'bottom':
-      return <View style={[base, { top: -ARROW_H, left: at - half, borderBottomWidth: ARROW_H, borderLeftWidth: half, borderRightWidth: half, borderBottomColor: color }]} />
+      return <View style={[base, physical({ top: -ARROW_H, left: at - half, borderBottomWidth: ARROW_H, borderLeftWidth: half, borderRightWidth: half, borderBottomColor: color })]} />
     case 'left':
-      return <View style={[base, { right: -ARROW_H, top: at - half, borderLeftWidth: ARROW_H, borderTopWidth: half, borderBottomWidth: half, borderLeftColor: color }]} />
+      return <View style={[base, physical({ right: -ARROW_H, top: at - half, borderLeftWidth: ARROW_H, borderTopWidth: half, borderBottomWidth: half, borderLeftColor: color })]} />
     case 'right':
-      return <View style={[base, { left: -ARROW_H, top: at - half, borderRightWidth: ARROW_H, borderTopWidth: half, borderBottomWidth: half, borderRightColor: color }]} />
+      return <View style={[base, physical({ left: -ARROW_H, top: at - half, borderRightWidth: ARROW_H, borderTopWidth: half, borderBottomWidth: half, borderRightColor: color })]} />
   }
 }

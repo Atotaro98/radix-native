@@ -21,11 +21,15 @@ export interface ItemAlignedInput {
   selectedIndex: number
   /** Labels / separators before the selected item, in px. */
   offsetBefore: number
+  /** Right-to-left: the texts line up on their right edges. */
+  rtl?: boolean
 }
 
 export function placeItemAligned(i: ItemAlignedInput): { x: number; y: number } {
   // Left edges: the item text lines up with the trigger's value text
-  const x = i.trigger.x + i.triggerPaddingX - i.contentPadding - i.itemPaddingLeft
+  const x = i.rtl
+    ? i.trigger.x + i.trigger.width - i.triggerPaddingX + i.contentPadding + i.itemPaddingLeft - i.content.width
+    : i.trigger.x + i.triggerPaddingX - i.contentPadding - i.itemPaddingLeft
   // Vertical centres: the selected item over the trigger
   const itemCenter = i.contentPadding + i.offsetBefore + i.selectedIndex * i.itemHeight + i.itemHeight / 2
   const y = i.trigger.y + i.trigger.height / 2 - itemCenter

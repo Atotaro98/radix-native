@@ -1,15 +1,13 @@
 import React from 'react'
-import { StyleSheet, View } from 'react-native'
-import type { StyleProp, ViewStyle } from 'react-native'
+import { View } from 'react-native'
 import { screen } from '@testing-library/react-native'
 import { renderWithTheme } from './helpers/render'
+import { flat } from './helpers/queries'
 import { Container } from '../components/layout/Container'
 import { Section } from '../components/layout/Section'
 import { AspectRatio } from '../components/layout/AspectRatio'
 
 type Node = { props: { style?: unknown }; children: unknown[] }
-const flat = (node: { props: { style?: unknown } }): ViewStyle =>
-  StyleSheet.flatten(node.props.style as StyleProp<ViewStyle>) ?? {}
 const inner = (node: Node) => node.children[0] as Node
 
 describe('Container (container.css)', () => {

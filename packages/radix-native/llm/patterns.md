@@ -49,8 +49,8 @@ Components never pick color tokens themselves. Each one asks its **Variant recip
 (`src/utils/variantPalette.ts`) for the colors of its parts:
 
 ```tsx
-const colors = useVariantColors('button', { variant, color, highContrast, disabled })
-// → { bg, text, border, pressedBg, pressedOpacity }
+const colors = useVariantColors('button', { variant, color, highContrast, disabled, pressed })
+// → { bg, text, border?, opacity?, shadow?, bevel? } — already chosen for the state (pressed included)
 ```
 
 Recipes are grouped by **Variant family** (buttons, chips, selection controls, tracks,

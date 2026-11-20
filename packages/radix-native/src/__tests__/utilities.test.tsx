@@ -1,8 +1,8 @@
 import React from 'react'
-import { StyleSheet, Text, View } from 'react-native'
-import type { StyleProp, ViewStyle } from 'react-native'
+import { Text, View } from 'react-native'
 import { screen } from '@testing-library/react-native'
 import { renderWithTheme } from './helpers/render'
+import { flat } from './helpers/queries'
 import { VisuallyHidden } from '../components/utilities/VisuallyHidden'
 import { AccessibleIcon } from '../components/utilities/AccessibleIcon'
 import { IconButton } from '../components/actions/IconButton'
@@ -11,9 +11,6 @@ import { Card } from '../components/layout/Card'
 import { Tabs } from '../components/navigation/Tabs'
 import { SegmentedControl } from '../components/actions/SegmentedControl'
 import { CheckboxGroup } from '../components/actions/CheckboxGroup'
-
-const flat = (node: { props: { style?: unknown } }): ViewStyle =>
-  StyleSheet.flatten(node.props.style as StyleProp<ViewStyle>) ?? {}
 
 function Icon(props: { color?: string; testID?: string }) {
   return <View testID={props.testID ?? 'icon'} style={{ width: 15, height: 15, backgroundColor: props.color }} />

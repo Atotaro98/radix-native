@@ -7,7 +7,7 @@ React Native components that match the [Radix Themes](https://www.radix-ui.com/t
 ## Features
 
 - **Identical API** to `@radix-ui/themes` — same component names, same props, same variants
-- **52 components** — layout, typography, actions, forms, display, feedback
+- **52 components** — layout, typography, display, actions, navigation, overlays, utilities, feedback, forms
 - **Full theme system** — 26 accent colors, 6 gray scales, radius, scaling, dark mode, nested themes
 - **31 color scales** from `@radix-ui/colors` with light/dark modes and alpha variants
 - **Minimal dependencies** — only `react`, `react-native`, and `react-native-reanimated` as peer deps
@@ -152,7 +152,7 @@ export default function App() {
 
 | Component   | Description                                               |
 | ----------- | --------------------------------------------------------- |
-| `TextField` | Single-line text input with 3 variants and disabled state |
+| `TextField` | Single-line text input with 3 variants and `TextField.Slot` icons  |
 | `TextArea`  | Multi-line text input                                     |
 | `Slider`    | Value or range picker with drag, step and vertical mode   |
 | `Select`    | Pick one value from a list (item-aligned or popper)       |
@@ -316,9 +316,9 @@ radix-native/
 │       └── src/
 │           ├── tokens/        # colors (31 scales), spacing, typography, radius
 │           ├── theme/         # Theme, ThemeRoot, ThemeImpl, createTheme
-│           ├── hooks/         # useThemeContext, useColor, useMargins, useControllableState, useInteraction
+│           ├── hooks/         # useThemeContext, useColor, useMargins, useControllableState
 │           ├── utils/         # resolveColor, metrics, textStyle, hitSlop, alpha, classicEffect
-│           ├── components/    # layout, typography, display, actions, feedback, forms (+ internal)
+│           ├── components/    # layout, typography, display, actions, navigation, overlays, utilities, feedback, forms (+ internal)
 │           └── __tests__/     # Jest + Testing Library
 ```
 

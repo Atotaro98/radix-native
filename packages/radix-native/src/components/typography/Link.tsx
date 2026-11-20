@@ -125,7 +125,8 @@ export function Link({
       accessibilityRole="link"
       {...text.textProps}
       {...rest}
-      onPress={handlePress}
+      // Without a destination the text takes no touch: a pressable parent (Card) gets it
+      onPress={onPress || href ? handlePress : undefined}
       style={[linkStyle, style]}
     >
       {children}

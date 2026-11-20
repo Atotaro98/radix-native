@@ -190,7 +190,8 @@ function DataListLabel({ width, minWidth, maxWidth, color, highContrast, style, 
       {...rest}
     >
       {/* Measures the label's own width; the outer View takes the column's (widest label) */}
-      <View style={{ flexDirection: 'row', alignSelf: 'flex-start', maxWidth: '100%' }} onLayout={onLayout}>
+      {/* Capped only by the label's own width: a label that grows past the column widens it */}
+      <View style={{ flexDirection: 'row', alignSelf: 'flex-start', maxWidth: width !== undefined || maxWidth !== undefined ? '100%' : undefined }} onLayout={onLayout}>
         {content}
       </View>
     </View>
@@ -201,7 +202,7 @@ DataListLabel.displayName = 'DataList.Label'
 function DataListValue({ style, children, ...rest }: DataListValueProps) {
   const root = useRoot('Value')
   const { align, first, last } = useContext(ItemContext)
-  const body = useVariantColors('text', {})
+  const body = useVariantColors('body', {})
   const horizontal = root.orientation === 'horizontal'
   const [start, end, firstStart, lastEnd] = VALUE_TRIM[align]
   const valueStyle: ViewStyle = {

@@ -1,17 +1,14 @@
 import React from 'react'
-import { StyleSheet, View } from 'react-native'
-import type { StyleProp, ViewStyle } from 'react-native'
+import { View } from 'react-native'
 import { screen } from '@testing-library/react-native'
 import { renderWithTheme } from './helpers/render'
+import { flat, cardRings } from './helpers/queries'
 import { Card } from '../components/layout/Card'
 import { RadioCards } from '../components/actions/RadioCards'
 import { Inset, resolveInsetStyle } from '../components/layout/Inset'
 import { NO_INSET, type InsetValues } from '../components/layout/InsetContext'
 
 type Node = { type: unknown; props: { style?: unknown } }
-const flat = (node: { props: { style?: unknown } }): ViewStyle =>
-  StyleSheet.flatten(node.props.style as StyleProp<ViewStyle>) ?? {}
-
 // A size-2 surface Card at 100%: --card-padding space-4 (16), border 1px, radius-4 (8).
 const CARD: InsetValues = { padding: { top: 15, right: 15, bottom: 15, left: 15 }, borderWidth: 1, borderRadius: 8 }
 
@@ -92,15 +89,16 @@ describe('Card border', () => {
     const card = screen.getByTestId('c')
     expect(flat(card).borderWidth).toBeUndefined()
     expect(flat(card).padding).toBe(16)
+    expect(cardRings(card)).toEqual([{ color: expect.any(String), width: 1 }])
+    // CardRing draws over the card's edge, so it never takes layout space
     const ring = card.findAll((n: Node) => n !== card && typeof n.type === 'string' && flat(n).borderWidth === 1)
-    expect(ring).toHaveLength(1)
     expect(flat(ring[0])).toMatchObject({ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 8 })
   })
 
   it('ghost has no ring and pulls itself out by its padding (.rt-Card:where(.rt-variant-ghost))', () => {
     renderWithTheme(<Card size={1} variant="ghost" mt={2} testID="c"><View /></Card>)
     const card = screen.getByTestId('c')
-    expect(card.findAll((n: Node) => typeof n.type === 'string' && flat(n).borderWidth === 1)).toHaveLength(0)
+    expect(cardRings(card)).toHaveLength(0)
     expect(flat(card)).toMatchObject({ marginTop: 8 - 12, marginLeft: -12, marginRight: -12, marginBottom: -12 })
   })
 })

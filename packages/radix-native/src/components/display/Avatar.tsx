@@ -11,17 +11,18 @@ import type { FontSizeToken } from '../../tokens/typography'
 import type { MarginProps } from '../../types/marginProps'
 import type { NativeViewProps } from '../../types/nativeProps'
 import { useSkeletonRadius } from '../feedback/SkeletonContext'
+import type { AvatarVariant } from '../../utils/variantPalette'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type AvatarSize = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
-export type AvatarVariant = 'solid' | 'soft'
+export type { AvatarVariant }
 
 type ImageStatus = 'idle' | 'loaded' | 'error'
 
 export interface AvatarProps extends NativeViewProps, MarginProps {
   /** Image source (URI string or require()). */
-  src?: string | number | { uri: string }
+  src?: string | number | { uri?: string | null }
   /** Fallback content when image is unavailable. Usually 1–2 characters. */
   fallback: React.ReactNode
   /** Avatar size (1–9). Default: 3. */
@@ -100,10 +101,11 @@ export function Avatar({
 
   // ─── Image source ───────────────────────────────────────────────────────
   const imageSource = useMemo((): ImageProps['source'] | undefined => {
-    if (!src) return undefined
+    // An empty or missing uri is no image: iOS reports no error for it
+    if (!src || !srcKey) return undefined
     if (typeof src === 'string') return { uri: src }
-    return src
-  }, [src])
+    return typeof src === 'number' ? src : { uri: src.uri ?? undefined }
+  }, [src, srcKey])
 
   // ─── Callbacks ──────────────────────────────────────────────────────────
   const handleLoad = useCallback(() => setStatus('loaded'), [])
@@ -141,7 +143,7 @@ export function Avatar({
   const textStyle = useMemo<TextStyle>(() => ({ ...text.style, textTransform: 'uppercase' }), [text.style])
 
   // ─── Derived state ──────────────────────────────────────────────────────
-  const showFallback = !src || status === 'error'
+  const showFallback = !imageSource || status === 'error'
 
   return (
     <View style={[containerStyle, style]} accessibilityRole="image" {...rest}>

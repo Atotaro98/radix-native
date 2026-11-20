@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Dimensions, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native'
+import { isRTL, physical } from '../../utils/rtl'
+import { Dimensions, Keyboard, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native'
 import type { LayoutChangeEvent, StyleProp, ViewStyle } from 'react-native'
 import Animated, { Easing, runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated'
 import { useThemeContext } from '../../hooks/useThemeContext'
@@ -87,18 +88,35 @@ function Placed({
     if (isRect(a)) setAnchorRect(a)
     else a.measureInWindow((x, y, width, height) => setAnchorRect({ x, y, width, height }))
   }, [anchor])
+  // The host's own window position: the content is drawn inside it (a root Theme under a header or a safe-area view)
+  const [origin, setOrigin] = useState({ x: 0, y: 0 })
+  // The keyboard's top edge in the window while it is up: the content stays above it
+  const [keyboardTop, setKeyboardTop] = useState<number | null>(null)
   useEffect(() => {
-    measure()
-    const sub = Dimensions.addEventListener('change', measure)
-    return () => sub.remove()
-  }, [measure])
+    const measureAll = () => {
+      measure()
+      host?.measureOrigin((x, y) => setOrigin((prev) => (prev.x === x && prev.y === y ? prev : { x, y })))
+    }
+    measureAll()
+    // After the frame: the anchor has its new layout by then (rotation, a view moved by the keyboard)
+    const later = () => requestAnimationFrame(measureAll)
+    const subs = [
+      Dimensions.addEventListener('change', later),
+      Keyboard.addListener('keyboardDidShow', (e) => { setKeyboardTop(e.endCoordinates.screenY); later() }),
+      Keyboard.addListener('keyboardDidHide', () => { setKeyboardTop(null); later() }),
+    ]
+    return () => subs.forEach((s) => s.remove())
+  }, [measure, host])
 
-  // Window minus safe area; the content stays `collisionPadding` inside it
-  const boundary = useMemo<Rect>(() => ({
-    x: insets.left, y: insets.top,
-    width: window.width - insets.left - insets.right,
-    height: window.height - insets.top - insets.bottom,
-  }), [insets, window.width, window.height])
+  // Window minus safe area (and the keyboard); the content stays `collisionPadding` inside it
+  const boundary = useMemo<Rect>(() => {
+    const bottom = Math.min(window.height - insets.bottom, keyboardTop ?? Infinity)
+    return {
+      x: insets.left, y: insets.top,
+      width: window.width - insets.left - insets.right,
+      height: Math.max(0, bottom - insets.top),
+    }
+  }, [insets, window.width, window.height, keyboardTop])
 
   const placement = useMemo<Placement | null>(() => {
     if (!anchorRect || !size) return null
@@ -112,10 +130,15 @@ function Placed({
       const { x, y } = placeOverride(anchorRect, size, inner)
       return { x, y, side: 'bottom', align: 'start', availableWidth: inner.width, availableHeight: inner.height, originX: size.width / 2, originY: size.height / 2 }
     }
-    return place(anchorRect, size, { side, align, sideOffset, alignOffset, avoidCollisions, collisionPadding, sticky, boundary })
+    // Radix `dir`: above / below the anchor, `start` is the right edge in RTL (left / right sides stay physical)
+    const vertical = side === 'top' || side === 'bottom'
+    const dirAlign = isRTL() && vertical && align !== 'center' ? (align === 'start' ? 'end' : 'start') : align
+    return place(anchorRect, size, { side, align: dirAlign, sideOffset, alignOffset, avoidCollisions, collisionPadding, sticky, boundary })
   }, [anchorRect, size, side, align, sideOffset, alignOffset, avoidCollisions, collisionPadding, sticky, boundary, placeOverride])
 
   // Layer: outside touch (non-modal) and back button dismiss it
+  const dismissRef = useRef(onDismiss)
+  dismissRef.current = onDismiss
   const placementRef = useRef(placement)
   placementRef.current = placement
   const anchorRef = useRef(anchorRect)
@@ -130,9 +153,10 @@ function Placed({
         const s = sizeRef.current
         return inside(anchorRef.current, x, y) || (!!p && !!s && inside({ x: p.x, y: p.y, width: s.width, height: s.height }, x, y))
       },
-      dismiss: onDismiss,
+      dismiss: () => dismissRef.current(),
     })
-  }, [host, open, modal, onDismiss])
+  // `onDismiss` is read through a ref: a new callback must not re-add the layer (it would jump above the layers opened after it)
+  }, [host, open, modal])
   const sizeRef = useRef(size)
   sizeRef.current = size
 
@@ -180,11 +204,14 @@ function Placed({
         testID={testID}
         onLayout={onLayout}
         accessibilityViewIsModal={modal}
+        // VoiceOver's escape gesture (two-finger scrub) is Radix's Escape
+        onAccessibilityEscape={onDismiss}
         style={[
           {
             position: 'absolute',
-            left: placement?.x ?? 0,
-            top: placement?.y ?? 0,
+            // Window coordinates: the physical left, also in RTL
+            ...physical({ left: (placement?.x ?? 0) - origin.x }),
+            top: (placement?.y ?? 0) - origin.y,
             // Hidden until placed, like Radix's off-screen pre-measure
             opacity: placed ? undefined : 0,
             minWidth: matchAnchorWidth ? anchorRect?.width : undefined,

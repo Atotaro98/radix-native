@@ -7,7 +7,6 @@ import Animated, {
   withTiming,
   withRepeat,
   withSequence,
-  withDelay,
   cancelAnimation,
   Easing,
 } from 'react-native-reanimated'
@@ -68,16 +67,26 @@ function SpinnerLeaf({
   const opacity = useSharedValue(1)
 
   useEffect(() => {
-    opacity.value = withDelay(
-      delay,
-      withRepeat(
-        withSequence(
-          withTiming(0.25, { duration: ANIMATION_DURATION, easing: Easing.linear }),
-          withTiming(1, { duration: 0 }),
-        ),
-        -1,
+    const cycle = withRepeat(
+      withSequence(
+        withTiming(0.25, { duration: ANIMATION_DURATION, easing: Easing.linear }),
+        withTiming(1, { duration: 0 }),
       ),
+      -1,
     )
+    if (delay <= 0) {
+      opacity.value = 1
+      opacity.value = cycle
+    } else {
+      // Radix uses negative animation delays: every leaf starts mid-cycle, where
+      // it would be had the animation always been running
+      opacity.value = 1 - 0.75 * ((ANIMATION_DURATION - delay) / ANIMATION_DURATION)
+      opacity.value = withSequence(
+        withTiming(0.25, { duration: delay, easing: Easing.linear }),
+        withTiming(1, { duration: 0 }),
+        cycle,
+      )
+    }
     return () => cancelAnimation(opacity)
   }, [delay, opacity])
 

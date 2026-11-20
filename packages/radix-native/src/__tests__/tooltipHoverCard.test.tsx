@@ -1,13 +1,11 @@
 import React, { useImperativeHandle } from 'react'
-import { Pressable, StyleSheet, Text } from 'react-native'
-import type { GestureResponderEvent, StyleProp, ViewStyle, TextStyle } from 'react-native'
+import { Pressable, Text } from 'react-native'
+import type { GestureResponderEvent } from 'react-native'
 import { act, fireEvent, screen } from '@testing-library/react-native'
 import { renderWithTheme } from './helpers/render'
+import { flat } from './helpers/queries'
 import { Tooltip, clampArrow } from '../components/overlays/Tooltip'
 import { HoverCard } from '../components/overlays/HoverCard'
-
-const flat = (node: { props: { style?: unknown } }): ViewStyle & TextStyle =>
-  StyleSheet.flatten(node.props.style as StyleProp<ViewStyle>) ?? {}
 
 type Handlers = { onPress?: (e: GestureResponderEvent) => void; onLongPress?: (e: GestureResponderEvent) => void; onPressOut?: (e: GestureResponderEvent) => void }
 function FakeAnchor({ ref, ...handlers }: Handlers & { ref?: React.Ref<unknown>; accessibilityHint?: string }) {

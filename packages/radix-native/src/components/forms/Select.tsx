@@ -1,8 +1,8 @@
 import React, { createContext, useCallback, useContext, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { isRTL } from '../../utils/rtl'
 import { Pressable, Text as RNText, View } from 'react-native'
 import type { StyleProp, ViewStyle } from 'react-native'
 import { useControllableState } from '../../hooks/useControllableState'
-import { useInteraction } from '../../hooks/useInteraction'
 import { useMargins } from '../../hooks/useMargins'
 import { useMetrics } from '../../hooks/useMetrics'
 import { useTextStyle } from '../../hooks/useTextStyle'
@@ -10,8 +10,7 @@ import { useVariantColors } from '../../hooks/useVariantColors'
 import { placeItemAligned } from '../../utils/selectLayout'
 import type { Rect } from '../../utils/popper'
 import type { AnchoredPlacementProps } from '../internal/AnchoredContent'
-import { CardRing } from '../internal/CardRing'
-import { FocusRing } from '../internal/FocusRing'
+import { useControl } from '../internal/control'
 import { ListLabel, ListRow, ListSeparator, rowHeight, useListMetrics, type ListLook } from '../internal/ListRows'
 import { anchorRef, createOverlayContext, useOverlayState, type OverlayState } from '../internal/overlayRoot'
 import { createPortalContext } from '../internal/portalContext'
@@ -20,6 +19,7 @@ import type { AccentColor } from '../../tokens/colors/types'
 import type { RadiusToken } from '../../theme/theme.types'
 import type { MarginProps } from '../../types/marginProps'
 import type { MenuVariant, SelectTriggerVariant } from '../../utils/variantPalette'
+import { paintSurface } from '../internal/surface'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -94,6 +94,8 @@ interface SelectContextValue extends OverlayState {
   /** The content's rows in order, known before it ever opens (see ItemRegistry). */
   entries: Entry[]
   register: (key: object, entry: Entry) => () => void
+  /** Replaces a registered row, keeping its place in the order. */
+  update: (key: object, entry: Entry) => void
   triggerPadX: React.MutableRefObject<number>
 }
 
@@ -108,11 +110,18 @@ function useRegister(entry: Entry) {
   const key = useRef({}).current
   const label = entry.kind === 'item' ? entry.label : undefined
   const value = entry.kind === 'item' ? entry.value : undefined
+  const latest = useRef(entry)
+  latest.current = entry
+  // Registers once, in tree order; a changed label or value updates the row where it is
   useLayoutEffect(() => {
     if (!registering || !ctx) return
-    return ctx.register(key, entry)
+    return ctx.register(key, latest.current)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [registering, ctx?.register, key, entry.kind, value, label])
+  }, [registering, ctx?.register, key])
+  useLayoutEffect(() => {
+    if (registering && ctx) ctx.update(key, latest.current)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [registering, ctx?.update, key, entry.kind, value, label])
   return registering
 }
 
@@ -140,9 +149,17 @@ function SelectRoot({
       setEntries(Array.from(registry.current.values()))
     }
   }, [])
+  const update = useCallback((key: object, entry: Entry) => {
+    const prev = registry.current.get(key)
+    if (!prev || prev === entry) return
+    const same = prev.kind === entry.kind && (prev.kind !== 'item' || (entry.kind === 'item' && prev.value === entry.value && prev.label === entry.label))
+    if (same) return
+    registry.current.set(key, entry)
+    setEntries(Array.from(registry.current.values()))
+  }, [])
   const ctx = useMemo<SelectContextValue>(() => ({
-    ...overlay, size, value, setValue: (v: string) => setValue(v), disabled, entries, register, triggerPadX,
-  }), [overlay, size, value, setValue, disabled, entries, register])
+    ...overlay, size, value, setValue: (v: string) => setValue(v), disabled, entries, register, update, triggerPadX,
+  }), [overlay, size, value, setValue, disabled, entries, register, update])
   return <Select_.Provider value={ctx}>{children}</Select_.Provider>
 }
 SelectRoot.displayName = 'Select.Root'
@@ -169,8 +186,6 @@ function SelectTrigger({
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
   const cfg = TRIGGER[ctx.size]
   const colors = useVariantColors('selectTrigger', { variant, color, disabled: ctx.disabled, open: ctx.open })
-  const focus = useVariantColors('focusRing', { color })
-  const { focused, handlers } = useInteraction({ enabled: false })
   const showPlaceholder = ctx.value === undefined || ctx.value === ''
   const text = useTextStyle({ size: cfg.font, color: showPlaceholder ? colors.placeholder : colors.text, compact: true, truncate: true })
   const ghost = variant === 'ghost'
@@ -186,6 +201,19 @@ function SelectTrigger({
     ? <RNText {...text.textProps} style={[text.style, { flexShrink: 1 }]}>{label}</RNText>
     : label
 
+  const surface = paintSurface(colors, borderRadius)
+  const toggleOpen = useCallback(() => ctx.setOpen(!ctx.open), [ctx])
+  // No press scale (plain Pressable); named by the consumer's label, its value read as accessibilityValue
+  const control = useControl({
+    props: { testID, accessibilityLabel },
+    children: null,
+    role: 'combobox',
+    onPress: toggleOpen,
+    disabled: ctx.disabled,
+    state: { expanded: ctx.open },
+    focusRing: { color, borderRadius },
+  })
+
   const triggerStyle: ViewStyle = {
     flexDirection: 'row',
     alignItems: 'center',
@@ -193,8 +221,6 @@ function SelectTrigger({
     alignSelf: 'flex-start',
     gap: metrics.px(cfg.gap),
     paddingHorizontal: padX,
-    borderRadius,
-    backgroundColor: colors.bg,
     ...(ghost
       // ghost: fit-content height, padding offset by an equal negative margin
       ? { paddingVertical: metrics.px(cfg.ghostPadY), marginVertical: -metrics.px(cfg.ghostPadY), marginHorizontal: -padX }
@@ -204,21 +230,15 @@ function SelectTrigger({
 
   return (
     <Pressable
+      {...control.pressableProps}
       ref={anchorRef(ctx.anchor)}
-      testID={testID}
-      accessibilityRole="combobox"
-      accessibilityLabel={accessibilityLabel}
       accessibilityValue={labelText ? { text: labelText } : undefined}
-      accessibilityState={{ expanded: ctx.open, disabled: ctx.disabled }}
-      disabled={ctx.disabled}
-      {...handlers}
-      onPress={() => ctx.setOpen(!ctx.open)}
-      style={[triggerStyle, style]}
+      style={[triggerStyle, surface.style, style]}
     >
       {content}
       <Chevron size={metrics.px(cfg.icon)} color={colors.icon} />
-      {colors.border ? <CardRing color={colors.border} borderRadius={borderRadius} /> : null}
-      <FocusRing visible={focused} color={focus.ring} borderRadius={borderRadius} />
+      {surface.over}
+      {control.focusRing}
     </Pressable>
   )
 }
@@ -256,6 +276,7 @@ function SelectContent({
         itemHeight: rowHeight(list, 'item'),
         selectedIndex,
         offsetBefore,
+        rtl: isRTL(),
       })
     : undefined, [position, ctx.triggerPadX, list, selectedIndex, offsetBefore])
 
@@ -274,6 +295,8 @@ function SelectContent({
           modal
           matchAnchorWidth
           placeOverride={placeOverride}
+          // A list taller than the screen opens scrolled to the selected item
+          scrollToY={list.padding + offsetBefore + selectedIndex * rowHeight(list, 'item') + rowHeight(list, 'item') / 2}
           side={side} sideOffset={sideOffset} align={align}
           {...props}
         >

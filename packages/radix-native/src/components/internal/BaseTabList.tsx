@@ -1,13 +1,11 @@
-import React, { createContext, useContext, useMemo } from 'react'
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef } from 'react'
 import { Pressable, ScrollView, View } from 'react-native'
-import type { AccessibilityRole, GestureResponderEvent, StyleProp, ViewStyle } from 'react-native'
-import { useInteraction } from '../../hooks/useInteraction'
+import type { AccessibilityRole, GestureResponderEvent, LayoutChangeEvent, StyleProp, ViewStyle } from 'react-native'
 import { useMargins } from '../../hooks/useMargins'
 import { useMetrics } from '../../hooks/useMetrics'
 import { useVariantColors } from '../../hooks/useVariantColors'
-import { useAccessibleControl } from './accessibleControl'
+import { useControl } from './control'
 import { ControlLabel, WeightReserve } from './ControlLabel'
-import { FocusRing } from './FocusRing'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { RadiusLevel } from '../../tokens/radius'
 import type { SpaceToken } from '../../tokens/spacing'
@@ -54,6 +52,8 @@ interface TabListContextValue {
   size: TabListSize
   color?: AccentColor
   highContrast?: boolean
+  /** Scrolls a trigger (its x and width in the list) into view; absent when the list wraps. */
+  reveal?: (x: number, width: number) => void
 }
 
 const TabListContext = createContext<TabListContextValue>({ size: 2 })
@@ -68,14 +68,22 @@ export function BaseTabList({
 }: BaseTabListProps & { role?: AccessibilityRole }) {
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
   const colors = useVariantColors('tabList', { color, highContrast })
-  const ctx = useMemo(() => ({ size, color, highContrast }), [size, color, highContrast])
+  const wraps = wrap === 'wrap' || wrap === 'wrap-reverse'
+  // The active trigger is kept in view (the browser does it on focus; a touch list has no focus)
+  const scroll = useRef<React.ComponentRef<typeof ScrollView>>(null)
+  const view = useRef({ offset: 0, width: 0 })
+  const reveal = useCallback((x: number, width: number) => {
+    const { offset, width: viewport } = view.current
+    if (!viewport) return
+    if (x < offset) scroll.current?.scrollTo({ x, animated: true })
+    else if (x + width > offset + viewport) scroll.current?.scrollTo({ x: x + width - viewport, animated: true })
+  }, [])
+  const ctx = useMemo(() => ({ size, color, highContrast, reveal: wraps ? undefined : reveal }), [size, color, highContrast, wraps, reveal])
   const row: ViewStyle = {
     flexDirection: 'row',
     justifyContent: JUSTIFY[justify ?? 'start'],
     flexWrap: wrap === 'wrap' ? 'wrap' : wrap === 'wrap-reverse' ? 'wrap-reverse' : 'nowrap',
   }
-  const wraps = wrap === 'wrap' || wrap === 'wrap-reverse'
-
   return (
     <View accessibilityRole={role} style={[margins, style]} {...rest}>
       {/* box-shadow: inset 0 -1px 0 0 var(--gray-a5) */}
@@ -84,7 +92,15 @@ export function BaseTabList({
         {wraps ? (
           <View style={row}>{children}</View>
         ) : (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[row, { flexGrow: 1 }]}>
+          <ScrollView
+            ref={scroll}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={[row, { flexGrow: 1 }]}
+            scrollEventThrottle={32}
+            onScroll={(e) => { view.current.offset = e.nativeEvent.contentOffset.x }}
+            onLayout={(e) => { view.current.width = e.nativeEvent.layout.width }}
+          >
             {children}
           </ScrollView>
         )}
@@ -111,11 +127,33 @@ export function BaseTabTrigger({ active, disabled, onPress, role, style, childre
   const list = useContext(TabListContext)
   const metrics = useMetrics()
   const cfg = SIZES[list.size]
-  const colors = useVariantColors('tabList', { color: list.color, highContrast: list.highContrast, checked: active })
-  const focus = useVariantColors('focusRing', { color: list.color })
-  const a11y = useAccessibleControl(children, rest.accessibilityLabel)
-  const { focused, handlers } = useInteraction({ enabled: false })
+  const colors = useVariantColors('tabList', { color: list.color, highContrast: list.highContrast, active })
   const innerRadius = metrics.radius(cfg.innerRadius)
+  // No press scale (plain Pressable); the focus outline sits on the inner, offset −2px
+  const control = useControl({
+    props: rest,
+    children,
+    role,
+    onPress,
+    disabled: !!disabled,
+    state: { selected: active },
+    focusRing: { color: list.color, borderRadius: innerRadius },
+  })
+
+  // Where the trigger is in the list; when it becomes active (or is laid out active) the list scrolls to it
+  const box = useRef<{ x: number; width: number } | null>(null)
+  const { reveal } = list
+  const consumerOnLayout = rest.onLayout
+  const onLayout = useCallback((e: LayoutChangeEvent) => {
+    const { x, width } = e.nativeEvent.layout
+    const first = box.current === null
+    box.current = { x, width }
+    if (first && active) reveal?.(x, width)
+    consumerOnLayout?.(e)
+  }, [active, reveal, consumerOnLayout])
+  useEffect(() => {
+    if (active && box.current) reveal?.(box.current.x, box.current.width)
+  }, [active, reveal])
 
   // --tab-active-letter-spacing −0.01em / --tab-inactive-letter-spacing 0
   const label = (weight: 'medium' | 'regular') => (
@@ -134,13 +172,8 @@ export function BaseTabTrigger({ active, disabled, onPress, role, style, childre
 
   return (
     <Pressable
-      accessibilityRole={role}
-      {...rest}
-      {...handlers}
-      onPress={onPress}
-      disabled={disabled}
-      accessibilityLabel={a11y.accessibilityLabel}
-      accessibilityState={{ selected: active, disabled: !!disabled }}
+      {...control.pressableProps}
+      onLayout={onLayout}
       style={[{
         height: metrics.space(cfg.height),
         paddingHorizontal: metrics.space(cfg.paddingX),
@@ -150,11 +183,10 @@ export function BaseTabTrigger({ active, disabled, onPress, role, style, childre
       }, style as StyleProp<ViewStyle>]}
     >
       {/* .rt-BaseTabListTriggerInnerHidden: the hidden copies reserve the width */}
-      {a11y.wrap(
+      {control.wrap(
         <WeightReserve label={label} style={inner}>
           {label(active ? 'medium' : 'regular')}
-          {/* focus-visible outline on the inner, offset −2px */}
-          <FocusRing visible={focused} color={focus.ring} borderRadius={innerRadius} />
+          {control.focusRing}
         </WeightReserve>,
       )}
       {active ? (

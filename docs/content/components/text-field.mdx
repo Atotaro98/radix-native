@@ -28,7 +28,28 @@ Extends `TextInputProps`. Supports [margin props](/theme/spacing).
 
 Plus all standard `TextInput` props (`placeholder`, `value`, `onChangeText`, `keyboardType`, etc.).
 
+### Slot
+
+`TextField.Slot` holds icons or buttons inside the field. The first slot goes on the left, a second one on the right.
+
+| Prop | Type | Default |
+|------|------|---------|
+| `side` | `'left' \| 'right'` | first left, next right |
+| `color` | `AccentColor` | — |
+| `gap` | `SpaceToken` | `2` (size 3: `3`) |
+| `px`, `pl`, `pr` | `SpaceToken` | by size |
+
 ## Examples
+
+### With slots
+
+```tsx
+<TextField placeholder="Search the docs…">
+  <TextField.Slot>
+    <MagnifyingGlassIcon size={16} />
+  </TextField.Slot>
+</TextField>
+```
 
 ### Size
 

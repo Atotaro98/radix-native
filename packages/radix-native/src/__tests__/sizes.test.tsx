@@ -3,15 +3,13 @@
  * (`var(--space-N)` and `calc(Npx * var(--scaling))` scale; plain `px` values don't).
  */
 import React from 'react'
-import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native'
+import { StyleSheet } from 'react-native'
 import { screen } from '@testing-library/react-native'
 import { Avatar, Blockquote, Card, CheckboxCards, CheckboxGroup, Code, Kbd, RadioCards, Spinner, Text } from '../index'
 import { renderWithTheme } from './helpers/render'
+import { flat } from './helpers/queries'
 
 type Node = { type: unknown; props: { style?: unknown } }
-
-const flat = (node: { props: { style?: unknown } }): ViewStyle =>
-  StyleSheet.flatten(node.props.style as StyleProp<ViewStyle>) ?? {}
 
 describe('Spinner', () => {
   // .rt-Spinner: var(--space-3), var(--space-4), calc(1.25 * var(--space-4))
@@ -84,6 +82,11 @@ describe.each([
 })
 
 describe('Avatar', () => {
+  it.each([[{ uri: '' }], [{ uri: undefined }], ['']])('shows the fallback for the empty source %j', (src) => {
+    renderWithTheme(<Avatar src={src} fallback="AB" />)
+    expect(screen.getByText('AB')).toBeTruthy()
+  })
+
   // .rt-AvatarRoot --avatar-size: var(--space-5…9) for sizes 1–5, plain px for 6–9
   it.each<[1 | 2 | 3 | 4 | 5, number]>([[1, 26], [2, 35], [3, 44], [4, 53], [5, 70]])(
     'size %i scales with the Theme (%ipx at 110%%)',

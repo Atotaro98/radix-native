@@ -6,7 +6,11 @@ type PressHandler = (event: GestureResponderEvent) => void
 type FocusHandler = (event: NativeSyntheticEvent<TargetedEvent>) => void
 
 interface UseInteractionParams {
-  /** When false, no pressed state, scale or focus ring is shown. */
+  /**
+   * When false (a disabled control), no pressed state, press scale or focus is
+   * reported. A control without press feedback still reports focus: it just
+   * does not apply `scaleStyle`.
+   */
   enabled: boolean
   /** Consumer handlers — always called, composed with the internal ones. */
   onPressIn?: PressHandler

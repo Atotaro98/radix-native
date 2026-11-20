@@ -4,7 +4,6 @@ import type { ViewStyle } from 'react-native'
 import { useMargins } from '../../hooks/useMargins'
 import { useMetrics } from '../../hooks/useMetrics'
 import { useVariantColors } from '../../hooks/useVariantColors'
-import { CardRing } from '../internal/CardRing'
 import { Text, type TextProps, type TextSize } from '../typography/Text'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { RadiusLevel } from '../../tokens/radius'
@@ -12,6 +11,7 @@ import type { SpaceToken } from '../../tokens/spacing'
 import type { MarginProps } from '../../types/marginProps'
 import type { NativeViewProps } from '../../types/nativeProps'
 import type { CalloutVariant } from '../../utils/variantPalette'
+import { paintSurface } from '../internal/surface'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -126,10 +126,9 @@ function CalloutRoot({
     alignItems: 'flex-start',
     padding: metrics.space(cfg.padding),
     columnGap: metrics.space(cfg.columnGap),
-    borderRadius,
-    backgroundColor: colors.bg,
     ...margins,
-  }), [metrics, cfg, borderRadius, colors.bg, margins])
+  }), [metrics, cfg, margins])
+  const surface = paintSurface(colors, borderRadius)
 
   const ctx = useMemo(() => ({ size, color: colors.text }), [size, colors.text])
 
@@ -139,13 +138,13 @@ function CalloutRoot({
   const content = items.filter((c) => !(React.isValidElement(c) && c.type === CalloutIcon))
 
   return (
-    <View style={[rootStyle, style]} {...rest}>
+    <View style={[rootStyle, surface.style, style]} {...rest}>
       <CalloutContext.Provider value={ctx}>
         {icons.length > 0 ? <View style={{ rowGap }}>{icons}</View> : null}
         <View style={{ flex: 1, rowGap }}>{content}</View>
       </CalloutContext.Provider>
       {/* inset 0 0 0 1px ring: drawn over, no layout space */}
-      {colors.border ? <CardRing color={colors.border} borderRadius={borderRadius} /> : null}
+      {surface.over}
     </View>
   )
 }

@@ -266,3 +266,24 @@ describe('ThemeControls placement', () => {
     expect(warn).not.toHaveBeenCalledWith(expect.stringContaining('ThemeControls'))
   })
 })
+
+describe('Theme context stability', () => {
+  it('inline fonts / colorOverrides with the same content keep the same context value', () => {
+    const App = () => (
+      <Theme fonts={{ regular: 'Inter' }} colorOverrides={{ indigo: { light: { 9: '#123456' } } }}>
+        <Capture id="a" />
+      </Theme>
+    )
+    const { rerender } = render(<App />)
+    const first = captured.a
+    rerender(<App />)
+    expect(captured.a).toBe(first)
+  })
+
+  it('a changed font still updates the context', () => {
+    const App = ({ face }: { face: string }) => <Theme fonts={{ regular: face }}><Capture id="a" /></Theme>
+    const { rerender } = render(<App face="Inter" />)
+    rerender(<App face="Lato" />)
+    expect(captured.a.fonts.regular).toBe('Lato')
+  })
+})

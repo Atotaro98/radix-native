@@ -9,11 +9,13 @@ import type { RadiusToken } from '../../tokens/radius'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { MarginProps } from '../../types/marginProps'
 import type { NativeViewProps } from '../../types/nativeProps'
+import type { SelectionVariant } from '../../utils/variantPalette'
+import { paintSurface } from '../internal/surface'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type ProgressSize = 1 | 2 | 3
-export type ProgressVariant = 'classic' | 'surface' | 'soft'
+export type ProgressVariant = SelectionVariant
 
 export interface ProgressProps extends NativeViewProps, MarginProps {
   /** Progress size (1–3). Default: 2. */
@@ -66,6 +68,9 @@ export function Progress({
   const isIndeterminate = value === undefined
   const progress = isIndeterminate || !(max > 0) ? 0 : Math.min(Math.max(value / max, 0), 1)
 
+  // Screen readers get the clamped value, like the bar (value 150 of 100 reads 100)
+  const valueMax = max > 0 ? max : 100
+
   // ─── Colors ─────────────────────────────────────────────────────────────
   const colors = useVariantColors('progress', { variant, color, highContrast })
 
@@ -97,10 +102,7 @@ export function Progress({
   // ─── Styles ─────────────────────────────────────────────────────────────
   const trackStyle = useMemo<ViewStyle>(() => ({
     height: resolvedHeight,
-    borderRadius,
-    backgroundColor: colors.track,
-    borderWidth: colors.border ? 1 : undefined,
-    borderColor: colors.border,
+    ...paintSurface(colors, borderRadius).style,
     overflow: 'hidden',
     ...margins,
   }), [resolvedHeight, borderRadius, colors, margins])
@@ -117,8 +119,8 @@ export function Progress({
       accessibilityState={isIndeterminate ? { busy: true } : undefined}
       accessibilityValue={{
         min: 0,
-        max,
-        now: isIndeterminate ? undefined : value,
+        max: valueMax,
+        now: isIndeterminate ? undefined : Math.round(progress * valueMax),
       }}
       {...rest}
       style={[trackStyle, style]}
