@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { isRTL, physical } from '../../utils/rtl'
 import { Dimensions, Keyboard, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native'
 import type { LayoutChangeEvent, StyleProp, ViewStyle } from 'react-native'
 import Animated, { Easing, runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated'
@@ -129,7 +130,10 @@ function Placed({
       const { x, y } = placeOverride(anchorRect, size, inner)
       return { x, y, side: 'bottom', align: 'start', availableWidth: inner.width, availableHeight: inner.height, originX: size.width / 2, originY: size.height / 2 }
     }
-    return place(anchorRect, size, { side, align, sideOffset, alignOffset, avoidCollisions, collisionPadding, sticky, boundary })
+    // Radix `dir`: above / below the anchor, `start` is the right edge in RTL (left / right sides stay physical)
+    const vertical = side === 'top' || side === 'bottom'
+    const dirAlign = isRTL() && vertical && align !== 'center' ? (align === 'start' ? 'end' : 'start') : align
+    return place(anchorRect, size, { side, align: dirAlign, sideOffset, alignOffset, avoidCollisions, collisionPadding, sticky, boundary })
   }, [anchorRect, size, side, align, sideOffset, alignOffset, avoidCollisions, collisionPadding, sticky, boundary, placeOverride])
 
   // Layer: outside touch (non-modal) and back button dismiss it
@@ -205,7 +209,8 @@ function Placed({
         style={[
           {
             position: 'absolute',
-            left: (placement?.x ?? 0) - origin.x,
+            // Window coordinates: the physical left, also in RTL
+            ...physical({ left: (placement?.x ?? 0) - origin.x }),
             top: (placement?.y ?? 0) - origin.y,
             // Hidden until placed, like Radix's off-screen pre-measure
             opacity: placed ? undefined : 0,

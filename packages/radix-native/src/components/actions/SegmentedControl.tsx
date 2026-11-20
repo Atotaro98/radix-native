@@ -1,4 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo } from 'react'
+import { inlineSign } from '../../utils/rtl'
 import { Pressable, View } from 'react-native'
 import type { StyleProp, ViewStyle } from 'react-native'
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated'
@@ -130,7 +131,9 @@ function SegmentedControlRoot({
     const target = Math.max(index, 0) * itemWidth
     x.value = reducedMotion || !cells.ready ? target : withTiming(target, INDICATOR_TIMING)
   }, [index, itemWidth, reducedMotion, cells.ready, x])
-  const indicatorStyle = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }))
+  // The indicator starts at the row's start (the right in RTL) and moves toward its end
+  const sign = inlineSign()
+  const indicatorStyle = useAnimatedStyle(() => ({ transform: [{ translateX: sign * x.value }] }))
 
   const ctx = useMemo<RootContextValue>(() => ({
     value, select, disabled, size, borderRadius, text: colors.text, separator: colors.separator, values, cells, reducedMotion,

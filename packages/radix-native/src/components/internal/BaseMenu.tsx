@@ -1,4 +1,5 @@
 import React, { useCallback, useContext, useMemo } from 'react'
+import { isRTL } from '../../utils/rtl'
 import { View } from 'react-native'
 import type { StyleProp, ViewStyle } from 'react-native'
 import { useMetrics } from '../../hooks/useMetrics'
@@ -149,7 +150,7 @@ export function MenuContent({
 /** A ThickChevronRightIcon stand-in. */
 function Chevron({ size, color }: { size: number; color: string }) {
   return (
-    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center', transform: isRTL() ? [{ scaleX: -1 }] : undefined }}>
       <View style={{
         width: size * 0.55, height: size * 0.55, marginLeft: -size * 0.2,
         borderRightWidth: size * 0.18, borderTopWidth: size * 0.18, borderColor: color,
@@ -321,7 +322,8 @@ export function MenuSubContent({
         open={sub.open && (root?.open ?? true)}
         onDismiss={close}
         anchor={sub.anchor}
-        side="right" sideOffset={sideOffset} align={align}
+        // Radix: a sub-menu opens toward the end of the row (left in RTL)
+        side={isRTL() ? 'left' : 'right'} sideOffset={sideOffset} align={align}
         alignOffset={alignOffset ?? -value.list.padding}
         {...props}
       />

@@ -1,4 +1,5 @@
 import React, { createContext, useCallback, useContext, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { isRTL } from '../../utils/rtl'
 import { Pressable, Text as RNText, View } from 'react-native'
 import type { StyleProp, ViewStyle } from 'react-native'
 import { useControllableState } from '../../hooks/useControllableState'
@@ -275,6 +276,7 @@ function SelectContent({
         itemHeight: rowHeight(list, 'item'),
         selectedIndex,
         offsetBefore,
+        rtl: isRTL(),
       })
     : undefined, [position, ctx.triggerPadX, list, selectedIndex, offsetBefore])
 

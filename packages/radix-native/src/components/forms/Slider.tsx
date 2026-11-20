@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react'
+import { isRTL } from '../../utils/rtl'
 import { View } from 'react-native'
 import type { AccessibilityActionEvent, GestureResponderEvent, LayoutChangeEvent, StyleProp, ViewStyle } from 'react-native'
 import { useControllableState } from '../../hooks/useControllableState'
@@ -114,6 +115,8 @@ export function Slider({
 
   // Horizontal slides from the left (inverted: right); vertical from the bottom (inverted: top)
   const fromEnd = vertical ? !inverted : inverted
+  // Touches are physical, the drawn edges follow the reading direction: in RTL a horizontal slider starts on the right
+  const touchFromEnd = vertical ? fromEnd : fromEnd !== isRTL()
   const minDistance = minStepsBetweenThumbs * step
   const config = { min, max, step }
 
@@ -138,7 +141,7 @@ export function Slider({
 
   const onGrant = (e: GestureResponderEvent) => {
     const origin = positionOf(e)
-    const raw = valueFromPosition(origin, length, { min, max, fromEnd })
+    const raw = valueFromPosition(origin, length, { min, max, fromEnd: touchFromEnd })
     const index = getClosestValueIndex(valuesRef.current, raw)
     drag.current = { index, start: valuesRef.current, origin, page: pageOf(e) }
     drag.current.index = moveTo(index, raw)
@@ -148,7 +151,7 @@ export function Slider({
     if (!d) return
     // locationX can jump between targets on Android; follow the page delta from the grant
     const position = d.origin + (pageOf(e) - d.page)
-    d.index = moveTo(d.index, valueFromPosition(position, length, { min, max, fromEnd }))
+    d.index = moveTo(d.index, valueFromPosition(position, length, { min, max, fromEnd: touchFromEnd }))
   }
   const onEnd = () => {
     const d = drag.current

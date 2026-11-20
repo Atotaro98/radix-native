@@ -1,4 +1,5 @@
 import React from 'react'
+import { inlineSign } from '../../utils/rtl'
 import { View } from 'react-native'
 import type { ViewStyle, StyleProp } from 'react-native'
 import Animated, {
@@ -98,7 +99,8 @@ function SwitchIndicator({ variant, color, highContrast, checked, disabled, geom
   // ─── Thumb animation ─────────────────────────────────────────────────────────
   // The track border is drawn as an overlay (like Radix's inset box-shadow),
   // so it never takes layout space and the thumb doesn't jump between states.
-  const thumbTravel = trackWidth - thumbSize - thumbMargin * 2
+  // The thumb rests at the row's start (the right in RTL) and travels toward its end
+  const thumbTravel = inlineSign() * (trackWidth - thumbSize - thumbMargin * 2)
   const translateX = useSharedValue(checked ? thumbTravel : 0)
 
   React.useEffect(() => {
