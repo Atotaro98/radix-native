@@ -1,12 +1,10 @@
 import React, { useImperativeHandle } from 'react'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
-import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native'
+import { Pressable, Text, View } from 'react-native'
+import type { GestureResponderEvent } from 'react-native'
 import { act, fireEvent, screen } from '@testing-library/react-native'
 import { renderWithTheme } from './helpers/render'
+import { flat } from './helpers/queries'
 import { Popover } from '../components/overlays/Popover'
-
-const flat = (node: { props: { style?: unknown } }): ViewStyle =>
-  StyleSheet.flatten(node.props.style as StyleProp<ViewStyle>) ?? {}
 
 /** A trigger that reports a fixed window rect, as a host component would. */
 function FakeAnchor({ onPress, ref }: { onPress?: (e: GestureResponderEvent) => void; ref?: React.Ref<unknown> }) {

@@ -11,14 +11,14 @@ Domain vocabulary (Text style, Text role, Variant recipe, Variant family, Radix 
 packages/radix-native/src/
   theme/          ThemeRoot (stateful) + ThemeImpl (inheritable) + Theme (public)
   hooks/          useThemeContext, useColor, useResolveColor (internal), useMetrics, useMargins, useLayoutStyle (internal), useResolveSpace (deprecated),
-                  useControllableState (internal), useInteraction (internal), useTextStyle (internal),
+                  useControllableState (internal), useInteraction (internal, under internal/control), useTextStyle (internal),
                   useVariantColors (internal), usePressScale
   tokens/         colors/ (31 scales), spacing, typography, radius, scaling
   types/          nativeProps, marginProps, layoutProps (LayoutProps, PaddingProps, GapProps)
   utils/          resolveColor, variantPalette, colorMath, metrics, shadow, classicEffect (deprecated), textStyle,
                   hitSlop, alpha, env, fonts
   components/
-    internal/     BaseButton, ToggleSurface, BaseToggle, BaseTextInput, ControlLabel, selectionGroup, controlGroup, SelectionCard, CardRing, BaseTabList, BaseDialog, Portal, portalContext, overlayRoot, AnchoredContent, PopperContent, ListRows, BaseMenu, inlineText, ClassicOverlay, FocusRing, ColumnRows, accessibleControl (not exported)
+    internal/     control (useControl), surface (paintSurface), BaseButton, ToggleSurface, BaseToggle, BaseTextInput, ControlLabel, selectionGroup, controlGroup, SelectionCard, CardRing, BaseTabList, BaseDialog, Portal, portalContext, overlayRoot, AnchoredContent, PopperContent, ListRows, BaseMenu, inlineText, ClassicOverlay, FocusRing, ColumnRows, accessibleControl (not exported)
     layout/       Box, Flex, Grid, Container, Section, AspectRatio, ScrollArea, Separator, Card, Inset, InsetContext (Radix --inset-* values; Card provides them)
     typography/   Text, Heading, Link, Blockquote, Code, Em, Strong, Quote, Kbd, TextContext, InlineText (factory, not exported)
     display/      Avatar, Badge, Callout, DataList, Table (column sizing in utils/tableLayout)
@@ -120,8 +120,18 @@ is only for a fixed step with no variant, state or mode to decide (Spinner `gray
 
 ```tsx
 const colors = useVariantColors('checkbox', { variant, color, highContrast, checked, disabled })
-// → { bg, border?, indicator? } — strings ready for styles
+// → { bg, border?, indicator?, bevel? } — strings ready for styles
 ```
+
+- **Each recipe takes exactly the state it decides** (`Disabled`, `Checked`, `Pressed`, `Focused`, or its own
+  flags like `open`, `highlighted`, `active`) — passing a flag a recipe ignores is a type error — and returns its
+  parts **for that state, already chosen**: `button` with `pressed` returns the pressed `bg` and `opacity`, `card`
+  with `pressed` its `:active` ring or ghost fill, `radioCard` with `checked` its 2px `ring` (`ringWidth: 2`).
+  Components never branch on state to pick a paint and never read a recipe's shape (`'x' in colors`).
+- **Surface parts** share names across recipes and are drawn by `paintSurface` (`internal/surface`), never by
+  hand: `bg` (fill), `border` (1px layout border), `ring` + `ringWidth?` (a `CardRing` over the content — Radix
+  inset box-shadow rings: cards, card items, Callout, Select trigger, Switch track, panels), `shadow`,
+  `bevel`, `opacity`.
 
 - Recipes return **paints** — `c(step)` (the `color` prop, accent by default), `g(step)` (gray),
   `f(step)` (Radix `--focus-*`: like `c`, but a gray component keeps the theme accent),
@@ -139,26 +149,26 @@ const colors = useVariantColors('checkbox', { variant, color, highContrast, chec
 - Drop shadows and the classic bevel are recipe parts too: `shadow` / `thumbShadow` (a `ShadowPaint`: color
   paint, opacity, offsetY, radius, Android elevation) and `bevel: true`. The recipe decides when they apply
   (Button classic loses its lift while pressed and both when disabled or loading; Card keeps its shadow while
-  pressed; card items keep it when disabled; Checkbox / Radio bevel only when checked). Components render
-  `shadowStyle(colors.shadow)` (`utils/shadow.ts`, the only `Platform.select` for shadows) and
-  `{colors.bevel && <ClassicOverlay />}`. `getClassicEffect` is a deprecated public export; don't use it.
+  pressed; card items keep it when disabled; Checkbox / Radio bevel only when checked). `paintSurface` draws
+  them (through `shadowStyle`, the only `Platform.select` for shadows, and `ClassicOverlay`); parts that are
+  not a surface (a Switch thumb, Slider thumb, SegmentedControl indicator, Kbd) still call `shadowStyle` themselves.
+  `getClassicEffect` is a deprecated public export; don't use it.
 
 ### Shared building blocks — use these instead of re-implementing
 
 | Need | Use |
 |------|-----|
 | Controlled / uncontrolled value | `useControllableState({ prop, defaultProp, onChange })` — setter accepts updater functions (no stale closures) |
-| Pressed / focused state, press scale, composing consumer handlers | `useInteraction({ enabled, onPressIn, onPressOut, onFocus, onBlur })` → `{ pressed, focused, scaleStyle, handlers }` |
-| Focus indicator | `<FocusRing visible={focused} color={useVariantColors('focusRing', { color }).ring} borderRadius={r} offset={…} />` (offset only on hosts without `overflow: 'hidden'`) |
-| Classic gradient / drop shadow | `{colors.bevel && <ClassicOverlay borderRadius={r} />}`, `shadowStyle(colors.shadow)` — both from the recipe |
+| Any pressable control (pressed / focus state, press scale, a11y name from content, touch target, disabled gate, focus ring, prop order) | `const control = useControl({ props: rest, children, role, onPress, disabled, state?, touchTarget?, focusRing: { color?, borderRadius, offset? }, forceName? })` (`internal/control`) → `<Pressable {...control.pressableProps} style={[control.scaleStyle?, …]}>{control.wrap(content)}{control.focusRing}</Pressable>`; read `control.pressed` for the recipe. Focus is reported whether or not the control uses the press scale. BaseButton, Card, Toggle surface, tab triggers, SegmentedControl items, Select trigger and menu / Select rows are built on it. Text inputs use `useInteraction` for focus only |
+| A recipe's fill, border, ring, shadow, bevel, opacity | `const surface = paintSurface(colors, borderRadius)` (`internal/surface`) → `style={[…, surface.style]}`, `{surface.under}` before the content (bevel), `{surface.over}` after it (ring) |
 | A button (interaction, recipe colors, classic, loading, focus ring, touch target, prop order) | `<BaseButton {...props} iconOnly? />` — Button and IconButton are thin wrappers over it, like Radix `BaseButton` |
-| Anything that acts as a Toggle (role, a11y state incl. `'mixed'`, disabled gate, press scale, touch target, focus ring, consumer handlers) | `<ToggleSurface role checked disabled onPress color indicator={{ kind, props }} labelLineHeight? />` (focus ring around the Indicator) or `<ToggleSurface … borderRadius>{card}</ToggleSurface>` (focus ring on the card's edge) — holds no checked state |
+| Anything that acts as a Toggle (role, a11y state incl. `'mixed'`, disabled gate, press scale, touch target, focus ring, consumer handlers) | `<ToggleSurface role checked disabled onPress indicator={{ kind, props }} labelLineHeight? />` (focus ring around the Indicator, in the Indicator's `color`) or `<ToggleSurface … borderRadius color>{card}</ToggleSurface>` (focus ring on the card's edge) — holds no checked state; built on `useControl` |
 | A standalone Toggle (checked state, what a press does per role) | `<BaseToggle role="checkbox" \| "radio" \| "switch" {...rest} kind={CheckboxToggle} indicator={{ size, variant, … }} margins>` — Checkbox, Radio and Switch are thin wrappers over it, built on the Toggle surface |
-| A Toggle's Indicator and its size | `CheckboxToggle`, `RadioToggle`, `SwitchToggle` (`ToggleKind`: `Indicator` + pure `geometry(props, theme)`, exported from each control's file, not from `index.ts`) — the one source of an Indicator's width, height, radius and focus offset; Indicators read it with `useToggleGeometry` |
+| A Toggle's Indicator and its size | `CheckboxToggle`, `RadioToggle`, `SwitchToggle` (`ToggleKind`: `Indicator` + pure `geometry(props, theme)`, exported from each control's file, not from `index.ts`) — the one source of an Indicator's width, height, radius and focus offset. Built with `defineToggle(geometry, Indicator)`; whoever draws the Indicator (Toggle surface, Selection card) computes it once with `useToggleGeometry(indicator)` and passes it as the Indicator's `geometry` prop. A bare Toggle's surface reports the Indicator radius to a Skeleton |
 | A Toggle's look without its behaviour | `CheckboxIndicator`, `RadioIndicator`, `SwitchIndicator` (exported from each control's file, not from `index.ts`) — rows and cards show these, never a nested Toggle |
 | A row of text runs + icons inside a control (Control label: buttons, Badge, tab triggers, SegmentedControl items, menu / Select rows) | `<ControlLabel size weight color letterSpacingEm? maxFontSizeMultiplier>{children}</ControlLabel>` — merges adjacent text, one line, tints icons without `color`; a tab trigger's label goes in `<WeightReserve label={(weight) => …}>{visible}</WeightReserve>`, which reserves the wider of both weights (SegmentedControl keeps its medium copy in flow instead: a zero-height reserving copy there made Android drop the last letter); pass `truncate={false}` where the control always takes the label's width (tabs, segmented) |
 | A Text input (sizes, recipe colors, focus, read-only look, prop order) | `<BaseTextInput {...props} multiline? />` — TextField and TextArea are thin wrappers over it |
-| A control announced as one element, named by its content (BaseButton, pressable Card, Toggle surface, tab / segmented items, menu / Select rows) | `const a11y = useAccessibleControl(children, consumerLabel, { forceName? })` (`internal/accessibleControl`) → pass `a11y.accessibilityLabel` to the pressable and render `a11y.wrap(content)`; accessible content inside reads `useIsInsideAccessibleControl()` and contributes only its label (AccessibleIcon). Never call `accessibleNameOf` or render `AccessibleControlContext.Provider` by hand |
+| A control announced as one element, named by its content | `useControl` does it (`useAccessibleControl` underneath, `internal/accessibleControl`); accessible content inside reads `useIsInsideAccessibleControl()` and contributes only its label (AccessibleIcon). Never call `accessibleNameOf` or render `AccessibleControlContext.Provider` by hand |
 | A base card's border (Card, card items) | `<CardRing color borderRadius width? />` (`internal/CardRing`) drawn after the content — never a layout `borderWidth`; publish the Inset values with `InsetContext.Provider` (padding − border width) |
 | Inside a Skeleton, keep the component's shape | `useSkeletonRadius(borderRadius)` (`feedback/SkeletonContext`) in any component with its own radius; layout primitives report through `useLayoutStyle` |
 | Cells as wide as the widest (CSS grid `auto` / `1fr` / subgrid) | `useWidest()` + `useWidestCell(cells)` (`hooks/useWidest`, internal): cells report their natural width, all take the widest; hide the parent until `ready` — DataList labels, SegmentedControl items |
@@ -168,8 +178,8 @@ const colors = useVariantColors('checkbox', { variant, color, highContrast, chec
 | An Anchored overlay drawn as a panel (Popover, HoverCard, menus, Select) | `<PopperContent open onDismiss anchor modal? padding borderRadius accessibilityRole inset? width… side…>{children}</PopperContent>` (`internal/PopperContent`; `usePanelSize(size)` for Popover / HoverCard) — panel, ring, shadow, max-height from the space left. Tooltip draws its own content on `<AnchoredContent>{(placement, anchorRect) => …}</AnchoredContent>` |
 | Rows of a menu or a Select list | `useListMetrics(size)`, `<ListRow list look paddingLeft paddingRight accessibilityRole checked? trailing? onPress>`, `<ListLabel>`, `<ListSeparator>` (`internal/ListRows`); `rowHeight(list, kind)` is the height each kind renders with (Select's item-aligned offset) |
 | Equal-width columns | `<ColumnRows columns gap…>` (no `onLayout`, no `%` flexBasis) |
-| CheckboxGroup / RadioGroup (Root + Item, labelled or bare items, column layout) | `createControlGroup({ name, type, rootRole, itemRole, Control, kind })` in `internal/controlGroup.tsx` — both groups are one call each; a labelled item is a Toggle surface row (label style, 0.5em gap) |
-| A Selection group (one value or several, controlled or not, disabled propagation) | `createSelectionGroup({ name, type: 'single' \| 'multiple' })` → `{ Root, useItem(value, disabled) }` — one instance per family, like Radix's CheckboxGroup / RadioGroup primitives |
+| CheckboxGroup / RadioGroup (Root + Item, labelled or bare items, column layout) | `createControlGroup({ name, type, rootRole, itemRole, Control, kind })` in `internal/controlGroup.tsx`, on `createSelectionFamily` — both groups are one call each; a labelled item is a Toggle surface row (label style, 0.5em gap) |
+| A Selection group family (Root with value, disabled propagation, shared size / variant / color / highContrast, margins, role) | `createSelectionFamily({ name, type, rootRole, size, Layout, Item })` (`internal/selectionGroup`) — the family brings only its layout (`SelectionLayoutProps<Extra>`, Extra = its own Root props like `columns`) and its item view (gets `item: { checked, disabled, select, shared }`); plain-text item content via `renderItemLabel(children, textStyle)`. Built on `createSelectionGroup({ name, type })`, like Radix's CheckboxGroup / RadioGroup primitives |
 | CheckboxCards / RadioCards (Root + Item, grid, Selection cards) | `createSelectionCards({ name, type, rootRole, itemRole, recipe, kind? })` in `internal/SelectionCard.tsx` — both families are one call each. A Selection card (`<SelectionCard recipe role size … indicator? />`) owns the Radix size table (padding, font size, radius), the trailing Indicator (`kind`, placed from its geometry) and plain text via `useTextStyle`, on a Toggle surface |
 | Any rendered text (size, face, letter spacing, Font scaling cap, `truncate` / `wrap`, nesting) | `useTextStyle({ inline?, role?, size?, weight?, lineHeight?, color?, compact?, maxFontSizeMultiplier?, truncate?, wrap?, margins? })` → `{ style, textProps, contextFontSize, em, radius }` — see Text style below |
 | Minimum touch target | `hitSlop ?? getMinHitSlop(width, height)` (44pt) |
@@ -215,10 +225,12 @@ Never assemble `fontSize` / `fontFamily` / `fontWeight` / `maxFontSizeMultiplier
   `createInlineText(role, displayName, renderChildren?)` in `typography/InlineText.tsx`.
 - **Lengths in em**: `text.em(k)` is Radix `k em` on this text's own size, rounded (Kbd min-width / padding,
   Code padding, Blockquote border, a group row's gap). `text.radius(k, offsetPx?)` is
-  `(offsetPx + k em) × radius-factor`, not rounded (Kbd `0.35em`, Code `0.5px + 0.2em`). Never multiply
-  `contextFontSize` by hand.
-- Color is resolved by the caller and passed in (`undefined` = inherit). `standaloneColor` applies only when
-  the text is not nested and has no `color` (Text's gray-12, ghost Code's body color).
+  `(offsetPx + k em) × radius-factor`, not rounded (Kbd `0.35em`, Code `0.5px + 0.2em`). Both are computed by
+  the pure `resolveTextStyle`. `letterSpacingEm` replaces the size's letter spacing (tab / segmented labels).
+  Never multiply `contextFontSize` by hand.
+- **Color**: pass the recipe's `text` as `color`. `undefined` means the text has no color of its own: nested it
+  inherits, standalone it renders as body text (`body` recipe, gray-12) — the `text` recipe returns `undefined`
+  without a `color` prop, ghost Code without one too. `standaloneColor` overrides that fallback (rarely needed).
 - Test new rules in `__tests__/textStyle.test.ts` (pure tables), not through renders.
 
 ### Component structure (consistent across all components)
@@ -305,7 +317,7 @@ ThemeControls (dev tool) hardcodes `maxFontSizeMultiplier={1}` on all internal t
 
 ## Press scale animation
 
-All interactive components (Button, IconButton, Checkbox, Switch, Radio, CheckboxGroup / RadioGroup rows, Card, CheckboxCards, RadioCards) have a subtle scale-down animation on press. Inside the library use `useInteraction` (which wraps `usePressScale`); `usePressScale` + `AnimatedPressable` remain public for consumers:
+All interactive components (Button, IconButton, Checkbox, Switch, Radio, CheckboxGroup / RadioGroup rows, Card, CheckboxCards, RadioCards) have a subtle scale-down animation on press. Inside the library use `useControl` (`control.scaleStyle`, on `useInteraction` / `usePressScale`); `usePressScale` + `AnimatedPressable` remain public for consumers:
 
 ```tsx
 import { usePressScale, AnimatedPressable } from '../../hooks/usePressScale'
@@ -328,7 +340,7 @@ const { scaleStyle, handlePressIn, handlePressOut } = usePressScale(!disabled)
 - Additive: works alongside Radix's pressed background color changes (not a replacement)
 - Doesn't start when the component is disabled; always springs back to 1 — on release and as soon as it becomes disabled (e.g. `loading` set mid-press)
 
-Components with pressed color changes (Button, IconButton, Card) read `pressed` from `useInteraction`, then pick the pressed bg / ring / opacity from their Variant recipe outside JSX. The style is a static array, not a callback.
+Components with pressed color changes (Button, IconButton, Card) pass `control.pressed` to their Variant recipe, which returns the pressed bg / ring / opacity; `paintSurface` draws them. The style is a static array, not a callback.
 
 ## Differences from Radix web
 
@@ -358,7 +370,7 @@ Every component change gets its playground section checked in the iOS Simulator 
 
 ## Testing
 
-`yarn test` (Jest + `@testing-library/react-native`, Reanimated 4 via `setUpTests()` and the worklets Babel plugin). Tests live in `src/__tests__/`; render inside a theme with `renderWithTheme` from `__tests__/helpers/render`. `contrast.test.ts` checks WCAG ratios of every text-on-fill pair the Variant recipes produce.
+`yarn test` (Jest + `@testing-library/react-native`, Reanimated 4 via `setUpTests()` and the worklets Babel plugin). Tests live in `src/__tests__/`; render inside a theme with `renderWithTheme` from `__tests__/helpers/render`. Read what a component drew through `__tests__/helpers/queries` (`flat`, `focusRings`, `cardRings`, `hasBevel`), not by guessing parts from their style (`borderWidth === 2`). `contrast.test.ts` checks WCAG ratios of every text-on-fill pair the Variant recipes produce.
 
 ## TypeScript rules
 

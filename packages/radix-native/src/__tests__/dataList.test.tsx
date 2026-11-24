@@ -1,13 +1,10 @@
 import React from 'react'
-import { StyleSheet, View } from 'react-native'
-import type { StyleProp, ViewStyle, TextStyle } from 'react-native'
+import { View } from 'react-native'
 import { act, fireEvent, screen } from '@testing-library/react-native'
 import { renderWithTheme } from './helpers/render'
+import { flat } from './helpers/queries'
 import { DataList } from '../components/display/DataList'
 import { Code } from '../components/typography/Code'
-
-const flat = (node: { props: { style?: unknown } }): ViewStyle & TextStyle =>
-  StyleSheet.flatten(node.props.style as StyleProp<ViewStyle>) ?? {}
 
 type Node = { props: { style?: unknown; onLayout?: unknown }; children: unknown[] }
 const kids = (n: Node) => n.children.filter((c): c is Node => typeof c === 'object')

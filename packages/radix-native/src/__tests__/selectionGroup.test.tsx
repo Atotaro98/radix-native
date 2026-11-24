@@ -10,6 +10,7 @@ import { fireEvent, screen } from '@testing-library/react-native'
 import { CheckboxGroup, RadioGroup, CheckboxCards, RadioCards } from '../index'
 import { renderWithTheme } from './helpers/render'
 import { crimson, indigo } from '../tokens/colors'
+import { cardRings, focusRings } from './helpers/queries'
 
 const families = [
   { name: 'CheckboxGroup', Group: CheckboxGroup, role: 'checkbox', multiple: true },
@@ -37,13 +38,7 @@ describe.each(families)('$name', ({ name, Group: G, role, multiple }) => {
   ] as const)('focus ring (Radix --focus-8): %s', (_label, color, expected) => {
     renderWithTheme(<Group color={color}>{options}</Group>)
     fireEvent(item('Alpha'), 'focus')
-    const styleOf = (node: { props: { style?: unknown } }) =>
-      StyleSheet.flatten(node.props.style as StyleProp<ViewStyle>)
-    const rings = screen.UNSAFE_root.findAll(
-      (node: { type: unknown; props: { style?: unknown } }) => typeof node.type === 'string'
-        && styleOf(node)?.position === 'absolute' && styleOf(node)?.borderWidth === 2,
-    )
-    expect(rings.map((node: { props: { style?: unknown } }) => styleOf(node)?.borderColor)).toEqual([expected])
+    expect(focusRings(screen.UNSAFE_root).map((ring) => ring.props.color)).toEqual([expected])
   })
   const checked = (label: string) => item(label).props.accessibilityState.checked
 
@@ -205,7 +200,7 @@ describe('Selection card checked ring', () => {
       left: border + Number(s.paddingLeft ?? 0),
     }
   }
-  const ringOf = (card: Host) => card.findAll((n) => n !== card && typeof n.type === 'string' && flat(n).borderWidth === 2)
+  const ringWidths = (card: Host) => cardRings(card).map((r) => r.width)
 
   // Radix draws the checked ring as an `::after` outline, so it takes no layout
   // space; ThemeControls passes its own padding through `style`.
@@ -222,11 +217,10 @@ describe('Selection card checked ring', () => {
     const a = screen.getByRole('radio', { name: 'A' }) as unknown as Host
     const b = screen.getByRole('radio', { name: 'B' }) as unknown as Host
     expect(contentOffset(b)).toEqual(contentOffset(a))
-    expect(ringOf(a)).toHaveLength(0)
-    expect(ringOf(b)).toHaveLength(1)
-    // base-card.css: no layout border, the ring is drawn over the card's outer 2px.
+    expect(ringWidths(a)).toEqual([1])
+    expect(ringWidths(b)).toEqual([2])
+    // base-card.css: no layout border, the ring is drawn over the card's outer 2px (CardRing).
     expect(flat(b).borderWidth).toBeUndefined()
-    expect(flat(ringOf(b)[0])).toMatchObject({ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderWidth: 2 })
   })
 
   it('CheckboxCards: checked and unchecked items have the same content offset', () => {

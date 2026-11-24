@@ -59,10 +59,18 @@ A group of components that Radix colors with the same rules: buttons (Button, Ic
 _Avoid_: color family, component group
 
 **Variant recipe**:
-How a Variant family turns each Variant and state (high contrast, checked, disabled, pressed, focused) into the colors of its parts (background, text, border, indicator, track, thumb, placeholder), and into their drop shadows and classic bevel, taken from Radix. Where Radix is inconsistent between families, each recipe keeps Radix's value rather than unifying.
+How a Variant family turns each Variant and state (high contrast, checked, disabled, pressed, focused) into the colors of its parts (background, text, border, ring, indicator, thumb, placeholder), and into their drop shadows and classic bevel, taken from Radix. A recipe takes exactly the state its family decides and returns its parts for that state already chosen; components never pick between a resting and a pressed color. Where Radix is inconsistent between families, each recipe keeps Radix's value rather than unifying.
 _Avoid_: generic palette, color scheme, theme colors
 
+**Surface**:
+The drawn box of a part: its fill, a 1px border, a ring drawn over its content (Radix's inset box-shadow rings), its drop shadow, the classic bevel and an opacity. Every recipe names these parts the same way, and one module draws them for every component.
+_Avoid_: background (for the whole box), container, shell
+
 ## Controls
+
+**Control**:
+Anything the user presses that radix-native draws: buttons, a pressable Card, a Toggle surface, tab triggers, SegmentedControl items, the Select trigger, menu and Select rows. Every Control shares one shell: pressed and focus state, the press scale, the name screen readers read from its content, the minimum touch target, the disabled gate, the focus ring and the order consumer props merge in. Focus never depends on the press scale.
+_Avoid_: pressable, touchable, interactive (on its own)
 
 **Control label**:
 The single row of content inside a Button, IconButton, Badge, tab trigger, SegmentedControl item or menu / Select item: runs of text and icons. Adjacent text reads as one piece of Compact text in the control's Text style, kept to one line; icons take the control's text color unless they set their own. While a button is loading, its Control label stays readable by screen readers even though it is hidden on screen.

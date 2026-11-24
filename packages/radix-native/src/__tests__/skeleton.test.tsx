@@ -1,17 +1,16 @@
 import React from 'react'
-import { StyleSheet, View } from 'react-native'
-import type { StyleProp, ViewStyle, TextStyle } from 'react-native'
+import { View } from 'react-native'
 import { screen } from '@testing-library/react-native'
 import { renderWithTheme } from './helpers/render'
+import { flat } from './helpers/queries'
 import { Skeleton } from '../components/feedback/Skeleton'
 import { Button } from '../components/actions/Button'
 import { Checkbox } from '../components/actions/Checkbox'
+import { Switch } from '../components/actions/Switch'
 import { Box } from '../components/layout/Box'
 import { Text } from '../components/typography/Text'
 
 type Node = { type: unknown; props: { style?: unknown; children?: unknown }; children: unknown[] }
-const flat = (node: { props: { style?: unknown } }): ViewStyle & TextStyle =>
-  StyleSheet.flatten(node.props.style as StyleProp<ViewStyle>) ?? {}
 const root = () => screen.getByTestId('s', { includeHiddenElements: true }) as unknown as Node
 /** The pulsing background: the first child of the skeleton. */
 const pulse = () => flat(root().children[0] as Node)
@@ -48,6 +47,11 @@ describe('Skeleton (skeleton.css)', () => {
     // base-checkbox: radius stays a small box even with radius="full"
     expect(pulse().borderRadius).toBeLessThan(10)
     expect(pulse().borderRadius).not.toBe(3)
+  })
+
+  it("keeps a wrapped Switch's track radius, from its own radius prop", () => {
+    renderWithTheme(<Skeleton testID="s"><Switch radius="full" /></Skeleton>, { radius: 'none' })
+    expect(pulse().borderRadius).toBeGreaterThan(100)
   })
 
   it('a Box without radius around a Button falls back to radius-1 (outermost wins)', () => {

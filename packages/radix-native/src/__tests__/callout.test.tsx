@@ -1,14 +1,11 @@
 import React from 'react'
-import { StyleSheet, View } from 'react-native'
-import type { StyleProp, ViewStyle, TextStyle } from 'react-native'
+import { View } from 'react-native'
 import { screen } from '@testing-library/react-native'
 import { renderWithTheme } from './helpers/render'
+import { flat, cardRings } from './helpers/queries'
 import { Callout } from '../components/display/Callout'
 
 type Node = { type: unknown; props: { style?: unknown }; children: unknown[]; findAll: (m: (n: Node) => boolean) => Node[] }
-const flat = (node: { props: { style?: unknown } }): ViewStyle & TextStyle =>
-  StyleSheet.flatten(node.props.style as StyleProp<ViewStyle>) ?? {}
-
 function Icon(props: { color?: string }) {
   return <View testID="icon" style={{ width: 15, height: 15, backgroundColor: props.color }} />
 }
@@ -49,14 +46,13 @@ describe('Callout (callout.css)', () => {
   })
 
   it('soft has no ring; surface and outline draw one over the content', () => {
-    const ring = (root: Node) => root.findAll((n) => typeof n.type === 'string' && flat(n).borderWidth === 1)
     const { unmount } = renderWithTheme(<Example variant="soft" />)
-    expect(ring(screen.getByTestId('c') as unknown as Node)).toHaveLength(0)
+    expect(cardRings(screen.getByTestId('c'))).toHaveLength(0)
     unmount()
     renderWithTheme(<Example variant="outline" />)
-    const root = screen.getByTestId('c') as unknown as Node
+    const root = screen.getByTestId('c')
     expect(flat(root).borderWidth).toBeUndefined()
-    expect(ring(root)).toHaveLength(1)
+    expect(cardRings(root)).toHaveLength(1)
   })
 
   it('puts icons in the left column wherever they appear', () => {

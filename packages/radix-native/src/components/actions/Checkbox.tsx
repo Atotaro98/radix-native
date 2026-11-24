@@ -3,18 +3,19 @@ import { View } from 'react-native'
 import type { StyleProp, ViewStyle } from 'react-native'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
-import { ClassicOverlay } from '../internal/ClassicOverlay'
 import { BaseToggle, type CheckedState } from '../internal/BaseToggle'
-import { useToggleGeometry, type ToggleKind } from '../internal/ToggleSurface'
+import { defineToggle } from '../internal/ToggleSurface'
 import { resolveMetrics, type MetricsInput } from '../../utils/metrics'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { NativePressableProps } from '../../types/nativeProps'
 import type { MarginProps } from '../../types/marginProps'
+import type { SelectionVariant } from '../../utils/variantPalette'
+import { paintSurface } from '../internal/surface'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type CheckboxSize = 1 | 2 | 3
-export type CheckboxVariant = 'classic' | 'surface' | 'soft'
+export type CheckboxVariant = SelectionVariant
 export type { CheckedState }
 
 export interface CheckboxProps extends NativePressableProps, MarginProps {
@@ -62,6 +63,8 @@ function checkboxGeometry({ size }: { size: CheckboxSize }, theme: MetricsInput)
   }
 }
 
+type CheckboxGeometry = ReturnType<typeof checkboxGeometry>
+
 // ─── Indicator ────────────────────────────────────────────────────────────────
 
 export interface CheckboxIndicatorProps {
@@ -74,29 +77,26 @@ export interface CheckboxIndicatorProps {
 }
 
 /** Internal: the box and its check / dash, drawn from the checked state alone. */
-export function CheckboxIndicator({ size, variant, color, highContrast, checked, disabled }: CheckboxIndicatorProps) {
-  const { width: boxSize, indicatorSize, borderRadius } = useToggleGeometry(checkboxGeometry, { size })
+function CheckboxIndicator({ variant, color, highContrast, checked, disabled, geometry }: CheckboxIndicatorProps & { geometry: CheckboxGeometry }) {
+  const { width: boxSize, indicatorSize, borderRadius } = geometry
   const isIndeterminate = checked === 'indeterminate'
   const isActive = checked !== false
   const colors = useVariantColors('checkbox', { variant, color, highContrast, checked: isActive, disabled })
 
+  const surface = paintSurface(colors, borderRadius)
   const boxStyle = useMemo<ViewStyle>(() => ({
     width: boxSize,
     height: boxSize,
-    borderRadius,
-    backgroundColor: colors.bg,
-    borderWidth: colors.border ? 1 : undefined,
-    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
-  }), [boxSize, borderRadius, colors])
+  }), [boxSize])
 
   const strokeWidth = Math.max(2, Math.round(indicatorSize * 0.18))
   const indicatorColor = colors.indicator
 
   return (
-    <View style={boxStyle}>
-      {colors.bevel && <ClassicOverlay borderRadius={borderRadius} />}
+    <View style={[boxStyle, surface.style]}>
+      {surface.under}
       {isActive && (
         isIndeterminate ? (
           <View style={{
@@ -122,10 +122,7 @@ export function CheckboxIndicator({ size, variant, color, highContrast, checked,
 }
 
 /** Internal: the Checkbox's Indicator and geometry, for the Toggle surface. */
-export const CheckboxToggle: ToggleKind<CheckboxIndicatorProps> = {
-  geometry: checkboxGeometry,
-  Indicator: CheckboxIndicator,
-}
+export const CheckboxToggle = defineToggle<CheckboxIndicatorProps, CheckboxGeometry>(checkboxGeometry, CheckboxIndicator)
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -147,7 +144,6 @@ export function Checkbox({
       {...rest}
       defaultChecked={defaultChecked}
       disabled={disabled}
-      color={color}
       kind={CheckboxToggle}
       indicator={{ size, variant, color, highContrast, disabled }}
       margins={margins}

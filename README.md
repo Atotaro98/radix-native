@@ -316,7 +316,7 @@ radix-native/
 │       └── src/
 │           ├── tokens/        # colors (31 scales), spacing, typography, radius
 │           ├── theme/         # Theme, ThemeRoot, ThemeImpl, createTheme
-│           ├── hooks/         # useThemeContext, useColor, useMargins, useControllableState, useInteraction
+│           ├── hooks/         # useThemeContext, useColor, useMargins, useControllableState
 │           ├── utils/         # resolveColor, metrics, textStyle, hitSlop, alpha, classicEffect
 │           ├── components/    # layout, typography, display, actions, feedback, forms (+ internal)
 │           └── __tests__/     # Jest + Testing Library

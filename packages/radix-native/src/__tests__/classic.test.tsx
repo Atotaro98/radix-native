@@ -3,13 +3,10 @@
  * Themes CSS: the recipes decide shadow and bevel, these check the wiring.
  */
 import React from 'react'
-import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native'
 import { act, fireEvent, screen } from '@testing-library/react-native'
 import { Button, Card, CheckboxCards, Text } from '../index'
 import { renderWithTheme } from './helpers/render'
-
-const flat = (node: { props: { style?: unknown } }): ViewStyle =>
-  StyleSheet.flatten(node.props.style as StyleProp<ViewStyle>) ?? {}
+import { flat } from './helpers/queries'
 
 describe('classic look', () => {
   it('a classic Button is lifted at rest', () => {

@@ -13,9 +13,10 @@ import type { MarginProps } from '../../types/marginProps'
 import type { AccentColor } from '../../tokens/colors/types'
 import { FocusRing } from './FocusRing'
 import { useSkeletonRadius } from '../feedback/SkeletonContext'
+import type { TextInputVariant } from '../../utils/variantPalette'
 
 export type BaseTextInputSize = 1 | 2 | 3
-export type BaseTextInputVariant = 'classic' | 'surface' | 'soft'
+export type BaseTextInputVariant = TextInputVariant
 
 export interface BaseTextInputProps extends Omit<TextInputProps, 'style' | 'multiline'>, MarginProps {
   /** Input size (1–3). Default: 2. */

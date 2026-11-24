@@ -1,13 +1,11 @@
 import React, { createContext, useContext, useMemo } from 'react'
 import { Pressable, ScrollView, View } from 'react-native'
 import type { AccessibilityRole, GestureResponderEvent, StyleProp, ViewStyle } from 'react-native'
-import { useInteraction } from '../../hooks/useInteraction'
 import { useMargins } from '../../hooks/useMargins'
 import { useMetrics } from '../../hooks/useMetrics'
 import { useVariantColors } from '../../hooks/useVariantColors'
-import { useAccessibleControl } from './accessibleControl'
+import { useControl } from './control'
 import { ControlLabel, WeightReserve } from './ControlLabel'
-import { FocusRing } from './FocusRing'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { RadiusLevel } from '../../tokens/radius'
 import type { SpaceToken } from '../../tokens/spacing'
@@ -111,11 +109,18 @@ export function BaseTabTrigger({ active, disabled, onPress, role, style, childre
   const list = useContext(TabListContext)
   const metrics = useMetrics()
   const cfg = SIZES[list.size]
-  const colors = useVariantColors('tabList', { color: list.color, highContrast: list.highContrast, checked: active })
-  const focus = useVariantColors('focusRing', { color: list.color })
-  const a11y = useAccessibleControl(children, rest.accessibilityLabel)
-  const { focused, handlers } = useInteraction({ enabled: false })
+  const colors = useVariantColors('tabList', { color: list.color, highContrast: list.highContrast, active })
   const innerRadius = metrics.radius(cfg.innerRadius)
+  // No press scale (plain Pressable); the focus outline sits on the inner, offset −2px
+  const control = useControl({
+    props: rest,
+    children,
+    role,
+    onPress,
+    disabled: !!disabled,
+    state: { selected: active },
+    focusRing: { color: list.color, borderRadius: innerRadius },
+  })
 
   // --tab-active-letter-spacing −0.01em / --tab-inactive-letter-spacing 0
   const label = (weight: 'medium' | 'regular') => (
@@ -134,13 +139,7 @@ export function BaseTabTrigger({ active, disabled, onPress, role, style, childre
 
   return (
     <Pressable
-      accessibilityRole={role}
-      {...rest}
-      {...handlers}
-      onPress={onPress}
-      disabled={disabled}
-      accessibilityLabel={a11y.accessibilityLabel}
-      accessibilityState={{ selected: active, disabled: !!disabled }}
+      {...control.pressableProps}
       style={[{
         height: metrics.space(cfg.height),
         paddingHorizontal: metrics.space(cfg.paddingX),
@@ -150,11 +149,10 @@ export function BaseTabTrigger({ active, disabled, onPress, role, style, childre
       }, style as StyleProp<ViewStyle>]}
     >
       {/* .rt-BaseTabListTriggerInnerHidden: the hidden copies reserve the width */}
-      {a11y.wrap(
+      {control.wrap(
         <WeightReserve label={label} style={inner}>
           {label(active ? 'medium' : 'regular')}
-          {/* focus-visible outline on the inner, offset −2px */}
-          <FocusRing visible={focused} color={focus.ring} borderRadius={innerRadius} />
+          {control.focusRing}
         </WeightReserve>,
       )}
       {active ? (

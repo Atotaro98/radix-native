@@ -34,8 +34,8 @@ export interface ControlLabelProps {
  * - Elements (icons) receive `color` only when they don't set it themselves.
  */
 export function ControlLabel({ size, weight, letterSpacingEm, truncate = true, color, maxFontSizeMultiplier, children }: ControlLabelProps) {
-  const text = useTextStyle({ size, weight, color, compact: true, truncate, maxFontSizeMultiplier })
-  const style = letterSpacingEm === undefined ? text.style : [text.style, { letterSpacing: letterSpacingEm * text.contextFontSize }]
+  const text = useTextStyle({ size, weight, letterSpacingEm, color, compact: true, truncate, maxFontSizeMultiplier })
+
 
   const nodes: React.ReactNode[] = []
   let textRun = ''
@@ -43,7 +43,7 @@ export function ControlLabel({ size, weight, letterSpacingEm, truncate = true, c
   const flushText = () => {
     if (textRun === '') return
     nodes.push(
-      <RNText key={`text-${nodes.length}`} style={style} {...text.textProps}>
+      <RNText key={`text-${nodes.length}`} style={text.style} {...text.textProps}>
         {textRun}
       </RNText>,
     )

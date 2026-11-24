@@ -1,12 +1,8 @@
 import React from 'react'
-import { StyleSheet } from 'react-native'
-import type { StyleProp, ViewStyle, TextStyle } from 'react-native'
 import { act, fireEvent, screen } from '@testing-library/react-native'
 import { renderWithTheme } from './helpers/render'
+import { flat } from './helpers/queries'
 import { SegmentedControl } from '../components/actions/SegmentedControl'
-
-const flat = (node: { props: { style?: unknown } }): ViewStyle & TextStyle =>
-  StyleSheet.flatten(node.props.style as StyleProp<ViewStyle>) ?? {}
 
 type Node = { type: unknown; props: { onLayout?: unknown; style?: unknown }; findAll: (m: (n: Node) => boolean) => Node[] }
 

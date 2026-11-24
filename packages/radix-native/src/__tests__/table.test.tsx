@@ -1,15 +1,11 @@
 import React from 'react'
-import { StyleSheet } from 'react-native'
-import type { StyleProp, ViewStyle, TextStyle } from 'react-native'
 import { act, fireEvent, screen } from '@testing-library/react-native'
 import { renderWithTheme } from './helpers/render'
+import { flat } from './helpers/queries'
 import { Table } from '../components/display/Table'
 import { resolveColumnWidths, resolveLength } from '../utils/tableLayout'
 
 type Node = { type: unknown; props: { style?: unknown; onLayout?: unknown; testID?: string }; parent: Node | null; findAll: (m: (n: Node) => boolean) => Node[] }
-const flat = (node: { props: { style?: unknown } }): ViewStyle & TextStyle =>
-  StyleSheet.flatten(node.props.style as StyleProp<ViewStyle>) ?? {}
-
 describe('table layout', () => {
   it('resolves numbers, px and % lengths', () => {
     expect([resolveLength(120, 400), resolveLength('120px', 400), resolveLength('25%', 400), resolveLength(undefined, 400)]).toEqual([120, 120, 100, undefined])

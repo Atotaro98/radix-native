@@ -4,17 +4,18 @@ import type { ViewStyle, StyleProp } from 'react-native'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { BaseToggle } from '../internal/BaseToggle'
-import { useToggleGeometry, type ToggleKind } from '../internal/ToggleSurface'
+import { defineToggle, type ToggleGeometry } from '../internal/ToggleSurface'
 import { resolveMetrics, type MetricsInput } from '../../utils/metrics'
 import type { AccentColor } from '../../tokens/colors/types'
-import { ClassicOverlay } from '../internal/ClassicOverlay'
 import type { NativePressableProps } from '../../types/nativeProps'
 import type { MarginProps } from '../../types/marginProps'
+import type { SelectionVariant } from '../../utils/variantPalette'
+import { paintSurface } from '../internal/surface'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type RadioSize = 1 | 2 | 3
-export type RadioVariant = 'classic' | 'surface' | 'soft'
+export type RadioVariant = SelectionVariant
 
 export interface RadioProps extends NativePressableProps, MarginProps {
   /** Radio size (1–3). Default: 2. */
@@ -62,25 +63,22 @@ export interface RadioIndicatorProps {
 }
 
 /** Internal: the ring and its dot, drawn from the checked state alone. */
-export function RadioIndicator({ size, variant, color, highContrast, checked, disabled }: RadioIndicatorProps) {
-  const { width: radioSize } = useToggleGeometry(radioGeometry, { size })
+function RadioIndicator({ variant, color, highContrast, checked, disabled, geometry }: RadioIndicatorProps & { geometry: ToggleGeometry }) {
+  const radioSize = geometry.width
   const dotSize = Math.round(radioSize * DOT_SCALE)
   const colors = useVariantColors('radio', { variant, color, highContrast, checked, disabled })
 
+  const surface = paintSurface(colors, radioSize / 2)
   const radioStyle = useMemo<ViewStyle>(() => ({
     width: radioSize,
     height: radioSize,
-    borderRadius: radioSize / 2,
-    backgroundColor: colors.bg,
-    borderWidth: colors.border ? 1 : undefined,
-    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
-  }), [radioSize, colors])
+  }), [radioSize])
 
   return (
-    <View style={radioStyle}>
-      {colors.bevel && <ClassicOverlay borderRadius={radioSize / 2} />}
+    <View style={[radioStyle, surface.style]}>
+      {surface.under}
       {colors.indicator && (
         <View
           style={{
@@ -96,10 +94,7 @@ export function RadioIndicator({ size, variant, color, highContrast, checked, di
 }
 
 /** Internal: the Radio's Indicator and geometry, for the Toggle surface. */
-export const RadioToggle: ToggleKind<RadioIndicatorProps> = {
-  geometry: radioGeometry,
-  Indicator: RadioIndicator,
-}
+export const RadioToggle = defineToggle<RadioIndicatorProps, ToggleGeometry>(radioGeometry, RadioIndicator)
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -121,7 +116,6 @@ export function Radio({
       {...rest}
       defaultChecked={defaultChecked}
       disabled={disabled}
-      color={color}
       kind={RadioToggle}
       indicator={{ size, variant, color, highContrast, disabled }}
       margins={margins}

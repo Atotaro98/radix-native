@@ -1,27 +1,25 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useMemo } from 'react'
 import { View } from 'react-native'
-import type { StyleProp, ViewStyle, GestureResponderEvent } from 'react-native'
+import type { StyleProp, ViewStyle } from 'react-native'
 import { useMetrics } from '../../hooks/useMetrics'
 import { useMargins } from '../../hooks/useMargins'
-import { useInteraction } from '../../hooks/useInteraction'
 import { AnimatedPressable } from '../../hooks/usePressScale'
 import { useVariantColors } from '../../hooks/useVariantColors'
-import { getMinHitSlop, MIN_TOUCH_TARGET } from '../../utils/hitSlop'
-import { shadowStyle } from '../../utils/shadow'
+import { MIN_TOUCH_TARGET } from '../../utils/hitSlop'
 import type { RadiusToken, RadiusLevel } from '../../tokens/radius'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { NativePressableProps } from '../../types/nativeProps'
 import type { MarginProps } from '../../types/marginProps'
 import { Spinner, type SpinnerSize } from '../feedback/Spinner'
-import { ClassicOverlay } from './ClassicOverlay'
+import { paintSurface } from './surface'
 import { ControlLabel } from './ControlLabel'
-import { useAccessibleControl } from './accessibleControl'
+import { useControl } from './control'
 import { isDev } from '../../utils/env'
-import { FocusRing } from './FocusRing'
 import { useSkeletonRadius } from '../feedback/SkeletonContext'
+import type { ButtonVariant } from '../../utils/variantPalette'
 
 export type BaseButtonSize = 1 | 2 | 3 | 4
-export type BaseButtonVariant = 'classic' | 'solid' | 'soft' | 'surface' | 'outline' | 'ghost'
+export type BaseButtonVariant = ButtonVariant
 
 export interface BaseButtonProps extends NativePressableProps, MarginProps {
   /** Button size (1–4). Default: 2. */
@@ -82,40 +80,34 @@ export function BaseButton({
   m, mx, my, mt, mr, mb, ml,
   style,
   onPress,
-  onPressIn,
-  onPressOut,
-  onFocus,
-  onBlur,
-  accessibilityState,
-  hitSlop,
   ...rest
 }: InternalProps) {
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
 
   const isDisabled = disabled || loading
-  const { pressed, focused, scaleStyle, handlers } = useInteraction({
-    enabled: !isDisabled,
-    onPressIn,
-    onPressOut,
-    onFocus,
-    onBlur,
-  })
-
   const metrics = useMetrics({ radius: radiusProp })
   const height = metrics.px(SIZE_HEIGHT[size])
   const gap = metrics.px(SIZE_GAP[size])
   const borderRadius = metrics.radius(SIZE_RADIUS_LEVEL[size], 'pill')
   useSkeletonRadius(borderRadius)
 
-  const colors = useVariantColors('button', { variant, color, highContrast, disabled: isDisabled, pressed })
-  const focusColor = useVariantColors('focusRing', { color }).ring
+  // The name a browser reads from the content (text, AccessibleIcon labels, VisuallyHidden text).
+  // Passed explicitly when part of it is hidden or the label is invisible (loading): Android
+  // does not read hidden content into a button's name by itself.
+  const control = useControl({
+    props: rest,
+    children,
+    role: 'button',
+    onPress,
+    disabled: isDisabled,
+    state: { busy: loading },
+    touchTarget: { width: iconOnly ? height : MIN_TOUCH_TARGET, height },
+    focusRing: { color, borderRadius },
+    forceName: loading,
+  })
+  const { pressed } = control
 
-  const handlePress = useCallback(
-    (e: GestureResponderEvent) => {
-      if (!isDisabled) onPress?.(e)
-    },
-    [isDisabled, onPress],
-  )
+  const colors = useVariantColors('button', { variant, color, highContrast, disabled: isDisabled, pressed })
 
   const containerStyle = useMemo<ViewStyle>(() => ({
     flexDirection: 'row',
@@ -125,24 +117,13 @@ export function BaseButton({
     ...(iconOnly
       ? { width: height, height }
       : { minHeight: height, paddingHorizontal: metrics.px(SIZE_PADDING_X[size]), gap }),
-    borderRadius,
-    borderWidth: colors.border ? 1 : undefined,
-    borderColor: colors.border,
     ...margins,
-  }), [iconOnly, height, size, metrics, gap, borderRadius, colors.border, margins])
+  }), [iconOnly, height, size, metrics, gap, margins])
 
-  const stateStyle: ViewStyle = {
-    backgroundColor: pressed ? colors.pressedBg : colors.bg,
-    opacity: pressed ? colors.pressedOpacity : undefined,
-  }
+  // The recipe already picked the pressed background, opacity and lift
+  const surface = paintSurface(colors, borderRadius)
 
-  const classicStyle = shadowStyle(colors.shadow)
-
-  // The name a browser reads from the content (text, AccessibleIcon labels, VisuallyHidden text).
-  // Passed explicitly when part of it is hidden or the label is invisible (loading): Android
-  // does not read hidden content into a button's name by itself.
-  const a11y = useAccessibleControl(children, rest.accessibilityLabel, { forceName: loading })
-  const unlabeled = iconOnly && !a11y.accessibilityLabel && a11y.name === ''
+  const unlabeled = iconOnly && !control.pressableProps.accessibilityLabel && control.name === ''
   React.useEffect(() => {
     if (isDev && unlabeled) {
       console.warn('[radix-native] IconButton has no `accessibilityLabel`; screen readers will announce it as an unlabeled button.')
@@ -163,18 +144,11 @@ export function BaseButton({
 
   return (
     <AnimatedPressable
-      accessibilityRole="button"
-      hitSlop={hitSlop ?? getMinHitSlop(iconOnly ? height : MIN_TOUCH_TARGET, height)}
-      {...rest}
-      {...handlers}
-      onPress={handlePress}
-      disabled={isDisabled}
-      accessibilityLabel={a11y.accessibilityLabel}
-      accessibilityState={{ ...accessibilityState, disabled: isDisabled, busy: loading }}
-      style={[scaleStyle, containerStyle, stateStyle, classicStyle, style]}
+      {...control.pressableProps}
+      style={[control.scaleStyle, containerStyle, surface.style, style]}
     >
-      {colors.bevel && <ClassicOverlay />}
-      {a11y.wrap(loading ? (
+      {surface.under}
+      {control.wrap(loading ? (
           <>
             {/* Radix: the label stays in place (keeping the size) and readable by
                 screen readers, but invisible; the spinner sits on top. */}
@@ -186,7 +160,7 @@ export function BaseButton({
         ) : (
           label
         ))}
-      <FocusRing visible={focused} color={focusColor} borderRadius={borderRadius} />
+      {control.focusRing}
     </AnimatedPressable>
   )
 }

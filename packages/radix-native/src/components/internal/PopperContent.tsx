@@ -3,9 +3,8 @@ import { ScrollView, View } from 'react-native'
 import type { AccessibilityRole, DimensionValue, StyleProp, ViewStyle } from 'react-native'
 import { useMetrics } from '../../hooks/useMetrics'
 import { useVariantColors } from '../../hooks/useVariantColors'
-import { shadowStyle } from '../../utils/shadow'
 import { AnchoredContent, type AnchoredContentProps } from './AnchoredContent'
-import { CardRing } from './CardRing'
+import { paintSurface } from './surface'
 import { InsetContext, type InsetValues } from '../layout/InsetContext'
 import type { RadiusLevel } from '../../tokens/radius'
 import type { SpaceToken } from '../../tokens/spacing'
@@ -58,6 +57,7 @@ export function PopperContent({
   width, minWidth, maxWidth, height, minHeight, maxHeight, style, children, ...anchored
 }: PopperContentProps) {
   const colors = useVariantColors('popperPanel', {})
+  const panel = paintSurface(colors, borderRadius)
   const insetValues = useMemo<InsetValues>(() => ({
     padding: { top: padding, right: padding, bottom: padding, left: padding }, borderWidth: 0, borderRadius: 0,
   }), [padding])
@@ -72,10 +72,8 @@ export function PopperContent({
             {
               width, minWidth, maxWidth, height, minHeight,
               maxHeight: maxHeight ?? placement?.availableHeight,
-              borderRadius,
-              backgroundColor: colors.panel,
             },
-            shadowStyle(colors.shadow),
+            panel.style,
             style,
           ]}
         >
@@ -83,7 +81,7 @@ export function PopperContent({
           <ScrollView bounces={false} style={{ borderRadius, flexGrow: 0 }} contentContainerStyle={{ padding }}>
             {inset ? <InsetContext.Provider value={insetValues}>{children}</InsetContext.Provider> : children}
           </ScrollView>
-          <CardRing color={colors.ring} borderRadius={borderRadius} />
+          {panel.over}
         </View>
       )}
     </AnchoredContent>

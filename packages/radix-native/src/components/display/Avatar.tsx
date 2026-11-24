@@ -11,11 +11,12 @@ import type { FontSizeToken } from '../../tokens/typography'
 import type { MarginProps } from '../../types/marginProps'
 import type { NativeViewProps } from '../../types/nativeProps'
 import { useSkeletonRadius } from '../feedback/SkeletonContext'
+import type { AvatarVariant } from '../../utils/variantPalette'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type AvatarSize = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
-export type AvatarVariant = 'solid' | 'soft'
+export type { AvatarVariant }
 
 type ImageStatus = 'idle' | 'loaded' | 'error'
 
