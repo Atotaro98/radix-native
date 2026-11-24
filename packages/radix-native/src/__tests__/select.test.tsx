@@ -1,31 +1,11 @@
 import React from 'react'
 import { Text } from 'react-native'
-import { act, fireEvent, screen } from '@testing-library/react-native'
+import { fireEvent, screen } from '@testing-library/react-native'
 import { renderWithTheme } from './helpers/render'
 import { flat } from './helpers/queries'
+import { layout, measureAs } from './helpers/overlay'
 import { Select } from '../components/forms/Select'
-import { placeItemAligned } from '../utils/selectLayout'
 import { AccessibleIcon } from '../components/utilities/AccessibleIcon'
-
-describe('item-aligned placement (Radix SelectItemAlignedPosition)', () => {
-  const base = {
-    trigger: { x: 40, y: 400, width: 160, height: 32 },
-    triggerPaddingX: 12,
-    content: { width: 200, height: 160 },
-    boundary: { x: 10, y: 10, width: 380, height: 780 },
-    contentPadding: 8,
-    itemPaddingLeft: 24,
-    itemHeight: 32,
-    offsetBefore: 0,
-  }
-  it('lines the selected item text up with the trigger value text', () => {
-    // x: 40 + 12 − 8 − 24; y: centre of item 2 (8 + 64 + 16) on the trigger centre (416)
-    expect(placeItemAligned({ ...base, selectedIndex: 2 })).toEqual({ x: 20, y: 416 - 88 })
-  })
-  it('stays inside the boundary', () => {
-    expect(placeItemAligned({ ...base, trigger: { ...base.trigger, x: 0, y: 20 }, selectedIndex: 3 })).toEqual({ x: 10, y: 10 })
-  })
-})
 
 /** Items inside a component of their own, like Radix's playground SelectItemsDemo. */
 function Fruits() {
@@ -96,9 +76,7 @@ describe('Select (select.css)', () => {
 
   it('stays hidden until the trigger has been measured', () => {
     renderWithTheme(<Example defaultOpen position="popper" />)
-    act(() => {
-      fireEvent(screen.getByTestId('content', { includeHiddenElements: true }), 'layout', { nativeEvent: { layout: { x: 0, y: 0, width: 120, height: 140 } } })
-    })
+    layoutContent(120, 140)
     expect(flat(screen.getByTestId('content', { includeHiddenElements: true })).opacity).toBe(0)
   })
 
@@ -151,17 +129,6 @@ describe('Select (select.css)', () => {
   })
 })
 
-/** Stands in for the trigger's host instance: it reports a fixed window rect (x 40, y 400, 160 × 32). */
-function measureTrigger() {
-  type Measure = (cb: (x: number, y: number, w: number, h: number) => void) => void
-  type Up = { instance: { measureInWindow?: Measure } | null; parent: Up | null }
-  // The mocked native View (a class instance) behind the trigger's host element
-  let node: Up | null = screen.getByTestId('trigger') as unknown as Up
-  while (node && typeof node.instance?.measureInWindow !== 'function') node = node.parent
-  if (!node?.instance) throw new Error('no native View behind the trigger')
-  node.instance.measureInWindow = (cb) => cb(40, 400, 160, 32)
-}
-
-const layoutContent = (width: number, height: number) => act(() => {
-  fireEvent(screen.getByTestId('content', { includeHiddenElements: true }), 'layout', { nativeEvent: { layout: { x: 0, y: 0, width, height } } })
-})
+/** The trigger's window rect: x 40, y 400, 160 × 32. */
+const measureTrigger = () => measureAs('trigger', [40, 400, 160, 32])
+const layoutContent = (width: number, height: number) => layout('content', width, height)

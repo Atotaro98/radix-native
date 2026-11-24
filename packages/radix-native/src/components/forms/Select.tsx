@@ -1,5 +1,4 @@
 import React, { createContext, useCallback, useContext, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { isRTL } from '../../utils/rtl'
 import { Pressable, Text as RNText, View } from 'react-native'
 import type { StyleProp, ViewStyle } from 'react-native'
 import { useControllableState } from '../../hooks/useControllableState'
@@ -7,11 +6,10 @@ import { useMargins } from '../../hooks/useMargins'
 import { useMetrics } from '../../hooks/useMetrics'
 import { useTextStyle } from '../../hooks/useTextStyle'
 import { useVariantColors } from '../../hooks/useVariantColors'
-import { placeItemAligned } from '../../utils/selectLayout'
-import type { Rect } from '../../utils/popper'
+import type { PlacementStrategy } from '../../utils/anchoredPlacement'
 import type { AnchoredPlacementProps } from '../internal/AnchoredContent'
 import { useControl } from '../internal/control'
-import { ListLabel, ListRow, ListSeparator, rowHeight, useListMetrics, type ListLook } from '../internal/ListRows'
+import { ListLabel, ListRow, ListSeparator, rowCenter, useListMetrics, type ListLook } from '../internal/ListRows'
 import { anchorRef, createOverlayContext, useOverlayState, type OverlayState } from '../internal/overlayRoot'
 import { createPortalContext } from '../internal/portalContext'
 import { PopperContent } from '../internal/PopperContent'
@@ -96,7 +94,9 @@ interface SelectContextValue extends OverlayState {
   register: (key: object, entry: Entry) => () => void
   /** Replaces a registered row, keeping its place in the order. */
   update: (key: object, entry: Entry) => void
-  triggerPadX: React.MutableRefObject<number>
+  /** The trigger's padding-x: where its value text starts (item-aligned placement). */
+  triggerPadX: number
+  setTriggerPadX: (px: number) => void
 }
 
 type Entry = { kind: 'item'; value: string; label: React.ReactNode } | { kind: 'label' } | { kind: 'separator' }
@@ -137,7 +137,7 @@ function SelectRoot({
 }: SelectRootProps) {
   const [value, setValue] = useControllableState<string | undefined>({ prop: valueProp, defaultProp: defaultValue, onChange: onValueChange as (v: string | undefined) => void })
   const overlay = useOverlayState({ open: openProp, defaultOpen, onOpenChange })
-  const triggerPadX = useRef(0)
+  const [triggerPadX, setTriggerPadX] = useState(0)
   // Rows register in tree order (layout effects run in order), like Radix's collection
   const registry = useRef(new Map<object, Entry>())
   const [entries, setEntries] = useState<Entry[]>([])
@@ -158,8 +158,8 @@ function SelectRoot({
     setEntries(Array.from(registry.current.values()))
   }, [])
   const ctx = useMemo<SelectContextValue>(() => ({
-    ...overlay, size, value, setValue: (v: string) => setValue(v), disabled, entries, register, update, triggerPadX,
-  }), [overlay, size, value, setValue, disabled, entries, register, update])
+    ...overlay, size, value, setValue: (v: string) => setValue(v), disabled, entries, register, update, triggerPadX, setTriggerPadX,
+  }), [overlay, size, value, setValue, disabled, entries, register, update, triggerPadX])
   return <Select_.Provider value={ctx}>{children}</Select_.Provider>
 }
 SelectRoot.displayName = 'Select.Root'
@@ -191,8 +191,9 @@ function SelectTrigger({
   const ghost = variant === 'ghost'
   const borderRadius = metrics.radius(cfg.radius, 'pill')
   const padX = metrics.px(ghost ? cfg.ghostPadX : cfg.padX)
-  // Where the value text starts, for item-aligned placement (read when the list opens)
-  useLayoutEffect(() => { ctx.triggerPadX.current = padX }, [ctx.triggerPadX, padX])
+  // Where the value text starts, for item-aligned placement
+  const { setTriggerPadX } = ctx
+  useLayoutEffect(() => { setTriggerPadX(padX) }, [setTriggerPadX, padX])
 
   const selectedEntry = ctx.entries.find((e) => e.kind === 'item' && e.value === ctx.value)
   const label = children ?? (showPlaceholder ? placeholder : selectedEntry?.kind === 'item' ? selectedEntry.label : undefined)
@@ -254,31 +255,13 @@ function SelectContent({
   const close = useCallback(() => ctx.setOpen(false), [ctx])
   const look = useMemo(() => ({ variant, color, highContrast }), [variant, color, highContrast])
 
-  // The selected item (else the first) and the px of the rows above it, from the heights the rows render with
-  const items = ctx.entries.filter((e): e is Extract<Entry, { kind: 'item' }> => e.kind === 'item')
-  const target = items.find((e) => e.value === ctx.value) ?? items[0]
-  let selectedIndex = 0
-  let offsetBefore = 0
-  for (const e of ctx.entries) {
-    if (e === target) break
-    if (e.kind === 'item') selectedIndex++
-    else offsetBefore += rowHeight(list, e.kind)
-  }
-  const placeOverride = useMemo(() => position === 'item-aligned'
-    ? (anchor: Rect, size: { width: number; height: number }, boundary: Rect) =>
-      placeItemAligned({
-        trigger: anchor,
-        triggerPaddingX: ctx.triggerPadX.current,
-        content: size,
-        boundary,
-        contentPadding: list.padding,
-        itemPaddingLeft: list.gutter,
-        itemHeight: rowHeight(list, 'item'),
-        selectedIndex,
-        offsetBefore,
-        rtl: isRTL(),
-      })
-    : undefined, [position, ctx.triggerPadX, list, selectedIndex, offsetBefore])
+  // The centre of the selected item's row (else the first item's), from the heights the rows render with
+  const selected = ctx.entries.findIndex((e) => e.kind === 'item' && e.value === ctx.value)
+  const target = selected >= 0 ? selected : ctx.entries.findIndex((e) => e.kind === 'item')
+  const center = rowCenter(list, ctx.entries.map((e) => e.kind), target)
+  const strategy = useMemo<PlacementStrategy | undefined>(() => position === 'item-aligned'
+    ? { kind: 'item-aligned', rowCenter: center, textInset: list.padding + list.gutter, anchorTextInset: ctx.triggerPadX }
+    : undefined, [position, center, list.padding, list.gutter, ctx.triggerPadX])
 
   return (
     <>
@@ -294,9 +277,9 @@ function SelectContent({
           anchor={ctx.anchor}
           modal
           matchAnchorWidth
-          placeOverride={placeOverride}
+          strategy={strategy}
           // A list taller than the screen opens scrolled to the selected item
-          scrollToY={list.padding + offsetBefore + selectedIndex * rowHeight(list, 'item') + rowHeight(list, 'item') / 2}
+          scrollToY={center}
           side={side} sideOffset={sideOffset} align={align}
           {...props}
         >
