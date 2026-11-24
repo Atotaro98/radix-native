@@ -11,6 +11,7 @@ import type { FontSizeToken } from '../../tokens/typography'
 import type { MarginProps } from '../../types/marginProps'
 import type { NativeViewProps } from '../../types/nativeProps'
 import { useSkeletonRadius } from '../feedback/SkeletonContext'
+import { renderContentText } from '../internal/contentText'
 import type { AvatarVariant } from '../../utils/variantPalette'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -149,11 +150,11 @@ export function Avatar({
     <View style={[containerStyle, style]} accessibilityRole="image" {...rest}>
       {/* Fallback: shown only when no src or image failed */}
       {showFallback && (
-        typeof fallback === 'string' || typeof fallback === 'number'
-          ? <RNText {...text.textProps} style={textStyle}>{fallback}</RNText>
-          : React.isValidElement(fallback)
-            ? React.cloneElement(fallback as React.ReactElement<{ color?: string }>, { color: colors.text })
-            : fallback
+        renderContentText(
+          fallback,
+          (value) => <RNText {...text.textProps} style={textStyle}>{value}</RNText>,
+          (element) => React.cloneElement(element as React.ReactElement<{ color?: string }>, { color: colors.text }),
+        )
       )}
 
       {/* Image: always mounted when src exists — hidden until loaded */}

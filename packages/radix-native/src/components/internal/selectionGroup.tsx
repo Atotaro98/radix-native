@@ -5,6 +5,7 @@ import { useControllableState } from '../../hooks/useControllableState'
 import { useMargins } from '../../hooks/useMargins'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { MarginProps } from '../../types/marginProps'
+import { renderContentText } from './contentText'
 
 type SelectionType = 'single' | 'multiple'
 
@@ -201,12 +202,11 @@ export function createSelectionFamily<
   return Object.assign(Root, { Root, Item })
 }
 
-/** An item's content: plain strings and numbers in one Text with the item's label style, anything else as given. */
+/** An item's content: its text (in any number of pieces) in one Text with the item's label style, anything else as given. */
 export function renderItemLabel(
   children: React.ReactNode,
   label: { style: StyleProp<TextStyle>; textProps: object },
   style?: StyleProp<TextStyle>,
 ): React.ReactNode {
-  if (typeof children !== 'string' && typeof children !== 'number') return children
-  return <RNText {...label.textProps} style={[label.style, style]}>{children}</RNText>
+  return renderContentText(children, (value) => <RNText {...label.textProps} style={[label.style, style]}>{value}</RNText>)
 }

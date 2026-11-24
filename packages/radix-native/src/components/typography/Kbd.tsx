@@ -1,7 +1,7 @@
 import React from 'react'
 import { View, Text as RNText } from 'react-native'
 import type { StyleProp, ViewStyle } from 'react-native'
-import { shadowStyle } from '../../utils/shadow'
+import { paintSurface } from '../internal/surface'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { useMargins } from '../../hooks/useMargins'
 import { useTextStyle } from '../../hooks/useTextStyle'
@@ -93,20 +93,11 @@ export function Kbd({
     minWidth: minW,
     paddingHorizontal: ph,
     paddingBottom: pb,
-    borderRadius: borderR,
-    backgroundColor: colors.bg,
-    // Classic uses border to approximate box-shadow outline + bottom shadow
-    ...(isClassic
-      ? {
-          borderWidth: 1,
-          borderColor: colors.ring,
-          borderBottomWidth: 2,
-          borderBottomColor: colors.bottomEdge,
-        }
-      : {}),
+    // Fill, the 1px edge and the outer drop shadow of --kbd-box-shadow
+    ...paintSurface(colors, borderR).style,
+    // Classic: the bottom edge is darker and 2px, standing in for the bottom shadow
+    ...(isClassic ? { borderBottomWidth: 2, borderBottomColor: colors.bottomEdge } : {}),
     transform: [{ translateY }],
-    // the outer drop shadow of --kbd-box-shadow
-    ...shadowStyle(colors.shadow),
     ...margins,
   }
 

@@ -4,6 +4,8 @@ import type { StyleProp, ViewStyle } from 'react-native'
 import { useTextStyle } from '../../hooks/useTextStyle'
 import type { WeightIntent } from '../../utils/textStyle'
 import type { TextSize } from '../typography/Text'
+import { renderContentText } from './contentText'
+import { tint } from './tint'
 
 export interface ControlLabelProps {
   /** Font size step of the label text. */
@@ -31,45 +33,20 @@ export interface ControlLabelProps {
  *   `<Button>Hello {name}</Button>` reads as one label.
  * - Text is Compact text kept to one line; it shrinks and truncates when the
  *   control is narrower than its label (unless `truncate` is off).
- * - Elements (icons) receive `color` only when they don't set it themselves.
+ * - Icons receive `color` only when they don't set it themselves (`tint`).
  */
 export function ControlLabel({ size, weight, letterSpacingEm, truncate = true, color, maxFontSizeMultiplier, children }: ControlLabelProps) {
   const text = useTextStyle({ size, weight, letterSpacingEm, color, compact: true, truncate, maxFontSizeMultiplier })
 
-
-  const nodes: React.ReactNode[] = []
-  let textRun = ''
-
-  const flushText = () => {
-    if (textRun === '') return
-    nodes.push(
-      <RNText key={`text-${nodes.length}`} style={text.style} {...text.textProps}>
-        {textRun}
-      </RNText>,
-    )
-    textRun = ''
-  }
-
-  React.Children.forEach(children, (child) => {
-    if (typeof child === 'string' || typeof child === 'number') {
-      textRun += String(child)
-      return
-    }
-    flushText()
-    if (React.isValidElement<{ color?: unknown }>(child)) {
-      const key = child.key ?? `el-${nodes.length}`
-      nodes.push(
-        child.props.color === undefined && color !== undefined
-          ? React.cloneElement(child as React.ReactElement<{ color?: string }>, { key, color })
-          : React.cloneElement(child, { key }),
-      )
-    } else if (child != null && typeof child !== 'boolean') {
-      nodes.push(child)
-    }
-  })
-  flushText()
-
-  return <>{nodes}</>
+  return (
+    <>
+      {renderContentText(
+        children,
+        (value) => <RNText style={text.style} {...text.textProps}>{value}</RNText>,
+        (element) => tint(element, color),
+      )}
+    </>
+  )
 }
 
 const HIDDEN = { importantForAccessibility: 'no-hide-descendants', accessibilityElementsHidden: true } as const

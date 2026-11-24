@@ -6,8 +6,7 @@ import { useControllableState } from '../../hooks/useControllableState'
 import { useMargins } from '../../hooks/useMargins'
 import { useMetrics } from '../../hooks/useMetrics'
 import { useVariantColors } from '../../hooks/useVariantColors'
-import { CardRing } from '../internal/CardRing'
-import { shadowStyle } from '../../utils/shadow'
+import { paintSurface } from '../internal/surface'
 import { beginDrag, commits, moveDrag, sliderLayout, stepThumb, thumbLabel, type SliderConfig, type SliderDrag } from '../../utils/slider'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { RadiusToken } from '../../theme/theme.types'
@@ -97,6 +96,9 @@ export function Slider({
   // .rt-SliderRoot border-radius: max(factor × track / 3, factor × --radius-thumb)
   const rootRadius = Math.max((metrics.radiusFactor * track) / 3, metrics.radiusFactor * metrics.radiusThumb)
   const thumbRadius = metrics.radius(1, 'thumb')
+  const trackSurface = paintSurface(colors.track, rootRadius)
+  const rangeSurface = paintSurface(colors.range, rootRadius)
+  const thumbSurface = paintSurface(colors.thumb, thumbRadius)
 
   const [values, setValues] = useControllableState<number[]>({
     prop: valueProp,
@@ -187,11 +189,11 @@ export function Slider({
       onResponderTerminate={onEnd}
     >
       {/* Track: overflow hidden, radius inherited from the root */}
-      <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: rootRadius, overflow: 'hidden', backgroundColor: colors.track }}>
-        <View style={{ position: 'absolute', [range.startEdge]: `${range.start}%`, [range.endEdge]: `${range.end}%`, ...(vertical ? { left: 0, right: 0 } : { top: 0, bottom: 0 }), borderRadius: rootRadius, backgroundColor: colors.range }}>
-          {colors.rangeBorder ? <CardRing color={colors.rangeBorder} borderRadius={rootRadius} /> : null}
+      <View pointerEvents="none" style={[{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden' }, trackSurface.style]}>
+        <View style={[{ position: 'absolute', [range.startEdge]: `${range.start}%`, [range.endEdge]: `${range.end}%`, ...(vertical ? { left: 0, right: 0 } : { top: 0, bottom: 0 }) }, rangeSurface.style]}>
+          {rangeSurface.over}
         </View>
-        {colors.trackBorder ? <CardRing color={colors.trackBorder} borderRadius={rootRadius} /> : null}
+        {trackSurface.over}
       </View>
 
       {Array.from({ length: thumbCount }, (_, i) => {
@@ -213,13 +215,9 @@ export function Slider({
                 position: 'absolute',
                 width: discSize,
                 height: discSize,
-                borderRadius: thumbRadius,
-                backgroundColor: colors.thumb,
-                borderWidth: 1,
-                borderColor: colors.thumbRing,
                 ...(vertical ? { top: along } : { left: along }),
               },
-              shadowStyle(colors.thumbShadow),
+              thumbSurface.style,
             ]}
           />
         )

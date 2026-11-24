@@ -1,11 +1,11 @@
-import React, { useMemo, useRef } from 'react'
+import React, { useRef } from 'react'
 import { ScrollView, View } from 'react-native'
 import type { AccessibilityRole, DimensionValue, StyleProp, ViewStyle } from 'react-native'
 import { useMetrics } from '../../hooks/useMetrics'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { AnchoredContent, type AnchoredContentProps } from './AnchoredContent'
 import { paintSurface } from './surface'
-import { InsetContext, type InsetValues } from '../layout/InsetContext'
+import { InsetContainer } from '../layout/InsetContext'
 import type { RadiusLevel } from '../../tokens/radius'
 import type { SpaceToken } from '../../tokens/spacing'
 
@@ -87,9 +87,6 @@ export function PopperContent({
 }: PopperContentProps) {
   const colors = useVariantColors('popperPanel', {})
   const panel = paintSurface(colors, borderRadius)
-  const insetValues = useMemo<InsetValues>(() => ({
-    padding: { top: padding, right: padding, bottom: padding, left: padding }, borderWidth: 0, borderRadius: 0,
-  }), [padding])
 
   return (
     <AnchoredContent {...anchored}>
@@ -107,7 +104,7 @@ export function PopperContent({
           ]}
         >
           <PanelScroll borderRadius={borderRadius} padding={padding} scrollToY={scrollToY}>
-            {inset ? <InsetContext.Provider value={insetValues}>{children}</InsetContext.Provider> : children}
+            {inset ? <InsetContainer padding={padding}>{children}</InsetContainer> : children}
           </PanelScroll>
           {panel.over}
         </View>

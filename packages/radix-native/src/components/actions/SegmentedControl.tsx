@@ -10,7 +10,7 @@ import { useVariantColors } from '../../hooks/useVariantColors'
 import { useWidest, useWidestCell, type WidestCells } from '../../hooks/useWidest'
 import { useControl } from '../internal/control'
 import { ControlLabel } from '../internal/ControlLabel'
-import { shadowStyle } from '../../utils/shadow'
+import { paintSurface } from '../internal/surface'
 import type { RadiusToken } from '../../theme/theme.types'
 import type { SpaceToken } from '../../tokens/spacing'
 import type { RadiusLevel } from '../../tokens/radius'
@@ -149,7 +149,8 @@ function SegmentedControlRoot({
     ...margins,
   }), [height, borderRadius, colors.bg, cells.ready, margins])
 
-  const ringWidth = colors.indicatorRing ? 1 : 0
+  // ::before inset 1px with a 1px edge = the full cell; disabled: inset 0, no edge
+  const indicator = paintSurface(colors.indicator, borderRadius)
 
   return (
     <View accessibilityRole="radiogroup" style={[rootStyle, style]} {...rest}>
@@ -157,15 +158,8 @@ function SegmentedControlRoot({
         <Animated.View
           pointerEvents="none"
           style={[
-            {
-              position: 'absolute', top: 0, left: 0, height: '100%', width: itemWidth,
-              // ::before inset 1px with a 1px ring = the full cell; disabled: inset 0, no ring
-              borderRadius,
-              borderWidth: ringWidth,
-              borderColor: colors.indicatorRing,
-              backgroundColor: colors.indicator,
-            },
-            shadowStyle(colors.indicatorShadow),
+            { position: 'absolute', top: 0, left: 0, height: '100%', width: itemWidth },
+            indicator.style,
             indicatorStyle,
           ]}
         />

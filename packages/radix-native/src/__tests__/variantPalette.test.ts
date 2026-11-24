@@ -79,16 +79,16 @@ describe('selection controls (base-checkbox.css, base-radio.css)', () => {
 
 describe('tracks (switch.css, progress.css)', () => {
   it.each([
-    ['switch surface unchecked', 'switch', { variant: 'surface' }, { bg: g('a3'), ring: g('a5'), thumb: WHITE }],
+    ['switch surface unchecked', 'switch', { variant: 'surface' }, { bg: g('a3'), ring: g('a5'), thumb: { bg: WHITE } }],
     ['switch surface checked → accent-track', 'switch', { variant: 'surface', checked: true }, { bg: c('track'), ring: g('a5') }],
     ['switch high contrast → black-a8 overlay (light only)', 'switch', { variant: 'surface', checked: true, highContrast: true },
       { bg: layers(byMode(blackA(8), TRANSPARENT), c('track')) }],
-    ['switch surface [data-disabled]', 'switch', { variant: 'surface', disabled: true }, { bg: g('a3'), ring: g('a3'), thumb: g(2) }],
+    ['switch surface [data-disabled]', 'switch', { variant: 'surface', disabled: true }, { bg: g('a3'), ring: g('a3'), thumb: { bg: g(2) } }],
     ['switch classic unchecked → gray-a4 + shadow-1', 'switch', { variant: 'classic' }, { bg: g('a4'), ring: SHADOW_1_RING }],
     ['switch classic [data-disabled] at 0.5', 'switch', { variant: 'classic', disabled: true },
       { bg: fade(g('a5'), 0.5), ring: fade(SHADOW_1_RING, 0.5) }],
     ['switch soft thumb stays white', 'switch', { variant: 'soft', checked: true },
-      { bg: layers(c('a4'), c('a4'), c('a4'), g('a2')), thumb: WHITE }],
+      { bg: layers(c('a4'), c('a4'), c('a4'), g('a2')), thumb: { bg: WHITE } }],
     ['switch soft unchecked', 'switch', { variant: 'soft' }, { bg: layers(whiteA(1), g('a3'), g('a3')) }],
     ['progress surface', 'progress', { variant: 'surface' }, { bg: g('a3'), border: g('a4'), indicator: c('track') }],
     ['progress classic → shadow-1', 'progress', { variant: 'classic' }, { border: SHADOW_1_RING }],
@@ -180,7 +180,7 @@ describe('kbd (kbd.css)', () => {
     expect(paints('kbd', { variant: 'classic' })).toMatchObject({
       bg: g(1),
       text: g(12),
-      ring: byMode(g('a5'), g('a7')),
+      border: byMode(g('a5'), g('a7')),
       bottomEdge: byMode(g('a7'), blackA(11)),
       highlight: byMode(g('a3'), g('a11')),
     })
@@ -257,8 +257,8 @@ describe('shadows and bevel (classic look)', () => {
   // .rt-SwitchThumb: a drop shadow in every variant; [data-disabled] 0 1px 3px black-a1
   it.each(['classic', 'surface', 'soft'] as const)('switch %s thumb shadow, lighter when disabled', variant => {
     const thumb = { color: raw('#000000'), offsetY: 1, radius: 1.5 }
-    expect(paints('switch', { variant }).thumbShadow).toEqual({ ...thumb, opacity: 0.15, elevation: 1 })
-    expect(paints('switch', { variant, disabled: true }).thumbShadow).toEqual({ ...thumb, opacity: 0.05, elevation: 0 })
+    expect(paints('switch', { variant }).thumb.shadow).toEqual({ ...thumb, opacity: 0.15, elevation: 1 })
+    expect(paints('switch', { variant, disabled: true }).thumb.shadow).toEqual({ ...thumb, opacity: 0.05, elevation: 0 })
   })
 
   // --kbd-box-shadow outer drop shadow: 0 0.08em 0.17em gray-a7 (dark black-a12)
@@ -297,16 +297,16 @@ describe('DataList label (data-list.css)', () => {
 
 describe('segmented (segmented-control.css)', () => {
   it.each([
-    ['.rt-SegmentedControlRoot', { variant: 'surface' }, { bg: layers(g('a3'), g('surface')), text: g(12), indicator: byMode(WHITE, g('a3')), indicatorRing: g('a4'), separator: g('a4') }],
-    ['.rt-variant-classic indicator --shadow-2', { variant: 'classic' }, { indicatorRing: g('a3') }],
-    ['[data-disabled]', { variant: 'surface', disabled: true }, { bg: layers(g('a3'), g(3)), text: g('a8'), indicator: g('a3') }],
+    ['.rt-SegmentedControlRoot', { variant: 'surface' }, { bg: layers(g('a3'), g('surface')), text: g(12), indicator: { bg: byMode(WHITE, g('a3')), border: g('a4') }, separator: g('a4') }],
+    ['.rt-variant-classic indicator --shadow-2', { variant: 'classic' }, { indicator: { border: g('a3') } }],
+    ['[data-disabled]', { variant: 'surface', disabled: true }, { bg: layers(g('a3'), g(3)), text: g('a8'), indicator: { bg: g('a3') } }],
   ] as const)('%s', (_selector, state, expected) => {
     expect(paints('segmented', state)).toMatchObject(expected)
   })
   it('classic adds a drop shadow; disabled drops ring and shadow', () => {
-    expect(paints('segmented', { variant: 'classic' }).indicatorShadow).toBeDefined()
-    expect(paints('segmented', { variant: 'surface' }).indicatorShadow).toBeUndefined()
-    expect(paints('segmented', { variant: 'classic', disabled: true })).not.toHaveProperty('indicatorRing')
+    expect(paints('segmented', { variant: 'classic' }).indicator.shadow).toBeDefined()
+    expect(paints('segmented', { variant: 'surface' }).indicator.shadow).toBeUndefined()
+    expect(paints('segmented', { variant: 'classic', disabled: true }).indicator).toEqual({ bg: g('a3') })
   })
 })
 
@@ -320,14 +320,28 @@ describe('tab list (base-tab-list.css)', () => {
   })
 })
 
+describe('theme panel (theme-panel.css)', () => {
+  it('the panel is gray-2 with a gray-6 border', () => {
+    expect(paints('themePanel', {})).toEqual({ bg: g(2), border: g(6) })
+  })
+  it.each([
+    ['.rt-ThemePanelRadioCard', { kind: 'card' }, { ring: g(7), ringWidth: 1 }],
+    ['.rt-ThemePanelRadioCard checked: a 2px gray-12 outline', { kind: 'card', checked: true }, { ring: g(12), ringWidth: 2 }],
+    ['a swatch has no ring', { kind: 'swatch' }, { ringWidth: 2 }],
+    ['a checked swatch', { kind: 'swatch', checked: true }, { ring: g(12), ringWidth: 2 }],
+  ] as const)('%s', (_selector, state, expected) => {
+    expect(paints('themePanelOption', state)).toEqual(expected)
+  })
+})
+
 describe('slider (slider.css)', () => {
   it.each([
-    ['.rt-variant-surface', { variant: 'surface' }, { track: g('a3'), trackBorder: g('a5'), range: c('track'), rangeBorder: g('a5'), thumb: WHITE, thumbRing: blackA(4) }],
-    ['.rt-variant-classic', { variant: 'classic' }, { track: g('a3'), trackBorder: SHADOW_1_RING, range: c('track'), thumbRing: blackA(3) }],
-    ['.rt-variant-soft', { variant: 'soft' }, { track: layers(whiteA(1), g('a4')), range: layers(c('a5'), c(6)) }],
-    ['.rt-high-contrast range (light only black-a8)', { variant: 'surface', highContrast: true }, { range: layers(byMode(blackA(8), TRANSPARENT), c('track')) }],
-    ['[data-disabled] surface', { variant: 'surface', disabled: true }, { range: TRANSPARENT, thumb: g(1), thumbRing: g(6), trackBorder: g('a4') }],
-    ['[data-disabled] soft', { variant: 'soft', disabled: true }, { range: TRANSPARENT, thumbRing: g(5) }],
+    ['.rt-variant-surface', { variant: 'surface' }, { track: { bg: g('a3'), ring: g('a5') }, range: { bg: c('track'), ring: g('a5') }, thumb: { bg: WHITE, border: blackA(4) } }],
+    ['.rt-variant-classic', { variant: 'classic' }, { track: { bg: g('a3'), ring: SHADOW_1_RING }, range: { bg: c('track') }, thumb: { border: blackA(3) } }],
+    ['.rt-variant-soft', { variant: 'soft' }, { track: { bg: layers(whiteA(1), g('a4')) }, range: { bg: layers(c('a5'), c(6)) } }],
+    ['.rt-high-contrast range (light only black-a8)', { variant: 'surface', highContrast: true }, { range: { bg: layers(byMode(blackA(8), TRANSPARENT), c('track')) } }],
+    ['[data-disabled] surface', { variant: 'surface', disabled: true }, { range: { bg: TRANSPARENT }, thumb: { bg: g(1), border: g(6) }, track: { ring: g('a4') } }],
+    ['[data-disabled] soft', { variant: 'soft', disabled: true }, { range: { bg: TRANSPARENT }, thumb: { border: g(5) } }],
   ] as const)('%s', (_selector, state, expected) => {
     expect(paints('slider', state)).toMatchObject(expected)
   })

@@ -12,6 +12,8 @@ import type { RadiusToken, RadiusLevel } from '../../tokens/radius'
 import type { MarginProps } from '../../types/marginProps'
 import type { AccentColor } from '../../tokens/colors/types'
 import { FocusRing } from './FocusRing'
+import { tintChildren } from './tint'
+import { paintSurface } from './surface'
 import { useSkeletonRadius } from '../feedback/SkeletonContext'
 import type { TextInputVariant } from '../../utils/variantPalette'
 import type { SpaceToken } from '../../tokens/spacing'
@@ -95,30 +97,11 @@ export function TextFieldSlot({ side: _side, color, gap, px, pl, pr, style, test
       onStartShouldSetResponder={() => true}
       onResponderRelease={ctx.focus}
     >
-      {React.Children.map(children, (child) =>
-        // RN has no currentColor: plain icons without their own color take the slot's.
-        // Components that name a theme color with `color` (Button, IconButton…) are left alone.
-        React.isValidElement<{ color?: string }>(child) && child.props.color === undefined && isIcon(child)
-          ? React.cloneElement(child, { color: colors.text })
-          : child,
-      )}
+      {tintChildren(children, colors.text)}
     </View>
   )
 }
 TextFieldSlot.displayName = 'TextField.Slot'
-
-/** Not one of the library's own components (their `color` is a theme color name, not a color string). */
-function isIcon(child: React.ReactElement): boolean {
-  const type = child.type as { displayName?: string } | string
-  if (typeof type === 'string') return false
-  const name = type.displayName ?? ''
-  return !RADIX_NAMES.has(name.split('.')[0])
-}
-const RADIX_NAMES = new Set([
-  'Button', 'IconButton', 'Badge', 'Text', 'Heading', 'Link', 'Code', 'Kbd', 'Spinner', 'Avatar', 'Checkbox', 'Switch',
-  'Radio', 'Select', 'DropdownMenu', 'Popover', 'Tooltip', 'Dialog', 'AlertDialog', 'HoverCard', 'ContextMenu', 'Separator',
-  'Box', 'Flex', 'Grid', 'Skeleton', 'SegmentedControl', 'Em', 'Strong', 'Quote',
-])
 
 interface InternalProps extends BaseTextInputProps {
   /** TextField: `TextField.Slot` elements (other children are ignored). */
@@ -206,10 +189,7 @@ export function BaseTextInput({
 
   const padX = metrics.px(SIZE_PADDING_X[size])
   const containerStyle: ViewStyle = {
-    borderRadius,
-    backgroundColor: colors.bg,
-    borderWidth: 1,
-    borderColor: colors.border,
+    ...paintSurface(colors, borderRadius).style,
     paddingHorizontal: padX,
     ...(multiline
       ? { paddingVertical: metrics.px(SIZE_PADDING_Y[size]) }

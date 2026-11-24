@@ -12,6 +12,7 @@ import type { MarginProps } from '../../types/marginProps'
 import type { NativeViewProps } from '../../types/nativeProps'
 import type { CalloutVariant } from '../../utils/variantPalette'
 import { paintSurface } from '../internal/surface'
+import { tintChildren } from '../internal/tint'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -71,12 +72,7 @@ function CalloutIcon({ style, children, ...rest }: CalloutIconProps) {
   const height = metrics.px(SIZES[ctx?.size ?? 2].iconHeight)
   return (
     <View style={[{ flexDirection: 'row', alignItems: 'center', height }, style]} {...rest}>
-      {React.Children.map(children, (child) =>
-        // RN has no currentColor: icons without their own color take the callout's
-        React.isValidElement<{ color?: string }>(child) && child.props.color === undefined && ctx
-          ? React.cloneElement(child, { color: ctx.color })
-          : child,
-      )}
+      {tintChildren(children, ctx?.color)}
     </View>
   )
 }

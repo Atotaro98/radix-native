@@ -1,9 +1,14 @@
 import React, { useState } from 'react'
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated'
+import Animated, { useAnimatedStyle } from 'react-native-reanimated'
 import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native'
+import type { StyleProp, ViewStyle } from 'react-native'
 import { Theme } from '../../theme/Theme'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useColor } from '../../hooks/useColor'
+import { useVariantColors } from '../../hooks/useVariantColors'
+import { useControl } from '../internal/control'
+import { paintSurface } from '../internal/surface'
+import { useEnterExit, usePresence } from '../internal/presence'
 import { isDev } from '../../utils/env'
 import { inlineSign } from '../../utils/rtl'
 import { resolveMetrics } from '../../utils/metrics'
@@ -30,6 +35,9 @@ const RADIUS_OPTIONS: RadiusToken[] = ['none', 'small', 'medium', 'large', 'full
 const SCALING_OPTIONS: ScalingMode[] = ['90%', '95%', '100%', '105%', '110%']
 
 const PANEL_WIDTH = 320
+// How far the closed panel sits past the row's end
+const SLIDE = PANEL_WIDTH + 20
+const TIMING = { open: 250, close: 250 }
 
 // theme-panel.tsx: Scaling is `repeat(3, 1fr)` below the sm breakpoint (phones)
 const SCALING_COLUMNS = 3
@@ -55,15 +63,17 @@ export interface ThemeControlsProps {
  */
 export function ThemeControls({ showCopyTheme, onCopyTheme, defaultOpen = false }: ThemeControlsProps = {}) {
   const [open, setOpen] = useState(defaultOpen)
-  const slideAnim = useSharedValue(defaultOpen ? 0 : PANEL_WIDTH + 20)
   const { height: windowHeight } = useWindowDimensions()
-  const panelBg = useColor('gray-2')
-  const panelBorder = useColor('gray-6')
+  const panel = paintSurface(useVariantColors('themePanel', {}), 12)
 
+  // Presence: the closed panel is not mounted, so nothing in it can be reached; it slides at
+  // once under Reduce Motion
+  const { present, onExited } = usePresence(open)
+  const progress = useEnterExit({ open, timing: TIMING, onExited })
   // The panel sits at the row's end (the left in RTL) and slides out past that edge
   const sign = inlineSign()
   const slideStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: sign * slideAnim.value }],
+    transform: [{ translateX: sign * (1 - progress.value) * SLIDE }],
   }))
 
   const {
@@ -87,11 +97,7 @@ export function ThemeControls({ showCopyTheme, onCopyTheme, defaultOpen = false 
     }
   }, [isRoot])
 
-  const toggle = () => {
-    const toValue = open ? PANEL_WIDTH + 20 : 0
-    slideAnim.value = withTiming(toValue, { duration: 250, easing: Easing.out(Easing.ease) })
-    setOpen(!open)
-  }
+  const toggle = () => setOpen(!open)
 
   const handleCopyTheme = () => {
     const config = `<Theme accentColor="${accentColor}" grayColor="${grayColor}" appearance="${appearance}" radius="${radius}" scaling="${scaling}">`
@@ -107,9 +113,10 @@ export function ThemeControls({ showCopyTheme, onCopyTheme, defaultOpen = false 
         </Button>
 
         {/* Sliding panel */}
+        {present ? (
         <Animated.View style={[styles.panelWrapper, { maxHeight: windowHeight - 120 }, slideStyle]}>
           <ScrollView
-            style={[styles.panel, { backgroundColor: panelBg, borderColor: panelBorder }]}
+            style={panel.style}
             contentContainerStyle={styles.panelContent}
             showsVerticalScrollIndicator={false}
           >
@@ -202,6 +209,7 @@ export function ThemeControls({ showCopyTheme, onCopyTheme, defaultOpen = false 
             )}
           </ScrollView>
         </Animated.View>
+        ) : null}
       </Theme>
     </View>
   )
@@ -243,17 +251,10 @@ function Swatches<T extends string>({
 
 function Swatch({ label, color, selected, onPress }: { label: string; color: ThemeColor; selected: boolean; onPress: () => void }) {
   const fill = useColor(color)
-  const ring = useColor('gray-12')
   return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="radio"
-      accessibilityLabel={label}
-      accessibilityState={{ checked: selected }}
-      style={[styles.swatchRing, selected && { borderColor: ring }]}
-    >
+    <PanelOption kind="swatch" label={label} checked={selected} onPress={onPress} borderRadius={14} style={styles.swatchRing}>
       <View style={[styles.swatchDot, { backgroundColor: fill }]} />
-    </Pressable>
+    </PanelOption>
   )
 }
 
@@ -263,28 +264,53 @@ function Swatch({ label, color, selected, onPress }: { label: string; color: The
  */
 function PanelRadioCard({
   label, checked, onPress, style, children,
-}: { label: string; checked: boolean; onPress: () => void; style?: object; children: React.ReactNode }) {
-  const ring = useColor('gray-7')
-  const outline = useColor('gray-12')
+}: { label: string; checked: boolean; onPress: () => void; style?: StyleProp<ViewStyle>; children: React.ReactNode }) {
   const radius = resolveMetrics({ scaling: '100%', radius: 'medium' }).radius(1)
   return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="radio"
-      accessibilityLabel={label}
-      accessibilityState={{ checked }}
-      style={[{ borderRadius: radius, borderWidth: 1, borderColor: ring }, style]}
-    >
+    // The ring is drawn over the card's edge: 1px of padding keeps the content inside it
+    <PanelOption kind="card" label={label} checked={checked} onPress={onPress} borderRadius={radius} style={[styles.card, style]}>
       {children}
-      {checked ? (
-        <View
-          pointerEvents="none"
-          style={{ position: 'absolute', top: -1, left: -1, right: -1, bottom: -1, borderRadius: radius + 1, borderWidth: 2, borderColor: outline }}
-        />
-      ) : null}
+    </PanelOption>
+  )
+}
+
+/**
+ * An option of the panel, as a Control: a radio named by `label`, with the
+ * shared shell's focus ring, minimum touch target and state. Its ring comes
+ * from the `themePanelOption` recipe and is drawn like every other Surface.
+ */
+function PanelOption({
+  kind, label, checked, onPress, borderRadius, style, children,
+}: {
+  kind: 'card' | 'swatch'
+  label: string
+  checked: boolean
+  onPress: () => void
+  borderRadius: number
+  style?: StyleProp<ViewStyle>
+  children: React.ReactNode
+}) {
+  const surface = paintSurface(useVariantColors('themePanelOption', { kind, checked }), borderRadius)
+  const control = useControl({
+    props: { accessibilityLabel: label },
+    children: null,
+    role: 'radio',
+    onPress,
+    state: { checked },
+    touchTarget: OPTION_SIZE[kind],
+    focusRing: { color: 'gray', borderRadius },
+  })
+  return (
+    <Pressable {...control.pressableProps} style={[surface.style, style]}>
+      {children}
+      {surface.over}
+      {control.focusRing}
     </Pressable>
   )
 }
+
+// The smallest box each kind is drawn in, grown to the minimum touch target
+const OPTION_SIZE = { swatch: { width: 28, height: 28 }, card: { width: 44, height: 34 } } as const
 
 /** A corner drawn at the token's radius-5 (pill for 'full'), as in Radix ThemePanel. */
 function RadiusShape({ token }: { token: RadiusToken }) {
@@ -318,10 +344,6 @@ const styles = StyleSheet.create({
     width: PANEL_WIDTH,
     marginTop: 44,
   },
-  panel: {
-    borderRadius: 12,
-    borderWidth: 1,
-  },
   panelContent: {
     padding: 16,
     rowGap: 14,
@@ -334,9 +356,6 @@ const styles = StyleSheet.create({
   swatchRing: {
     width: 28,
     height: 28,
-    borderRadius: 14,
-    borderWidth: 2,
-    borderColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -344,6 +363,9 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
+  },
+  card: {
+    padding: 1,
   },
   row: {
     flexDirection: 'row',

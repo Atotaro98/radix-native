@@ -7,7 +7,7 @@ import { useMargins } from '../../hooks/useMargins'
 import { AnimatedPressable } from '../../hooks/usePressScale'
 import { useControl } from '../internal/control'
 import { paintSurface } from '../internal/surface'
-import { InsetContext, type InsetValues } from './InsetContext'
+import { InsetContainer } from './InsetContext'
 import type { RadiusLevel } from '../../tokens/radius'
 import type { MarginProps } from '../../types/marginProps'
 import type { NativeViewProps } from '../../types/nativeProps'
@@ -105,13 +105,9 @@ export function Card({
     }),
   }), [resolvedPadding, margins, isGhost])
 
-  // base-card.css: --inset-padding-* = card padding − border width
-  const inset = useMemo<InsetValues>(() => {
-    const p = resolvedPadding - borderWidth
-    return { padding: { top: p, right: p, bottom: p, left: p }, borderWidth, borderRadius }
-  }, [resolvedPadding, borderWidth, borderRadius])
-
-  const content = <InsetContext.Provider value={inset}>{children}</InsetContext.Provider>
+  const content = (
+    <InsetContainer padding={resolvedPadding} borderWidth={borderWidth} borderRadius={borderRadius}>{children}</InsetContainer>
+  )
 
   if (onPress) {
     return (

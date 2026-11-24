@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React from 'react'
 import { View } from 'react-native'
 import type { StyleProp, ViewStyle } from 'react-native'
 import { useMetrics } from '../../hooks/useMetrics'
@@ -10,7 +10,7 @@ import { useTextStyle } from '../../hooks/useTextStyle'
 import type { TextSize } from '../typography/Text'
 import { ToggleSurface, useToggleGeometry, type ToggleKind } from './ToggleSurface'
 import { paintSurface } from './surface'
-import { InsetContext, type InsetValues } from '../layout/InsetContext'
+import { InsetContainer } from '../layout/InsetContext'
 import { ColumnRows, AutoFitRows } from './ColumnRows'
 import {
   createSelectionFamily,
@@ -98,6 +98,7 @@ export function SelectionCard<P extends object>({
   // Plain-text children: Radix item font size, gray-12 (disabled gray-a9)
   const label = useTextStyle({ size: cfg.fontSize, color: colors.text })
 
+  const paddingRight = indicator ? paddingX * 2 + indicatorWidth : paddingX
   const cardStyle: ViewStyle = {
     flexGrow: 1,
     position: 'relative',
@@ -107,23 +108,11 @@ export function SelectionCard<P extends object>({
     alignItems: 'center',
     gap: metrics.space(2),
     paddingTop: paddingY,
-    paddingRight: indicator ? paddingX * 2 + indicatorWidth : paddingX,
+    paddingRight,
     paddingBottom: paddingY,
     paddingLeft: paddingX,
   }
 
-  // base-card.css: --inset-padding-* = item padding − border width
-  const paddingRight = cardStyle.paddingRight as number
-  const inset = useMemo<InsetValues>(() => ({
-    padding: {
-      top: paddingY - CARD_BORDER_WIDTH,
-      right: paddingRight - CARD_BORDER_WIDTH,
-      bottom: paddingY - CARD_BORDER_WIDTH,
-      left: paddingX - CARD_BORDER_WIDTH,
-    },
-    borderWidth: CARD_BORDER_WIDTH,
-    borderRadius,
-  }), [paddingX, paddingY, paddingRight, borderRadius])
 
   return (
     <ToggleSurface
@@ -135,10 +124,14 @@ export function SelectionCard<P extends object>({
       borderRadius={borderRadius}
       style={[cardStyle, surface.style, style]}
     >
-      <InsetContext.Provider value={inset}>
-          {/* Plain strings must live inside <Text> in RN */}
-          {renderItemLabel(children, label, { flexShrink: 1 })}
-      </InsetContext.Provider>
+      <InsetContainer
+        padding={{ top: paddingY, right: paddingRight, bottom: paddingY, left: paddingX }}
+        borderWidth={CARD_BORDER_WIDTH}
+        borderRadius={borderRadius}
+      >
+        {/* Plain strings must live inside <Text> in RN */}
+        {renderItemLabel(children, label, { flexShrink: 1 })}
+      </InsetContainer>
       {indicator && geometry ? (
         // Trailing edge, vertically centered (Radix CSS)
         <View
