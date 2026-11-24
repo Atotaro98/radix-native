@@ -116,6 +116,22 @@ describe('Select (select.css)', () => {
     expect(flat(screen.getByTestId('content')).left).toBe(60)
   })
 
+  it('shows the selected item text when it is written in several pieces (`Option {name}`)', () => {
+    const name = 'B'
+    renderWithTheme(
+      <Select.Root defaultValue="b">
+        <Select.Trigger testID="trigger" />
+        <Select.Content>
+          <Select.Item value="a">Option A</Select.Item>
+          <Select.Item value="b">Option {name}</Select.Item>
+        </Select.Content>
+      </Select.Root>,
+    )
+    // One text, not loose strings inside the trigger (React Native throws on those)
+    expect(screen.getByText('Option B')).toBeTruthy()
+    expect(screen.getByTestId('trigger').props.accessibilityValue).toEqual({ text: 'Option B' })
+  })
+
   it('an item is named by its AccessibleIcon label', () => {
     renderWithTheme(
       <Select.Root defaultOpen>
