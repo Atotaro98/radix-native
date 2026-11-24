@@ -1,0 +1,49 @@
+name: Feature request
+description: Suggest a component, prop or improvement
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Radix Native mirrors the [Radix Themes](https://www.radix-ui.com/themes) API, so the strongest requests are for things that already exist there.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: The use case or problem, not the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed API
+      description: What it would look like to use. A code sample is ideal.
+      render: tsx
+    validations:
+      required: true
+  - type: dropdown
+    id: parity
+    attributes:
+      label: Does this exist in Radix Themes?
+      options:
+        - Yes — it is missing or incomplete in Radix Native
+        - No — it is specific to React Native
+        - Not sure
+    validations:
+      required: true
+  - type: input
+    id: radix-docs
+    attributes:
+      label: Radix Themes docs link
+      placeholder: https://www.radix-ui.com/themes/docs/components/…
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Workarounds you use today, or other approaches you thought about.
+  - type: checkboxes
+    id: contribute
+    attributes:
+      label: Contribution
+      options:
+        - label: I am willing to open a pull request for this
