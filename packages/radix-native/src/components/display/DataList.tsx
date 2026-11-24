@@ -5,7 +5,7 @@ import { useMargins } from '../../hooks/useMargins'
 import { useMetrics } from '../../hooks/useMetrics'
 import { useTextStyle } from '../../hooks/useTextStyle'
 import { useVariantColors } from '../../hooks/useVariantColors'
-import { useWidest, useWidestCell, type WidestCells } from '../../hooks/useWidest'
+import { naturalWidthStyle, useWidest, useWidestCell, type WidestCells } from '../../hooks/useWidest'
 import { renderInlineText } from '../internal/inlineText'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { MarginProps } from '../../types/marginProps'
@@ -190,8 +190,7 @@ function DataListLabel({ width, minWidth, maxWidth, color, highContrast, style, 
       {...rest}
     >
       {/* Measures the label's own width; the outer View takes the column's (widest label) */}
-      {/* Capped only by the label's own width: a label that grows past the column widens it */}
-      <View style={{ flexDirection: 'row', alignSelf: 'flex-start', maxWidth: width !== undefined || maxWidth !== undefined ? '100%' : undefined }} onLayout={onLayout}>
+      <View style={[naturalWidthStyle(width !== undefined || maxWidth !== undefined), { alignSelf: 'flex-start' }]} onLayout={onLayout}>
         {content}
       </View>
     </View>
