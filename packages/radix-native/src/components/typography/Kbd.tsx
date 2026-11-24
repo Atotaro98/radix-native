@@ -110,24 +110,25 @@ export function Kbd({
     ...margins,
   }
 
-  // Classic variant: thin highlight line at the top to simulate
-  // the inset box-shadow highlight from Radix
+  // Classic: the inset top highlight of --kbd-box-shadow. It fills the box inside the ring and
+  // draws only its top border, so the line bends with the corners like an inset shadow does
+  // (a straight 1px line stuck out past the rounded corners at large sizes)
   const highlightStyle: ViewStyle | null = isClassic
     ? {
         position: 'absolute',
         top: 0,
-        left: 1,
-        right: 1,
-        height: 1,
-        backgroundColor: colors.highlight,
-        borderTopLeftRadius: Math.max(0, borderR - 1),
-        borderTopRightRadius: Math.max(0, borderR - 1),
+        left: 0,
+        right: 0,
+        bottom: 0,
+        borderTopWidth: 1,
+        borderTopColor: colors.highlight,
+        borderRadius: Math.max(0, borderR - 1),
       }
     : null
 
   return (
     <View {...rest} style={[containerStyle, style]}>
-      {highlightStyle && <View style={highlightStyle} />}
+      {highlightStyle && <View pointerEvents="none" style={highlightStyle} />}
       {text.provide(<RNText {...text.textProps} style={text.style}>{children}</RNText>)}
     </View>
   )

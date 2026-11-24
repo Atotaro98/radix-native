@@ -220,6 +220,10 @@ describe('Kbd', () => {
       shadowColor: expected.shadow,
     })
     const highlight = (key.children[0] as unknown as { props: { style: object } }).props.style
-    expect(StyleSheet.flatten(highlight)).toMatchObject({ backgroundColor: expected.highlight })
+    // Drawn as the top border of a box with the Kbd's corners, so it bends with them like the inset shadow
+    const drawn = StyleSheet.flatten(highlight) as { borderTopColor?: string; borderTopWidth?: number; borderRadius?: number; backgroundColor?: string }
+    expect(drawn).toMatchObject({ borderTopColor: expected.highlight, borderTopWidth: 1 })
+    expect(drawn.borderRadius).toBeGreaterThan(0)
+    expect(drawn.backgroundColor).toBeUndefined()
   })
 })
