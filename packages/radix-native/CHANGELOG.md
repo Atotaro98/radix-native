@@ -1,5 +1,28 @@
 # radix-native
 
+## 0.12.0
+
+### Minor Changes
+
+- 5c1aba6: `TextField.Slot`: icons or buttons inside a TextField, like Radix Themes (`side`, `color`, `gap`, `px` / `pl` / `pr`). The first slot goes on the left and a second one on the right; icons without a `color` take the slot's, and a press on a slot focuses the input. `TextField.Root` is an alias of `TextField`.
+
+### Patch Changes
+
+- 350e496: Fixes from a code audit. `Popover.Anchor` keeps positioning the content after the Trigger is pressed. A ref on the child of an overlay Trigger / Anchor is kept on React 18. A disabled TextField / TextArea stays not editable when `readOnly={false}` is passed. Avatar shows its fallback for an empty or missing `uri`. Progress reports its clamped value to screen readers. A Link without `href` or `onPress` no longer takes the touch from a pressable parent.
+
+  More fixes: a Slider keeps its drag inside a ScrollView on Android. DataList label columns and Table auto columns widen when a longer cell arrives. Spinner starts mid-cycle instead of fully opaque. Anchored overlays (Popover, menus, Select, Tooltip, HoverCard) are placed correctly when the root Theme does not start at the window's top-left, stay above the keyboard, keep their stacking order when `onOpenChange` is an inline function, and close with the screen reader's escape gesture (Dialog and AlertDialog too). A Select list taller than the screen opens scrolled to the selected item, and an item whose label changes keeps its place. A Theme with inline `fonts` / `colorOverrides` no longer re-renders everything under it on each render. ScrollArea `scrollbars="both"` content is at least as wide as the viewport.
+
+  Right-to-left layouts: Anchored overlays are placed at their physical position, with `align="start"` on the anchor's right edge and sub-menus opening to the left; the Slider follows the finger (a horizontal slider starts on the right); the Switch thumb and the SegmentedControl indicator move toward the row's end; Select's item-aligned list lines up on the right.
+
+  A scrolling Tabs.List / TabNav keeps the active trigger in view.
+
+- 97f7f39: Overlay and control fixes. A `DropdownMenu.RadioItem` / `ContextMenu.RadioItem` inside a sub-menu now keeps its `RadioGroup` (checked state and `onValueChange`): overlay content keeps the state of the radix-native components around it, not only the Theme. Select's item-aligned list honours a per-side `collisionPadding`. Tab triggers, SegmentedControl items, menu items, Select items and labelled CheckboxGroup / RadioGroup rows pass the name their content gives them (AccessibleIcon labels, VisuallyHidden text) as `accessibilityLabel`, so TalkBack reads them as one element. Their labels read adjacent text as one label (`Hello {name}`), and menu and Select item labels stay on one line. A menu, Select or modal Popover that is closing no longer swallows the next tap, and the Tooltip arrow stays on the content's straight edge.
+- 850e1a5: - DropdownMenu / ContextMenu: a `CheckboxItem` or `RadioItem` inside a component of your own now reserves the indicator gutter for the whole menu, as it does when it is a direct child of `Content`.
+  - Table: a cell whose `width`, `minWidth` or `maxWidth` changes after the first layout keeps its measured width, so the table no longer stays hidden waiting for a layout event that never comes.
+  - Kbd: the classic variant's top highlight follows the rounded corners instead of sticking out past them at large sizes.
+  - Internal: one module decides where an Anchored overlay goes (window, safe area, keyboard, RTL, portal origin, Select's item-aligned position); Table, DataList and SegmentedControl share one registry of measured cells; the Slider's drag is a pure module; Dialog and Anchored overlays share their enter / exit presence.
+- 2f5788a: Tab triggers, SegmentedControl items and the Select trigger show their focus ring again: press feedback and focus are now separate. Strong, Em and Quote outside other text render as body text (gray-12), like Radix, instead of the platform's default color. Internally, Variant recipes take exactly the state they decide and return their parts already chosen for it, one module draws every recipe's surface (fill, border, ring, shadow, bevel), every pressable control shares one shell, and the four Selection group families share one Root.
+
 ## 0.11.1
 
 ### Patch Changes
