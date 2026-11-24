@@ -36,6 +36,10 @@ _Avoid_: font role, text variant, text type
 The weight a piece of text asks for (`light`, `regular`, `medium`, `bold`), as distinct from the font face that ends up rendering it. When no face is configured for that weight, the intent is reported as unmet rather than silently dropped.
 _Avoid_: font weight (when the configured face is meant)
 
+**Content text**:
+What a component's content says as text: the strings and numbers in it, read as one run however many pieces they were written in (`Option {name}` is two) and whether or not a fragment groups them. Each run renders as one piece of text in the component's Text style; anything else in the content stays as it is.
+_Avoid_: string children, plain children, label text
+
 **Compact text**:
 Text inside a control that grows with its label (a Control label, Kbd, TextField, TextArea) but whose layout would break under unbounded accessibility font scaling, so it gets a default Font scaling cap of 2. Text in a truly fixed-size box (Avatar initials) is capped at 1 instead.
 _Avoid_: small text, control text
@@ -63,14 +67,22 @@ How a Variant family turns each Variant and state (high contrast, checked, disab
 _Avoid_: generic palette, color scheme, theme colors
 
 **Surface**:
-The drawn box of a part: its fill, a 1px border, a ring drawn over its content (Radix's inset box-shadow rings), its drop shadow, the classic bevel and an opacity. Every recipe names these parts the same way, and one module draws them for every component.
+The drawn box of a part: its fill, a 1px border, a ring drawn over its content (Radix's inset box-shadow rings), its drop shadow, the classic bevel and an opacity. Every recipe names these parts the same way, and one module draws them for every component. A component that draws several boxes has a Surface for each: a Slider's track, range and thumb.
 _Avoid_: background (for the whole box), container, shell
+
+**Tint**:
+Giving content the color of the text around it, as `currentColor` does on the web: an icon in a Control label, a Callout icon, a TextField slot. Only content that sets no color of its own is tinted, and never one of radix-native's own components, whose `color` names a Theme color.
+_Avoid_: currentColor (React Native has none), inherit color (that is Nested text)
 
 ## Controls
 
 **Control**:
 Anything the user presses that radix-native draws: buttons, a pressable Card, a Toggle surface, tab triggers, SegmentedControl items, the Select trigger, menu and Select rows. Every Control shares one shell: pressed and focus state, the press scale, the name screen readers read from its content, the minimum touch target, the disabled gate, the focus ring and the order consumer props merge in. Focus never depends on the press scale.
 _Avoid_: pressable, touchable, interactive (on its own)
+
+**Inset values**:
+What a padded container tells an Inset inside it so the Inset can reach the container's edges: the container's padding minus its border width, the border width and the radius. Card, Selection cards, Anchored overlay panels and Dialog content publish them.
+_Avoid_: inset padding (for the whole set), card context
 
 **Control label**:
 The single row of content inside a Button, IconButton, Badge, tab trigger, SegmentedControl item or menu / Select item: runs of text and icons. Adjacent text reads as one piece of Compact text in the control's Text style, kept to one line; icons take the control's text color unless they set their own. While a button is loading, its Control label stays readable by screen readers even though it is hidden on screen.
