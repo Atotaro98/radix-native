@@ -1,12 +1,13 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef } from 'react'
 import { physical } from '../../utils/rtl'
 import { Pressable, StyleSheet, View } from 'react-native'
 import type { StyleProp, ViewStyle } from 'react-native'
-import Animated, { Easing, runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated'
+import Animated, { useAnimatedStyle } from 'react-native-reanimated'
 import { placementContains, type AnchoredPlacementOptions, type PlacementStrategy } from '../../utils/anchoredPlacement'
 import type { Align, Padding, Placement, Rect, Side } from '../../utils/popper'
 import type { Anchor } from './overlayRoot'
 import { Portal, usePortalHost } from './Portal'
+import { useEnterExit, usePresence, type PresenceTiming } from './presence'
 import { useAnchoredPlacement } from './useAnchoredPlacement'
 
 export interface AnchoredPlacementProps {
@@ -30,7 +31,7 @@ export interface AnchoredContentProps extends AnchoredPlacementProps {
   /** A full-screen transparent backdrop swallows outside touches (menus, Select, Popover modal). */
   modal?: boolean
   /** Opening / closing animation (Radix `.rt-PopperContent`); Tooltip opens faster and closes instantly. */
-  timing?: { open: number; close: number }
+  timing?: PresenceTiming
   /** Content min-width = the anchor's width (Popover, Select). */
   matchAnchorWidth?: boolean
   /** Default: the Popper rules. Select's `item-aligned` puts its selected row over the anchor instead. */
@@ -41,9 +42,8 @@ export interface AnchoredContentProps extends AnchoredPlacementProps {
   testID?: string
 }
 
-// animations.css: cubic-bezier(0.16, 1, 0.3, 1); popper content opens in 160ms, closes in 100ms
-const EASE = Easing.bezier(0.16, 1, 0.3, 1)
-const POPPER_TIMING = { open: 160, close: 100 }
+// animations.css: popper content opens in 160ms, closes in 100ms
+const POPPER_TIMING: PresenceTiming = { open: 160, close: 100 }
 
 /**
  * Internal: an Anchored overlay's content in the nearest portal host, placed
@@ -53,13 +53,11 @@ const POPPER_TIMING = { open: 160, close: 100 }
  * Android back button dismisses it.
  */
 export function AnchoredContent(props: AnchoredContentProps) {
-  // Presence: stay mounted until the exit animation ends
-  const [present, setPresent] = useState(props.open)
-  useEffect(() => { if (props.open) setPresent(true) }, [props.open])
+  const { present, onExited } = usePresence(props.open)
   if (!present) return null
   return (
     <Portal>
-      <Placed {...props} onExited={() => setPresent(false)} />
+      <Placed {...props} onExited={onExited} />
     </Portal>
   )
 }
@@ -71,7 +69,6 @@ function Placed({
   style, children, testID, onExited,
 }: AnchoredContentProps & { onExited: () => void }) {
   const host = usePortalHost()
-  const reducedMotion = useReducedMotion()
   const options = useMemo<AnchoredPlacementOptions>(
     () => ({ side, align, sideOffset, alignOffset, avoidCollisions, collisionPadding, sticky, strategy }),
     [side, align, sideOffset, alignOffset, avoidCollisions, collisionPadding, sticky, strategy],
@@ -97,23 +94,9 @@ function Placed({
   // `onDismiss` is read through a ref: a new callback must not re-add the layer (it would jump above the layers opened after it)
   }, [host, open, modal])
 
-  // Animation toward the placed side
-  const progress = useSharedValue(0)
+  // Animation toward the placed side, once placed
   const isPlaced = placement !== null
-  useEffect(() => {
-    if (open && isPlaced) {
-      progress.value = reducedMotion || !timing.open ? 1 : withTiming(1, { duration: timing.open, easing: EASE })
-    } else if (!open) {
-      if (reducedMotion || !timing.close) {
-        onExited()
-        return
-      }
-      progress.value = withTiming(0, { duration: timing.close, easing: EASE }, (done) => {
-        if (done) runOnJS(onExited)()
-      })
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, isPlaced, reducedMotion])
+  const progress = useEnterExit({ open, ready: isPlaced, timing, onExited })
 
   const placedSide = placement?.side ?? side
   // item-aligned content is not a .rt-PopperContent: it only fades

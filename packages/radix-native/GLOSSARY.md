@@ -100,6 +100,18 @@ _Avoid_: group (on its own), option list
 An item of CheckboxCards or RadioCards: a card that acts as a Toggle inside a Selection group, takes its size from the group's size, and is announced as one checkbox or radio named by its content. A checkbox card shows its Indicator at the trailing edge; a radio card shows none and marks its checked state with a ring.
 _Avoid_: card item, option card
 
+**Measured columns**:
+Columns whose width comes from their cells, as CSS grid and table layout do on the web: every cell reports its natural width, the columns are resolved from them (all as wide as the widest, or a table's own rules), and nothing is shown until every cell has reported. DataList labels, SegmentedControl items and Table columns.
+_Avoid_: auto columns, widest cells (for the whole concept), column registry
+
+**Drag session**:
+One touch on a Slider from finger down to release: which thumb it moves (the closest, followed when thumbs cross), how the values change along the way, and whether it commits at the end (only when the values changed).
+_Avoid_: gesture, pan
+
+**Collection**:
+The parts of a compound component as its root knows them, wherever they sit in the tree, including inside a consumer's own component. A Select's rows and a menu's indicator rows.
+_Avoid_: registry, children (for registered parts), item list
+
 ## Overlays
 
 **Overlay**:
@@ -109,6 +121,14 @@ _Avoid_: popup, modal (on its own), sheet
 **Modal overlay**:
 An Overlay that blocks interaction with everything else until it is closed: Dialog and AlertDialog.
 _Avoid_: modal (on its own), dialog (for the whole category)
+
+**Placement**:
+Where an Anchored overlay's content is drawn and how much room it has, decided from its anchor, the content's size and the device: the window minus the safe area and the keyboard, the layout direction, and where its portal host starts. It follows Radix's Popper rules, or, for a Select, puts the selected row over the trigger (item-aligned).
+_Avoid_: position (for the whole concept), layout, popper (for item-aligned)
+
+**Presence**:
+An Overlay staying mounted after it closes until its exit animation has ended, and appearing or disappearing at once under Reduce Motion.
+_Avoid_: mounted state, visibility
 
 **Anchored overlay**:
 An Overlay placed relative to the element that triggered it, its anchor: Popover, Tooltip, HoverCard, DropdownMenu, ContextMenu and the content of a Select. Popover and HoverCard are not modal: touching outside closes them and still reaches what is underneath. Menus and Select block that touch.

@@ -8,9 +8,7 @@ import { useMetrics } from '../../hooks/useMetrics'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { CardRing } from '../internal/CardRing'
 import { shadowStyle } from '../../utils/shadow'
-import {
-  getClosestValueIndex, percentOf, snapToStep, thumbCenter, thumbLabel, updateValues, valueFromPosition,
-} from '../../utils/slider'
+import { beginDrag, commits, moveDrag, sliderLayout, stepThumb, thumbLabel, type SliderConfig, type SliderDrag } from '../../utils/slider'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { RadiusToken } from '../../theme/theme.types'
 import type { MarginProps } from '../../types/marginProps'
@@ -113,67 +111,54 @@ export function Slider({
     setLength(vertical ? e.nativeEvent.layout.height : e.nativeEvent.layout.width)
   }, [vertical])
 
-  // Horizontal slides from the left (inverted: right); vertical from the bottom (inverted: top)
-  const fromEnd = vertical ? !inverted : inverted
-  // Touches are physical, the drawn edges follow the reading direction: in RTL a horizontal slider starts on the right
-  const touchFromEnd = vertical ? fromEnd : fromEnd !== isRTL()
-  const minDistance = minStepsBetweenThumbs * step
-  const config = { min, max, step }
+  const rtl = isRTL()
+  const config = useMemo<SliderConfig>(
+    () => ({ min, max, step, minStepsBetweenThumbs, vertical, inverted, rtl }),
+    [min, max, step, minStepsBetweenThumbs, vertical, inverted, rtl],
+  )
 
-  const drag = useRef<{ index: number; start: number[]; origin: number; page: number } | null>(null)
-  const valuesRef = useRef(values)
+  // The drag itself is `utils/slider`; here: the responder's events in, the values out
+  const drag = useRef<SliderDrag | null>(null)
+  const valuesRef = useRef<readonly number[]>(values)
   valuesRef.current = values
-
-  const moveTo = useCallback((index: number, raw: number): number => {
-    const snapped = snapToStep(raw, config)
-    const current = valuesRef.current
-    if (current[index] === snapped) return index
-    const next = updateValues(current, index, snapped, minDistance)
-    if (!next) return index
-    valuesRef.current = next.values
-    setValues(next.values)
-    return next.index
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [min, max, step, minDistance, setValues])
+  const apply = (next: readonly number[]) => {
+    if (next === valuesRef.current) return
+    valuesRef.current = next
+    setValues([...next])
+  }
+  const commit = (before: readonly number[]) => {
+    if (commits(before, valuesRef.current)) onValueCommit?.([...valuesRef.current])
+  }
 
   const positionOf = (e: GestureResponderEvent) => (vertical ? e.nativeEvent.locationY : e.nativeEvent.locationX)
   const pageOf = (e: GestureResponderEvent) => (vertical ? e.nativeEvent.pageY : e.nativeEvent.pageX)
 
   const onGrant = (e: GestureResponderEvent) => {
-    const origin = positionOf(e)
-    const raw = valueFromPosition(origin, length, { min, max, fromEnd: touchFromEnd })
-    const index = getClosestValueIndex(valuesRef.current, raw)
-    drag.current = { index, start: valuesRef.current, origin, page: pageOf(e) }
-    drag.current.index = moveTo(index, raw)
+    const next = beginDrag(valuesRef.current, config, length, positionOf(e), pageOf(e))
+    drag.current = next.drag
+    apply(next.values)
   }
   const onMove = (e: GestureResponderEvent) => {
-    const d = drag.current
-    if (!d) return
-    // locationX can jump between targets on Android; follow the page delta from the grant
-    const position = d.origin + (pageOf(e) - d.page)
-    d.index = moveTo(d.index, valueFromPosition(position, length, { min, max, fromEnd: touchFromEnd }))
+    if (!drag.current) return
+    const next = moveDrag(drag.current, valuesRef.current, config, length, pageOf(e))
+    drag.current = next.drag
+    apply(next.values)
   }
   const onEnd = () => {
     const d = drag.current
     drag.current = null
-    if (d && String(d.start) !== String(valuesRef.current)) onValueCommit?.(valuesRef.current)
+    if (d) commit(d.start)
   }
 
   const onAccessibilityAction = (index: number) => (e: AccessibilityActionEvent) => {
-    const delta = e.nativeEvent.actionName === 'increment' ? step : e.nativeEvent.actionName === 'decrement' ? -step : 0
-    if (!delta) return
+    const by = e.nativeEvent.actionName === 'increment' ? 1 : e.nativeEvent.actionName === 'decrement' ? -1 : 0
+    if (!by) return
     const before = valuesRef.current
-    moveTo(index, before[index] + delta)
-    if (String(before) !== String(valuesRef.current)) onValueCommit?.(valuesRef.current)
+    apply(stepThumb(before, config, index, by))
+    commit(before)
   }
 
-  // ─── Geometry ───────────────────────────────────────────────────────────
-  const percents = values.map((v) => percentOf(v, min, max))
-  // Range: one value → from the start edge; several → between the outer thumbs
-  const rangeStart = values.length > 1 ? Math.min(...percents) : 0
-  const rangeEnd = 100 - Math.max(...percents)
-  const startEdge = vertical ? (inverted ? 'top' : 'bottom') : (inverted ? 'right' : 'left')
-  const endEdge = { top: 'bottom', bottom: 'top', left: 'right', right: 'left' }[startEdge] as typeof startEdge
+  const { range, thumbCenters } = sliderLayout(values, config, length, thumbSize)
 
   const rootStyle = useMemo<ViewStyle>(() => ({
     justifyContent: 'center',
@@ -203,7 +188,7 @@ export function Slider({
     >
       {/* Track: overflow hidden, radius inherited from the root */}
       <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: rootRadius, overflow: 'hidden', backgroundColor: colors.track }}>
-        <View style={{ position: 'absolute', [startEdge]: `${rangeStart}%`, [endEdge]: `${rangeEnd}%`, ...(vertical ? { left: 0, right: 0 } : { top: 0, bottom: 0 }), borderRadius: rootRadius, backgroundColor: colors.range }}>
+        <View style={{ position: 'absolute', [range.startEdge]: `${range.start}%`, [range.endEdge]: `${range.end}%`, ...(vertical ? { left: 0, right: 0 } : { top: 0, bottom: 0 }), borderRadius: rootRadius, backgroundColor: colors.range }}>
           {colors.rangeBorder ? <CardRing color={colors.rangeBorder} borderRadius={rootRadius} /> : null}
         </View>
         {colors.trackBorder ? <CardRing color={colors.trackBorder} borderRadius={rootRadius} /> : null}
@@ -211,8 +196,7 @@ export function Slider({
 
       {Array.from({ length: thumbCount }, (_, i) => {
         const v = values[i] ?? min
-        const center = thumbCenter(percentOf(v, min, max), length, thumbSize)
-        const along = (fromEnd ? length - center : center) - discSize / 2
+        const along = (thumbCenters[i] ?? 0) - discSize / 2
         return (
           <View
             key={i}

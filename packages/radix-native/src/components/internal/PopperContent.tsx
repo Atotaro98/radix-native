@@ -11,8 +11,8 @@ import type { SpaceToken } from '../../tokens/spacing'
 
 export type PanelSize = 1 | 2 | 3 | 4
 
-// popover.css / hover-card.css .rt-*Content:where(.rt-r-size-N)
-const SIZES: Record<PanelSize, { padding: SpaceToken; radius: RadiusLevel }> = {
+// popover.css / hover-card.css / base-dialog.css .rt-*Content:where(.rt-r-size-N)
+export const PANEL_SIZES: Record<PanelSize, { padding: SpaceToken; radius: RadiusLevel }> = {
   1: { padding: 3, radius: 4 },
   2: { padding: 4, radius: 4 },
   3: { padding: 5, radius: 5 },
@@ -22,7 +22,7 @@ const SIZES: Record<PanelSize, { padding: SpaceToken; radius: RadiusLevel }> = {
 /** Padding and radius of a Popover / HoverCard panel of this size, in px. */
 export function usePanelSize(size: PanelSize): { padding: number; borderRadius: number } {
   const metrics = useMetrics()
-  return { padding: metrics.space(SIZES[size].padding), borderRadius: metrics.radius(SIZES[size].radius) }
+  return { padding: metrics.space(PANEL_SIZES[size].padding), borderRadius: metrics.radius(PANEL_SIZES[size].radius) }
 }
 
 export interface PopperContentProps extends Omit<AnchoredContentProps, 'children' | 'style'> {

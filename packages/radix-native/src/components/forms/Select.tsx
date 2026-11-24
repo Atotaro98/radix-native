@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import React, { createContext, useCallback, useContext, useLayoutEffect, useMemo, useState } from 'react'
 import { Pressable, Text as RNText, View } from 'react-native'
 import type { StyleProp, ViewStyle } from 'react-native'
 import { useControllableState } from '../../hooks/useControllableState'
@@ -8,6 +8,7 @@ import { useTextStyle } from '../../hooks/useTextStyle'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import type { PlacementStrategy } from '../../utils/anchoredPlacement'
 import type { AnchoredPlacementProps } from '../internal/AnchoredContent'
+import { useCollection, useCollectionItem, type Collection } from '../internal/collection'
 import { useControl } from '../internal/control'
 import { ListLabel, ListRow, ListSeparator, rowCenter, useListMetrics, type ListLook } from '../internal/ListRows'
 import { anchorRef, createOverlayContext, useOverlayState, type OverlayState } from '../internal/overlayRoot'
@@ -89,11 +90,9 @@ interface SelectContextValue extends OverlayState {
   value: string | undefined
   setValue: (v: string) => void
   disabled: boolean
-  /** The content's rows in order, known before it ever opens (see ItemRegistry). */
-  entries: Entry[]
-  register: (key: object, entry: Entry) => () => void
-  /** Replaces a registered row, keeping its place in the order. */
-  update: (key: object, entry: Entry) => void
+  /** The content's rows in order, known before it ever opens (Content renders them once just to register). */
+  entries: readonly Entry[]
+  rows: Pick<Collection<Entry>, 'register' | 'update'>
   /** The trigger's padding-x: where its value text starts (item-aligned placement). */
   triggerPadX: number
   setTriggerPadX: (px: number) => void
@@ -104,24 +103,11 @@ type Entry = { kind: 'item'; value: string; label: React.ReactNode } | { kind: '
 /** True while Content renders its children only to register them (RN can't mirror item text like Radix). */
 const RegistryContext = createContext(false)
 
+/** Registers a row while Content renders for the registry; true then (the row renders nothing). */
 function useRegister(entry: Entry) {
   const ctx = useContext(Select_.Context)
   const registering = useContext(RegistryContext)
-  const key = useRef({}).current
-  const label = entry.kind === 'item' ? entry.label : undefined
-  const value = entry.kind === 'item' ? entry.value : undefined
-  const latest = useRef(entry)
-  latest.current = entry
-  // Registers once, in tree order; a changed label or value updates the row where it is
-  useLayoutEffect(() => {
-    if (!registering || !ctx) return
-    return ctx.register(key, latest.current)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [registering, ctx?.register, key])
-  useLayoutEffect(() => {
-    if (registering && ctx) ctx.update(key, latest.current)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [registering, ctx?.update, key, entry.kind, value, label])
+  useCollectionItem(ctx?.rows, entry, registering)
   return registering
 }
 
@@ -138,28 +124,11 @@ function SelectRoot({
   const [value, setValue] = useControllableState<string | undefined>({ prop: valueProp, defaultProp: defaultValue, onChange: onValueChange as (v: string | undefined) => void })
   const overlay = useOverlayState({ open: openProp, defaultOpen, onOpenChange })
   const [triggerPadX, setTriggerPadX] = useState(0)
-  // Rows register in tree order (layout effects run in order), like Radix's collection
-  const registry = useRef(new Map<object, Entry>())
-  const [entries, setEntries] = useState<Entry[]>([])
-  const register = useCallback((key: object, entry: Entry) => {
-    registry.current.set(key, entry)
-    setEntries(Array.from(registry.current.values()))
-    return () => {
-      registry.current.delete(key)
-      setEntries(Array.from(registry.current.values()))
-    }
-  }, [])
-  const update = useCallback((key: object, entry: Entry) => {
-    const prev = registry.current.get(key)
-    if (!prev || prev === entry) return
-    const same = prev.kind === entry.kind && (prev.kind !== 'item' || (entry.kind === 'item' && prev.value === entry.value && prev.label === entry.label))
-    if (same) return
-    registry.current.set(key, entry)
-    setEntries(Array.from(registry.current.values()))
-  }, [])
+  const { items: entries, register, update } = useCollection<Entry>()
+  const rows = useMemo(() => ({ register, update }), [register, update])
   const ctx = useMemo<SelectContextValue>(() => ({
-    ...overlay, size, value, setValue: (v: string) => setValue(v), disabled, entries, register, update, triggerPadX, setTriggerPadX,
-  }), [overlay, size, value, setValue, disabled, entries, register, update, triggerPadX])
+    ...overlay, size, value, setValue: (v: string) => setValue(v), disabled, entries, rows, triggerPadX, setTriggerPadX,
+  }), [overlay, size, value, setValue, disabled, entries, rows, triggerPadX])
   return <Select_.Provider value={ctx}>{children}</Select_.Provider>
 }
 SelectRoot.displayName = 'Select.Root'
