@@ -7,6 +7,7 @@ import type { AnchoredPlacementProps } from './AnchoredContent'
 import { ListLabel, ListRow, ListSeparator, ListShortcut, useListMetrics, type ListLook, type ListMetrics } from './ListRows'
 import { anchorRef, createOverlayContext, useOverlayState, type OverlayState } from './overlayRoot'
 import { createPortalContext } from './portalContext'
+import { useCollection, useCollectionItem, type Collection } from './collection'
 import { PopperContent } from './PopperContent'
 import type { AccentColor } from '../../tokens/colors/types'
 import type { MenuVariant } from '../../utils/variantPalette'
@@ -78,6 +79,8 @@ interface MenuContentValue extends ListLook {
   list: ListMetrics
   /** Some item in this content shows an indicator: every row reserves the wide left gutter. */
   gutter: boolean
+  /** The rows that show an indicator register here, wherever they sit in the content. */
+  indicators: Pick<Collection<object>, 'register' | 'update'>
   /** Closes the whole menu (root and subs). */
   closeAll: () => void
 }
@@ -99,7 +102,11 @@ const rowStart = (content: MenuContentValue) => (content.gutter ? content.list.g
 
 // ─── Content ──────────────────────────────────────────────────────────────────
 
-/** Radix decides the gutter with CSS `:has`: scan this content's own children (not sub-menus). */
+/**
+ * Radix decides the gutter with CSS `:has`. Scanning this content's own children (not sub-menus)
+ * answers on the first frame; an indicator row inside a consumer's own component registers itself
+ * instead (see `useContentValue`), which the scan cannot see.
+ */
 function hasIndicatorItems(children: React.ReactNode): boolean {
   let found = false
   React.Children.forEach(children, (child) => {
@@ -113,9 +120,12 @@ function hasIndicatorItems(children: React.ReactNode): boolean {
 function useContentValue(size: MenuSize, look: ListLook, children: React.ReactNode, closeAll: () => void) {
   const list = useListMetrics(size)
   const { variant, color, highContrast } = look
+  const { items: registered, register, update } = useCollection<object>()
+  const indicators = useMemo(() => ({ register, update }), [register, update])
+  const gutter = registered.length > 0
   return useMemo<MenuContentValue>(() => ({
-    size, list, variant, color, highContrast, gutter: hasIndicatorItems(children), closeAll,
-  }), [size, list, variant, color, highContrast, children, closeAll])
+    size, list, variant, color, highContrast, gutter: gutter || hasIndicatorItems(children), indicators, closeAll,
+  }), [size, list, variant, color, highContrast, gutter, children, indicators, closeAll])
 }
 
 /**
@@ -160,6 +170,8 @@ function Chevron({ size, color }: { size: number; color: string }) {
   )
 }
 
+const INDICATOR_ROW = {}
+
 interface RowProps extends MenuItemProps {
   role: 'menuitem' | 'menuitemcheckbox' | 'menuitemradio'
   checked?: boolean | 'indeterminate'
@@ -170,6 +182,7 @@ interface RowProps extends MenuItemProps {
 /** An item: `onSelect` gets an event whose `preventDefault()` keeps the whole menu open. */
 function MenuRow({ role, checked, color, shortcut, disabled, onSelect, onActivate, testID, children }: RowProps) {
   const content = useContent('Menu item')
+  useCollectionItem(content.indicators, INDICATOR_ROW, role !== 'menuitem')
   const onPress = useCallback(() => {
     let prevented = false
     const event: MenuSelectEvent = {

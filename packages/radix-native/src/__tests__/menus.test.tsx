@@ -151,6 +151,25 @@ describe('DropdownMenu (base-menu.css)', () => {
     expect(screen.getByText('Hello Ana', { includeHiddenElements: true })).toBeTruthy()
   })
 
+  it('reserves the indicator gutter when the checkbox item sits in a component of its own', () => {
+    function Bookmarks() {
+      return <DropdownMenu.CheckboxItem checked testID="bookmarks">Show bookmarks</DropdownMenu.CheckboxItem>
+    }
+    renderWithTheme(
+      <DropdownMenu.Root>
+        <DropdownMenu.Trigger><FakeAnchor rect={RECT} /></DropdownMenu.Trigger>
+        <DropdownMenu.Content testID="content">
+          <DropdownMenu.Item testID="edit">Edit</DropdownMenu.Item>
+          <Bookmarks />
+        </DropdownMenu.Content>
+      </DropdownMenu.Root>,
+    )
+    open()
+    // size 2: the 24px gutter instead of the 12px padding-x, on every row
+    expect(flat(row('edit')).paddingLeft).toBe(24)
+    expect(flat(row('bookmarks')).paddingLeft).toBe(24)
+  })
+
   it('a Trigger outside its Root names its own component', () => {
     jest.spyOn(console, 'error').mockImplementation(() => {})
     expect(() => renderWithTheme(<DropdownMenu.Trigger><FakeAnchor rect={RECT} /></DropdownMenu.Trigger>))
