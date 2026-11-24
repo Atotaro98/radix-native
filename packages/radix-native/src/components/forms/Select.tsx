@@ -166,10 +166,16 @@ function SelectTrigger({
 
   const selectedEntry = ctx.entries.find((e) => e.kind === 'item' && e.value === ctx.value)
   const label = children ?? (showPlaceholder ? placeholder : selectedEntry?.kind === 'item' ? selectedEntry.label : undefined)
-  const labelText = typeof label === 'string' ? label : undefined
-  const content = typeof label === 'string' || typeof label === 'number'
-    ? <RNText {...text.textProps} style={[text.style, { flexShrink: 1 }]}>{label}</RNText>
-    : label
+  // Text written in several pieces (`Option {name}`) reads as one text; a loose string never reaches the View
+  const parts = React.Children.toArray(label)
+  const isText = (part: React.ReactNode): part is string | number => typeof part === 'string' || typeof part === 'number'
+  const labelText = parts.length > 0 && parts.every(isText) ? parts.join('') : undefined
+  const valueText = (value: string | number, key?: React.Key) => (
+    <RNText key={key} {...text.textProps} style={[text.style, { flexShrink: 1 }]}>{value}</RNText>
+  )
+  const content = labelText !== undefined
+    ? valueText(labelText)
+    : parts.map((part, i) => (isText(part) ? valueText(part, i) : part))
 
   const surface = paintSurface(colors, borderRadius)
   const toggleOpen = useCallback(() => ctx.setOpen(!ctx.open), [ctx])
