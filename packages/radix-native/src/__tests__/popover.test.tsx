@@ -1,21 +1,18 @@
-import React, { useImperativeHandle } from 'react'
+import React from 'react'
 import { Pressable, Text, View } from 'react-native'
-import type { GestureResponderEvent } from 'react-native'
-import { act, fireEvent, screen } from '@testing-library/react-native'
+import { fireEvent, screen } from '@testing-library/react-native'
 import { renderWithTheme } from './helpers/render'
 import { flat } from './helpers/queries'
+import { FakeAnchor, layout, touchWindow } from './helpers/overlay'
 import { Popover } from '../components/overlays/Popover'
+import { Theme } from '../theme/Theme'
 
-/** A trigger that reports a fixed window rect, as a host component would. */
-function FakeAnchor({ onPress, ref }: { onPress?: (e: GestureResponderEvent) => void; ref?: React.Ref<unknown> }) {
-  useImperativeHandle(ref, () => ({ measureInWindow: (cb: (x: number, y: number, w: number, h: number) => void) => cb(40, 100, 90, 32) }))
-  return <Pressable testID="trigger" onPress={onPress}><Text>Comment</Text></Pressable>
-}
+const RECT = [40, 100, 90, 32] as const
 
 function Example(props: Partial<React.ComponentProps<typeof Popover.Root>>) {
   return (
     <Popover.Root {...props}>
-      <Popover.Trigger><FakeAnchor /></Popover.Trigger>
+      <Popover.Trigger><FakeAnchor rect={RECT} /></Popover.Trigger>
       <Popover.Content testID="content">
         <Text>Popover body</Text>
         <Popover.Close><Pressable testID="close"><Text>Close</Text></Pressable></Popover.Close>
@@ -24,17 +21,50 @@ function Example(props: Partial<React.ComponentProps<typeof Popover.Root>>) {
   )
 }
 
-const layoutContent = (width = 200, height = 120) => act(() => {
-  fireEvent(screen.getByTestId('content', { includeHiddenElements: true }), 'layout', { nativeEvent: { layout: { x: 0, y: 0, width, height } } })
-})
+const layoutContent = (width = 200, height = 120) => layout('content', width, height)
 
 describe('Popover', () => {
+  it('is placed from Popover.Anchor when there is one, also after the Trigger is pressed', () => {
+    function Anchor({ ref }: { ref?: React.Ref<unknown> }) {
+      React.useImperativeHandle(ref, () => ({ measureInWindow: (cb: (...r: number[]) => void) => cb(10, 300, 200, 40) }))
+      return <View />
+    }
+    renderWithTheme(
+      <Popover.Root>
+        <Popover.Anchor><Anchor /></Popover.Anchor>
+        <Popover.Trigger><FakeAnchor rect={RECT} /></Popover.Trigger>
+        <Popover.Content testID="content"><Text>Body</Text></Popover.Content>
+      </Popover.Root>,
+    )
+    fireEvent.press(screen.getByTestId('trigger'))
+    layoutContent()
+    expect(flat(screen.getByTestId('content'))).toMatchObject({ left: 10, top: 300 + 40 + 8 })
+  })
+
   it('opens from the trigger and places itself below it, aligned to its start, 8px away', () => {
     renderWithTheme(<Example />)
     expect(screen.queryByText('Popover body')).toBeNull()
     fireEvent.press(screen.getByTestId('trigger'))
     layoutContent()
     expect(flat(screen.getByTestId('content'))).toMatchObject({ left: 40, top: 100 + 32 + 8, minWidth: 90 })
+  })
+
+  it("the screen reader's escape gesture closes it", () => {
+    const onOpenChange = jest.fn()
+    renderWithTheme(<Example defaultOpen onOpenChange={onOpenChange} />)
+    fireEvent(screen.getByTestId('content', { includeHiddenElements: true }), 'accessibilityEscape')
+    expect(onOpenChange).toHaveBeenLastCalledWith(false)
+  })
+
+  it('a new onOpenChange on every render keeps the open popover dismissable and in place', () => {
+    const calls: boolean[] = []
+    function Inline({ n }: { n: number }) {
+      return <Example open onOpenChange={(o) => calls.push(o && n > 0)} modal />
+    }
+    const { rerender } = renderWithTheme(<Inline n={1} />)
+    rerender(<Theme appearance="light"><Inline n={2} /></Theme>)
+    fireEvent.press(screen.getByTestId('content-backdrop', { includeHiddenElements: true }))
+    expect(calls).toEqual([false])
   })
 
   it('stays hidden until measured', () => {
@@ -66,15 +96,9 @@ describe('Popover', () => {
     renderWithTheme(<View testID="page"><Example onOpenChange={onOpenChange} /></View>)
     fireEvent.press(screen.getByTestId('trigger'))
     layoutContent()
-    let host = screen.getByTestId('page').parent
-    while (host && typeof host.props.onStartShouldSetResponderCapture !== 'function') host = host.parent
-    if (!host) throw new Error('no portal host')
-    const capture = (x: number, y: number) => act(() => {
-      (host!.props.onStartShouldSetResponderCapture as (e: unknown) => boolean)({ nativeEvent: { pageX: x, pageY: y } })
-    })
-    capture(60, 150)
+    touchWindow('page', 60, 150)
     expect(onOpenChange).not.toHaveBeenLastCalledWith(false)
-    capture(380, 700)
+    touchWindow('page', 380, 700)
     expect(onOpenChange).toHaveBeenLastCalledWith(false)
   })
 })

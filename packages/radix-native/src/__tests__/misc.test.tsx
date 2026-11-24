@@ -81,9 +81,20 @@ describe('Progress', () => {
   it('reports its value and never produces NaN widths', () => {
     renderWithTheme(<Progress value={5} max={0} testID="p" />)
     const p = screen.getByTestId('p')
-    expect(p.props.accessibilityValue).toEqual({ min: 0, max: 0, now: 5 })
+    expect(p.props.accessibilityValue).toEqual({ min: 0, max: 100, now: 0 })
     const indicator = (p.children[0] as unknown as { props: { style: unknown } })
     expect(JSON.stringify(StyleSheet.flatten(indicator.props.style as never))).not.toContain('NaN')
+  })
+})
+
+describe('Progress accessibility value', () => {
+  it.each([
+    [150, 100, 100],
+    [-5, 100, 0],
+    [3, 4, 3],
+  ])('value %s of %s reads %s', (value, max, now) => {
+    renderWithTheme(<Progress value={value} max={max} testID="p" />)
+    expect(screen.getByTestId('p').props.accessibilityValue).toEqual({ min: 0, max, now })
   })
 })
 

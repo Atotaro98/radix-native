@@ -33,7 +33,7 @@ export function resolveLength(value: TableLength | undefined, basis: number): nu
  * share what is left equally.
  */
 export function resolveColumnWidths(
-  cells: TableCellSize[],
+  cells: readonly TableCellSize[],
   columns: number,
   available: number,
   layout: 'auto' | 'fixed',
@@ -67,4 +67,20 @@ export function resolveColumnWidths(
   const total = widths.reduce((a, b) => a + b, 0)
   if (total > 0 && total < available) return widths.map((w) => (w * available) / total)
   return widths
+}
+
+/**
+ * A table's column widths from its registered cells, or null while they
+ * cannot be known: no container width yet, no cells, or (auto layout) a cell
+ * still unmeasured. The column count is the highest column a cell sits in.
+ */
+export function resolveTableWidths(
+  cells: readonly TableCellSize[],
+  available: number,
+  layout: 'auto' | 'fixed',
+): number[] | null {
+  const columns = cells.reduce((n, c) => Math.max(n, c.col + 1), 0)
+  const measured = layout === 'fixed' || cells.every((c) => c.natural !== undefined)
+  if (!available || !columns || !measured) return null
+  return resolveColumnWidths(cells, columns, available, layout)
 }

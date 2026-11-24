@@ -1,24 +1,21 @@
-import React, { useImperativeHandle, useState } from 'react'
-import { Pressable, Text, View } from 'react-native'
-import type { GestureResponderEvent } from 'react-native'
-import { act, fireEvent, screen } from '@testing-library/react-native'
+import React, { useState } from 'react'
+import { Text, View } from 'react-native'
+import { fireEvent, screen } from '@testing-library/react-native'
 import { renderWithTheme } from './helpers/render'
 import { flat } from './helpers/queries'
+import { FakeAnchor, layout } from './helpers/overlay'
 import { DropdownMenu } from '../components/overlays/DropdownMenu'
 import { ContextMenu } from '../components/overlays/ContextMenu'
 import { AccessibleIcon } from '../components/utilities/AccessibleIcon'
 
-function FakeAnchor({ onPress, ref }: { onPress?: (e: GestureResponderEvent) => void; ref?: React.Ref<unknown> }) {
-  useImperativeHandle(ref, () => ({ measureInWindow: (cb: (x: number, y: number, w: number, h: number) => void) => cb(20, 100, 80, 32) }))
-  return <Pressable testID="trigger" onPress={onPress}><Text>Options</Text></Pressable>
-}
+const RECT = [20, 100, 80, 32] as const
 
 function Example({ onEdit, onOpenChange }: { onEdit?: () => void; onOpenChange?: (o: boolean) => void }) {
   const [bookmarks, setBookmarks] = useState(true)
   const [person, setPerson] = useState('pedro')
   return (
     <DropdownMenu.Root onOpenChange={onOpenChange}>
-      <DropdownMenu.Trigger><FakeAnchor /></DropdownMenu.Trigger>
+      <DropdownMenu.Trigger><FakeAnchor rect={RECT} /></DropdownMenu.Trigger>
       <DropdownMenu.Content testID="content">
         <DropdownMenu.Item shortcut="⌘ E" onSelect={onEdit} testID="edit">Edit</DropdownMenu.Item>
         <DropdownMenu.Item onSelect={(e) => e.preventDefault()} testID="keep">Keep open</DropdownMenu.Item>
@@ -43,7 +40,7 @@ function Example({ onEdit, onOpenChange }: { onEdit?: () => void; onOpenChange?:
 
 const open = () => {
   fireEvent.press(screen.getByTestId('trigger'))
-  act(() => { fireEvent(screen.getByTestId('content', { includeHiddenElements: true }), 'layout', { nativeEvent: { layout: { x: 0, y: 0, width: 220, height: 300 } } }) })
+  layout('content', 220, 300)
 }
 const row = (id: string) => screen.getByTestId(id, { includeHiddenElements: true })
 
@@ -94,7 +91,7 @@ describe('DropdownMenu (base-menu.css)', () => {
   it('size 2 rows are 32px tall; size 1 rows 24px with an 8px left padding when there is no gutter', () => {
     renderWithTheme(
       <DropdownMenu.Root defaultOpen>
-        <DropdownMenu.Trigger><FakeAnchor /></DropdownMenu.Trigger>
+        <DropdownMenu.Trigger><FakeAnchor rect={RECT} /></DropdownMenu.Trigger>
         <DropdownMenu.Content size={1}><DropdownMenu.Item testID="a">A</DropdownMenu.Item></DropdownMenu.Content>
       </DropdownMenu.Root>,
     )
@@ -116,7 +113,7 @@ describe('DropdownMenu (base-menu.css)', () => {
       const [person, setPerson] = useState('pedro')
       return (
         <DropdownMenu.Root>
-          <DropdownMenu.Trigger><FakeAnchor /></DropdownMenu.Trigger>
+          <DropdownMenu.Trigger><FakeAnchor rect={RECT} /></DropdownMenu.Trigger>
           <DropdownMenu.Content testID="content">
             <DropdownMenu.RadioGroup value={person} onValueChange={setPerson}>
               <DropdownMenu.Sub defaultOpen>
@@ -143,7 +140,7 @@ describe('DropdownMenu (base-menu.css)', () => {
   it('a row is named by its AccessibleIcon label and reads adjacent text as one label', () => {
     renderWithTheme(
       <DropdownMenu.Root defaultOpen>
-        <DropdownMenu.Trigger><FakeAnchor /></DropdownMenu.Trigger>
+        <DropdownMenu.Trigger><FakeAnchor rect={RECT} /></DropdownMenu.Trigger>
         <DropdownMenu.Content testID="content">
           <DropdownMenu.Item testID="share">Share <AccessibleIcon label="by email"><View /></AccessibleIcon></DropdownMenu.Item>
           <DropdownMenu.Item testID="greet">Hello {'Ana'}</DropdownMenu.Item>
@@ -156,7 +153,7 @@ describe('DropdownMenu (base-menu.css)', () => {
 
   it('a Trigger outside its Root names its own component', () => {
     jest.spyOn(console, 'error').mockImplementation(() => {})
-    expect(() => renderWithTheme(<DropdownMenu.Trigger><FakeAnchor /></DropdownMenu.Trigger>))
+    expect(() => renderWithTheme(<DropdownMenu.Trigger><FakeAnchor rect={RECT} /></DropdownMenu.Trigger>))
       .toThrow('DropdownMenu.Trigger must be used within DropdownMenu.Root')
     expect(() => renderWithTheme(<ContextMenu.Trigger><Text>Area</Text></ContextMenu.Trigger>))
       .toThrow('ContextMenu.Trigger must be used within ContextMenu.Root')
@@ -194,7 +191,7 @@ describe('ContextMenu', () => {
       </ContextMenu.Root>,
     )
     fireEvent(screen.getByTestId('area'), 'longPress', { nativeEvent: { pageX: 120, pageY: 200 } })
-    act(() => { fireEvent(screen.getByTestId('content', { includeHiddenElements: true }), 'layout', { nativeEvent: { layout: { x: 0, y: 0, width: 160, height: 100 } } }) })
+    layout('content', 160, 100)
     // right / start / sideOffset 2 / alignOffset −4·2
     expect(flat(screen.getByTestId('content'))).toMatchObject({ left: 122, top: 192 })
   })

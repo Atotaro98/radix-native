@@ -1,0 +1,75 @@
+name: Bug report
+description: Something in radix-native does not work as expected
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Please search [existing issues](https://github.com/Atotaro98/radix-native/issues) first.
+        Security vulnerabilities must not be reported here — see the [security policy](https://github.com/Atotaro98/radix-native/blob/main/SECURITY.md).
+  - type: input
+    id: component
+    attributes:
+      label: Component
+      description: Which component or API is affected?
+      placeholder: Select, Popover, Theme…
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead. Screenshots or recordings help a lot.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: A minimal code snippet, an Expo Snack, or a link to a repository that shows the problem.
+      render: tsx
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      multiple: true
+      options:
+        - iOS
+        - Android
+        - Web
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: radix-native version
+      placeholder: 0.11.1
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Versions of react-native, Expo SDK (if used), react-native-reanimated, and the device / OS version.
+      placeholder: |
+        react-native: 0.81
+        expo: 55
+        react-native-reanimated: 4.1
+        device: iPhone 16, iOS 18.5
+    validations:
+      required: true
+  - type: dropdown
+    id: architecture
+    attributes:
+      label: React Native architecture
+      options:
+        - New Architecture
+        - Old Architecture
+        - Not sure
+  - type: textarea
+    id: radix-themes
+    attributes:
+      label: Behavior in Radix Themes (web)
+      description: If this is a difference from @radix-ui/themes, describe or link how it behaves there.

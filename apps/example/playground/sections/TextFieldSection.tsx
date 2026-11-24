@@ -1,6 +1,7 @@
 import React from 'react'
 import { ScrollView } from 'react-native'
-import { TextField, Flex, Box, Text, useColor } from 'radix-native'
+import { TextField, IconButton, Flex, Box, Text, useColor } from 'radix-native'
+import { MagnifyingGlass, DotsThree } from 'phosphor-react-native'
 import type { TextFieldSize, TextFieldVariant, AccentColor } from 'radix-native'
 import { ComponentSection } from '../ui'
 import { ALL_COLORS } from '../constants'
@@ -102,6 +103,37 @@ function AllSizes() {
   )
 }
 
+function Slots() {
+  return (
+    <Flex gap={5}>
+      {VARIANTS.map(variant => (
+        <Flex key={variant} gap={3}>
+          <Text size={1} weight="bold" maxFontSizeMultiplier={1} style={{ textTransform: 'uppercase', letterSpacing: 0.6, opacity: 0.5 }}>
+            {variant}
+          </Text>
+          {SIZES.map(size => (
+            <TextField key={size} size={size} variant={variant} placeholder="Search the docs…">
+              <TextField.Slot>
+                <MagnifyingGlass size={size === 1 ? 14 : 16} />
+              </TextField.Slot>
+              <TextField.Slot>
+                <IconButton size={size === 3 ? 2 : 1} variant="ghost" accessibilityLabel="More options">
+                  <DotsThree size={size === 1 ? 12 : 14} />
+                </IconButton>
+              </TextField.Slot>
+            </TextField>
+          ))}
+          <TextField variant={variant} placeholder="Search the docs…">
+            <TextField.Slot color="indigo" side="right">
+              <MagnifyingGlass size={16} />
+            </TextField.Slot>
+          </TextField>
+        </Flex>
+      ))}
+    </Flex>
+  )
+}
+
 export function TextFieldSection() {
   return (
     <ComponentSection
@@ -110,6 +142,7 @@ export function TextFieldSection() {
         { id: 'theme-colors', label: 'Theme colors', render: () => <ThemeColors /> },
         { id: 'all-colors', label: 'All colors', render: () => <AllColors /> },
         { id: 'all-sizes', label: 'All sizes', render: () => <AllSizes /> },
+        { id: 'slots', label: 'Slots', render: () => <Slots /> },
       ]}
     />
   )

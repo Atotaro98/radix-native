@@ -185,6 +185,7 @@ const colors = useVariantColors('checkbox', { variant, color, highContrast, chec
 | Minimum touch target | `hitSlop ?? getMinHitSlop(width, height)` (44pt) |
 | Colors of a component's parts for its variant and state | `useVariantColors(recipe, { variant?, color, highContrast?, checked?, disabled?, pressed?, focused? })` — see Variant colors above |
 | Translucent color | `fadeColor(color, opacity)` from `utils/colorMath` (or `fade(paint, opacity)` inside a recipe) — never concatenate `hex + '99'` |
+| Right-to-left | `utils/rtl`: `physical(style)` for anything placed from window coordinates (RN swaps `left` / `right` in RTL), `inlineSign()` for a `translateX` that moves toward the row's end, `isRTL()` for Radix `dir` rules (overlay `align`, sub-menu side). Never read `I18nManager` in a component |
 | Dev-only logging | `isDev` from `utils/env` — never reference `__DEV__` directly (crashes outside Metro) |
 
 ### Pressable prop order

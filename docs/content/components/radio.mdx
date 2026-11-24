@@ -1,0 +1,104 @@
+---
+metaTitle: Radio
+metaDescription: Standalone radio button for building custom single-selection layouts.
+sourcePath: components/actions/Radio
+---
+
+# Radio
+
+```tsx
+<Flex direction="row" gap={4}>
+  <Radio defaultChecked />
+  <Radio />
+</Flex>
+```
+
+## API Reference
+
+Inherits from Pressable. Supports [margin props](/theme/spacing).
+
+| Prop | Type | Default |
+|------|------|---------|
+| `size` | `1 \| 2 \| 3` | `2` |
+| `variant` | `'classic' \| 'surface' \| 'soft'` | `'surface'` |
+| `color` | `AccentColor` | theme accent |
+| `highContrast` | `boolean` | — |
+| `checked` | `boolean` | — |
+| `defaultChecked` | `boolean` | `false` |
+| `onCheckedChange` | `(checked: boolean) => void` | — |
+| `disabled` | `boolean` | `false` |
+
+Like a native radio input, pressing a checked `Radio` does not uncheck it: `onCheckedChange` only fires with `true`. For a labeled group with shared state, use [Radio Group](/components/radio-group).
+
+## Examples
+
+### Size
+
+```tsx
+<Flex direction="row" gap={4} align="center">
+  <Radio size={1} defaultChecked />
+  <Radio size={2} defaultChecked />
+  <Radio size={3} defaultChecked />
+</Flex>
+```
+
+### Variant
+
+```tsx
+<Flex direction="row" gap={4}>
+  <Radio variant="classic" defaultChecked />
+  <Radio variant="surface" defaultChecked />
+  <Radio variant="soft" defaultChecked />
+</Flex>
+```
+
+### Color
+
+```tsx
+<Flex direction="row" gap={4}>
+  <Radio color="indigo" defaultChecked />
+  <Radio color="cyan" defaultChecked />
+  <Radio color="orange" defaultChecked />
+  <Radio color="crimson" defaultChecked />
+</Flex>
+```
+
+### High contrast
+
+```tsx
+<Flex direction="row" gap={4}>
+  <Radio color="indigo" defaultChecked />
+  <Radio color="indigo" defaultChecked highContrast />
+</Flex>
+```
+
+### Disabled
+
+```tsx
+<Flex direction="row" gap={4}>
+  <Radio disabled />
+  <Radio disabled defaultChecked />
+</Flex>
+```
+
+### Controlled
+
+`Radio` has no group of its own, so keep the selected value in state and derive `checked` for each one.
+
+```tsx
+function Example() {
+  const [value, setValue] = useState('1')
+  return (
+    <Flex direction="row" gap={4}>
+      {['1', '2', '3'].map((option) => (
+        <Radio
+          key={option}
+          checked={value === option}
+          onCheckedChange={() => setValue(option)}
+          accessibilityLabel={`Option ${option}`}
+        />
+      ))}
+    </Flex>
+  )
+}
+```

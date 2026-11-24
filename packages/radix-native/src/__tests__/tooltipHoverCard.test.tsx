@@ -1,26 +1,18 @@
-import React, { useImperativeHandle } from 'react'
-import { Pressable, Text } from 'react-native'
-import type { GestureResponderEvent } from 'react-native'
-import { act, fireEvent, screen } from '@testing-library/react-native'
+import React from 'react'
+import { Text } from 'react-native'
+import { fireEvent, screen } from '@testing-library/react-native'
 import { renderWithTheme } from './helpers/render'
 import { flat } from './helpers/queries'
+import { FakeAnchor, layout } from './helpers/overlay'
 import { Tooltip, clampArrow } from '../components/overlays/Tooltip'
 import { HoverCard } from '../components/overlays/HoverCard'
 
-type Handlers = { onPress?: (e: GestureResponderEvent) => void; onLongPress?: (e: GestureResponderEvent) => void; onPressOut?: (e: GestureResponderEvent) => void }
-function FakeAnchor({ ref, ...handlers }: Handlers & { ref?: React.Ref<unknown>; accessibilityHint?: string }) {
-  useImperativeHandle(ref, () => ({ measureInWindow: (cb: (x: number, y: number, w: number, h: number) => void) => cb(150, 300, 100, 32) }))
-  return <Pressable testID="trigger" {...handlers}><Text>Trigger</Text></Pressable>
-}
-
-const layout = (id: string, width: number, height: number) => act(() => {
-  fireEvent(screen.getByTestId(id, { includeHiddenElements: true }), 'layout', { nativeEvent: { layout: { x: 0, y: 0, width, height } } })
-})
+const RECT = [150, 300, 100, 32] as const
 
 describe('Tooltip (tooltip.css)', () => {
   it('long-press shows it above the trigger, centred, 4px + arrow away; lifting the finger hides it', () => {
     const onPress = jest.fn()
-    renderWithTheme(<Tooltip content="Add to library" testID="tip"><FakeAnchor onPress={onPress} /></Tooltip>)
+    renderWithTheme(<Tooltip content="Add to library" testID="tip"><FakeAnchor rect={RECT} onPress={onPress} /></Tooltip>)
     fireEvent(screen.getByTestId('trigger'), 'longPress')
     layout('tip', 120, 24)
     // top: 300 − 24 − (4 + 5); centred: 150 + 50 − 60
@@ -31,19 +23,19 @@ describe('Tooltip (tooltip.css)', () => {
 
   it('a tap still presses the trigger and shows nothing', () => {
     const onPress = jest.fn()
-    renderWithTheme(<Tooltip content="Add to library"><FakeAnchor onPress={onPress} /></Tooltip>)
+    renderWithTheme(<Tooltip content="Add to library"><FakeAnchor rect={RECT} onPress={onPress} /></Tooltip>)
     fireEvent.press(screen.getByTestId('trigger'))
     expect(onPress).toHaveBeenCalled()
     expect(screen.queryByText('Add to library')).toBeNull()
   })
 
   it('a string content is the trigger accessibility hint', () => {
-    renderWithTheme(<Tooltip content="Add to library"><FakeAnchor /></Tooltip>)
+    renderWithTheme(<Tooltip content="Add to library"><FakeAnchor rect={RECT} /></Tooltip>)
     expect(screen.getByTestId('trigger').props.accessibilityHint).toBe('Add to library')
   })
 
   it('text is size 1 (12px) on gray-12', () => {
-    renderWithTheme(<Tooltip content="Hi" defaultOpen testID="tip"><FakeAnchor /></Tooltip>)
+    renderWithTheme(<Tooltip content="Hi" defaultOpen testID="tip"><FakeAnchor rect={RECT} /></Tooltip>)
     expect(flat(screen.getByText('Hi', { includeHiddenElements: true })).fontSize).toBe(12)
   })
 })
@@ -52,7 +44,7 @@ describe('HoverCard', () => {
   it('long-press opens it below the trigger, aligned to its start, 8px away', () => {
     renderWithTheme(
       <HoverCard.Root>
-        <HoverCard.Trigger><FakeAnchor /></HoverCard.Trigger>
+        <HoverCard.Trigger><FakeAnchor rect={RECT} /></HoverCard.Trigger>
         <HoverCard.Content testID="card"><Text>Preview</Text></HoverCard.Content>
       </HoverCard.Root>,
     )

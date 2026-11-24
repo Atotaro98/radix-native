@@ -32,8 +32,8 @@ export function ThemeImpl({
   radius: radiusProp,
   scaling: scalingProp,
   hasBackground: hasBackgroundProp,
-  fonts: fontsProp,
-  colorOverrides: colorOverridesProp,
+  fonts: fontsInput,
+  colorOverrides: colorOverridesInput,
   maxFontSizeMultiplier: maxFontSizeMultiplierProp,
   safeAreaInsets: safeAreaInsetsProp,
   onAppearanceChange = noop,
@@ -64,6 +64,11 @@ export function ThemeImpl({
     () => ({ top: insetTop, right: insetRight, bottom: insetBottom, left: insetLeft }),
     [insetTop, insetRight, insetBottom, insetLeft],
   )
+
+  // Inline objects (`fonts={{ … }}`) are new on every render: keep the previous one while its content is the same,
+  // so the context value (and every component under the Theme) only changes when a value does
+  const fontsProp = useStableValue(fontsInput)
+  const colorOverridesProp = useStableValue(colorOverridesInput)
 
   const parentFonts = parent?.fonts ?? EMPTY_FONTS
   const fonts = React.useMemo(
@@ -121,6 +126,17 @@ export function ThemeImpl({
   )
 }
 ThemeImpl.displayName = 'ThemeImpl'
+
+/** The previous value while the new one has the same content (plain data only). */
+function useStableValue<T>(value: T): T {
+  const ref = React.useRef({ value, key: '' })
+  if (ref.current.value !== value) {
+    const key = JSON.stringify(value)
+    if (ref.current.key === '') ref.current.key = JSON.stringify(ref.current.value)
+    if (key !== ref.current.key) ref.current = { value, key }
+  }
+  return ref.current.value
+}
 
 /** Per scale, per mode, per step: the child's steps win, the parent's others stay. */
 function mergeColorOverrides(parent: ColorOverrides, child: ColorOverrides): ColorOverrides {

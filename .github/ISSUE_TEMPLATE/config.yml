@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/Atotaro98/radix-native/security/advisories/new
+    about: Please report vulnerabilities privately, not in a public issue.
+  - name: Radix Themes documentation
+    url: https://www.radix-ui.com/themes/docs
+    about: Radix Native follows the Radix Themes API — check here for how a component is meant to behave.

@@ -3,10 +3,22 @@ import { act, fireEvent, screen } from '@testing-library/react-native'
 import { renderWithTheme } from './helpers/render'
 import { flat } from './helpers/queries'
 import { Table } from '../components/display/Table'
-import { resolveColumnWidths, resolveLength } from '../utils/tableLayout'
+import { resolveColumnWidths, resolveLength, resolveTableWidths } from '../utils/tableLayout'
 
 type Node = { type: unknown; props: { style?: unknown; onLayout?: unknown; testID?: string }; parent: Node | null; findAll: (m: (n: Node) => boolean) => Node[] }
 describe('table layout', () => {
+  it('has no widths until the container is measured, there are cells, and (auto) every cell reported', () => {
+    const cells = [{ col: 0, natural: 100, firstRow: true }, { col: 1, firstRow: true }]
+    expect(resolveTableWidths(cells, 0, 'auto')).toBeNull()
+    expect(resolveTableWidths([], 300, 'auto')).toBeNull()
+    expect(resolveTableWidths(cells, 300, 'auto')).toBeNull()
+    expect(resolveTableWidths([cells[0], { ...cells[1], natural: 50 }], 300, 'auto')).toEqual([200, 100])
+  })
+
+  it('fixed layout does not wait for measurements; the column count is the highest column used', () => {
+    expect(resolveTableWidths([{ col: 0, width: 100, firstRow: true }, { col: 2, firstRow: true }], 300, 'fixed')).toEqual([100, 100, 100])
+  })
+
   it('resolves numbers, px and % lengths', () => {
     expect([resolveLength(120, 400), resolveLength('120px', 400), resolveLength('25%', 400), resolveLength(undefined, 400)]).toEqual([120, 120, 100, undefined])
   })

@@ -201,6 +201,7 @@ export function createDialog({ alert, name }: { alert: boolean; name: string }) 
                 <Animated.View
                   testID={testID}
                   accessibilityViewIsModal
+                  onAccessibilityEscape={requestClose}
                   accessibilityRole={alert ? 'alert' : undefined}
                   accessibilityLabel={accessibilityLabel}
                   // Presses inside the content never reach the backdrop

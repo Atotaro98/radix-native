@@ -16,6 +16,8 @@ interface PortalHostValue {
   mount: (key: number, node: React.ReactNode) => void
   unmount: (key: number) => void
   addLayer: (layer: Layer) => () => void
+  /** Where the host starts in the window: overlays are placed in window coordinates but drawn inside the host. */
+  measureOrigin: (cb: (x: number, y: number) => void) => void
 }
 
 const PortalHostContext = createContext<PortalHostValue | null>(null)
@@ -57,6 +59,12 @@ export const PortalHost = React.forwardRef<PortalHostHandle, { children?: React.
       return () => { layers.current = layers.current.filter((l) => l !== layer) }
     }, [])
 
+    const root = useRef<React.ComponentRef<typeof View>>(null)
+    const measureOrigin = useCallback((cb: (x: number, y: number) => void) => {
+      const node = root.current
+      if (node && typeof node.measureInWindow === 'function') node.measureInWindow((x, y) => cb(x || 0, y || 0))
+    }, [])
+
     const dismissTop = useCallback(() => {
       const top = layers.current[layers.current.length - 1]
       if (!top) return false
@@ -82,11 +90,11 @@ export const PortalHost = React.forwardRef<PortalHostHandle, { children?: React.
       return false
     }, [])
 
-    const value = useMemo(() => ({ mount, unmount, addLayer }), [mount, unmount, addLayer])
+    const value = useMemo(() => ({ mount, unmount, addLayer, measureOrigin }), [mount, unmount, addLayer, measureOrigin])
 
     return (
       <PortalHostContext.Provider value={value}>
-        <View style={{ flex: 1 }} onStartShouldSetResponderCapture={onCapture}>
+        <View ref={root} collapsable={false} style={{ flex: 1 }} onStartShouldSetResponderCapture={onCapture}>
           {children}
           {nodes.size > 0 ? (
             <View style={StyleSheet.absoluteFill} pointerEvents="box-none">

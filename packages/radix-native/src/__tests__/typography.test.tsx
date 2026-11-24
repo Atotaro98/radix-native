@@ -37,6 +37,12 @@ describe('Text', () => {
 })
 
 describe('Link', () => {
+  it('takes no touch without href or onPress', () => {
+    renderWithTheme(<><Link>Plain</Link><Link href="https://example.com">Go</Link></>)
+    expect(screen.getByText('Plain').props.onPress).toBeUndefined()
+    expect(screen.getByText('Go').props.onPress).toBeDefined()
+  })
+
   it('inherits size and is underlined inside running text', () => {
     renderWithTheme(
       <Text size={1}>

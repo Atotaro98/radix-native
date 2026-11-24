@@ -73,14 +73,19 @@ function sideOverflow(pos: { x: number; y: number }, content: Size, side: Side, 
   }
 }
 
-export function place(anchor: Rect, content: Size, o: PlaceOptions): Placement {
-  const pad = resolvePadding(o.collisionPadding)
-  const inner: Rect = {
-    x: o.boundary.x + pad.left,
-    y: o.boundary.y + pad.top,
-    width: o.boundary.width - pad.left - pad.right,
-    height: o.boundary.height - pad.top - pad.bottom,
+/** The boundary minus the collision padding: where the content has to stay. */
+export function innerBoundary(boundary: Rect, collisionPadding: Padding): Rect {
+  const pad = resolvePadding(collisionPadding)
+  return {
+    x: boundary.x + pad.left,
+    y: boundary.y + pad.top,
+    width: boundary.width - pad.left - pad.right,
+    height: boundary.height - pad.top - pad.bottom,
   }
+}
+
+export function place(anchor: Rect, content: Size, o: PlaceOptions): Placement {
+  const inner = innerBoundary(o.boundary, o.collisionPadding)
 
   let side = o.side
   let pos = basePosition(anchor, content, side, o.align, o.sideOffset, o.alignOffset)

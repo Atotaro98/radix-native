@@ -1,4 +1,4 @@
-import React, { forwardRef } from 'react'
+import React, { forwardRef, useState } from 'react'
 import { Platform, ScrollView, View } from 'react-native'
 import type { StyleProp, ViewStyle } from 'react-native'
 import { useMargins } from '../../hooks/useMargins'
@@ -50,6 +50,8 @@ export const ScrollArea = forwardRef<ScrollAreaRef, ScrollAreaProps>(function Sc
   ref,
 ) {
   const margins = useMargins({ m, mx, my, mt, mr, mb, ml })
+  // `both`: the viewport's width, so the content is at least that wide (a block on the web)
+  const [viewportWidth, setViewportWidth] = useState<number | undefined>(undefined)
   const always = type === 'always'
   const indicators = { persistentScrollbar: Platform.OS === 'android' && always }
 
@@ -85,10 +87,20 @@ export const ScrollArea = forwardRef<ScrollAreaRef, ScrollAreaProps>(function Sc
   }
 
   return (
-    <ScrollView ref={ref} showsVerticalScrollIndicator {...indicators} style={[margins, style]} {...rest}>
+    <ScrollView
+      ref={ref}
+      showsVerticalScrollIndicator
+      {...indicators}
+      style={[margins, style]}
+      {...rest}
+      onLayout={(e) => {
+        setViewportWidth(e.nativeEvent.layout.width)
+        rest.onLayout?.(e)
+      }}
+    >
       <ScrollView horizontal showsHorizontalScrollIndicator {...indicators} nestedScrollEnabled>
         {/* A horizontal ScrollView lays children out in a row; the viewport stacks them like Radix's */}
-        <View style={contentContainerStyle}>{children}</View>
+        <View style={[{ minWidth: viewportWidth }, contentContainerStyle]}>{children}</View>
       </ScrollView>
     </ScrollView>
   )

@@ -1,13 +1,14 @@
-import React, { createContext, useCallback, useContext, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import React, { createContext, useCallback, useContext, useMemo, useState } from 'react'
 import { ScrollView, View } from 'react-native'
 import type { LayoutChangeEvent, ViewStyle } from 'react-native'
 import { useMargins } from '../../hooks/useMargins'
+import { naturalWidthStyle, useMeasuredCell, useMeasuredCells, type MeasuredCells } from '../../hooks/useWidest'
 import { useMetrics } from '../../hooks/useMetrics'
 import { useTextStyle } from '../../hooks/useTextStyle'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { renderInlineText } from '../internal/inlineText'
 import { useInsetContext } from '../layout/InsetContext'
-import { resolveColumnWidths, type TableCellSize, type TableLength } from '../../utils/tableLayout'
+import { resolveTableWidths, type TableCellSize, type TableLength } from '../../utils/tableLayout'
 import type { SpaceToken } from '../../tokens/spacing'
 import type { RadiusLevel } from '../../tokens/radius'
 import type { TextSize } from '../typography/Text'
@@ -76,9 +77,11 @@ interface TableContextValue {
   layout: TableLayout
   colors: { text: string; divider: string; headerBg?: string }
   widths: number[] | null
-  register: (id: object, cell: TableCellSize) => () => void
-  report: (id: object, natural: number) => void
+  cells: Pick<MeasuredCells<CellMeta>, 'register' | 'update' | 'report'>
 }
+
+/** What a column needs to know about a cell besides its measured width. */
+type CellMeta = Omit<TableCellSize, 'natural'>
 
 const TableContext = createContext<TableContextValue | null>(null)
 const SectionContext = createContext<{ header: boolean; first: boolean }>({ header: false, first: false })
@@ -113,44 +116,23 @@ function TableRoot({
   const surface = variant === 'surface'
   const borderRadius = metrics.radius(SIZES[size].radius)
 
-  const cells = useRef(new Map<object, TableCellSize>())
-  const [version, setVersion] = useState(0)
+  const measured = useMeasuredCells<CellMeta>()
   const [available, setAvailable] = useState(0)
-
-  const register = useCallback((id: object, cell: TableCellSize) => {
-    cells.current.set(id, cell)
-    setVersion((v) => v + 1)
-    return () => {
-      cells.current.delete(id)
-      setVersion((v) => v + 1)
-    }
-  }, [])
-  const report = useCallback((id: object, natural: number) => {
-    const cell = cells.current.get(id)
-    if (!cell || cell.natural === natural) return
-    cells.current.set(id, { ...cell, natural })
-    setVersion((v) => v + 1)
-  }, [])
 
   const onLayout = useCallback((e: LayoutChangeEvent) => {
     // The surface border is drawn inside the root
     setAvailable(e.nativeEvent.layout.width - (surface ? 2 : 0))
   }, [surface])
 
-  const widths = useMemo(() => {
-    void version
-    const list = Array.from(cells.current.values())
-    const columns = list.reduce((n, c) => Math.max(n, c.col + 1), 0)
-    const measured = layout === 'fixed' || list.every((c) => c.natural !== undefined)
-    if (!available || !columns || !measured) return null
-    return resolveColumnWidths(list, columns, available, layout)
-  }, [version, available, layout])
+  const widths = useMemo(() => resolveTableWidths(measured.cells, available, layout), [measured.cells, available, layout])
+  const { register, update, report } = measured
+  const cells = useMemo(() => ({ register, update, report }), [register, update, report])
 
   const ctx = useMemo<TableContextValue>(() => ({
     size, variant, layout,
     colors: { text: colors.text, divider: colors.divider, headerBg: colors.headerBg },
-    widths, register, report,
-  }), [size, variant, layout, colors.text, colors.divider, colors.headerBg, widths, register, report])
+    widths, cells,
+  }), [size, variant, layout, colors.text, colors.divider, colors.headerBg, widths, cells])
 
   const sections = React.Children.toArray(children)
   const tableWidth = widths ? widths.reduce((a, b) => a + b, 0) : undefined
@@ -259,14 +241,8 @@ function makeCell(kind: 'cell' | 'column' | 'row', name: string) {
     const cfg = SIZES[table.size]
     // ColumnHeaderCell is bold (700, not medium); RowHeaderCell normal
     const text = useTextStyle({ size: cfg.fontSize, weight: kind === 'column' ? 'bold' : 'regular' })
-    const id = useRef({}).current
-    const { register, report } = table
-
-    useLayoutEffect(
-      () => register(id, { col, width, minWidth, maxWidth, firstRow: first }),
-      [register, id, col, width, minWidth, maxWidth, first],
-    )
-    const onLayout = useCallback((e: LayoutChangeEvent) => report(id, e.nativeEvent.layout.width), [report, id])
+    const meta = useMemo<CellMeta>(() => ({ col, width, minWidth, maxWidth, firstRow: first }), [col, width, minWidth, maxWidth, first])
+    const onLayout = useMeasuredCell(table.cells, { meta })
 
     const sp = (token: SpaceToken | undefined) => (token === undefined ? undefined : metrics.space(token))
     const padding: ViewStyle = {
@@ -291,7 +267,7 @@ function makeCell(kind: 'cell' | 'column' | 'row', name: string) {
         {/* The cell's natural (max-content) width, padding included */}
         <View
           onLayout={table.layout === 'auto' ? onLayout : undefined}
-          style={[padding, { flexDirection: 'row', maxWidth: '100%' }]}
+          style={[padding, naturalWidthStyle(width !== undefined || maxWidth !== undefined)]}
         >
           {renderInlineText(children, { textStyle: [text.style, { textAlign: justify === 'start' ? 'left' : justify === 'end' ? 'right' : 'center' }], textProps: text.textProps, provide: text.provide }, table.colors.text)}
         </View>

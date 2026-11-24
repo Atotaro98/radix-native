@@ -68,6 +68,9 @@ export function Progress({
   const isIndeterminate = value === undefined
   const progress = isIndeterminate || !(max > 0) ? 0 : Math.min(Math.max(value / max, 0), 1)
 
+  // Screen readers get the clamped value, like the bar (value 150 of 100 reads 100)
+  const valueMax = max > 0 ? max : 100
+
   // ─── Colors ─────────────────────────────────────────────────────────────
   const colors = useVariantColors('progress', { variant, color, highContrast })
 
@@ -116,8 +119,8 @@ export function Progress({
       accessibilityState={isIndeterminate ? { busy: true } : undefined}
       accessibilityValue={{
         min: 0,
-        max,
-        now: isIndeterminate ? undefined : value,
+        max: valueMax,
+        now: isIndeterminate ? undefined : Math.round(progress * valueMax),
       }}
       {...rest}
       style={[trackStyle, style]}

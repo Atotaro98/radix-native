@@ -1,6 +1,6 @@
 import React from 'react'
-import { Text } from 'react-native'
-import { fireEvent, screen } from '@testing-library/react-native'
+import { ScrollView, Text } from 'react-native'
+import { act, fireEvent, screen } from '@testing-library/react-native'
 import { renderWithTheme } from './helpers/render'
 import { flat } from './helpers/queries'
 import { Tabs } from '../components/navigation/Tabs'
@@ -86,5 +86,29 @@ describe('TabNav', () => {
     expect(onPress).toHaveBeenCalled()
     expect(docs.props.accessibilityState).toMatchObject({ selected: false })
     expect(screen.getByRole('link', { name: 'Account' }).props.accessibilityState).toMatchObject({ selected: true })
+  })
+})
+
+describe('Tabs.List keeps the active trigger in view', () => {
+  it('scrolls to a trigger that becomes active outside the viewport', () => {
+    const scrollTo = jest.fn()
+    jest.spyOn(ScrollView.prototype as unknown as { scrollTo: () => void }, 'scrollTo').mockImplementation(scrollTo)
+    renderWithTheme(
+      <Tabs.Root defaultValue="a">
+        <Tabs.List testID="list">
+          <Tabs.Trigger value="a" testID="a">A</Tabs.Trigger>
+          <Tabs.Trigger value="b" testID="b">B</Tabs.Trigger>
+        </Tabs.List>
+      </Tabs.Root>,
+    )
+    const scroller = screen.UNSAFE_getByType(ScrollView)
+    act(() => {
+      fireEvent(scroller, 'layout', { nativeEvent: { layout: { x: 0, y: 0, width: 100, height: 40 } } })
+      fireEvent(screen.getByTestId('a'), 'layout', { nativeEvent: { layout: { x: 0, y: 0, width: 80, height: 40 } } })
+      fireEvent(screen.getByTestId('b'), 'layout', { nativeEvent: { layout: { x: 80, y: 0, width: 80, height: 40 } } })
+    })
+    fireEvent.press(screen.getByTestId('b'))
+    expect(scrollTo).toHaveBeenLastCalledWith({ x: 60, animated: true })
+    jest.restoreAllMocks()
   })
 })

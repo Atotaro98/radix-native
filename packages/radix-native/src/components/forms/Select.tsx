@@ -6,11 +6,10 @@ import { useMargins } from '../../hooks/useMargins'
 import { useMetrics } from '../../hooks/useMetrics'
 import { useTextStyle } from '../../hooks/useTextStyle'
 import { useVariantColors } from '../../hooks/useVariantColors'
-import { placeItemAligned } from '../../utils/selectLayout'
-import type { Rect } from '../../utils/popper'
+import type { PlacementStrategy } from '../../utils/anchoredPlacement'
 import type { AnchoredPlacementProps } from '../internal/AnchoredContent'
 import { useControl } from '../internal/control'
-import { ListLabel, ListRow, ListSeparator, rowHeight, useListMetrics, type ListLook } from '../internal/ListRows'
+import { ListLabel, ListRow, ListSeparator, rowCenter, useListMetrics, type ListLook } from '../internal/ListRows'
 import { anchorRef, createOverlayContext, useOverlayState, type OverlayState } from '../internal/overlayRoot'
 import { createPortalContext } from '../internal/portalContext'
 import { PopperContent } from '../internal/PopperContent'
@@ -93,7 +92,11 @@ interface SelectContextValue extends OverlayState {
   /** The content's rows in order, known before it ever opens (see ItemRegistry). */
   entries: Entry[]
   register: (key: object, entry: Entry) => () => void
-  triggerPadX: React.MutableRefObject<number>
+  /** Replaces a registered row, keeping its place in the order. */
+  update: (key: object, entry: Entry) => void
+  /** The trigger's padding-x: where its value text starts (item-aligned placement). */
+  triggerPadX: number
+  setTriggerPadX: (px: number) => void
 }
 
 type Entry = { kind: 'item'; value: string; label: React.ReactNode } | { kind: 'label' } | { kind: 'separator' }
@@ -107,11 +110,18 @@ function useRegister(entry: Entry) {
   const key = useRef({}).current
   const label = entry.kind === 'item' ? entry.label : undefined
   const value = entry.kind === 'item' ? entry.value : undefined
+  const latest = useRef(entry)
+  latest.current = entry
+  // Registers once, in tree order; a changed label or value updates the row where it is
   useLayoutEffect(() => {
     if (!registering || !ctx) return
-    return ctx.register(key, entry)
+    return ctx.register(key, latest.current)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [registering, ctx?.register, key, entry.kind, value, label])
+  }, [registering, ctx?.register, key])
+  useLayoutEffect(() => {
+    if (registering && ctx) ctx.update(key, latest.current)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [registering, ctx?.update, key, entry.kind, value, label])
   return registering
 }
 
@@ -127,7 +137,7 @@ function SelectRoot({
 }: SelectRootProps) {
   const [value, setValue] = useControllableState<string | undefined>({ prop: valueProp, defaultProp: defaultValue, onChange: onValueChange as (v: string | undefined) => void })
   const overlay = useOverlayState({ open: openProp, defaultOpen, onOpenChange })
-  const triggerPadX = useRef(0)
+  const [triggerPadX, setTriggerPadX] = useState(0)
   // Rows register in tree order (layout effects run in order), like Radix's collection
   const registry = useRef(new Map<object, Entry>())
   const [entries, setEntries] = useState<Entry[]>([])
@@ -139,9 +149,17 @@ function SelectRoot({
       setEntries(Array.from(registry.current.values()))
     }
   }, [])
+  const update = useCallback((key: object, entry: Entry) => {
+    const prev = registry.current.get(key)
+    if (!prev || prev === entry) return
+    const same = prev.kind === entry.kind && (prev.kind !== 'item' || (entry.kind === 'item' && prev.value === entry.value && prev.label === entry.label))
+    if (same) return
+    registry.current.set(key, entry)
+    setEntries(Array.from(registry.current.values()))
+  }, [])
   const ctx = useMemo<SelectContextValue>(() => ({
-    ...overlay, size, value, setValue: (v: string) => setValue(v), disabled, entries, register, triggerPadX,
-  }), [overlay, size, value, setValue, disabled, entries, register])
+    ...overlay, size, value, setValue: (v: string) => setValue(v), disabled, entries, register, update, triggerPadX, setTriggerPadX,
+  }), [overlay, size, value, setValue, disabled, entries, register, update, triggerPadX])
   return <Select_.Provider value={ctx}>{children}</Select_.Provider>
 }
 SelectRoot.displayName = 'Select.Root'
@@ -173,8 +191,9 @@ function SelectTrigger({
   const ghost = variant === 'ghost'
   const borderRadius = metrics.radius(cfg.radius, 'pill')
   const padX = metrics.px(ghost ? cfg.ghostPadX : cfg.padX)
-  // Where the value text starts, for item-aligned placement (read when the list opens)
-  useLayoutEffect(() => { ctx.triggerPadX.current = padX }, [ctx.triggerPadX, padX])
+  // Where the value text starts, for item-aligned placement
+  const { setTriggerPadX } = ctx
+  useLayoutEffect(() => { setTriggerPadX(padX) }, [setTriggerPadX, padX])
 
   const selectedEntry = ctx.entries.find((e) => e.kind === 'item' && e.value === ctx.value)
   const label = children ?? (showPlaceholder ? placeholder : selectedEntry?.kind === 'item' ? selectedEntry.label : undefined)
@@ -236,30 +255,13 @@ function SelectContent({
   const close = useCallback(() => ctx.setOpen(false), [ctx])
   const look = useMemo(() => ({ variant, color, highContrast }), [variant, color, highContrast])
 
-  // The selected item (else the first) and the px of the rows above it, from the heights the rows render with
-  const items = ctx.entries.filter((e): e is Extract<Entry, { kind: 'item' }> => e.kind === 'item')
-  const target = items.find((e) => e.value === ctx.value) ?? items[0]
-  let selectedIndex = 0
-  let offsetBefore = 0
-  for (const e of ctx.entries) {
-    if (e === target) break
-    if (e.kind === 'item') selectedIndex++
-    else offsetBefore += rowHeight(list, e.kind)
-  }
-  const placeOverride = useMemo(() => position === 'item-aligned'
-    ? (anchor: Rect, size: { width: number; height: number }, boundary: Rect) =>
-      placeItemAligned({
-        trigger: anchor,
-        triggerPaddingX: ctx.triggerPadX.current,
-        content: size,
-        boundary,
-        contentPadding: list.padding,
-        itemPaddingLeft: list.gutter,
-        itemHeight: rowHeight(list, 'item'),
-        selectedIndex,
-        offsetBefore,
-      })
-    : undefined, [position, ctx.triggerPadX, list, selectedIndex, offsetBefore])
+  // The centre of the selected item's row (else the first item's), from the heights the rows render with
+  const selected = ctx.entries.findIndex((e) => e.kind === 'item' && e.value === ctx.value)
+  const target = selected >= 0 ? selected : ctx.entries.findIndex((e) => e.kind === 'item')
+  const center = rowCenter(list, ctx.entries.map((e) => e.kind), target)
+  const strategy = useMemo<PlacementStrategy | undefined>(() => position === 'item-aligned'
+    ? { kind: 'item-aligned', rowCenter: center, textInset: list.padding + list.gutter, anchorTextInset: ctx.triggerPadX }
+    : undefined, [position, center, list.padding, list.gutter, ctx.triggerPadX])
 
   return (
     <>
@@ -275,7 +277,9 @@ function SelectContent({
           anchor={ctx.anchor}
           modal
           matchAnchorWidth
-          placeOverride={placeOverride}
+          strategy={strategy}
+          // A list taller than the screen opens scrolled to the selected item
+          scrollToY={center}
           side={side} sideOffset={sideOffset} align={align}
           {...props}
         >

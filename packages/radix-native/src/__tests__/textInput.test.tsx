@@ -1,9 +1,10 @@
 import React from 'react'
+import { StyleSheet, View } from 'react-native'
 import { screen, fireEvent } from '@testing-library/react-native'
 import { Theme, TextField, TextArea } from '../index'
 import { renderWithTheme } from './helpers/render'
 import { focusRings } from './helpers/queries'
-import { indigo, slate } from '../tokens/colors'
+import { indigo, red, slate } from '../tokens/colors'
 
 const borderOf = (input: { parent: unknown }) =>
   // The input's parent is the View that draws the border.
@@ -89,6 +90,11 @@ describe.each([
     expect(screen.getByPlaceholderText('Email').props.value).toBe('fixed')
   })
 
+  it('disabled stays not editable when readOnly={false} is passed', () => {
+    renderWithTheme(<Input placeholder="Email" disabled readOnly={false} />)
+    expect(screen.getByPlaceholderText('Email').props).toMatchObject({ readOnly: true, editable: false })
+  })
+
   it('read-only focus ring is gray-8', () => {
     renderWithTheme(<Input placeholder="Email" readOnly />)
     const input = screen.getByPlaceholderText('Email')
@@ -118,4 +124,49 @@ it('TextArea is always multiline; TextField never is', () => {
   )
   expect(screen.getByPlaceholderText('One').props.multiline).toBe(false)
   expect(screen.getByPlaceholderText('Many').props.multiline).toBe(true)
+})
+
+describe('TextField.Slot (text-field.css .rt-TextFieldSlot)', () => {
+  const Icon = ({ color, testID }: { color?: string; testID?: string }) => <View testID={testID} accessibilityLabel={color} />
+  Icon.displayName = 'Icon'
+
+  it('the first slot goes left, a second one right; side="right" alone goes right', () => {
+    renderWithTheme(
+      <TextField placeholder="Search" testID="x">
+        <TextField.Slot><Icon testID="a" /></TextField.Slot>
+        <TextField.Slot><Icon testID="b" /></TextField.Slot>
+      </TextField>,
+    )
+    const json = JSON.stringify(screen.toJSON())
+    const order = ['"testID":"a"', '"placeholder":"Search"', '"testID":"b"'].map((k) => json.indexOf(k))
+    expect(order.every((i) => i >= 0)).toBe(true)
+    expect([...order].sort((x, y) => x - y)).toEqual(order)
+  })
+
+  it('removes the field padding on the side of a slot and pads the slot per size', () => {
+    renderWithTheme(
+      <TextField placeholder="Search" size={3}>
+        <TextField.Slot side="right" testID="slot"><Icon testID="a" /></TextField.Slot>
+      </TextField>,
+    )
+    const container = StyleSheet.flatten(screen.getByPlaceholderText('Search').parent!.parent!.props.style)
+    expect(container).toMatchObject({ flexDirection: 'row', paddingLeft: 12, paddingRight: 0 })
+    const slot = StyleSheet.flatten(screen.getByTestId('slot').props.style)
+    expect(slot).toMatchObject({ gap: 12, paddingLeft: 12, paddingRight: 12, marginRight: -1 })
+  })
+
+  it('tints icons: gray-a11, the slot color at a11, soft accent-12', () => {
+    renderWithTheme(
+      <>
+        <TextField placeholder="1"><TextField.Slot><Icon testID="gray" /></TextField.Slot></TextField>
+        <TextField placeholder="2"><TextField.Slot color="red"><Icon testID="own" /></TextField.Slot></TextField>
+        <TextField placeholder="3" variant="soft"><TextField.Slot><Icon testID="soft" /></TextField.Slot></TextField>
+        <TextField placeholder="4"><TextField.Slot><Icon testID="kept" color="#000" /></TextField.Slot></TextField>
+      </>,
+    )
+    expect(screen.getByTestId('gray').props.accessibilityLabel).toBe(slate.light.a11)
+    expect(screen.getByTestId('own').props.accessibilityLabel).toBe(red.light.a11)
+    expect(screen.getByTestId('soft').props.accessibilityLabel).toBe(indigo.light[12])
+    expect(screen.getByTestId('kept').props.accessibilityLabel).toBe('#000')
+  })
 })

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { createContext, useCallback, useContext, useMemo, useRef } from 'react'
 import { TextInput, View } from 'react-native'
 import type { TextInputProps, ViewStyle, TextStyle, StyleProp } from 'react-native'
 import { useThemeContext } from '../../hooks/useThemeContext'
@@ -14,6 +14,7 @@ import type { AccentColor } from '../../tokens/colors/types'
 import { FocusRing } from './FocusRing'
 import { useSkeletonRadius } from '../feedback/SkeletonContext'
 import type { TextInputVariant } from '../../utils/variantPalette'
+import type { SpaceToken } from '../../tokens/spacing'
 
 export type BaseTextInputSize = 1 | 2 | 3
 export type BaseTextInputVariant = TextInputVariant
@@ -34,7 +35,94 @@ export interface BaseTextInputProps extends Omit<TextInputProps, 'style' | 'mult
   style?: StyleProp<ViewStyle>
 }
 
+export interface TextFieldSlotProps {
+  /** Which side of the input. Default: the first slot goes left, a slot after it goes right. */
+  side?: 'left' | 'right'
+  /** Colors the slot's icons (accent-a11). Default: gray-a11 (soft: the field's accent-12). */
+  color?: AccentColor
+  /** Space between the slot's children. Default: 2 (size 3: 3). */
+  gap?: SpaceToken
+  px?: SpaceToken
+  pl?: SpaceToken
+  pr?: SpaceToken
+  style?: StyleProp<ViewStyle>
+  testID?: string
+  children?: React.ReactNode
+}
+
+interface SlotContextValue {
+  size: BaseTextInputSize
+  variant: BaseTextInputVariant
+  color: AccentColor | undefined
+  side: 'left' | 'right'
+  /** Focuses the input (a press on the slot that no control inside it took). */
+  focus: () => void
+}
+const SlotContext = createContext<SlotContextValue | null>(null)
+
+/** .rt-TextFieldSlot gap / padding-x: space-2 · space-1, space-2 · space-2, space-3 · space-3. */
+const SLOT: Record<BaseTextInputSize, { gap: SpaceToken; px: SpaceToken }> = {
+  1: { gap: 2, px: 1 }, 2: { gap: 2, px: 2 }, 3: { gap: 3, px: 3 },
+}
+
+/**
+ * `TextField.Slot`: icons or buttons inside the field, before or after the
+ * input. Icons without a `color` take the slot's; a press on the slot (outside
+ * a control in it) focuses the input, like Radix.
+ */
+export function TextFieldSlot({ side: _side, color, gap, px, pl, pr, style, testID, children }: TextFieldSlotProps) {
+  const ctx = useContext(SlotContext)
+  if (!ctx) throw new Error('TextField.Slot must be used within TextField')
+  const metrics = useMetrics()
+  const colors = useVariantColors('textFieldSlot', { variant: ctx.variant, color: color ?? ctx.color, own: color !== undefined })
+  const cfg = SLOT[ctx.size]
+  const left = ctx.side === 'left'
+  const slotStyle: ViewStyle = {
+    flexShrink: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'stretch',
+    gap: metrics.space(gap ?? cfg.gap),
+    paddingLeft: metrics.space(pl ?? px ?? cfg.px),
+    paddingRight: metrics.space(pr ?? px ?? cfg.px),
+    // Over the field's 1px border, as in Radix (margin: -border-width on the outer side)
+    ...(left ? { marginLeft: -1 } : { marginRight: -1 }),
+  }
+  return (
+    <View
+      testID={testID}
+      style={[slotStyle, style]}
+      onStartShouldSetResponder={() => true}
+      onResponderRelease={ctx.focus}
+    >
+      {React.Children.map(children, (child) =>
+        // RN has no currentColor: plain icons without their own color take the slot's.
+        // Components that name a theme color with `color` (Button, IconButton…) are left alone.
+        React.isValidElement<{ color?: string }>(child) && child.props.color === undefined && isIcon(child)
+          ? React.cloneElement(child, { color: colors.text })
+          : child,
+      )}
+    </View>
+  )
+}
+TextFieldSlot.displayName = 'TextField.Slot'
+
+/** Not one of the library's own components (their `color` is a theme color name, not a color string). */
+function isIcon(child: React.ReactElement): boolean {
+  const type = child.type as { displayName?: string } | string
+  if (typeof type === 'string') return false
+  const name = type.displayName ?? ''
+  return !RADIX_NAMES.has(name.split('.')[0])
+}
+const RADIX_NAMES = new Set([
+  'Button', 'IconButton', 'Badge', 'Text', 'Heading', 'Link', 'Code', 'Kbd', 'Spinner', 'Avatar', 'Checkbox', 'Switch',
+  'Radio', 'Select', 'DropdownMenu', 'Popover', 'Tooltip', 'Dialog', 'AlertDialog', 'HoverCard', 'ContextMenu', 'Separator',
+  'Box', 'Flex', 'Grid', 'Skeleton', 'SegmentedControl', 'Em', 'Strong', 'Quote',
+])
+
 interface InternalProps extends BaseTextInputProps {
+  /** TextField: `TextField.Slot` elements (other children are ignored). */
+  children?: React.ReactNode
   /** TextArea: several lines, top-aligned, at least three lines tall. */
   multiline?: boolean
 }
@@ -80,6 +168,7 @@ export function BaseTextInput({
   value: valueProp,
   defaultValue,
   onChangeText,
+  children,
   ...rest
 }: InternalProps) {
   const { appearance } = useThemeContext()
@@ -115,29 +204,62 @@ export function BaseTextInput({
     maxFontSizeMultiplier,
   })
 
+  const padX = metrics.px(SIZE_PADDING_X[size])
   const containerStyle: ViewStyle = {
     borderRadius,
     backgroundColor: colors.bg,
     borderWidth: 1,
     borderColor: colors.border,
-    paddingHorizontal: metrics.px(SIZE_PADDING_X[size]),
+    paddingHorizontal: padX,
     ...(multiline
       ? { paddingVertical: metrics.px(SIZE_PADDING_Y[size]) }
       : { minHeight: metrics.px(SIZE_HEIGHT[size]), justifyContent: 'center' }),
     ...margins,
   }
 
+  // ─── Slots (TextField only) ─────────────────────────────────────────────
+  // Radix: a slot goes left unless side="right" or it follows a slot that is not on the right
+  const input = useRef<React.ComponentRef<typeof TextInput>>(null)
+  const focus = useCallback(() => { if (!disabled) input.current?.focus() }, [disabled])
+  const leftSlots: React.ReactNode[] = []
+  const rightSlots: React.ReactNode[] = []
+  if (!multiline) {
+    let afterLeft = false
+    React.Children.forEach(children, (child) => {
+      if (!React.isValidElement<TextFieldSlotProps>(child) || child.type !== TextFieldSlot) return
+      const { side } = child.props
+      const right = side === 'right' || (side === undefined && afterLeft)
+      if (right) rightSlots.push(child)
+      else {
+        leftSlots.push(child)
+        afterLeft = true
+      }
+    })
+  }
+  const hasLeft = leftSlots.length > 0
+  const hasRight = rightSlots.length > 0
+  const hasSlots = hasLeft || hasRight
+  const leftCtx = useMemo<SlotContextValue>(() => ({ size, variant, color, side: 'left', focus }), [size, variant, color, focus])
+  const rightCtx = useMemo<SlotContextValue>(() => ({ ...leftCtx, side: 'right' }), [leftCtx])
+
+  // .rt-TextFieldInput:has(~ .rt-TextFieldSlot): a row, with no padding on a side that has a slot
+  const slotLayout: ViewStyle | undefined = hasSlots
+    ? { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', paddingLeft: hasLeft ? 0 : padX, paddingRight: hasRight ? 0 : padX }
+    : undefined
+
   const inputStyle: TextStyle = {
     ...text.style,
     padding: 0,
     ...(multiline
       ? { textAlignVertical: 'top', minHeight: (text.style.lineHeight ?? 0) * 3 }
-      : { width: '100%' }),
+      : hasSlots ? { flex: 1, minWidth: 0 } : { width: '100%' }),
   }
 
   return (
-    <View style={[containerStyle, style]}>
+    <View style={[containerStyle, slotLayout, style]}>
+      {hasLeft ? <SlotContext.Provider value={leftCtx}>{leftSlots}</SlotContext.Provider> : null}
       <TextInput
+        ref={input}
         {...text.textProps}
         // Radix sets color-scheme per appearance: native widgets (the iOS keyboard) follow the Theme
         keyboardAppearance={appearance}
@@ -149,10 +271,12 @@ export function BaseTextInput({
         multiline={multiline}
         style={inputStyle}
         placeholderTextColor={colors.placeholder}
-        readOnly={readOnly}
+        // React Native: a defined `readOnly` wins over `editable`, so both carry the disabled gate
+        readOnly={disabled ? true : readOnly}
         editable={!disabled && editable !== false}
         accessibilityState={{ ...accessibilityState, disabled }}
       />
+      {hasRight ? <SlotContext.Provider value={rightCtx}>{rightSlots}</SlotContext.Provider> : null}
       {/* 1px border + 1px inner ring = Radix 2px focus outline */}
       <FocusRing visible={focused} color={colors.border} borderRadius={Math.max(0, borderRadius - 1)} width={1} />
     </View>

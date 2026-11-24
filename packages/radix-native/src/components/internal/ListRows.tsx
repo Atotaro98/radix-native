@@ -13,7 +13,7 @@ import type { MenuVariant } from '../../utils/variantPalette'
  * Internal: the rows of a menu's content (DropdownMenu, ContextMenu, their
  * sub-menus) and of a Select's list — Radix draws both from base-menu.css,
  * Select sizes 1 and 2 matching the menu's, size 3 only with larger item text.
- * Each kind of row knows its own height (`rowHeight`), so Select's item-aligned
+ * Each kind of row knows its own height (`rowHeight`, `rowCenter`), so Select's item-aligned
  * position adds up the same numbers the rows render with.
  */
 
@@ -67,9 +67,22 @@ export function useListMetrics(size: ListSize): ListMetrics {
   }, [metrics, size])
 }
 
+export type RowKind = 'item' | 'label' | 'separator'
+
 /** The height each kind of row renders with: items and labels are one item tall; a separator is 1px plus its margins. */
-export function rowHeight(list: ListMetrics, kind: 'item' | 'label' | 'separator'): number {
+export function rowHeight(list: ListMetrics, kind: RowKind): number {
   return kind === 'separator' ? 1 + 2 * list.separatorMargin : list.itemHeight
+}
+
+/**
+ * From the top of a list's content (its padding included) to the centre of
+ * its `index`-th row: where Select's item-aligned position puts the trigger,
+ * and where a list taller than the screen scrolls to on open.
+ */
+export function rowCenter(list: ListMetrics, rows: readonly RowKind[], index: number): number {
+  let y = list.padding
+  for (let i = 0; i < index && i < rows.length; i++) y += rowHeight(list, rows[i])
+  return y + (index >= 0 && index < rows.length ? rowHeight(list, rows[index]) / 2 : 0)
 }
 
 /** A ThickCheckIcon stand-in: a rotated L drawn with borders. */

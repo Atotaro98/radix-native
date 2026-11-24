@@ -1,11 +1,13 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Dimensions, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native'
-import type { LayoutChangeEvent, StyleProp, ViewStyle } from 'react-native'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { physical } from '../../utils/rtl'
+import { Pressable, StyleSheet, View } from 'react-native'
+import type { StyleProp, ViewStyle } from 'react-native'
 import Animated, { Easing, runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated'
-import { useThemeContext } from '../../hooks/useThemeContext'
-import { place, resolvePadding, type Align, type Padding, type Placement, type Rect, type Side } from '../../utils/popper'
-import type { Anchor, Measurable } from './overlayRoot'
+import { placementContains, type AnchoredPlacementOptions, type PlacementStrategy } from '../../utils/anchoredPlacement'
+import type { Align, Padding, Placement, Rect, Side } from '../../utils/popper'
+import type { Anchor } from './overlayRoot'
 import { Portal, usePortalHost } from './Portal'
+import { useAnchoredPlacement } from './useAnchoredPlacement'
 
 export interface AnchoredPlacementProps {
   side?: Side
@@ -31,11 +33,8 @@ export interface AnchoredContentProps extends AnchoredPlacementProps {
   timing?: { open: number; close: number }
   /** Content min-width = the anchor's width (Popover, Select). */
   matchAnchorWidth?: boolean
-  /**
-   * Replaces the Popper rules (Select's `item-aligned`): gets the anchor, the
-   * content size and the padded boundary, returns the content's top-left.
-   */
-  placeOverride?: (anchor: Rect, content: { width: number; height: number }, boundary: Rect) => { x: number; y: number }
+  /** Default: the Popper rules. Select's `item-aligned` puts its selected row over the anchor instead. */
+  strategy?: PlacementStrategy
   style?: StyleProp<ViewStyle>
   /** Gets the placement (max-height from the available space), the anchor's window rect and the content's size (Tooltip's arrow). */
   children: (placement: Placement | null, anchor: Rect | null, size: { width: number; height: number } | null) => React.ReactNode
@@ -46,11 +45,9 @@ export interface AnchoredContentProps extends AnchoredPlacementProps {
 const EASE = Easing.bezier(0.16, 1, 0.3, 1)
 const POPPER_TIMING = { open: 160, close: 100 }
 
-const isRect = (a: Measurable | Rect): a is Rect => 'x' in a && 'width' in a
-
 /**
  * Internal: an Anchored overlay's content in the nearest portal host, placed
- * next to its anchor with the Radix Popper rules (utils/popper), hidden until
+ * next to its anchor (utils/anchoredPlacement, via useAnchoredPlacement), hidden until
  * measured, animated toward the anchor (slide 4px + scale 0.97 + fade; none
  * under Reduce Motion), and registered as a layer so an outside touch or the
  * Android back button dismisses it.
@@ -68,79 +65,43 @@ export function AnchoredContent(props: AnchoredContentProps) {
 }
 
 function Placed({
-  open, onDismiss, anchor, modal = false, timing = POPPER_TIMING, matchAnchorWidth, placeOverride,
+  open, onDismiss, anchor, modal = false, timing = POPPER_TIMING, matchAnchorWidth, strategy,
   side = 'bottom', sideOffset = 0, align = 'center', alignOffset = 0,
   avoidCollisions = true, collisionPadding = 10, sticky = 'partial',
   style, children, testID, onExited,
 }: AnchoredContentProps & { onExited: () => void }) {
   const host = usePortalHost()
-  const { safeAreaInsets: insets } = useThemeContext()
-  const window = useWindowDimensions()
   const reducedMotion = useReducedMotion()
-  const [anchorRect, setAnchorRect] = useState<Rect | null>(null)
-  const [size, setSize] = useState<{ width: number; height: number } | null>(null)
-
-  // Measure the anchor on open and on rotation (the backdrop / outside dismissal stops scrolling)
-  const measure = useCallback(() => {
-    const a = anchor.current
-    if (!a) return
-    if (isRect(a)) setAnchorRect(a)
-    else a.measureInWindow((x, y, width, height) => setAnchorRect({ x, y, width, height }))
-  }, [anchor])
-  useEffect(() => {
-    measure()
-    const sub = Dimensions.addEventListener('change', measure)
-    return () => sub.remove()
-  }, [measure])
-
-  // Window minus safe area; the content stays `collisionPadding` inside it
-  const boundary = useMemo<Rect>(() => ({
-    x: insets.left, y: insets.top,
-    width: window.width - insets.left - insets.right,
-    height: window.height - insets.top - insets.bottom,
-  }), [insets, window.width, window.height])
-
-  const placement = useMemo<Placement | null>(() => {
-    if (!anchorRect || !size) return null
-    if (placeOverride) {
-      const pad = resolvePadding(collisionPadding)
-      const inner = {
-        x: boundary.x + pad.left, y: boundary.y + pad.top,
-        width: boundary.width - pad.left - pad.right,
-        height: boundary.height - pad.top - pad.bottom,
-      }
-      const { x, y } = placeOverride(anchorRect, size, inner)
-      return { x, y, side: 'bottom', align: 'start', availableWidth: inner.width, availableHeight: inner.height, originX: size.width / 2, originY: size.height / 2 }
-    }
-    return place(anchorRect, size, { side, align, sideOffset, alignOffset, avoidCollisions, collisionPadding, sticky, boundary })
-  }, [anchorRect, size, side, align, sideOffset, alignOffset, avoidCollisions, collisionPadding, sticky, boundary, placeOverride])
+  const options = useMemo<AnchoredPlacementOptions>(
+    () => ({ side, align, sideOffset, alignOffset, avoidCollisions, collisionPadding, sticky, strategy }),
+    [side, align, sideOffset, alignOffset, avoidCollisions, collisionPadding, sticky, strategy],
+  )
+  const { placement, anchorRect, size, maxWidth, onLayout } = useAnchoredPlacement(anchor, options)
 
   // Layer: outside touch (non-modal) and back button dismiss it
-  const placementRef = useRef(placement)
-  placementRef.current = placement
-  const anchorRef = useRef(anchorRect)
-  anchorRef.current = anchorRect
+  const dismissRef = useRef(onDismiss)
+  dismissRef.current = onDismiss
+  const placed = useRef({ placement, anchorRect, size })
+  placed.current = { placement, anchorRect, size }
   useEffect(() => {
     if (!host || !open) return
-    const inside = (r: Rect | null, x: number, y: number) => !!r && x >= r.x && x <= r.x + r.width && y >= r.y && y <= r.y + r.height
     return host.addLayer({
       modal,
+      // The anchor counts as inside: the trigger toggles the overlay itself
       contains: (x, y) => {
-        const p = placementRef.current
-        const s = sizeRef.current
-        return inside(anchorRef.current, x, y) || (!!p && !!s && inside({ x: p.x, y: p.y, width: s.width, height: s.height }, x, y))
+        const { placement: p, anchorRect: a, size: s } = placed.current
+        return (!!a && placementContains(a, a, x, y)) || (!!p && !!s && placementContains(p, s, x, y))
       },
-      dismiss: onDismiss,
+      dismiss: () => dismissRef.current(),
     })
-  }, [host, open, modal, onDismiss])
-  const sizeRef = useRef(size)
-  sizeRef.current = size
+  // `onDismiss` is read through a ref: a new callback must not re-add the layer (it would jump above the layers opened after it)
+  }, [host, open, modal])
 
   // Animation toward the placed side
   const progress = useSharedValue(0)
-  const placed = placement !== null
+  const isPlaced = placement !== null
   useEffect(() => {
-    if (open && placed) {
+    if (open && isPlaced) {
       progress.value = reducedMotion || !timing.open ? 1 : withTiming(1, { duration: timing.open, easing: EASE })
     } else if (!open) {
       if (reducedMotion || !timing.close) {
@@ -152,11 +113,11 @@ function Placed({
       })
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, placed, reducedMotion])
+  }, [open, isPlaced, reducedMotion])
 
   const placedSide = placement?.side ?? side
   // item-aligned content is not a .rt-PopperContent: it only fades
-  const slides = !placeOverride
+  const slides = strategy?.kind !== 'item-aligned'
   const animated = useAnimatedStyle(() => {
     const t = 1 - progress.value
     // rt-slide-from-{side}: 4px toward the anchor, scale 0.97
@@ -165,11 +126,6 @@ function Placed({
     if (!slides) return { opacity: progress.value }
     return { opacity: progress.value, transform: [{ translateX: dx }, { translateY: dy }, { scale: 1 - 0.03 * t }] }
   })
-
-  const onLayout = useCallback((e: LayoutChangeEvent) => {
-    const { width, height } = e.nativeEvent.layout
-    setSize((prev) => (prev && prev.width === width && prev.height === height ? prev : { width, height }))
-  }, [])
 
   return (
     // While closing (the exit animation), touches go through to what is underneath, like Radix's
@@ -180,15 +136,18 @@ function Placed({
         testID={testID}
         onLayout={onLayout}
         accessibilityViewIsModal={modal}
+        // VoiceOver's escape gesture (two-finger scrub) is Radix's Escape
+        onAccessibilityEscape={onDismiss}
         style={[
           {
             position: 'absolute',
-            left: placement?.x ?? 0,
-            top: placement?.y ?? 0,
+            // Window coordinates: the physical left, also in RTL
+            ...physical({ left: placement?.left ?? 0 }),
+            top: placement?.top ?? 0,
             // Hidden until placed, like Radix's off-screen pre-measure
-            opacity: placed ? undefined : 0,
+            opacity: isPlaced ? undefined : 0,
             minWidth: matchAnchorWidth ? anchorRect?.width : undefined,
-            maxWidth: boundary.width - 20,
+            maxWidth,
           },
           placement ? { transformOrigin: [placement.originX, placement.originY, 0] } : undefined,
           animated,
