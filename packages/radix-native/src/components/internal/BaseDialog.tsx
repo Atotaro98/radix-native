@@ -1,22 +1,22 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useMemo, useRef } from 'react'
 import { KeyboardAvoidingView, Modal, Pressable, ScrollView, StyleSheet, useWindowDimensions } from 'react-native'
 import type { DimensionValue, StyleProp, ViewStyle } from 'react-native'
-import Animated, { Easing, runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated'
+import Animated, { useAnimatedStyle } from 'react-native-reanimated'
 import { useMetrics } from '../../hooks/useMetrics'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { paintSurface } from './surface'
 import { createOverlayContext, slot, useOverlayState, type OverlayState, type OverlayStateProps, type SlotChild } from './overlayRoot'
 import { PortalHost, type PortalHostHandle } from './Portal'
+import { useEnterExit, usePresence, type PresenceTiming } from './presence'
+import { PANEL_SIZES, type PanelSize } from './PopperContent'
 import { InsetContext, type InsetValues } from '../layout/InsetContext'
 import { Heading, type HeadingProps } from '../typography/Heading'
 import { Text, type TextProps } from '../typography/Text'
-import type { RadiusLevel } from '../../tokens/radius'
-import type { SpaceToken } from '../../tokens/spacing'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type DialogSize = 1 | 2 | 3 | 4
+export type DialogSize = PanelSize
 
 export interface DialogRootProps extends OverlayStateProps {
   children?: React.ReactNode
@@ -50,20 +50,12 @@ export interface DialogContentProps {
   children?: React.ReactNode
 }
 
-// ─── Size mappings (base-dialog.css .rt-BaseDialogContent:where(.rt-r-size-N)) ─
+// base-dialog.css .rt-BaseDialogContent:where(.rt-r-size-N): the same padding and radius as a popper panel
+const SIZES = PANEL_SIZES
 
-const SIZES: Record<DialogSize, { padding: SpaceToken; radius: RadiusLevel }> = {
-  1: { padding: 3, radius: 4 },
-  2: { padding: 4, radius: 4 },
-  3: { padding: 5, radius: 5 },
-  4: { padding: 6, radius: 5 },
-}
-
-// animations.css / base-dialog.css: ease cubic-bezier(0.16, 1, 0.3, 1)
-const EASE = Easing.bezier(0.16, 1, 0.3, 1)
-const OPEN_MS = 200
-const BACKDROP_CLOSE_MS = 160
-const CONTENT_CLOSE_MS = 100
+// base-dialog.css: both open in 200ms; the backdrop closes in 160ms, the content in 100ms
+const BACKDROP_TIMING: PresenceTiming = { open: 200, close: 160 }
+const CONTENT_TIMING: PresenceTiming = { open: 200, close: 100 }
 
 // ─── Context ──────────────────────────────────────────────────────────────────
 
@@ -109,37 +101,17 @@ export function createDialog({ alert, name }: { alert: boolean; name: string }) 
     const metrics = useMetrics()
     const { safeAreaInsets: insets } = useThemeContext()
     const colors = useVariantColors('dialog', {})
-    const reducedMotion = useReducedMotion()
     const window = useWindowDimensions()
     const cfg = SIZES[size]
     const padding = metrics.space(cfg.padding)
     const borderRadius = metrics.radius(cfg.radius)
     const panel = paintSurface(colors, borderRadius)
 
-    // Presence: stay mounted until the exit animation ends (Radix unmountSuspended)
-    const [present, setPresent] = useState(ctx.open)
-    const backdrop = useSharedValue(0)
-    const content = useSharedValue(0)
-    const closing = useSharedValue(0)
-    useEffect(() => {
-      if (ctx.open) {
-        setPresent(true)
-        closing.value = 0
-        backdrop.value = reducedMotion ? 1 : withTiming(1, { duration: OPEN_MS, easing: EASE })
-        content.value = reducedMotion ? 1 : withTiming(1, { duration: OPEN_MS, easing: EASE })
-      } else if (present) {
-        if (reducedMotion) {
-          setPresent(false)
-          return
-        }
-        closing.value = 1
-        backdrop.value = withTiming(0, { duration: BACKDROP_CLOSE_MS, easing: EASE }, (done) => {
-          if (done) runOnJS(setPresent)(false)
-        })
-        content.value = withTiming(0, { duration: CONTENT_CLOSE_MS, easing: EASE })
-      }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [ctx.open, reducedMotion])
+    // Mounted until the backdrop, the slower of the two, has faded out (Radix unmountSuspended)
+    const { present, onExited } = usePresence(ctx.open)
+    const backdrop = useEnterExit({ open: ctx.open, timing: BACKDROP_TIMING, onExited })
+    const content = useEnterExit({ open: ctx.open, timing: CONTENT_TIMING })
+    const closing = !ctx.open
 
     const backdropStyle = useAnimatedStyle(() => ({ opacity: backdrop.value }))
     // show: translateY(5px) scale(0.97) → identity; hide: → translateY(5px) scale(0.99)
@@ -147,7 +119,7 @@ export function createDialog({ alert, name }: { alert: boolean; name: string }) 
       opacity: content.value,
       transform: [
         { translateY: (1 - content.value) * 5 },
-        { scale: 1 - (1 - content.value) * (closing.value ? 0.01 : 0.03) },
+        { scale: 1 - (1 - content.value) * (closing ? 0.01 : 0.03) },
       ],
     }))
 
