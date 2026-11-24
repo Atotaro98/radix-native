@@ -5,6 +5,7 @@ import { Theme } from '../../theme/Theme'
 import { useThemeContext } from '../../hooks/useThemeContext'
 import { useColor } from '../../hooks/useColor'
 import { isDev } from '../../utils/env'
+import { inlineSign } from '../../utils/rtl'
 import { resolveMetrics } from '../../utils/metrics'
 import { Text } from '../typography/Text'
 import { Heading } from '../typography/Heading'
@@ -59,8 +60,10 @@ export function ThemeControls({ showCopyTheme, onCopyTheme, defaultOpen = false 
   const panelBg = useColor('gray-2')
   const panelBorder = useColor('gray-6')
 
+  // The panel sits at the row's end (the left in RTL) and slides out past that edge
+  const sign = inlineSign()
   const slideStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: slideAnim.value }],
+    transform: [{ translateX: sign * slideAnim.value }],
   }))
 
   const {
