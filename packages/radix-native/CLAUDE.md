@@ -18,8 +18,8 @@ packages/radix-native/src/
   utils/          resolveColor, variantPalette, colorMath, metrics, shadow, classicEffect (deprecated), textStyle,
                   hitSlop, alpha, env, fonts, popper, anchoredPlacement, slider, tableLayout, rtl
   components/
-    internal/     control (useControl), surface (paintSurface), useAnchoredPlacement, presence (usePresence, useEnterExit), collection (useCollection), BaseButton, ToggleSurface, BaseToggle, BaseTextInput, ControlLabel, selectionGroup, controlGroup, SelectionCard, CardRing, BaseTabList, BaseDialog, Portal, portalContext, overlayRoot, AnchoredContent, PopperContent, ListRows, BaseMenu, inlineText, ClassicOverlay, FocusRing, ColumnRows, accessibleControl (not exported)
-    layout/       Box, Flex, Grid, Container, Section, AspectRatio, ScrollArea, Separator, Card, Inset, InsetContext (Radix --inset-* values; Card provides them)
+    internal/     control (useControl), surface (paintSurface), contentText (renderContentText, plainText), tint, useAnchoredPlacement, presence (usePresence, useEnterExit), collection (useCollection), BaseButton, ToggleSurface, BaseToggle, BaseTextInput, ControlLabel, selectionGroup, controlGroup, SelectionCard, CardRing, BaseTabList, BaseDialog, Portal, portalContext, overlayRoot, AnchoredContent, PopperContent, ListRows, BaseMenu, inlineText, ClassicOverlay, FocusRing, ColumnRows, accessibleControl (not exported)
+    layout/       Box, Flex, Grid, Container, Section, AspectRatio, ScrollArea, Separator, Card, Inset, InsetContext (Radix --inset-* values; containers publish them through InsetContainer)
     typography/   Text, Heading, Link, Blockquote, Code, Em, Strong, Quote, Kbd, TextContext, InlineText (factory, not exported)
     display/      Avatar, Badge, Callout, DataList, Table (column sizing in utils/tableLayout)
     actions/      Button, IconButton, Checkbox, CheckboxGroup, CheckboxCards,
@@ -142,16 +142,20 @@ const colors = useVariantColors('checkbox', { variant, color, highContrast, chec
   look inconsistent (e.g. solid high-contrast text `gray-1` in Button, `accent-1` in Badge), and cite
   the Radix selector in a comment.
 - `SHADOW_1_RING` is Radix `--shadow-1` as a border color (classic variants, sunken parts).
-- Add a row to `__tests__/variantPalette.test.ts` for every rule; `contrast.test.ts` walks the
-  real recipes.
+- A component that draws more than one box gets a recipe that names each as a surface of its own, with the same
+  parts: a Slider's `track`, `range` and `thumb`, a Switch's `thumb`, a SegmentedControl's `indicator`. Each goes
+  through `paintSurface(colors.thumb, radius)`; never flatten them into prefixed keys (`thumbRing`, `thumbShadow`).
+- Add a row to `__tests__/variantPalette.test.ts` for every rule. `contrast.test.ts` walks the real recipes: its
+  `TEXT_ON_FILL` map is total over the registry, so a new recipe does not compile until it declares which part is
+  text on which fill (or `null`).
 - Focus rings come from the `focusRing` recipe (`useVariantColors('focusRing', { color }).ring`);
   text inputs draw theirs as `border` from their own recipe.
-- Drop shadows and the classic bevel are recipe parts too: `shadow` / `thumbShadow` (a `ShadowPaint`: color
+- Drop shadows and the classic bevel are recipe parts too: `shadow` (a `ShadowPaint`: color
   paint, opacity, offsetY, radius, Android elevation) and `bevel: true`. The recipe decides when they apply
   (Button classic loses its lift while pressed and both when disabled or loading; Card keeps its shadow while
   pressed; card items keep it when disabled; Checkbox / Radio bevel only when checked). `paintSurface` draws
-  them (through `shadowStyle`, the only `Platform.select` for shadows, and `ClassicOverlay`); parts that are
-  not a surface (a Switch thumb, Slider thumb, SegmentedControl indicator, Kbd) still call `shadowStyle` themselves.
+  them (through `shadowStyle`, the only `Platform.select` for shadows, and `ClassicOverlay`), also for a Switch
+  thumb, a Slider thumb, a SegmentedControl indicator and Kbd; components never call `shadowStyle` themselves.
   `getClassicEffect` is a deprecated public export; don't use it.
 
 ### Shared building blocks — use these instead of re-implementing
@@ -160,6 +164,8 @@ const colors = useVariantColors('checkbox', { variant, color, highContrast, chec
 |------|-----|
 | Controlled / uncontrolled value | `useControllableState({ prop, defaultProp, onChange })` — setter accepts updater functions (no stale closures) |
 | Any pressable control (pressed / focus state, press scale, a11y name from content, touch target, disabled gate, focus ring, prop order) | `const control = useControl({ props: rest, children, role, onPress, disabled, state?, touchTarget?, focusRing: { color?, borderRadius, offset? }, forceName? })` (`internal/control`) → `<Pressable {...control.pressableProps} style={[control.scaleStyle?, …]}>{control.wrap(content)}{control.focusRing}</Pressable>`; read `control.pressed` for the recipe. Focus is reported whether or not the control uses the press scale. BaseButton, Card, Toggle surface, tab triggers, SegmentedControl items, Select trigger and menu / Select rows are built on it. Text inputs use `useInteraction` for focus only |
+| Content that may be written as text (`children`, a `label`, a `fallback`) | `renderContentText(children, (value) => <RNText …>{value}</RNText>, node?)` (`internal/contentText`): strings and numbers, in any number of pieces (`Option {name}`) and inside fragments, become one Text per run; everything else passes through (`node` to add to elements, e.g. `tint`). `plainText(children)` is the text when the content is text alone. Never test `typeof children === 'string'` — it is false for `Option {name}` and React Native throws on the loose strings. Control label, group and card item labels, the Select trigger, Tooltip, VisuallyHidden, Skeleton and the Avatar fallback are built on it; `renderInlineText` additionally merges text components into the run |
+| Give content the surrounding text color (RN has no `currentColor`) | `tint(element, color)` / `tintChildren(children, color)` (`internal/tint`): only an element that sets no `color` and is not one of the library's own components (their `color` names a Theme color) gets it — Control label, Callout.Icon, TextField.Slot. A new exported component must be added to `LIBRARY_NAMES` (`__tests__/tint.test.tsx` fails otherwise). Never `cloneElement(child, { color })` by hand |
 | A recipe's fill, border, ring, shadow, bevel, opacity | `const surface = paintSurface(colors, borderRadius)` (`internal/surface`) → `style={[…, surface.style]}`, `{surface.under}` before the content (bevel), `{surface.over}` after it (ring) |
 | A button (interaction, recipe colors, classic, loading, focus ring, touch target, prop order) | `<BaseButton {...props} iconOnly? />` — Button and IconButton are thin wrappers over it, like Radix `BaseButton` |
 | Anything that acts as a Toggle (role, a11y state incl. `'mixed'`, disabled gate, press scale, touch target, focus ring, consumer handlers) | `<ToggleSurface role checked disabled onPress indicator={{ kind, props }} labelLineHeight? />` (focus ring around the Indicator, in the Indicator's `color`) or `<ToggleSurface … borderRadius color>{card}</ToggleSurface>` (focus ring on the card's edge) — holds no checked state; built on `useControl` |
@@ -169,7 +175,8 @@ const colors = useVariantColors('checkbox', { variant, color, highContrast, chec
 | A row of text runs + icons inside a control (Control label: buttons, Badge, tab triggers, SegmentedControl items, menu / Select rows) | `<ControlLabel size weight color letterSpacingEm? maxFontSizeMultiplier>{children}</ControlLabel>` — merges adjacent text, one line, tints icons without `color`; a tab trigger's label goes in `<WeightReserve label={(weight) => …}>{visible}</WeightReserve>`, which reserves the wider of both weights (SegmentedControl keeps its medium copy in flow instead: a zero-height reserving copy there made Android drop the last letter); pass `truncate={false}` where the control always takes the label's width (tabs, segmented) |
 | A Text input (sizes, recipe colors, focus, read-only look, prop order) | `<BaseTextInput {...props} multiline? />` — TextField and TextArea are thin wrappers over it |
 | A control announced as one element, named by its content | `useControl` does it (`useAccessibleControl` underneath, `internal/accessibleControl`); accessible content inside reads `useIsInsideAccessibleControl()` and contributes only its label (AccessibleIcon). Never call `accessibleNameOf` or render `AccessibleControlContext.Provider` by hand |
-| A base card's border (Card, card items) | `<CardRing color borderRadius width? />` (`internal/CardRing`) drawn after the content — never a layout `borderWidth`; publish the Inset values with `InsetContext.Provider` (padding − border width) |
+| A base card's border (Card, card items) | `<CardRing color borderRadius width? />` (`internal/CardRing`) drawn after the content — never a layout `borderWidth` |
+| A padded container an `Inset` can reach the edges of (Card, Selection card, popper panel, Dialog content) | `<InsetContainer padding borderWidth? borderRadius?>{children}</InsetContainer>` (`layout/InsetContext`) around the content: it owns Radix's `--inset-padding = padding − border width`. Never build `InsetValues` or render `InsetContext.Provider` in a container (Inset itself re-provides for nested content) |
 | Inside a Skeleton, keep the component's shape | `useSkeletonRadius(borderRadius)` (`feedback/SkeletonContext`) in any component with its own radius; layout primitives report through `useLayoutStyle` |
 | Columns sized by their cells (CSS grid `auto` / `1fr` / subgrid, table layout) | Measured columns (`hooks/useWidest`, internal). All cells take the widest: `useWidest()` + `useWidestCell(cells)` — DataList labels, SegmentedControl items. Another rule per column: `useMeasuredCells<Meta>()` + `useMeasuredCell(cells, { meta })` and resolve from `cells` (Table, with the pure `resolveTableWidths` in `utils/tableLayout`). Wrap the measured content in `naturalWidthStyle(ownsWidth)`; hide the parent until `ready`. Never keep a second registry of cells |
 | Text inside a container that sets the font (DataList, Table) | `renderInlineText(children, { textStyle, textProps, provide }, color)` (`internal/inlineText`): merges strings and text components into one Text |
@@ -308,7 +315,7 @@ Avatar initials live in a fixed-size box and are always capped at `1`.
 </Theme>
 ```
 
-ThemeControls (dev tool) hardcodes `maxFontSizeMultiplier={1}` on all internal text.
+ThemeControls (dev tool) hardcodes `maxFontSizeMultiplier={1}` on all internal text. Its options are drawn by hand to look like Radix's ThemePanel, but on the library's modules: each is a Control (`useControl`), its ring comes from the `themePanelOption` recipe through `paintSurface`, and the panel opens and closes on Presence (not mounted while closed).
 
 ## Tokens
 
@@ -375,7 +382,7 @@ Every component change gets its playground section checked in the iOS Simulator 
 
 ## Testing
 
-`yarn test` (Jest + `@testing-library/react-native`, Reanimated 4 via `setUpTests()` and the worklets Babel plugin). Tests live in `src/__tests__/`; render inside a theme with `renderWithTheme` from `__tests__/helpers/render`. Read what a component drew through `__tests__/helpers/queries` (`flat`, `focusRings`, `cardRings`, `hasBevel`), not by guessing parts from their style (`borderWidth === 2`). `contrast.test.ts` checks WCAG ratios of every text-on-fill pair the Variant recipes produce.
+`yarn test` (Jest + `@testing-library/react-native`, Reanimated 4 via `setUpTests()` and the worklets Babel plugin). Tests live in `src/__tests__/`; render inside a theme with `renderWithTheme` from `__tests__/helpers/render`. Read what a component drew through `__tests__/helpers/queries` (`flat`, `focusRings`, `cardRings`, `hasBevel`), not by guessing parts from their style (`borderWidth === 2`). `contrast.test.ts` checks WCAG ratios of every text-on-fill pair the Variant recipes produce (each recipe declares its pair in `TEXT_ON_FILL`).
 
 ## TypeScript rules
 

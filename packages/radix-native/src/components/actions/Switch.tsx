@@ -9,7 +9,6 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated'
 import { useVariantColors } from '../../hooks/useVariantColors'
-import { shadowStyle } from '../../utils/shadow'
 import { useMargins } from '../../hooks/useMargins'
 import { BaseToggle } from '../internal/BaseToggle'
 import { defineToggle } from '../internal/ToggleSurface'
@@ -126,17 +125,13 @@ function SwitchIndicator({ variant, color, highContrast, checked, disabled, geom
     paddingHorizontal: thumbMargin,
   }
 
-  const thumbStyle: ViewStyle = {
-    width: thumbSize,
-    height: thumbSize,
-    borderRadius: thumbRadius,
-    backgroundColor: colors.thumb,
-  }
+  const thumb = paintSurface(colors.thumb, thumbRadius)
+  const thumbStyle: ViewStyle = { width: thumbSize, height: thumbSize }
 
   return (
     <View style={[trackStyle, track.style]}>
       {track.over}
-      <Animated.View style={[thumbStyle, shadowStyle(colors.thumbShadow), thumbAnimatedStyle]} />
+      <Animated.View style={[thumbStyle, thumb.style, thumbAnimatedStyle]} />
     </View>
   )
 }

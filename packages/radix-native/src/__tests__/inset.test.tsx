@@ -6,7 +6,7 @@ import { flat, cardRings } from './helpers/queries'
 import { Card } from '../components/layout/Card'
 import { RadioCards } from '../components/actions/RadioCards'
 import { Inset, resolveInsetStyle } from '../components/layout/Inset'
-import { NO_INSET, type InsetValues } from '../components/layout/InsetContext'
+import { InsetContainer, NO_INSET, useInsetContext, type InsetValues } from '../components/layout/InsetContext'
 
 type Node = { type: unknown; props: { style?: unknown } }
 // A size-2 surface Card at 100%: --card-padding space-4 (16), border 1px, radius-4 (8).
@@ -80,6 +80,30 @@ describe('Inset inside a Card', () => {
       </Card>,
     )
     expect(flat(screen.getByTestId('i')).marginTop).toBe(-12)
+  })
+})
+
+describe('InsetContainer (base-card.css: --inset-padding = padding − border width)', () => {
+  const published = (ui: (probe: React.ReactElement) => React.ReactElement) => {
+    let values: InsetValues | undefined
+    const Probe = () => { values = useInsetContext(); return null }
+    renderWithTheme(ui(<Probe />))
+    return values
+  }
+
+  it.each<[string, React.ComponentProps<typeof InsetContainer>, InsetValues]>([
+    ['a card: one padding, a 1px border, its radius', { padding: 16, borderWidth: 1, borderRadius: 8 }, CARD],
+    ['a panel: no border, no radius', { padding: 12 },
+      { padding: { top: 12, right: 12, bottom: 12, left: 12 }, borderWidth: 0, borderRadius: 0 }],
+    ['a padding per side', { padding: { top: 20, right: 60, bottom: 20, left: 24 }, borderWidth: 1, borderRadius: 8 },
+      { padding: { top: 19, right: 59, bottom: 19, left: 23 }, borderWidth: 1, borderRadius: 8 }],
+  ])('%s', (_label, props, expected) => {
+    expect(published((probe) => <InsetContainer {...props}>{probe}</InsetContainer>)).toEqual(expected)
+  })
+
+  it('a Card publishes its padding minus its border; a ghost Card has no border', () => {
+    expect(published((probe) => <Card size={2}>{probe}</Card>)).toEqual(CARD)
+    expect(published((probe) => <Card size={2} variant="ghost">{probe}</Card>)?.borderWidth).toBe(0)
   })
 })
 

@@ -8,11 +8,12 @@
  * not for body text — use `highContrast` when AA matters. Likewise colored text
  * (a11) on soft / surface fills is ≈4:1 in light mode for some hues.
  *
- * The second half checks every text-on-fill pair the Variant recipes produce.
+ * The second half checks every text-on-fill pair the Variant recipes produce: each
+ * recipe in the registry declares its pair, or that it has none (`TEXT_ON_FILL`).
  */
 import { resolveColor } from '../utils/resolveColor'
 import { resolveVariantColors } from '../utils/variantPalette'
-import type { RecipeName, RecipeState } from '../utils/variantPalette'
+import type { RecipeName, RecipeState, VariantColors } from '../utils/variantPalette'
 import type { ResolveColorFn } from '../hooks/useResolveColor'
 import { contrastRatio, composite } from './helpers/contrast'
 import type { AccentColor, GrayColor } from '../tokens/colors/types'
@@ -56,36 +57,116 @@ describe.each(MODES)('%s mode', (mode) => {
   })
 })
 
-// ─── Text on its own background, through the real Variant recipes ──────────────
+// ─── Text on its own fill, through the real Variant recipes ───────────────────
 
-type TextRecipe = 'button' | 'badge' | 'avatar' | 'code' | 'textField'
-const TEXT_RECIPES: { name: TextRecipe; variants: readonly string[] }[] = [
-  { name: 'button', variants: ['classic', 'solid', 'soft', 'surface', 'outline', 'ghost'] },
-  { name: 'badge', variants: ['solid', 'soft', 'surface', 'outline'] },
-  { name: 'avatar', variants: ['solid', 'soft'] },
-  { name: 'code', variants: ['solid', 'soft', 'outline'] },
-  { name: 'textField', variants: ['classic', 'surface', 'soft'] },
-]
+/**
+ * What a recipe says about text: the states to walk (enabled ones: disabled text is
+ * exempt from WCAG), which of its parts is the text and which the fill under it
+ * (default `text` on `bg`; no fill = straight on the page), and the floor it must
+ * reach. `null`: the recipe colors no text of its own.
+ *
+ * The map is total over the recipe registry, so a new recipe does not compile until
+ * it says where its text is.
+ */
+interface Spec<R extends RecipeName> {
+  states: readonly Omit<RecipeState<R>, 'appearance'>[]
+  pair?: (colors: VariantColors<R>) => { text?: string; fill?: string }
+  minimum: (state: Omit<RecipeState<R>, 'appearance'>, mode: 'light' | 'dark') => number
+}
 
-const cases = MODES.flatMap(mode => TEXT_RECIPES.flatMap(({ name, variants }) =>
-  variants.flatMap(variant => [false, true].map(highContrast => ({ mode, name, variant, highContrast })))))
+const HC = [false, true] as const
+const withHC = <V extends string>(variants: readonly V[], extra: object = {}) =>
+  variants.flatMap(variant => HC.map(highContrast => ({ variant, highContrast, hasColor: true, ...extra })))
 
-describe.each(cases)('$mode $name $variant (highContrast: $highContrast)', ({ mode, name, variant, highContrast }) => {
+// Regression floors for Radix's APCA-tuned pairs (see the note at the top):
+// contrast on solid step 9 ≈ 3:1; a11 on a tinted fill (soft / surface) ≈ 4:1
+// in light mode (orange 3.99). High contrast must reach AA.
+const SOLID = 2.9
+const TINTED = 3.9
+const AA = 4.5
+const AAA = 7
+// Radix pairs under 4:1, kept as they are and guarded against getting worse:
+// a highlighted soft menu item with its own color (accent-a11 on accent-a4; orange 3.54)
+const SOFT_HIGHLIGHT = 3.5
+// a menu label (gray-a10 on the panel; 3.78)
+const MENU_LABEL = 3.7
+const chipFloor = (s: { variant: string; highContrast?: boolean }) =>
+  s.highContrast ? AA : s.variant === 'solid' || s.variant === 'classic' ? SOLID : TINTED
+
+const TEXT_ON_FILL: { [R in RecipeName]: Spec<R> | null } = {
+  button: { states: withHC(['classic', 'solid', 'soft', 'surface', 'outline', 'ghost'] as const), minimum: chipFloor },
+  badge: { states: withHC(['solid', 'soft', 'surface', 'outline'] as const), minimum: chipFloor },
+  avatar: { states: withHC(['solid', 'soft'] as const), minimum: chipFloor },
+  code: { states: withHC(['solid', 'soft', 'outline'] as const), minimum: chipFloor },
+  textField: { states: withHC(['classic', 'surface', 'soft'] as const), minimum: () => AA },
+  textArea: { states: withHC(['classic', 'surface', 'soft'] as const), minimum: () => AA },
+  callout: { states: withHC(['soft', 'surface', 'outline'] as const), minimum: s => (s.highContrast ? AA : TINTED) },
+  checkboxCard: { states: withHC(['surface', 'classic'] as const), minimum: () => AAA },
+  radioCard: { states: withHC(['surface', 'classic'] as const, { checked: true }), minimum: () => AAA },
+  segmented: { states: [{ variant: 'surface' }, { variant: 'classic' }], minimum: () => AAA },
+  table: { states: [{ variant: 'surface' }, { variant: 'ghost' }], minimum: () => AAA },
+  tooltip: { states: [{}], minimum: () => AAA },
+  kbd: { states: [{ variant: 'classic' }, { variant: 'soft' }], minimum: () => AA },
+  selectTrigger: {
+    states: withHC(['classic', 'surface', 'soft', 'ghost'] as const),
+    minimum: s => (s.variant === 'soft' || s.variant === 'ghost' ? AA : AAA),
+  },
+  menuItem: {
+    states: [
+      ...withHC(['solid', 'soft'] as const, { highlighted: true }),
+      ...withHC(['solid', 'soft'] as const, { highlighted: true, hasColor: false }),
+      ...withHC(['solid', 'soft'] as const, { subOpen: true, hasColor: false }),
+      ...withHC(['solid', 'soft'] as const, { hasColor: false }),
+    ],
+    minimum: s => (!s.highlighted ? AAA : s.variant === 'solid' ? (s.highContrast && !s.hasColor ? AA : SOLID) : s.hasColor ? SOFT_HIGHLIGHT : AAA),
+  },
+  // Text straight on the page
+  text: { states: HC.map(highContrast => ({ highContrast, hasColor: true })), minimum: s => (s.highContrast ? AAA : AA) },
+  blockquote: { states: HC.map(highContrast => ({ highContrast, hasColor: true })), minimum: s => (s.highContrast ? AAA : AA) },
+  link: { states: HC.map(highContrast => ({ highContrast })), minimum: s => (s.highContrast ? AAA : AA) },
+  dataListLabel: {
+    states: [true, false].flatMap(hasColor => HC.map(highContrast => ({ highContrast, hasColor }))),
+    minimum: s => (s.highContrast ? AAA : AA),
+  },
+  body: { states: [{}], minimum: () => AAA },
+  controlLabel: { states: [{}], minimum: () => AAA },
+  tabList: { states: [{}, { active: true }], minimum: s => (s.active ? AAA : AA) },
+  menuChrome: { states: [{}], pair: colors => ({ text: colors.label }), minimum: () => MENU_LABEL },
+  textFieldSlot: { states: withHC(['classic', 'surface', 'soft'] as const), minimum: () => AA },
+  // No text of their own
+  checkbox: null,
+  radio: null,
+  switch: null,
+  progress: null,
+  slider: null,
+  card: null,
+  dialog: null,
+  popperPanel: null,
+  focusRing: null,
+  themePanel: null,
+  themePanelOption: null,
+}
+
+const specs = (Object.keys(TEXT_ON_FILL) as RecipeName[]).flatMap(name => {
+  const spec = TEXT_ON_FILL[name] as Spec<RecipeName> | null
+  return spec ? MODES.flatMap(mode => spec.states.map(state => ({ name, mode, state, spec, label: JSON.stringify(state) }))) : []
+})
+
+describe.each(specs)('$mode $name $label', ({ name, mode, state, spec }) => {
   const page = mode === 'light' ? '#ffffff' : resolveColor('gray-1', mode, 'indigo', 'slate')
-  // Regression floors for Radix's APCA-tuned pairs (see the note at the top):
-  // contrast on solid step 9 ≈ 3:1; a11 on a tinted fill (soft/surface) ≈ 4:1
-  // in light mode (orange 3.99). highContrast and plain fields must reach AA.
-  const solid = variant === 'solid' || variant === 'classic'
-  const minimum = highContrast || name === 'textField' ? 4.5 : solid ? 2.9 : 3.9
+  const minimum = spec.minimum(state, mode)
 
-  it.each(ACCENTS)('text on its background ≥ %s', (accent) => {
+  it.each(ACCENTS)(`text on its fill ≥ ${minimum} (%s)`, (accent) => {
     const rc = ((first: string, step?: string | number) =>
       resolveColor(step === undefined ? first : `${first}-${step}`, mode, 'indigo', 'slate')) as ResolveColorFn
-    const state = { appearance: mode, variant, highContrast, hasColor: true } as RecipeState<RecipeName>
-    const colors = resolveVariantColors(name, state as RecipeState<typeof name>, { rc, color: accent, appearance: mode }) as
-      { bg?: string; text?: string }
-    const bg = toHex(composite(colors.bg ?? 'transparent', page))
-    expect(contrastRatio(colors.text!, bg)).toBeGreaterThanOrEqual(minimum)
+    const colors = resolveVariantColors(name, { ...state, appearance: mode } as RecipeState<RecipeName>, { rc, color: accent, appearance: mode })
+    const parts = colors as { text?: string; bg?: string }
+    const { text, fill } = spec.pair ? spec.pair(colors) : { text: parts.text, fill: parts.bg }
+    // A recipe may give no text color for a state (plain Text without `color`): nothing to check
+    if (text === undefined) return
+    const under = toHex(composite(fill ?? 'transparent', page))
+    const ratio = contrastRatio(toHex(composite(text, under)), under)
+    expect(ratio).toBeGreaterThanOrEqual(minimum)
   })
 })
 

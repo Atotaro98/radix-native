@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef } from 'react'
+import React, { useCallback, useRef } from 'react'
 import { KeyboardAvoidingView, Modal, Pressable, ScrollView, StyleSheet, useWindowDimensions } from 'react-native'
 import type { DimensionValue, StyleProp, ViewStyle } from 'react-native'
 import Animated, { useAnimatedStyle } from 'react-native-reanimated'
@@ -10,7 +10,7 @@ import { createOverlayContext, slot, useOverlayState, type OverlayState, type Ov
 import { PortalHost, type PortalHostHandle } from './Portal'
 import { useEnterExit, usePresence, type PresenceTiming } from './presence'
 import { PANEL_SIZES, type PanelSize } from './PopperContent'
-import { InsetContext, type InsetValues } from '../layout/InsetContext'
+import { InsetContainer } from '../layout/InsetContext'
 import { Heading, type HeadingProps } from '../typography/Heading'
 import { Text, type TextProps } from '../typography/Text'
 
@@ -135,13 +135,6 @@ export function createDialog({ alert, name }: { alert: boolean; name: string }) 
       if (!alert) ctx.setOpen(false)
     }, [ctx])
 
-    // Dialog content publishes its padding to an Inset inside it
-    const inset = useMemo<InsetValues>(() => ({
-      padding: { top: padding, right: padding, bottom: padding, left: padding },
-      borderWidth: 0,
-      borderRadius: 0,
-    }), [padding])
-
     // .rt-BaseDialogScrollPadding: space-6 top, space-4 sides, max(space-6, 6vh) bottom (+ safe area)
     const scrollPadding: ViewStyle = {
       flexGrow: 1,
@@ -194,12 +187,13 @@ export function createDialog({ alert, name }: { alert: boolean; name: string }) 
                     style,
                   ]}
                 >
-                  <InsetContext.Provider value={inset}>
+                  {/* Dialog content publishes its padding to an Inset inside it */}
+                  <InsetContainer padding={padding}>
                     {height !== undefined || maxHeight !== undefined
                       // overflow: auto — scrolls inside only when the height is capped
                       ? <ScrollView style={{ margin: -padding }} contentContainerStyle={{ padding }}>{children}</ScrollView>
                       : children}
-                  </InsetContext.Provider>
+                  </InsetContainer>
                   {panel.over}
                 </Animated.View>
               </Pressable>

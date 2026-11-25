@@ -3,6 +3,7 @@ import { Text, View } from 'react-native'
 import type { ViewStyle } from 'react-native'
 import type { NativeViewProps } from '../../types/nativeProps'
 import { textOf } from '../internal/accessibleControl'
+import { renderContentText } from '../internal/contentText'
 
 export type VisuallyHiddenProps = NativeViewProps
 
@@ -30,7 +31,7 @@ export const VISUALLY_HIDDEN_STYLE: ViewStyle = {
 export function VisuallyHidden({ style, children, ...rest }: VisuallyHiddenProps) {
   return (
     <View style={[VISUALLY_HIDDEN_STYLE, style]} {...rest}>
-      {typeof children === 'string' || typeof children === 'number' ? <Text numberOfLines={1}>{children}</Text> : children}
+      {renderContentText(children, (value) => <Text numberOfLines={1}>{value}</Text>)}
     </View>
   )
 }

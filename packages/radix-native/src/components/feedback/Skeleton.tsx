@@ -7,6 +7,7 @@ import { useMargins } from '../../hooks/useMargins'
 import { useMetrics } from '../../hooks/useMetrics'
 import { useTextStyle } from '../../hooks/useTextStyle'
 import { SkeletonContext } from './SkeletonContext'
+import { renderContentText } from '../internal/contentText'
 import type { MarginProps } from '../../types/marginProps'
 import type { NativeViewProps } from '../../types/nativeProps'
 
@@ -139,9 +140,7 @@ export function Skeleton({
       {hasChildren && (
         <View style={{ opacity: 0 }}>
           <SkeletonContext.Provider value={reportRadius}>
-            {typeof children === 'string' || typeof children === 'number'
-              ? text.provide(<RNText {...text.textProps} style={textStyle}>{children}</RNText>)
-              : children}
+            {renderContentText(children, (value) => <>{text.provide(<RNText {...text.textProps} style={textStyle}>{value}</RNText>)}</>)}
           </SkeletonContext.Provider>
         </View>
       )}

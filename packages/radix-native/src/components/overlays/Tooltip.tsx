@@ -5,6 +5,7 @@ import type { DimensionValue, StyleProp, ViewStyle } from 'react-native'
 import { useMetrics } from '../../hooks/useMetrics'
 import { useTextStyle } from '../../hooks/useTextStyle'
 import { useVariantColors } from '../../hooks/useVariantColors'
+import { plainText, renderContentText } from '../internal/contentText'
 import { AnchoredContent, type AnchoredPlacementProps } from '../internal/AnchoredContent'
 import { slot, useOverlayState, type SlotChild } from '../internal/overlayRoot'
 
@@ -54,7 +55,7 @@ export function Tooltip({
     onLongPress: () => setOpen(true),
     onPressOut: () => setOpen(false),
   }, anchor)
-  const hint = typeof content === 'string' ? content : undefined
+  const hint = plainText(content)
 
   return (
     <>
@@ -96,9 +97,7 @@ export function Tooltip({
                 backgroundColor: colors.bg,
               }, style]}
             >
-              {typeof content === 'string' || typeof content === 'number'
-                ? <RNText style={text.style} {...text.textProps}>{content}</RNText>
-                : content}
+              {renderContentText(content, (value) => <RNText style={text.style} {...text.textProps}>{value}</RNText>)}
               {placement ? <Arrow side={placedSide} at={arrowAt} color={colors.bg} /> : null}
             </View>
           )

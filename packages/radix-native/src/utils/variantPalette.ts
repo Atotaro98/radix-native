@@ -120,8 +120,10 @@ interface Focused { focused?: boolean }
  * The parts of a drawn surface, as `paintSurface` (internal/surface) draws them:
  * `border` is a 1px layout border, `ring` a ring drawn over the content (Radix
  * inset box-shadow, `ringWidth` default 1), `bevel` the classic gradient.
+ * A recipe whose component draws more than one box names each of them as a
+ * surface of its own (a Slider's `track`, `range` and `thumb`).
  */
-interface SurfacePaints {
+export interface SurfacePaints {
   bg?: Paint
   border?: Paint
   ring?: Paint
@@ -320,9 +322,8 @@ export interface SwitchPaints extends SurfacePaints {
   bg: Paint
   /** Ring drawn over the track (Radix inset box-shadow). */
   ring?: Paint
-  thumb: Paint
-  /** The thumb's drop shadow (every variant). */
-  thumbShadow: ShadowPaint
+  /** The thumb: its fill and its drop shadow (every variant). */
+  thumb: { bg: Paint; shadow: ShadowPaint }
 }
 
 /**
@@ -341,40 +342,38 @@ const SWITCH_HC_OVERLAY = byMode(blackA(8), TRANSPARENT)
  * half) over a background color; each state flattens its half of the stack.
  */
 function switchRecipe(s: WithVariant<SelectionVariant> & Checked & Disabled): SwitchPaints {
-  return { ...switchColors(s), thumbShadow: switchThumbShadow(!!s.disabled) }
+  // .rt-SwitchThumb → white in every variant (soft only desaturates it); disabled gray-2
+  const thumb = { bg: s.disabled ? g(2) : WHITE, shadow: switchThumbShadow(!!s.disabled) }
+  return { ...switchTrack(s), thumb }
 }
 
-function switchColors(s: WithVariant<SelectionVariant> & Checked & Disabled): Omit<SwitchPaints, 'thumbShadow'> {
+function switchTrack(s: WithVariant<SelectionVariant> & Checked & Disabled): Omit<SwitchPaints, 'thumb'> {
   const hc = !!s.highContrast
-  // .rt-SwitchThumb → white in every variant (soft only desaturates it); disabled gray-2
-  const thumb = s.disabled ? g(2) : WHITE
   const solidChecked = hc ? layers(SWITCH_HC_OVERLAY, c('track')) : c('track')
 
   switch (s.variant) {
     case 'surface':
-      if (s.disabled) return { bg: g('a3'), ring: g('a3'), thumb }
-      return { bg: s.checked ? solidChecked : g('a3'), ring: g('a5'), thumb }
+      if (s.disabled) return { bg: g('a3'), ring: g('a3') }
+      return { bg: s.checked ? solidChecked : g('a3'), ring: g('a5') }
 
     case 'classic':
       if (s.disabled) {
         // [data-disabled]::before → gray-a5 + shadow-1 at opacity 0.5
-        return { bg: fade(g('a5'), 0.5), ring: fade(SHADOW_1_RING, 0.5), thumb }
+        return { bg: fade(g('a5'), 0.5), ring: fade(SHADOW_1_RING, 0.5) }
       }
-      if (!s.checked) return { bg: g('a4'), ring: SHADOW_1_RING, thumb }
+      if (!s.checked) return { bg: g('a4'), ring: SHADOW_1_RING }
       return {
         bg: solidChecked,
         ring: hc ? layers(g('a3'), blackA(2)) : layers(g('a3'), c('a4'), blackA(1)),
-        thumb,
       }
 
     case 'soft':
-      if (s.disabled) return { bg: g('a4'), thumb }
-      if (!s.checked) return { bg: layers(whiteA(1), g('a3'), g('a3')), thumb }
+      if (s.disabled) return { bg: g('a4') }
+      if (!s.checked) return { bg: layers(whiteA(1), g('a3'), g('a3')) }
       return {
         bg: hc
           ? layers(SWITCH_HC_OVERLAY, c('a6'), c('a6'), c('a6'), c('a3'))
           : layers(c('a4'), c('a4'), c('a4'), g('a2')),
-        thumb,
       }
   }
 }
@@ -404,18 +403,15 @@ function progress(s: WithVariant<SelectionVariant>): ProgressPaints {
 }
 
 export interface SliderPaints {
-  track: Paint
-  /** Ring over the track (inset box-shadow). */
-  trackBorder?: Paint
-  /** Invisible when disabled (Radix makes the range transparent). */
-  range: Paint
-  /** Ring over the range (inset box-shadow). */
-  rangeBorder?: Paint
-  thumb: Paint
-  /** The thumb's 1px ring (`0 0 0 1px …` in --slider-thumb-box-shadow). */
-  thumbRing: Paint
-  /** classic / soft: the rest of the thumb shadow as one drop shadow. */
-  thumbShadow?: ShadowPaint
+  /** The track and the ring over it (inset box-shadow). */
+  track: { bg: Paint; ring?: Paint }
+  /** The range and the ring over it; invisible when disabled (Radix makes the range transparent). */
+  range: { bg: Paint; ring?: Paint }
+  /**
+   * The thumb: its 1px edge (`0 0 0 1px …` in --slider-thumb-box-shadow, around the
+   * disc) and, classic / soft, the rest of that shadow as one drop shadow.
+   */
+  thumb: { bg: Paint; border: Paint; shadow?: ShadowPaint }
 }
 
 const sliderThumbShadow: ShadowPaint = { color: BLACK, opacity: 0.1, offsetY: 1, radius: 2, elevation: 1 }
@@ -428,30 +424,32 @@ const sliderThumbShadow: ShadowPaint = { color: BLACK, opacity: 0.1, offsetY: 1,
  */
 function slider(s: WithVariant<SelectionVariant> & Disabled): SliderPaints {
   const hc = (paint: Paint) => (s.highContrast ? layers(SWITCH_HC_OVERLAY, paint) : paint)
-  const thumb = s.disabled ? g(1) : WHITE
+  const bg = s.disabled ? g(1) : WHITE
+  const hidden = { bg: TRANSPARENT }
   switch (s.variant) {
     case 'surface':
-      if (s.disabled) return { track: g('a3'), trackBorder: g('a4'), range: TRANSPARENT, thumb, thumbRing: g(6) }
-      return { track: g('a3'), trackBorder: g('a5'), range: hc(c('track')), rangeBorder: g('a5'), thumb, thumbRing: blackA(4) }
-    case 'classic':
-      if (s.disabled) return { track: g('a3'), trackBorder: fade(SHADOW_1_RING, 0.5), range: TRANSPARENT, thumb, thumbRing: g(6) }
+      if (s.disabled) return { track: { bg: g('a3'), ring: g('a4') }, range: hidden, thumb: { bg, border: g(6) } }
       return {
-        track: g('a3'),
-        trackBorder: SHADOW_1_RING,
-        range: hc(c('track')),
-        rangeBorder: s.highContrast ? layers(g('a3'), blackA(2)) : layers(g('a3'), c('a4'), blackA(1)),
-        thumb,
-        thumbRing: blackA(3),
-        thumbShadow: sliderThumbShadow,
+        track: { bg: g('a3'), ring: g('a5') },
+        range: { bg: hc(c('track')), ring: g('a5') },
+        thumb: { bg, border: blackA(4) },
+      }
+    case 'classic':
+      if (s.disabled) return { track: { bg: g('a3'), ring: fade(SHADOW_1_RING, 0.5) }, range: hidden, thumb: { bg, border: g(6) } }
+      return {
+        track: { bg: g('a3'), ring: SHADOW_1_RING },
+        range: {
+          bg: hc(c('track')),
+          ring: s.highContrast ? layers(g('a3'), blackA(2)) : layers(g('a3'), c('a4'), blackA(1)),
+        },
+        thumb: { bg, border: blackA(3), shadow: sliderThumbShadow },
       }
     case 'soft':
-      if (s.disabled) return { track: g('a4'), range: TRANSPARENT, thumb, thumbRing: g(5) }
+      if (s.disabled) return { track: { bg: g('a4') }, range: hidden, thumb: { bg, border: g(5) } }
       return {
-        track: layers(whiteA(1), g('a4')),
-        range: hc(layers(c('a5'), c(6))),
-        thumb,
-        thumbRing: blackA(3),
-        thumbShadow: sliderThumbShadow,
+        track: { bg: layers(whiteA(1), g('a4')) },
+        range: { bg: hc(layers(c('a5'), c(6))) },
+        thumb: { bg, border: blackA(3), shadow: sliderThumbShadow },
       }
   }
 }
@@ -634,8 +632,8 @@ export type KbdVariant = 'classic' | 'soft'
 export interface KbdPaints {
   bg: Paint
   text: Paint
-  /** Classic only: the 1px ring of `--kbd-box-shadow`. */
-  ring?: Paint
+  /** Classic only: the 1px edge of `--kbd-box-shadow`, around the key. */
+  border?: Paint
   /** Classic only: the darker bottom edge. */
   bottomEdge?: Paint
   /** Classic only: the inset top highlight. */
@@ -654,7 +652,7 @@ function kbd(s: WithVariant<KbdVariant>): KbdPaints {
   return {
     bg: g(1),
     text: g(12),
-    ring: byMode(g('a5'), g('a7')),
+    border: byMode(g('a5'), g('a7')),
     bottomEdge: byMode(g('a7'), blackA(11)),
     highlight: byMode(g('a3'), g('a11')),
     shadow: {
@@ -701,12 +699,12 @@ export interface SegmentedPaints {
   /** Root: gray-a3 over --color-surface (disabled: over gray-3). */
   bg: Paint
   text: Paint
-  /** --segmented-control-indicator-background-color: --color-background / dark gray-a3. */
-  indicator: Paint
-  /** The indicator's 1px ring: surface gray-a4, classic --shadow-2's gray-a3. None when disabled. */
-  indicatorRing?: Paint
-  /** classic: the rest of --shadow-2 as one drop shadow. */
-  indicatorShadow?: ShadowPaint
+  /**
+   * The indicator: --segmented-control-indicator-background-color (--color-background /
+   * dark gray-a3), its 1px edge (surface gray-a4, classic --shadow-2's gray-a3; none when
+   * disabled) and, classic, the rest of --shadow-2 as one drop shadow.
+   */
+  indicator: { bg: Paint; border?: Paint; shadow?: ShadowPaint }
   separator: Paint
 }
 
@@ -715,13 +713,15 @@ export interface SegmentedPaints {
  * gray-3, the indicator a flat gray-a3 with no ring or shadow.
  */
 function segmented(s: WithVariant<SegmentedVariant> & Disabled): SegmentedPaints {
-  if (s.disabled) return { bg: layers(g('a3'), g(3)), text: g('a8'), indicator: g('a3'), separator: g('a4') }
+  if (s.disabled) return { bg: layers(g('a3'), g(3)), text: g('a8'), indicator: { bg: g('a3') }, separator: g('a4') }
   return {
     bg: layers(g('a3'), g('surface')),
     text: g(12),
-    indicator: byMode(WHITE, g('a3')),
-    indicatorRing: s.variant === 'classic' ? g('a3') : g('a4'),
-    indicatorShadow: s.variant === 'classic' ? classicLift(s) : undefined,
+    indicator: {
+      bg: byMode(WHITE, g('a3')),
+      border: s.variant === 'classic' ? g('a3') : g('a4'),
+      ...(s.variant === 'classic' ? { shadow: classicLift(s) } : null),
+    },
     separator: g('a4'),
   }
 }
@@ -936,6 +936,28 @@ function focusRing(_s: BaseState): FocusRingPaints {
   return { ring: f(8) }
 }
 
+// ─── Theme panel (ThemeControls) — theme-panel.css ────────────────────────────
+
+/** The panel itself: gray-2 with a 1px gray-6 border. */
+function themePanel(_s: BaseState): { bg: Paint; border: Paint } {
+  return { bg: g(2), border: g(6) }
+}
+
+export interface ThemePanelOptionPaints extends SurfacePaints {
+  ring?: Paint
+  ringWidth: number
+}
+
+/**
+ * An option of the panel. `card` is `.rt-ThemePanelRadioCard`: a 1px gray-7 ring,
+ * checked a 2px gray-12 outline over it (outline-offset -1px). `swatch` is a color
+ * dot: no ring until it is checked, then the same 2px gray-12 one.
+ */
+function themePanelOption(s: BaseState & Checked & { kind: 'card' | 'swatch' }): ThemePanelOptionPaints {
+  if (s.checked) return { ring: g(12), ringWidth: 2 }
+  return s.kind === 'card' ? { ring: g(7), ringWidth: 1 } : { ringWidth: 2 }
+}
+
 // ─── Registry ─────────────────────────────────────────────────────────────────
 
 export const VARIANT_RECIPES = {
@@ -972,6 +994,8 @@ export const VARIANT_RECIPES = {
   selectTrigger,
   controlLabel,
   focusRing,
+  themePanel,
+  themePanelOption,
 } as const
 
 export type RecipeName = keyof typeof VARIANT_RECIPES
@@ -979,15 +1003,19 @@ export type RecipeState<R extends RecipeName> = Parameters<(typeof VARIANT_RECIP
 type RecipePaints<R extends RecipeName> = ReturnType<(typeof VARIANT_RECIPES)[R]>
 
 /** A recipe's output with every paint resolved to a color string. */
-export type VariantColors<R extends RecipeName> = {
-  [K in keyof RecipePaints<R>]-?: Resolved<Exclude<RecipePaints<R>[K], undefined>, undefined extends RecipePaints<R>[K] ? true : false>
+export type VariantColors<R extends RecipeName> = ResolvedParts<RecipePaints<R>>
+
+type ResolvedParts<T> = {
+  [K in keyof T]-?: Resolved<Exclude<T[K], undefined>, undefined extends T[K] ? true : false>
 }
 
 type Resolved<P, Optional extends boolean> =
   P extends number ? number | undefined
   : P extends true ? true | undefined
   : P extends ShadowPaint ? (Optional extends true ? Shadow | undefined : Shadow)
-  : Optional extends true ? string | undefined : string
+  : P extends Paint ? (Optional extends true ? string | undefined : string)
+  // A surface of its own (a Slider's thumb): its parts, resolved the same way
+  : (Optional extends true ? ResolvedParts<P> | undefined : ResolvedParts<P>)
 
 // ─── Resolution ───────────────────────────────────────────────────────────────
 
@@ -1023,13 +1051,23 @@ export function resolveVariantColors<R extends RecipeName>(
   state: RecipeState<R>,
   ctx: PaintContext,
 ): VariantColors<R> {
-  const paints = getVariantPaints(name, state) as Record<string, Paint | ShadowPaint | number | true | undefined>
-  const colors: Record<string, string | number | true | Shadow | undefined> = {}
+  return resolveParts(getVariantPaints(name, state) as Parts, ctx) as VariantColors<R>
+}
+
+type Part = Paint | ShadowPaint | Parts | number | true | undefined
+interface Parts { [name: string]: Part }
+
+const isPaint = (value: object): value is Paint =>
+  'scale' in value || 'raw' in value || 'layers' in value || 'fade' in value || 'mix' in value || 'light' in value
+
+function resolveParts(paints: Parts, ctx: PaintContext): Record<string, unknown> {
+  const colors: Record<string, unknown> = {}
   for (const key of Object.keys(paints)) {
     const value = paints[key]
     if (value === undefined || typeof value === 'number' || value === true) colors[key] = value
-    else if ('elevation' in value) colors[key] = { ...value, color: resolvePaint(value.color, ctx) }
-    else colors[key] = resolvePaint(value, ctx)
+    else if (isPaint(value)) colors[key] = resolvePaint(value, ctx)
+    else if ('elevation' in value) colors[key] = { ...value, color: resolvePaint((value as ShadowPaint).color, ctx) }
+    else colors[key] = resolveParts(value, ctx)
   }
-  return colors as VariantColors<R>
+  return colors
 }

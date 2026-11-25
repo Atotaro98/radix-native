@@ -10,6 +10,7 @@ import type { PlacementStrategy } from '../../utils/anchoredPlacement'
 import type { AnchoredPlacementProps } from '../internal/AnchoredContent'
 import { useCollection, useCollectionItem, type Collection } from '../internal/collection'
 import { useControl } from '../internal/control'
+import { plainText, renderContentText } from '../internal/contentText'
 import { ListLabel, ListRow, ListSeparator, rowCenter, useListMetrics, type ListLook } from '../internal/ListRows'
 import { anchorRef, createOverlayContext, useOverlayState, type OverlayState } from '../internal/overlayRoot'
 import { createPortalContext } from '../internal/portalContext'
@@ -167,15 +168,10 @@ function SelectTrigger({
   const selectedEntry = ctx.entries.find((e) => e.kind === 'item' && e.value === ctx.value)
   const label = children ?? (showPlaceholder ? placeholder : selectedEntry?.kind === 'item' ? selectedEntry.label : undefined)
   // Text written in several pieces (`Option {name}`) reads as one text; a loose string never reaches the View
-  const parts = React.Children.toArray(label)
-  const isText = (part: React.ReactNode): part is string | number => typeof part === 'string' || typeof part === 'number'
-  const labelText = parts.length > 0 && parts.every(isText) ? parts.join('') : undefined
-  const valueText = (value: string | number, key?: React.Key) => (
-    <RNText key={key} {...text.textProps} style={[text.style, { flexShrink: 1 }]}>{value}</RNText>
-  )
-  const content = labelText !== undefined
-    ? valueText(labelText)
-    : parts.map((part, i) => (isText(part) ? valueText(part, i) : part))
+  const labelText = plainText(label)
+  const content = renderContentText(label, (value) => (
+    <RNText {...text.textProps} style={[text.style, { flexShrink: 1 }]}>{value}</RNText>
+  ))
 
   const surface = paintSurface(colors, borderRadius)
   const toggleOpen = useCallback(() => ctx.setOpen(!ctx.open), [ctx])

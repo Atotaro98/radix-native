@@ -7,6 +7,7 @@ import { useMetrics } from '../../hooks/useMetrics'
 import { useTextStyle } from '../../hooks/useTextStyle'
 import { useVariantColors } from '../../hooks/useVariantColors'
 import { renderInlineText } from '../internal/inlineText'
+import { paintSurface } from '../internal/surface'
 import { useInsetContext } from '../layout/InsetContext'
 import { resolveTableWidths, type TableCellSize, type TableLength } from '../../utils/tableLayout'
 import type { SpaceToken } from '../../tokens/spacing'
@@ -141,7 +142,7 @@ function TableRoot({
     <View
       onLayout={onLayout}
       style={[
-        surface && { borderWidth: 1, borderColor: colors.border, borderRadius, backgroundColor: colors.bg, overflow: 'hidden' },
+        surface && [paintSurface(colors, borderRadius).style, { overflow: 'hidden' }],
         { opacity: widths ? undefined : 0 },
         margins,
         style,
